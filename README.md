@@ -1,8 +1,8 @@
 # PvP Performance Tracker
 
-Tracks if you successfully hit your opponent off-pray or not. For example, if your opponent is using protect from melee, you must hit him with magic or ranged for a successful off-pray hit.
+Tracks if you successfully hit your opponent off-pray or not. For example, if your opponent is using protect from melee, you must hit him with magic or ranged for a successful off-pray hit. Only useful for 1v1 PvP fights that involve overhead prayers, LMS being the perfect example. Multi will cause problems.
 
-Fight history panel:
+Fight history panel: (labels now say PvP rather than LMS)
 
 ![Panel Image](https://i.imgur.com/jGpayTj.png)
 
@@ -21,17 +21,19 @@ The stats are displayed as such: "successful off-pray hits / total attacks (succ
 
 **I can't guarantee accuracy for use outside of LMS**, because of the way attack styles are determined: that is by checking the Player's current animation. There are definitely a few random weapons I still haven't thought about that won't be included. But I am **confident it will work in over 90% of cases**, since people tend to stick to fairly common pking loadouts. Thankfully, most weapons AnimationIDs are re-used (e.g all normal scim slashes share one animation, crossbow is same with all bolts). Due to this, loads of weapons I haven't even tested are supported.
 
-Another part of the logic I'm not 100% confident of, although it works very well from the testing I've done so far: target selection. It all comes from the `onInteractingChanged` event, which can have some odd behaviour sometimes since following or trading will also trigger this event. Attacking someone already in combat will also trigger this event. I put some checks to only trust a fight as started once the player has attacked back, but I bet there are other ways it can be improved I didn't think of.
+Another component I'm not 100% confident of, although it works very well from the testing I've done so far: target selection. It all comes from the `onInteractingChanged` event, which can have some odd behaviour sometimes since following or trading will also trigger this event. Attacking someone already in combat will also trigger this event. I put a few different checks to validate and ignore this event depending on the state, but I'm sure are other ways it can be improved I didn't think about.
 
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues & PRs. If you find a weapon that doesn't work, let me know as well.
 
 ### Supported Weapons
-It would take forever to make a nicely formatted list of these, and on top of that many weapon animations are re-used, so more than I know are supported. Check out the variable names & comments in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/com/pvpperformancetracker/AnimationID.java) for a full breakdown of supported weapons/what I've tested. All LMS gear should be supported, as well as general popular pking gear, including some less common weapons like anchor, the 4 godsword specs, revenant weapons, dmace, etc. Basically all F2P weapons should be supported as well but I don't think this would be useful for F2P.
+It would take forever to make a nicely formatted list of these, and on top of that many weapon animations are re-used, so more than I know are supported. Check out the variable names & comments in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/com/pvpperformancetracker/AnimationID.java) for a full breakdown of supported weapons/what I've tested. All LMS gear should be supported, as well as general popular pking gear, including some less common weapons like anchor, the 4 godsword specs, revenant weapons, dmace, etc. Basically all F2P weapons should be supported as well but I don't think this would be useful for F2P. There are surely some uncommon but relevant weapons or specs I forgot about so feel free to submit those as an issue if you notice it in a fight, or not mentioned in the file.
 
 ### Known issues
-- Double deaths *not* on the same tick are not tracked. This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
-- Darts will often not get counted as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet.
+- **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
+- **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
+- There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
 
 ### Known unsupported weapons
-- Nightmare staves and their specs
-- Inquisitor's mace
+Not because they can't work, simply because I don't have their AnimationIDs.
+- **Nightmare staves** and their specs: probably works for any spell cast, but not certainly. Specs I definitely don't have.
+- **Inquisitor's mace**: It probably re-uses simple animations that are supported, but I can't be sure.
