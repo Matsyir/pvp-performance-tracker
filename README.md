@@ -29,7 +29,7 @@ I would love to see other features/stats come into this plugin in the future, fe
 It would take forever to make a nicely formatted list of these, and on top of that many weapon animations are re-used, so more than I know are supported. Check out the variable names & comments in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/com/pvpperformancetracker/AnimationID.java) for a full breakdown of supported weapons/what I've tested. All LMS gear should be supported, as well as general popular pking gear, including some less common weapons like anchor, the 4 godsword specs, revenant weapons, dmace, etc. Basically all F2P weapons should be supported as well but I don't think this would be useful for F2P.
 
 ### Known issues
-- Double deaths on the same tick are not tracked. This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
+- Double deaths *not* on the same tick are not tracked. This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
 - Darts will often not get counted as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet.
 
 ### Known unsupported weapons
