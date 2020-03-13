@@ -29,9 +29,7 @@ import java.awt.Color;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
@@ -57,17 +55,25 @@ class FightPerformancePanel extends JPanel
 
 		// load & rescale red skull icon used to show if a player/opponent died in a fight.
 		ImageIcon icon = new ImageIcon(new ImageIcon(
-			ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png"))
-			.getImage()
-			.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
+				ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png"))
+				.getImage()
+				.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
 		Image image = icon.getImage();
 		Image scaledImg = image.getScaledInstance(12, 12,  Image.SCALE_DEFAULT);
 		icon = new ImageIcon(scaledImg);
 
-		// player's stats, always first
-		JPanel playerStatsPanel = new JPanel(new BorderLayout());
+		// boxlayout panel
+		JPanel fightPanel = new JPanel();
+		fightPanel.setLayout(new BoxLayout(fightPanel, BoxLayout.Y_AXIS));
+		fightPanel.setBackground(background);
+
+		// first line
+		// prayer success rate
+		JPanel playerStatsPanel = new JPanel();
+		playerStatsPanel.setLayout(new BorderLayout());
 		playerStatsPanel.setBackground(background);
 
+		// LEFT: playername
 		JLabel playerStatsName = new JLabel();
 		if (fight.getCompetitor().isDead())
 		{
@@ -77,17 +83,20 @@ class FightPerformancePanel extends JPanel
 		playerStatsName.setForeground(Color.WHITE);
 		playerStatsPanel.add(playerStatsName, BorderLayout.WEST);
 
+		// RIGHT: successrate
 		JLabel playerStats = new JLabel();
 		playerStats.setToolTipText(fight.getCompetitor().getSuccessCount() + " successful off-pray attacks/" +
-			fight.getCompetitor().getAttackCount() + " total attacks");
+				fight.getCompetitor().getAttackCount() + " total attacks" +
+				(fight.playerWinning() ? " (green due to higher success ratio)" : ""));
 		playerStats.setText(fight.getCompetitor().getStats());
 		playerStats.setForeground(fight.playerWinning() ? Color.GREEN : Color.WHITE);
 		playerStatsPanel.add(playerStats, BorderLayout.EAST);
 
-		add(playerStatsPanel, BorderLayout.NORTH);
+		fightPanel.add(playerStatsPanel);
 
 		// opponent's stats, second
-		JPanel opponentStatsPanel = new JPanel(new BorderLayout());
+		JPanel opponentStatsPanel = new JPanel();
+		opponentStatsPanel.setLayout(new BorderLayout());
 		opponentStatsPanel.setBackground(background);
 
 		JLabel opponentStatsName = new JLabel();
@@ -101,11 +110,32 @@ class FightPerformancePanel extends JPanel
 
 		JLabel opponentStats = new JLabel();
 		opponentStats.setToolTipText(fight.getOpponent().getSuccessCount() + " successful off-pray attacks/" +
-			fight.getOpponent().getAttackCount() + " total attacks");
+				fight.getOpponent().getAttackCount() + " total attacks" +
+				(fight.opponentWinning() ? " (green due to higher success ratio)" : ""));
 		opponentStats.setText(fight.getOpponent().getStats());
 		opponentStats.setForeground(fight.opponentWinning() ? Color.GREEN : Color.WHITE);
 		opponentStatsPanel.add(opponentStats, BorderLayout.EAST);
 
-		add(opponentStatsPanel, BorderLayout.CENTER);
+		fightPanel.add(opponentStatsPanel);
+
+		// performance data
+		JPanel playerPerformancePanel = new JPanel();
+		playerPerformancePanel.setLayout(new BorderLayout());
+		playerPerformancePanel.setBackground(background);
+
+		JLabel opponentPerformanceName = new JLabel();
+		opponentPerformanceName.setToolTipText("Estimation of average damage based on performance");
+		opponentPerformanceName.setText("Performance:");
+		playerPerformancePanel.add(opponentPerformanceName, BorderLayout.WEST);
+
+		JLabel playerPerformanceValue = new JLabel();
+		String firstChar = fight.getPlayerPerformanceString().substring(0, 1);
+		playerPerformanceValue.setToolTipText("Estimation of average damage based on performance");
+		playerPerformanceValue.setText(fight.getPlayerPerformanceString());
+		playerPerformanceValue.setForeground(firstChar.equals("+") ? Color.GREEN : firstChar.equals("-") ? Color.RED : Color.WHITE);
+		playerPerformancePanel.add(playerPerformanceValue, BorderLayout.EAST);
+		fightPanel.add(playerPerformancePanel);
+
+		add(fightPanel, BorderLayout.NORTH);
 	}
 }

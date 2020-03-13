@@ -27,8 +27,10 @@ package com.pvpperformancetracker;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
+import net.runelite.client.game.ItemManager;
 
 // Basic class to hold information about PvP fight performances. A "successful" attack
 // is dealt by not attacking with the style of the opponent's overhead. For example,
@@ -36,6 +38,7 @@ import net.runelite.api.Player;
 // attack. Using melee against someone using protect from melee is not successful.
 // This is not a guaranteed way of determining the better competitor, since someone casting
 // barrage in full tank gear can count as a successful attack. It's a good general idea, though.
+@Slf4j
 @Getter
 public class FightPerformance
 {
@@ -48,10 +51,10 @@ public class FightPerformance
 	private Instant lastFightTime;
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0.
-	FightPerformance(Player competitor, Player opponent)
+	FightPerformance(Player competitor, Player opponent, ItemManager itemManager)
 	{
-		this.competitor = new Fighter(competitor);
-		this.opponent = new Fighter(opponent);
+		this.competitor = new Fighter(competitor, itemManager);
+		this.opponent = new Fighter(opponent, itemManager);
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
@@ -63,21 +66,26 @@ public class FightPerformance
 	// to determine if successful.
 	void checkForAttackAnimations(String playerName)
 	{
+		if(playerName == null) {
+			return;
+		}
 		if (playerName.equals(competitor.getName()))
 		{
 			AnimationAttackStyle attackStyle = competitor.getAnimationAttackStyle();
+			String animationType = competitor.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection());
+				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), opponent.getPlayer(), animationType);
 				lastFightTime = Instant.now();
 			}
 		}
 		else if (playerName.equals(opponent.getName()))
 		{
 			AnimationAttackStyle attackStyle = opponent.getAnimationAttackStyle();
+			String animationType = opponent.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection());
+				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), competitor.getPlayer(), animationType);
 				lastFightTime = Instant.now();
 			}
 		}
@@ -135,5 +143,14 @@ public class FightPerformance
 	boolean fightStarted()
 	{
 		return competitor.getAttackCount() > 0;
+	}
+
+	public String getPlayerPerformanceString()
+	{
+		int damage = competitor.getTotalDamage() - opponent.getTotalDamage();
+
+		String baseString = damage == 0 ? "" : damage > 0 ? "+ " : "- ";
+		// The success rate is the percentage of successful attacks.
+		return baseString + Math.abs(damage);
 	}
 }

@@ -105,6 +105,14 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			.rightColor(plugin.getCurrentFight().opponentWinning() ? Color.GREEN : Color.WHITE)
 			.build());
 
+		String firstChar = currentFight.getPlayerPerformanceString().substring(0, 1);
+		panelComponent.getChildren().add(LineComponent.builder()
+				.left("Performance: ")
+				.right(currentFight.getPlayerPerformanceString())
+				.rightColor(firstChar.equals("+") ? Color.GREEN : firstChar.equals("-") ? Color.RED : Color.WHITE)
+				.build());
+
+
 		// Fix potential text overlap due to long RSN if displaying full RSN.
 		if (config.useSimpleOverlay())
 		{

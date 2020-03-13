@@ -25,8 +25,11 @@
 package com.pvpperformancetracker;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Player;
+import net.runelite.client.game.ItemManager;
 
+@Slf4j
 @Getter
 class Fighter
 {
@@ -34,16 +37,20 @@ class Fighter
 	private String name; // username
 	private int attackCount; // total number of attacks
 	private int successCount; // total number of successful attacks
-	private boolean dead; // will be true if the fighter died in the fight
+	private int totalDamage; // total number of successful attacks
+	private boolean dead; // will be true f the fighter died in the fight
+	private LmsDamageCalc lmsDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
-	Fighter(Player player)
+	Fighter(Player player, ItemManager itemManager)
 	{
 		this.player = player;
 		name = player.getName();
 		attackCount = 0;
 		successCount = 0;
+		totalDamage = 0;
 		dead = false;
+		lmsDamageCalc =  new LmsDamageCalc(itemManager);
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -54,14 +61,20 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		successCount = 0;
+		totalDamage = 0;
 		dead = false;
 	}
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful)
+	void addAttack(boolean successful, Player competitor, Player opponent, String animationType)
 	{
+		int deservedDamage = lmsDamageCalc.getDamage(competitor, opponent, successful, animationType);
 		attackCount++;
+		totalDamage += deservedDamage;
+		log.warn("attacker" + competitor.getName());
+		log.warn("defender" + opponent.getName());
+		log.warn("deservedDamage" + deservedDamage);
 		if (successful)
 		{
 			successCount++;
@@ -83,6 +96,11 @@ class Fighter
 	AnimationAttackStyle getAnimationAttackStyle()
 	{
 		return AnimationAttackStyle.styleForAnimation(player.getAnimation());
+	}
+
+	String getAnimationAttackType()
+	{
+		return AnimationAttackType.getAnimationType(player.getAnimation());
 	}
 
 	// Return a simple string to display the current player's success rate.
