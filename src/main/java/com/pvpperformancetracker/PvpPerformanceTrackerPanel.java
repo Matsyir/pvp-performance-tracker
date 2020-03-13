@@ -31,11 +31,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
@@ -46,7 +42,6 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 {
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
-	private final GridBagConstraints fightPanelConstraints = new GridBagConstraints();
 
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
 	private final JPopupMenu popupMenu = new JPopupMenu();
@@ -62,14 +57,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		JPanel mainContent = new JPanel(new BorderLayout());
 
 		fightHistoryContainer.setSize(getSize());
-		fightHistoryContainer.setLayout(new GridBagLayout());
-
-		// constraints to initialize FightPerformancePanels with
-		fightPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-		fightPanelConstraints.weightx = 1;
-		fightPanelConstraints.gridx = 0;
-		fightPanelConstraints.gridy = 0;
-		fightPanelConstraints.insets = new Insets(0, 0, 4, 0);
+		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
 		add(totalStatsPanel, BorderLayout.NORTH, 0);
 
@@ -86,7 +74,6 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			totalStatsPanel.reset();
 			fightHistoryContainer.removeAll();
-			fightPanelConstraints.gridy = 0;
 			SwingUtilities.invokeLater(this::updateUI);
 		});
 		popupMenu.add(reset);
@@ -106,8 +93,12 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 			FightPerformancePanel panel = new FightPerformancePanel(fight);
 			panel.setComponentPopupMenu(popupMenu);
-			fightHistoryContainer.add(panel, fightPanelConstraints);
-			fightPanelConstraints.gridy++;
+			fightHistoryContainer.add(panel, 0);
+
+			panel.setBorder(BorderFactory.createCompoundBorder(
+					BorderFactory.createMatteBorder(5, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
+					BorderFactory.createEmptyBorder(8, 10, 8, 10)
+			));
 
 			updateUI();
 		});

@@ -43,6 +43,7 @@ import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -81,6 +82,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private PvpPerformanceTrackerOverlay overlay;
+
+	@Inject
+	private ItemManager itemManager;
 
 	@Getter
 	private FightPerformance currentFight;
@@ -190,7 +194,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (!hasOpponent() ||
 			(hasOpponent() && !opponent.getName().equals(currentFight.getOpponent().getName())))
 		{
-			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
+			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
 		}
 	}
 
