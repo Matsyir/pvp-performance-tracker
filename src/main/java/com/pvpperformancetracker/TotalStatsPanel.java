@@ -110,7 +110,7 @@ public class TotalStatsPanel extends JPanel
 		{
 			statsLabel.setText(totalStats.getStats());
 			killsLabel.setText(numKills + " Kill" + (numKills != 1 ? "s" : ""));
-			deathsLabel.setText(numDeaths + " Death"  + (numDeaths != 1 ? "s" : ""));
+			deathsLabel.setText(numDeaths + " Death" + (numDeaths != 1 ? "s" : ""));
 			statsLabel.setToolTipText(totalStats.getSuccessCount() + " successful off-pray attacks/" +
 				totalStats.getAttackCount() + " total attacks");
 		});

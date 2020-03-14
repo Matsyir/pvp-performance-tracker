@@ -37,8 +37,8 @@ class Fighter
 	private String name; // username
 	private int attackCount; // total number of attacks
 	private int successCount; // total number of successful attacks
-	private int totalDamage; // total number of successful attacks
-	private boolean dead; // will be true f the fighter died in the fight
+	private int totalDamage; // total deserved damage based on gear & opponent's pray
+	private boolean dead; // will be true if the fighter died in the fight
 	private LmsDamageCalc lmsDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
@@ -50,7 +50,7 @@ class Fighter
 		successCount = 0;
 		totalDamage = 0;
 		dead = false;
-		lmsDamageCalc =  new LmsDamageCalc(itemManager);
+		lmsDamageCalc = new LmsDamageCalc(itemManager);
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
