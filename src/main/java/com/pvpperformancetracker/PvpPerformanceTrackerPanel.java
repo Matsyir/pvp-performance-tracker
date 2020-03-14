@@ -40,7 +40,6 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
@@ -52,10 +51,15 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
 	private final JPopupMenu popupMenu = new JPopupMenu();
 
+	private final PvpPerformanceTrackerPlugin plugin;
+	private final PvpPerformanceTrackerConfig config;
+
 	@Inject
-	private PvpPerformanceTrackerPanel(ClientThread clientThread, ItemManager itemManager, ScheduledExecutorService executor)
+	private PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config)
 	{
 		super(false);
+		this.plugin = plugin;
+		this.config = config;
 
 		setLayout(new BorderLayout(0, 4));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -81,6 +85,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 			totalStatsPanel.reset();
 			fightHistoryContainer.removeAll();
 			SwingUtilities.invokeLater(this::updateUI);
+			plugin.resetFightHistory();
 		});
 		popupMenu.add(reset);
 
@@ -93,20 +98,51 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 	public void addFight(FightPerformance fight)
 	{
+		totalStatsPanel.addFight(fight);
+
 		SwingUtilities.invokeLater(() ->
 		{
-			totalStatsPanel.addFight(fight);
-
 			FightPerformancePanel panel = new FightPerformancePanel(fight);
 			panel.setComponentPopupMenu(popupMenu);
-			fightHistoryContainer.add(panel, 0);
-
 			panel.setBorder(BorderFactory.createCompoundBorder(
-					BorderFactory.createMatteBorder(5, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
-					BorderFactory.createEmptyBorder(8, 10, 8, 10)
+				BorderFactory.createMatteBorder(4, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
+				BorderFactory.createEmptyBorder(8, 8, 2, 8)  // bottom is 2 due to extra spacing coming from somewhere else.
 			));
+
+			fightHistoryContainer.add(panel, 0);
+			updateUI();
+		});
+	}
+
+	public void addFights(FightPerformance[] fights)
+	{
+
+		SwingUtilities.invokeLater(() ->
+		{
+			for (FightPerformance fight : fights)
+			{
+				totalStatsPanel.addFight(fight);
+				FightPerformancePanel panel = new FightPerformancePanel(fight);
+				panel.setComponentPopupMenu(popupMenu);
+				panel.setBorder(BorderFactory.createCompoundBorder(
+					BorderFactory.createMatteBorder(4, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
+					BorderFactory.createEmptyBorder(8, 8, 2, 8)  // bottom is 2 due to extra spacing coming from somewhere else.
+				));
+
+				fightHistoryContainer.add(panel, 0);
+			}
 
 			updateUI();
 		});
+	}
+
+	public void rebuild()
+	{
+		totalStatsPanel.reset();
+		fightHistoryContainer.removeAll();
+		if (plugin.fightHistory.size() > 0)
+		{
+			addFights(plugin.fightHistory.toArray(new FightPerformance[plugin.fightHistory.size()]));
+		}
 	}
 }

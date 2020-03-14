@@ -46,6 +46,18 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
 
+	private TitleComponent overlayTitle;
+
+	private LineComponent simpleConfigOverlayFirstLine; // Left: player's RSN, Right: off-pray %
+	private LineComponent simpleConfigOverlaySecondLine; // Same as above but for opponent
+
+	// The main overlay is like the panel.
+	private LineComponent overlayFirstLine; // Left: player's RSN, Right: Opponent RSN
+	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
+	private LineComponent overlayThirdLine; // right: player's deserved dps stats, right: opponent's deserved dps stats
+
+	private boolean didRender;
+
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
 	{
@@ -56,78 +68,114 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		setPriority(OverlayPriority.LOW);
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "PvP Performance Tracker"));
 		panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+
+		overlayTitle = TitleComponent.builder().text("PvP Performance").build();
+
+		simpleConfigOverlayFirstLine = LineComponent.builder().build();
+		simpleConfigOverlaySecondLine = LineComponent.builder().build();
+
+		overlayFirstLine = LineComponent.builder().build();
+		overlaySecondLine = LineComponent.builder().build();
+		overlayThirdLine = LineComponent.builder().build();
+
+		setLines();
+
+		didRender = false;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		FightPerformance currentFight = plugin.getCurrentFight();
-		if (currentFight == null || !config.showFightOverlay() ||
+		FightPerformance fight = plugin.getCurrentFight();
+		if (fight == null || !config.showFightOverlay() ||
 			(config.restrictToLms() && !plugin.isAtLMS()))
 		{
+			didRender = false;
 			return null;
 		}
 
-		panelComponent.getChildren().clear();
-
-		// Only display the title if it's enabled (pointless in my opinion, since you can just see
-		// what the panel is displaying, but I can understand the preference of having overlays labelled)
-		if (config.showOverlayTitle())
+		// Adjust size to fix potential text overlap due to long RSN if displaying full RSN, on first render.
+		if (!didRender)
 		{
-			panelComponent.getChildren().add(TitleComponent.builder()
-				.text("PvP Performance")
-				.build());
+			if (config.useSimpleOverlay())
+			{
+				FontMetrics metrics = graphics.getFontMetrics();
+				panelComponent.setPreferredSize(new Dimension(
+					Math.max(ComponentConstants.STANDARD_WIDTH,
+						Math.max(metrics.stringWidth(fight.getCompetitor().getName()),
+							metrics.stringWidth(fight.getOpponent().getName()))
+							+ metrics.stringWidth("100%") + 6),
+					0));
+			}
+			else
+			{
+				panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+			}
+
+			didRender = true;
 		}
 
-		// First line: Player's stats
-		// Using simple overlay = left: RSN, right: success%
-		// Not using simple overlay = left: 5 chars of RSN, right: stats string (successCount / totalCount success%)
-		String playerName = plugin.getCurrentFight().getCompetitor().getName();
-		panelComponent.getChildren().add(LineComponent.builder()
-			.left(config.useSimpleOverlay() ?
-				playerName :
-				playerName.substring(0, Math.min(5, playerName.length())))
-			.right(config.useSimpleOverlay() ?
-				String.valueOf(Math.round(currentFight.getCompetitor().calculateSuccessPercentage())) + "%" :
-				plugin.getCurrentFight().getCompetitor().getStats())
-			.rightColor(plugin.getCurrentFight().playerWinning() ? Color.GREEN : Color.WHITE)
-			.build());
-
-		// Second line: Same as first line but opponent's stats.
-		String opponentName = plugin.getCurrentFight().getOpponent().getName();
-		panelComponent.getChildren().add(LineComponent.builder()
-			.left(config.useSimpleOverlay() ?
-				opponentName :
-				opponentName.substring(0, Math.min(5, opponentName.length())))
-			.right(config.useSimpleOverlay() ?
-				String.valueOf(Math.round(currentFight.getOpponent().calculateSuccessPercentage())) + "%" :
-				plugin.getCurrentFight().getOpponent().getStats())
-			.rightColor(plugin.getCurrentFight().opponentWinning() ? Color.GREEN : Color.WHITE)
-			.build());
-
-		String firstChar = currentFight.getPlayerPerformanceString().substring(0, 1);
-		panelComponent.getChildren().add(LineComponent.builder()
-				.left("Performance: ")
-				.right(currentFight.getPlayerPerformanceString())
-				.rightColor(firstChar.equals("+") ? Color.GREEN : firstChar.equals("-") ? Color.RED : Color.WHITE)
-				.build());
-
-
-		// Fix potential text overlap due to long RSN if displaying full RSN.
 		if (config.useSimpleOverlay())
 		{
-			FontMetrics metrics = graphics.getFontMetrics();
-			panelComponent.setPreferredSize(new Dimension(
-				Math.max(ComponentConstants.STANDARD_WIDTH,
-					Math.max(metrics.stringWidth(playerName), metrics.stringWidth(opponentName))
-						+ metrics.stringWidth("100%") + 12),
-				0));
+			simpleConfigOverlayFirstLine.setRight(Math.round(fight.getCompetitor().calculateSuccessPercentage()) + "%");
+			simpleConfigOverlayFirstLine.setRightColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
+
+			simpleConfigOverlaySecondLine.setRight(Math.round(fight.getOpponent().calculateSuccessPercentage()) + "%");
+			simpleConfigOverlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		}
 		else
 		{
-			panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
+			overlaySecondLine.setLeft(fight.getCompetitor().getOffPrayStats(true));
+			overlaySecondLine.setLeftColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
+			overlaySecondLine.setRight(fight.getOpponent().getOffPrayStats(true));
+			overlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
+
+			overlayThirdLine.setLeft(fight.getCompetitorDeservedDpsString());
+			overlayThirdLine.setLeftColor(fight.competitorDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
+
+			// only show damage for the opponent, since space is restricted here and having both differences
+			// is redundant since the sign is simply flipped.
+			overlayThirdLine.setRight(String.valueOf(fight.getOpponent().getTotalDamage()));
+			overlayThirdLine.setRightColor(fight.opponentDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
 		}
 
 		return panelComponent.render(graphics);
+	}
+
+	void setLines()
+	{
+		panelComponent.getChildren().clear();
+
+		// Only display the title if it's enabled (pointless in my opinion, since you can just see
+		// what the panel is displaying, but I can see it being useful if you have lots of overlays)
+		if (config.showOverlayTitle())
+		{
+			panelComponent.getChildren().add(overlayTitle);
+		}
+
+		if (config.useSimpleOverlay())
+		{
+			panelComponent.getChildren().add(simpleConfigOverlayFirstLine);
+			panelComponent.getChildren().add(simpleConfigOverlaySecondLine);
+		}
+		else
+		{
+			panelComponent.getChildren().add(overlayFirstLine);
+			panelComponent.getChildren().add(overlaySecondLine);
+			panelComponent.getChildren().add(overlayThirdLine);
+		}
+	}
+
+	void setFight(FightPerformance fight)
+	{
+		simpleConfigOverlayFirstLine.setLeft(fight.getCompetitor().getName());
+		simpleConfigOverlaySecondLine.setLeft(fight.getOpponent().getName());
+
+		String cName = fight.getCompetitor().getName();
+		overlayFirstLine.setLeft(cName.substring(0, Math.min(6, cName.length())));
+		String oName = fight.getOpponent().getName();
+		overlayFirstLine.setRight(oName.substring(0, Math.min(6, oName.length())));
+
+		didRender = false;
 	}
 }

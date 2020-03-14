@@ -24,8 +24,10 @@
  */
 package com.pvpperformancetracker;
 
+import com.google.gson.annotations.Expose;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Random;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
@@ -40,15 +42,33 @@ import net.runelite.client.game.ItemManager;
 // barrage in full tank gear can count as a successful attack. It's a good general idea, though.
 @Slf4j
 @Getter
-public class FightPerformance
+public class FightPerformance implements Comparable<FightPerformance>
 {
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
 
-	private Fighter competitor;
-	private Fighter opponent;
-	private Instant lastFightTime;
+	@Expose private Fighter competitor;
+	@Expose private Fighter opponent;
+	@Expose private Instant lastFightTime;
+
+	// return a random fightPerformance used for testing UI
+	static FightPerformance getTestInstance()
+	{
+		int cTotal = (int)(Math.random() * 60) + 8;
+		int cSuccess = (int)(Math.random() * (cTotal - 4)) + 4;
+		int cDamage = (int)(Math.random() * (cSuccess * 25));
+
+		int oTotal = (int)(Math.random() * 60) + 8;
+		int oSuccess = (int)(Math.random() * (oTotal - 4)) + 4;
+		int oDamage = (int)(Math.random() * (oSuccess * 25));
+
+		int secOffset = (int)(Math.random() * 57600) - 28800;
+
+		boolean cDead = Math.random() >= 0.5;
+
+		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset);
+	}
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0.
 	FightPerformance(Player competitor, Player opponent, ItemManager itemManager)
@@ -59,6 +79,27 @@ public class FightPerformance
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5);
+	}
+
+	// Used for testing purposes
+	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, int cDamage, int oSuccess, int oTotal, int oDamage, boolean cDead, int secondOffset)
+	{
+		this.competitor = new Fighter(cName);
+		this.opponent = new Fighter(oName);
+
+		competitor.addAttacks(cSuccess, cTotal, cDamage);
+		opponent.addAttacks(oSuccess, oTotal, oDamage);
+
+		if (cDead)
+		{
+			competitor.died();
+		}
+		else
+		{
+			opponent.died();
+		}
+
+		lastFightTime = Instant.now().minusSeconds(secondOffset);
 	}
 
 	// If the given playerName is in this fight, check the Fighter's current animation,
@@ -91,20 +132,26 @@ public class FightPerformance
 		}
 	}
 
-	// returns true if competitor success rate > opponent success rate.
-	// could be "wrong" about winning in some cases, if someone is eating a lot and not actually attacking
-	// much, they could have a higher success rate than the person clearly winning. Although it is hard to
-	// judge by comparing attack counts since someone using fast weapons against slow weapons
-	// could cause a situation opposite of the one described above.
-	boolean playerWinning()
+	// returns true if competitor off-pray hit success rate > opponent success rate.
+	boolean competitorOffPraySuccessIsGreater()
 	{
 		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
 	}
 
-	// returns true if opponent success rate > competitor success rate.
-	boolean opponentWinning()
+	// returns true if opponent off-pray hit success rate > competitor success rate.
+	boolean opponentOffPraySuccessIsGreater()
 	{
 		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
+	}
+
+	boolean competitorDeservedDpsIsGreater()
+	{
+		return competitor.getTotalDamage() > opponent.getTotalDamage();
+	}
+
+	boolean opponentDeservedDpsIsGreater()
+	{
+		return opponent.getTotalDamage() > competitor.getTotalDamage();
 	}
 
 	// Will return true and stop the fight if the fight should be over.
@@ -145,12 +192,23 @@ public class FightPerformance
 		return competitor.getAttackCount() > 0;
 	}
 
-	public String getPlayerPerformanceString()
+	// get full value of deserved dps as well as difference, for the competitor
+	public String getCompetitorDeservedDpsString()
 	{
-		int damage = competitor.getTotalDamage() - opponent.getTotalDamage();
+		int difference = competitor.getTotalDamage() - opponent.getTotalDamage();
+		return competitor.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
 
-		String baseString = damage == 0 ? "" : damage > 0 ? "+ " : "- ";
-		// The success rate is the percentage of successful attacks.
-		return baseString + Math.abs(damage);
+	// get full value of deserved dps as well as difference, for the opponent
+	public String getOpponentDeservedDpsString()
+	{
+		int difference = opponent.getTotalDamage() - competitor.getTotalDamage();
+		return opponent.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	@Override
+	public int compareTo(FightPerformance o)
+	{
+		return lastFightTime.compareTo(o.lastFightTime);
 	}
 }

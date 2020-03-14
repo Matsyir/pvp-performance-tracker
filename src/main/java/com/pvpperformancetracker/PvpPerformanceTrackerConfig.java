@@ -54,35 +54,45 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "saveFightHistory",
+		name = "Save Fight History",
+		description = "Enables the side-panel which displays previous fight statistics.",
+		position = 2
+	)
+	default boolean saveFightHistory()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "useSimpleOverlay",
+		name = "Use Simple Overlay",
+		description = "The overlay will only display percentage as stats rather than fraction, percentage & deserved dps.",
+		position = 3
+	)
+	default boolean useSimpleOverlay()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showOverlayTitle",
 		name = "Show Overlay Title",
-		description = "The overlay will have a title to say it's the PvP Performance Tracker.",
-		position = 2
+		description = "The overlay will have a title to display that it is PvP Performance.",
+		position = 4
 	)
 	default boolean showOverlayTitle()
 	{
 		return false;
 	}
 
-	@ConfigItem(
-		keyName = "useSimpleOverlay",
-		name = "Use Simple Overlay",
-		description = "The overlay will only display percentage as stats rather than fraction & percentage.",
-		position = 3
-	)
-	default boolean useSimpleOverlay()
-	{
-		return true;
-	}
 
 	@ConfigItem(
-		keyName = "saveFightHistory",
-		name = "Save Fight History",
-		description = "Enables the side-panel which displays previous fight statistics.",
-		position = 4
+		hidden = true,
+		keyName = "fightHistoryData",
+		name = "Fight History Data",
+		description = "You shouldn't be seeing this without looking at the code. Fight history data is saved here. Do not edit.",
+		position = 999
 	)
-	default boolean saveFightHistory()
-	{
-		return true;
-	}
+	default String fightHistoryData() { return "[]"; }
 }

@@ -24,6 +24,7 @@
  */
 package com.pvpperformancetracker;
 
+import com.google.gson.annotations.Expose;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Player;
@@ -34,10 +35,15 @@ import net.runelite.client.game.ItemManager;
 class Fighter
 {
 	private Player player;
+	@Expose
 	private String name; // username
+	@Expose
 	private int attackCount; // total number of attacks
+	@Expose
 	private int successCount; // total number of successful attacks
+	@Expose
 	private int totalDamage; // total deserved damage based on gear & opponent's pray
+	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
 	private LmsDamageCalc lmsDamageCalc;
 
@@ -88,6 +94,14 @@ class Fighter
 		attackCount += total;
 	}
 
+	// this is to be used for debug purposes
+	void addAttacks(int success, int total, int damage)
+	{
+		successCount += success;
+		attackCount += total;
+		totalDamage += damage;
+	}
+
 	void died()
 	{
 		dead = true;
@@ -105,9 +119,17 @@ class Fighter
 
 	// Return a simple string to display the current player's success rate.
 	// ex. "42/59 (71%)". The name is not included as it will be in a separate view.
-	String getStats()
+	// if shortString is true, the percentage is omitted, it only returns the fraction.
+	String getOffPrayStats(boolean shortString)
 	{
-		return successCount + "/" + attackCount + " (" + Math.round(calculateSuccessPercentage()) + "%)";
+		return shortString ?
+			successCount + "/" + attackCount :
+			successCount + "/" + attackCount + " (" + Math.round(calculateSuccessPercentage()) + "%)";
+	}
+
+	String getOffPrayStats()
+	{
+		return getOffPrayStats(false);
 	}
 
 	double calculateSuccessPercentage()

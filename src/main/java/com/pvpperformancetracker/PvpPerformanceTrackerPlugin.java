@@ -25,8 +25,13 @@
 package com.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
@@ -61,6 +66,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
 
+	public List<FightPerformance> fightHistory;
+
 	@Getter(AccessLevel.PACKAGE)
 	private NavigationButton navButton;
 	private boolean navButtonShown = false;
@@ -78,6 +85,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private ClientToolbar clientToolbar;
 
 	@Inject
+	private ConfigManager configManager;
+
+	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
@@ -89,8 +99,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Getter
 	private FightPerformance currentFight;
 
+	private Gson gson;
+
 	@Provides
-	PvpPerformanceTrackerConfig provideConfig(ConfigManager configManager)
+	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(PvpPerformanceTrackerConfig.class);
 	}
@@ -107,6 +119,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
+		fightHistory = new ArrayList<>();
+		gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		log.info(config.fightHistoryData());
+		FightPerformance[] savedFights = gson.fromJson(config.fightHistoryData(), FightPerformance[].class);
+		importFightHistory(savedFights);
+
+		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
+		for (int i = 0; i < 20; i++)
+		{
+			FightPerformance fight = FightPerformance.getTestInstance();
+			addToFightHistory(fight);
+		}
+
+
 		// add the panel's nav button depending on config
 		if (config.saveFightHistory() &&
 			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS())))
@@ -121,6 +147,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		Gson gson = new Gson();
+		fightHistory.sort(FightPerformance::compareTo);
+		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[fightHistory.size()]), FightPerformance[].class);
+		configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
+
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
 	}
@@ -129,10 +160,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (event.getGroup().equals("pvpperformancetracker"))
+		if (!event.getGroup().equals("pvpperformancetracker")) { return; }
+
+		switch(event.getKey())
 		{
-			if (event.getKey().equals("saveFightHistory") || event.getKey().equals("restrictToLms"))
-			{
+			case "saveFightHistory":
+			case "restrictToLms":
 				boolean isAtLms = isAtLMS();
 				if (!navButtonShown && config.saveFightHistory() &&
 					(!config.restrictToLms() || isAtLms))
@@ -145,7 +178,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					SwingUtilities.invokeLater(() -> clientToolbar.removeNavigation(navButton));
 					navButtonShown = false;
 				}
-			}
+				break;
+			case "useSimpleOverlay":
+			case "showOverlayTitle":
+				overlay.setLines();
+				break;
 		}
 	}
 
@@ -195,6 +232,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			(hasOpponent() && !opponent.getName().equals(currentFight.getOpponent().getName())))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
+			overlay.setFight(currentFight);
 		}
 	}
 
@@ -252,10 +290,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// add fight to fight history if it actually started
 			if (currentFight.fightStarted())
 			{
-				panel.addFight(currentFight);
+				addToFightHistory(currentFight);
 			}
 			currentFight = null;
 		}
+	}
+
+	void addToFightHistory(FightPerformance fight)
+	{
+		fightHistory.add(fight);
+		panel.addFight(fight);
+	}
+
+	void importFightHistory(FightPerformance[] fights)
+	{
+		fightHistory.addAll(Arrays.asList(fights));
+		panel.rebuild();
+	}
+
+	void resetFightHistory()
+	{
+		fightHistory.clear();
 	}
 
 	boolean isAtLMS()
