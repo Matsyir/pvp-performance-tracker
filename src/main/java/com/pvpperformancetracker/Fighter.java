@@ -45,7 +45,7 @@ class Fighter
 	private int totalDamage; // total deserved damage based on gear & opponent's pray
 	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
-	private LmsDamageCalc lmsDamageCalc;
+	private PvpDamageCalc pvpDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
 	Fighter(Player player, ItemManager itemManager)
@@ -56,7 +56,7 @@ class Fighter
 		successCount = 0;
 		totalDamage = 0;
 		dead = false;
-		lmsDamageCalc = new LmsDamageCalc(itemManager);
+		pvpDamageCalc = new PvpDamageCalc(itemManager);
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -73,9 +73,9 @@ class Fighter
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player competitor, Player opponent, String animationType)
+	void addAttack(boolean successful, Player competitor, Player opponent, AnimationAttackType animationType)
 	{
-		int deservedDamage = lmsDamageCalc.getDamage(competitor, opponent, successful, animationType);
+		int deservedDamage = pvpDamageCalc.getDamage(competitor, opponent, successful, animationType);
 		attackCount++;
 		totalDamage += deservedDamage;
 		log.warn("attacker" + competitor.getName());
@@ -112,9 +112,9 @@ class Fighter
 		return AnimationAttackStyle.styleForAnimation(player.getAnimation());
 	}
 
-	String getAnimationAttackType()
+	AnimationAttackType getAnimationAttackType()
 	{
-		return AnimationAttackType.getAnimationType(player.getAnimation());
+		return AnimationAttackType.typeForAnimation(player.getAnimation());
 	}
 
 	// Return a simple string to display the current player's success rate.

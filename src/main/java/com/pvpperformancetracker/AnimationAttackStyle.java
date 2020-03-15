@@ -31,6 +31,8 @@ import net.runelite.api.HeadIcon;
 
 import static com.pvpperformancetracker.AnimationID.*;
 
+// These are AnimationID groupings to represent the three main attack styles,
+// simply Melee/Mage/Ranged.
 public enum AnimationAttackStyle
 {
 	// Melee attack animations

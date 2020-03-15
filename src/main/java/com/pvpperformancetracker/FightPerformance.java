@@ -48,9 +48,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
 
-	@Expose private Fighter competitor;
-	@Expose private Fighter opponent;
-	@Expose private Instant lastFightTime;
+	@Expose
+	private Fighter competitor;
+	@Expose
+	private Fighter opponent;
+	@Expose
+	private Instant lastFightTime;
 
 	// return a random fightPerformance used for testing UI
 	static FightPerformance getTestInstance()
@@ -113,7 +116,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		if (playerName.equals(competitor.getName()))
 		{
 			AnimationAttackStyle attackStyle = competitor.getAnimationAttackStyle();
-			String animationType = competitor.getAnimationAttackType();
+			AnimationAttackType animationType = competitor.getAnimationAttackType();
 			if (attackStyle != null)
 			{
 				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), opponent.getPlayer(), animationType);
@@ -123,7 +126,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		else if (playerName.equals(opponent.getName()))
 		{
 			AnimationAttackStyle attackStyle = opponent.getAnimationAttackStyle();
-			String animationType = opponent.getAnimationAttackType();
+			AnimationAttackType animationType = opponent.getAnimationAttackType();
 			if (attackStyle != null)
 			{
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), competitor.getPlayer(), animationType);

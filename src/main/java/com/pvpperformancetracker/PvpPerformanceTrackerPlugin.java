@@ -227,7 +227,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// start a new fight with the new found opponent, if a new one.
-		if (!hasOpponent() || !opponent.getName().equals(currentFight.getOpponent().getName()))
+		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
 			overlay.setFight(currentFight);
