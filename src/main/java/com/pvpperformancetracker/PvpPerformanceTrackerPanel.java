@@ -142,7 +142,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		fightHistoryContainer.removeAll();
 		if (plugin.fightHistory.size() > 0)
 		{
-			addFights(plugin.fightHistory.toArray(new FightPerformance[plugin.fightHistory.size()]));
+			addFights(plugin.fightHistory.toArray(new FightPerformance[0]));
 		}
 	}
 }

@@ -126,11 +126,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		importFightHistory(savedFights);
 
 		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-		for (int i = 0; i < 20; i++)
-		{
-			FightPerformance fight = FightPerformance.getTestInstance();
-			addToFightHistory(fight);
-		}
+//		for (int i = 0; i < 20; i++)
+//		{
+//			FightPerformance fight = FightPerformance.getTestInstance();
+//			addToFightHistory(fight);
+//		}
 
 
 		// add the panel's nav button depending on config
@@ -147,9 +147,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		Gson gson = new Gson();
 		fightHistory.sort(FightPerformance::compareTo);
-		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[fightHistory.size()]), FightPerformance[].class);
+		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
 		configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
 
 		clientToolbar.removeNavigation(navButton);
@@ -228,8 +227,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// start a new fight with the new found opponent, if a new one.
-		if (!hasOpponent() ||
-			(hasOpponent() && !opponent.getName().equals(currentFight.getOpponent().getName())))
+		if (!hasOpponent() || !opponent.getName().equals(currentFight.getOpponent().getName()))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
 			overlay.setFight(currentFight);
