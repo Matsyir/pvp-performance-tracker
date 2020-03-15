@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 import java.text.NumberFormat;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;
 import net.runelite.http.api.item.ItemEquipmentStats;
@@ -15,12 +16,61 @@ import net.runelite.api.Player;
 @Slf4j
 public class PvpDamageCalc
 {
-	private final ItemManager itemManager;
-
-	public final int WEAPON_SLOT = 3, CHEST_SLOT = 4, LEG_SLOT = 7,
+	private static final int WEAPON_SLOT = 3, CHEST_SLOT = 4, LEG_SLOT = 7,
 		STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3, RANGE_ATTACK = 4,
 		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
 		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 13;
+
+	private static final double ATTACK_LEVEL = 118;
+	private static final double STRENGTH_LEVEL = 118;
+	private static final double DEFENCE_LEVEL = 75;
+	private static final int RANGE_LEVEL = 112;
+	private static final double MAGIC_LEVEL = 99;
+
+	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
+	private static final double UNSUCCESSFUL_PRAY_DMG_MULTIPLIER = 0.6; // modifier for when you don't successfully hit off-pray
+
+	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
+	private static final double ATTACK_OFFENSIVE_PRAYER_MULTIPLIER = 1.2;
+	private static final double STRENGTH_OFFENSIVE_PRAYER_MULTIPLIER = 1.23;
+	private static final double MAGIC_OFFENSIVE_PRAYER_MULTIPLIER = 1.25;
+	private static final double RANGE_OFFENSIVE_PRAYER_DMG_MULTIPLIER = 1.23;
+	private static final double RANGE_OFFENSIVE_PRAYER_ATTACK_MULTIPLIER = 1.2;
+
+	// Defensive pray: Assume you have one of the defensive prays active, but don't assume you have augury
+	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
+	private static final double MELEE_DEFENSIVE_PRAYER_MULTIPLIER = 1.25;
+	private static final double MAGIC_DEFENSIVE_DEF_PRAYER_MULTIPLIER = 1.25;
+	private static final double MAGIC_DEFENSIVE_MAGE_PRAYER_MULTIPLIER = 1;
+	private static final double RANGE_DEFENSIVE_PRAYER_MULTIPLIER = 1.25;
+
+	private static final int BARRAGE_BASE_DMG = 30;
+	private static final int BLITZ_BASE_DMG = 26;
+
+	private static final double DIAMOND_BOLTS_DMG_MULTIPLIER = 1.015;
+
+	private static final double BALLISTA_SPEC_ACCURACY_MULTIPLIER = 1.25;
+	private static final double BALLISTA_SPEC_DMG_MULTIPLIER = 1.25;
+
+	private static final int ACB_SPEC_ACCURACY_MULTIPLIER = 2;
+
+	private static final int DBOW_DMG_MULTIPLIER = 2;
+	private static final int DBOW_SPEC_DMG_MULTIPLIER = 3;
+	private static final int DBOW_SPEC_MIN_HIT = 16;
+
+	private static final double DDS_SPEC_ACCURACY_MULTIPLIER = 1.25;
+	private static final double DDS_SPEC_DMG_MULTIPLIER = 2.3;
+
+	private static final int AGS_SPEC_ACCURACY_MULTIPLIER = 2;
+	private static final double AGS_SPEC_INITIAL_DMG_MULTIPLIER = 1.1;
+	private static final double AGS_SPEC_FINAL_DMG_MULTIPLIER = 1.25;
+
+
+	private static final double VLS_SPEC_DMG_MULTIPLIER = 1.2;
+	private static final double VLS_SPEC_DEFENCE_SCALE = .25;
+	private static final double SWH_SPEC_DMG_MULTIPLIER = 1.25;
+
+	private final ItemManager itemManager;
 
 	public PvpDamageCalc(ItemManager itemManager)
 	{
@@ -40,7 +90,7 @@ public class PvpDamageCalc
 		log.warn(Arrays.toString(playerStats));
 		log.warn("defender");
 		log.warn(Arrays.toString(opponentStats));
-		log.warn("animationType" + animationType);
+		log.warn("animationType" + animationType.toString());
 		boolean isSpecial = animationType.isSpecial;
 		if (isSpecial)
 		{
@@ -68,10 +118,10 @@ public class PvpDamageCalc
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weaponId, isSpecial);
 
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-
+//		NumberFormat nf = NumberFormat.getInstance();
+//		nf.setMaximumFractionDigits(2);
 //		String accuracyString = nf.format(accuracy);
+//
 //        String chatMessage = new ChatMessageBuilder()
 //                .append(ChatColorType.HIGHLIGHT)
 //                .append("Type: ")
@@ -102,15 +152,15 @@ public class PvpDamageCalc
 		boolean vls = weaponId == LmsItemData.VESTAS_LONGSWORD.itemId;
 		boolean swh = weaponId == LmsItemData.STATIUS_WARHAMMER.itemId;
 
-		double agsModifier = ags ? 1.25 : 1;
-		double prayerModifier = success ? 1 : 0.6;
+		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MULTIPLIER : 1;
+		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MULTIPLIER;
 		double averageSuccessfulHit;
 		if ((dbow || vls || swh) && usingSpec)
 		{
 			double accuracyAdjuster = dbow ? accuracy : 1;
-			int minHit = dbow ? 16 : 0;
-			minHit = vls ? (int) (maxHit * 1.20) : minHit;
-			minHit = swh ? (int) (maxHit * 1.25) : minHit;
+			int minHit = dbow ? DBOW_SPEC_MIN_HIT : 0;
+			minHit = vls ? (int) (maxHit * VLS_SPEC_DMG_MULTIPLIER) : minHit;
+			minHit = swh ? (int) (maxHit * SWH_SPEC_DMG_MULTIPLIER) : minHit;
 
 			int total = 0;
 
@@ -145,39 +195,40 @@ public class PvpDamageCalc
 		boolean vls = weaponId == LmsItemData.VESTAS_LONGSWORD.itemId;
 		boolean swh = weaponId == LmsItemData.STATIUS_WARHAMMER.itemId;
 
-		int effectiveLevel = (int) Math.floor((118 * 1.23) + 8 + 3);
+		int effectiveLevel = (int) Math.floor((STRENGTH_LEVEL * STRENGTH_OFFENSIVE_PRAYER_MULTIPLIER) + 8 + 3);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
-		double amplifier = ags && usingSpec ? 1.1 : 1;
-		amplifier = (swh && usingSpec) ? 1.25 : amplifier;
-		amplifier = (dds && usingSpec) ? 2.3 : amplifier;
-		amplifier = (vls && usingSpec) ? 1.2 : amplifier;
+		double amplifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MULTIPLIER : 1;
+		amplifier = (swh && usingSpec) ? SWH_SPEC_DMG_MULTIPLIER : amplifier;
+		amplifier = (dds && usingSpec) ? DDS_SPEC_DMG_MULTIPLIER : amplifier;
+		amplifier = (vls && usingSpec) ? VLS_SPEC_DMG_MULTIPLIER : amplifier;
 
 		return (int) (amplifier * baseDamage);
 	}
 
 	private int getRangedMaxHit(int rangeStrength, boolean usingSpec, int weaponId)
 	{
-		boolean diamond = weaponId == LmsItemData.RUNE_CROSSBOW.itemId || weaponId == LmsItemData.ARMADYL_CROSSBOW.itemId;
-		boolean ballista = weaponId == LmsItemData.HEAVY_BALLISTA.itemId;
-		boolean dbow = weaponId == LmsItemData.DARK_BOW.itemId;
+		LmsItemData weaponAmmo = LmsItemData.getWeaponAmmo(weaponId);
+		boolean diamond = weaponAmmo == LmsItemData.DIAMOND_BOLTS_E;
+		boolean ballista = weaponId == LmsItemData.HEAVY_BALLISTA.itemId || weaponId == LmsItemData.HEAVY_BALLISTA_PVP.itemId;
+		boolean dbow = weaponId == LmsItemData.DARK_BOW.itemId || weaponId == LmsItemData.DARK_BOW_PVP.itemId;
 
-//		int rangeStrength = diamond ? LmsItemData.DIAMOND_BOLTS_E.itemBonuses[RANGE_STRENGTH] :
-//			ballista ? LmsItemData.DRAGON_JAVELIN.itemBonuses[RANGE_STRENGTH] :
-//			LmsItemData.DRAGON_ARROW.itemBonuses[RANGE_STRENGTH];
+		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.itemBonuses[RANGE_STRENGTH];
 
-		int effectiveLevel = (int) Math.floor((112 * 1.23) + 8);
+		rangeStrength += ammoStrength;
+
+		int effectiveLevel = (int) Math.floor((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_DMG_MULTIPLIER) + 8);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
-		double amplifier = diamond ? 1.015 : 1;
-		amplifier = ballista && usingSpec ? 1.25 : amplifier;
-		amplifier = dbow && !usingSpec ? 2 : amplifier;
-		amplifier = dbow && usingSpec ? 3 : amplifier;
+		double amplifier = diamond ? DIAMOND_BOLTS_DMG_MULTIPLIER : 1;
+		amplifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MULTIPLIER : amplifier;
+		amplifier = dbow && !usingSpec ? DBOW_DMG_MULTIPLIER : amplifier;
+		amplifier = dbow && usingSpec ? DBOW_SPEC_DMG_MULTIPLIER : amplifier;
 		return (int) (amplifier * baseDamage);
 	}
 
 	private int getMagicMaxHit(int mageDamageBonus, AnimationAttackType animationType)
 	{
-		int baseDamage = animationType == Barrage ? 30 : 26;
+		int baseDamage = animationType == Barrage ? BARRAGE_BASE_DMG : BLITZ_BASE_DMG;
 		double magicBonus = 1 + (mageDamageBonus / 100);
 		return (int) (baseDamage * magicBonus);
 	}
@@ -188,13 +239,6 @@ public class PvpDamageCalc
 		boolean ags = weaponId == LmsItemData.ARMADYL_GODSWORD.itemId;
 		boolean dds = weaponId == LmsItemData.DRAGON_DAGGER.itemId;
 
-		double attackLevelPlayer = 118;
-		double defenceLevelTarget = 75;
-
-		double attackPrayerMultiplier = 1.2;
-
-		double defencePrayerMultiplier = 1.25;
-
 		double stabBonusPlayer = playerStats[STAB_ATTACK];
 		double slashBonusPlayer = playerStats[SLASH_ATTACK];
 		double crushBonusPlayer = playerStats[CRUSH_ATTACK];
@@ -203,27 +247,20 @@ public class PvpDamageCalc
 		double slashBonusTarget = opponentStats[SLASH_DEF];
 		double crushBonusTarget = opponentStats[CRUSH_DEF];
 
-		double stanceBonusPlayer = 0;
-		double stanceBonusTarget = 0;
-
 		double effectiveLevelPlayer;
+		double effectiveLevelTarget;
 
-		double effectiveLevelTarget = 0;
-
-		double baseChance = 0;
-
-		double attackerChance = 0;
+		double baseChance;
+		double attackerChance;
 		double defenderChance = 0;
 
 		double hitChance;
-
-		double accuracyMultiplier = dds ? 1.25 : ags ? 2 : 1;
+		double accuracyMultiplier = dds ? DDS_SPEC_ACCURACY_MULTIPLIER : ags ? AGS_SPEC_ACCURACY_MULTIPLIER : 1;
 
 		/**
 		 * Attacker Chance
 		 */
-
-		effectiveLevelPlayer = Math.floor(((attackLevelPlayer * attackPrayerMultiplier) + stanceBonusPlayer) + 8);
+		effectiveLevelPlayer = Math.floor(((ATTACK_LEVEL * ATTACK_OFFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
 
 		final double attackBonus = animationType == Stab ? stabBonusPlayer
 			: animationType == Slash ? slashBonusPlayer : crushBonusPlayer;
@@ -239,14 +276,15 @@ public class PvpDamageCalc
 		attackerChance = baseChance;
 //        log.debug("MELEE ATTACK: " + attackerChance );
 //        log.debug("dds : " + dds );
+
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((defenceLevelTarget * defencePrayerMultiplier) + stanceBonusTarget) + 8);
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MELEE_DEFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
 		{
-			defenderChance = Math.floor((effectiveLevelTarget * (stabBonusTarget + 64)) * .25);
+			defenderChance = Math.floor((effectiveLevelTarget * (stabBonusTarget + 64)) * VLS_SPEC_DEFENCE_SCALE);
 		}
 		else if (animationType == Slash)
 		{
@@ -264,7 +302,6 @@ public class PvpDamageCalc
 		/**
 		 * Calculate Accuracy
 		 */
-
 		if (attackerChance > defenderChance)
 		{
 			hitChance = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
@@ -283,30 +320,27 @@ public class PvpDamageCalc
 
 	private double getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, int weaponId)
 	{
-		boolean diamond = (weaponId == 23601 || weaponId == 23611);
-		double rangeLevelPlayer = 112;
-		double defenceLevelTarget = 75;
-		double rangePrayerMultiplier = 1.23;
-		double defencePrayerMultiplier = 1.25;
-		double stanceBonusPlayer = 0;
-		double stanceBonusTarget = 0;
-		double effectiveLevelPlayer = 0;
-		double effectiveLevelTarget = 0;
-		double rangeModifier = 0;
-		double attackerChance = 0;
-		double defenderChance = 0;
+		LmsItemData weaponAmmo = LmsItemData.getWeaponAmmo(weaponId);
+		boolean diamond = weaponAmmo == LmsItemData.DIAMOND_BOLTS_E;
+		boolean acb = weaponId == LmsItemData.ARMADYL_CROSSBOW.itemId || weaponId == LmsItemData.ARMADYL_CROSSBOW_PVP.itemId;
+		boolean ballista = weaponId == LmsItemData.HEAVY_BALLISTA.itemId || weaponId == LmsItemData.HEAVY_BALLISTA_PVP.itemId;
+		double effectiveLevelPlayer;
+		double effectiveLevelTarget;
+		double rangeModifier;
+		double attackerChance;
+		double defenderChance;
 		double hitChance;
-		double accuracyMultiplier = diamond ? 2 : 1.25;
 
 		/**
 		 * Attacker Chance
 		 */
-
-		effectiveLevelPlayer = Math.floor(((rangeLevelPlayer * rangePrayerMultiplier) + stanceBonusPlayer) + 8);
+		effectiveLevelPlayer = Math.floor(((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_ATTACK_MULTIPLIER) + STANCE_BONUS) + 8);
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));
 		if (usingSpec)
 		{
-			attackerChance = Math.floor(rangeModifier * accuracyMultiplier);
+			double specAccuracyMultiplier = acb ? ACB_SPEC_ACCURACY_MULTIPLIER :
+				ballista ? BALLISTA_SPEC_ACCURACY_MULTIPLIER : 1;
+			attackerChance = Math.floor(rangeModifier * specAccuracyMultiplier);
 		}
 		else
 		{
@@ -316,7 +350,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((defenceLevelTarget * defencePrayerMultiplier) + stanceBonusTarget) + 8);
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * RANGE_DEFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
 		/**
@@ -336,27 +370,10 @@ public class PvpDamageCalc
 		nf.format(hitChance);
 
 		return diamond ? hitChance * 1.1 : hitChance;
-
 	}
 
 	private double getMagicAccuracy(int playerMageAtt, int opponentMageDef)
 	{
-		double magicLevelPlayer = 99;
-
-		double defenceLevelTarget = 75;
-		double magicLevelTarget = 99;
-
-		double magicPrayerMultiplier = 1.25;
-
-		double defencePrayerMultiplier = 1.25;
-		double magicPrayerMultiplierTarget = 1;
-
-		double mageBonusPlayer = playerMageAtt;
-
-		double mageBonusTarget = opponentMageDef;
-
-		int targetStanceBonus = 0; //assume they are not in controlled or defensive
-
 		double effectiveLevelPlayer;
 
 		double reducedDefenceLevelTarget;
@@ -365,40 +382,31 @@ public class PvpDamageCalc
 
 		double effectiveLevelTarget;
 
-		double magicModifier = 0;
+		double magicModifier;
 
-		double attackerChance = 0;
-		double defenderChance = 0;
+		double attackerChance;
+		double defenderChance;
 		double hitChance;
 
 		/**
 		 * Attacker Chance
 		 */
-
-		effectiveLevelPlayer = Math.floor(((magicLevelPlayer * magicPrayerMultiplier)) + 8);
-
-		magicModifier = Math.floor(effectiveLevelPlayer * (mageBonusPlayer + 64));
-
+		effectiveLevelPlayer = Math.floor(((MAGIC_LEVEL * MAGIC_OFFENSIVE_PRAYER_MULTIPLIER)) + 8);
+		magicModifier = Math.floor(effectiveLevelPlayer * ((double) playerMageAtt + 64));
 		attackerChance = magicModifier;
 
 		/**
 		 * Defender Chance
 		 */
-
-		effectiveLevelTarget = Math.floor(((defenceLevelTarget * defencePrayerMultiplier) + targetStanceBonus) + 8);
-
-		effectiveMagicLevelTarget = Math.floor((magicLevelTarget * magicPrayerMultiplierTarget) * 0.70);
-
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MAGIC_DEFENSIVE_DEF_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
+		effectiveMagicLevelTarget = Math.floor((MAGIC_LEVEL * MAGIC_DEFENSIVE_MAGE_PRAYER_MULTIPLIER) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
-
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
-
-		defenderChance = Math.floor(effectiveMagicDefenceTarget * (mageBonusTarget + 64));
+		defenderChance = Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
 		/**
 		 * Calculate Accuracy
 		 */
-
 		if (attackerChance > defenderChance)
 		{
 			hitChance = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
@@ -464,7 +472,6 @@ public class PvpDamageCalc
 
 				for (int id = 0; id < bonuses.length; id++)
 				{
-
 					equipmentBonuses[id] += bonuses[id];
 				}
 			}
@@ -473,12 +480,48 @@ public class PvpDamageCalc
 	}
 
 	// LMS items are copies of real items, so their stats aren't cached like most items.
+	// A few non-LMS range weapons will be saved in order to assume ammo type/range strength.
 	private enum LmsItemData
 	{
-		NONE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-		ARMADYL_GODSWORD(20593, 0, 132, 80, 0, 0, 0, 0, 0, 0, 0, 132, 0, 8, 0),
-		DARK_BOW(20408, 0, 0, 0, 0, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		// Ammo first so it can be referenced for weapons
+		DIAMOND_BOLTS_E(23649, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0),
 		DRAGON_ARROW(20389, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0, 0),
+		DRAGON_JAVELIN(23648, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, 0, 0),
+		AMETHYST_ARROWS(4770, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 55, 0, 0),
+
+		// Non-LMS items:
+		NONE(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		RUNE_CROSSBOW_PVP(9185, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		ARMADYL_CROSSBOW_PVP(11785, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 1, 0),
+		DRAGON_CROSSBOW(21902, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 94, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		DRAGON_HUNTER_CROSSBOW(21012, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		DARK_BOW_PVP(11235, DRAGON_ARROW,
+			0, 0, 0, 0, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		HEAVY_BALLISTA_PVP(19481, DRAGON_JAVELIN,
+			0, 0, 0, 0, 125, 0, 0, 0, 0, 0, 0, 15, 0, 0),
+		LIGHT_BALLISTA(19478, DRAGON_JAVELIN,
+			0, 0, 0, 0, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		MAGIC_SHORTBOW(861, AMETHYST_ARROWS,
+			0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		MAGIC_SHORTBOW_I(12788, AMETHYST_ARROWS,
+			0, 0, 0, 0, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		CRAWS_BOW(22550, 0, 0, 0, 0, 75, 0, 0, 0, 0, 0, 0, 60, 0, 0), // no ammo since range str is included in wep
+
+		// LMS items:
+		RUNE_CROSSBOW(23601, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		ARMADYL_CROSSBOW(23611, DIAMOND_BOLTS_E,
+			0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 1, 0),
+		DARK_BOW(20408, DRAGON_ARROW,
+			0, 0, 0, 0, 95, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+		HEAVY_BALLISTA(23630, DRAGON_JAVELIN,
+			0, 0, 0, 0, 125, 0, 0, 0, 0, 0, 0, 15, 0, 0),
+
+		ARMADYL_GODSWORD(20593, 0, 132, 80, 0, 0, 0, 0, 0, 0, 0, 132, 0, 8, 0),
 		DRAGON_CLAWS(20784, 41, 57, -4, 0, 0, 13, 26, 7, 0, 0, 56, 0, 0, 0),
 		GRANITE_MAUL(20557, 0, 0, 81, 0, 0, 0, 0, 0, 0, 0, 79, 0, 0, 0),
 		MAGES_BOOK(23652, 0, 0, 0, 15, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0),
@@ -503,7 +546,6 @@ public class PvpDamageCalc
 		SPIRIT_SHIELD(23599, 0, 0, 0, 0, 0, 39, 41, 50, 1, 45, 0, 0, 1, 0),
 		HELM_OF_NEITIZNOT(23591, 0, 0, 0, 0, 0, 31, 29, 34, 3, 30, 3, 0, 3, 0),
 		AMULET_OF_GLORY(20586, 10, 10, 10, 10, 10, 3, 3, 3, 3, 3, 6, 0, 3, 0),
-		DIAMOND_BOLTS_E(23649, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0),
 		ABYSSAL_WHIP(20405, 0, 82, 0, 0, 0, 0, 0, 0, 0, 0, 82, 0, 0, 0),
 		DRAGON_DEFENDER(23597, 25, 24, 23, -3, -2, 25, 24, 23, -3, -2, 6, 0, 0, 0),
 		BLACK_DHIDE_BODY(20423, 0, 0, 0, -15, 30, 55, 47, 60, 50, 55, 0, 0, 0, 0),
@@ -513,13 +555,9 @@ public class PvpDamageCalc
 		BERSERKER_RING_I(23595, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 8, 0, 0, 0),
 		AHRIMS_STAFF(23653, 12, -1, 65, 15, 0, 3, 5, 2, 15, 0, 68, 0, 0, 5),
 		DRAGON_DAGGER(20407, 40, 25, -4, 1, 0, 0, 0, 0, 1, 0, 40, 0, 0, 0),
-		RUNE_CROSSBOW(23601, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 		MYSTIC_ROBE_TOP(20425, 0, 0, 0, 20, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0),
 		MYSTIC_ROBE_BOTTOM(20426, 0, 0, 0, 15, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0),
-
 		ELDER_MAUL(21205, 0, 0, 135, -4, 0, 0, 0, 0, 0, 0, 147, 0, 0, 0),
-
-		ARMADYL_CROSSBOW(23611, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 1, 0),
 		STAFF_OF_THE_DEAD(23613, 55, 70, 0, 17, 0, 0, 3, 3, 17, 0, 72, 0, 0, 15),
 		INFERNAL_CAPE(23622, 4, 4, 4, 1, 1, 12, 12, 12, 12, 12, 8, 0, 2, 0),
 		KODAI_WAND(23626, 0, 0, 0, 28, 0, 0, 3, 3, 20, 0, 0, 0, 0, 15),
@@ -527,70 +565,49 @@ public class PvpDamageCalc
 		IMBUED_ZAMORAK_CAPE(23605, 0, 0, 0, 15, 0, 3, 3, 3, 15, 0, 0, 0, 0, 2),
 		IMBUED_GUTHIX_CAPE(23603, 0, 0, 0, 15, 0, 3, 3, 3, 15, 0, 0, 0, 0, 2),
 		IMBUED_SARADOMIN_CAPE(23607, 0, 0, 0, 15, 0, 3, 3, 3, 15, 0, 0, 0, 0, 2),
-		DRAGON_JAVELIN(23648, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, 0, 0),
-		HEAVY_BALLISTA(23630, 0, 0, 0, 0, 125, 0, 0, 0, 0, 0, 0, 15, 0, 0),
 		OCCULT_NECKLACE(23654, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 2, 10),
 		ETERNAL_BOOTS(23644, 0, 0, 0, 8, 0, 5, 5, 5, 8, 5, 0, 0, 0, 0);
 
-		public int getItemId()
-		{
-			return itemId;
-		}
+		private static final Map<Integer, LmsItemData> itemData = new HashMap<>();
 
-		public int[] getItemBonuses()
-		{
-			return itemBonuses;
-		}
-
+		@Getter
 		private final int itemId;
+		@Getter
+		private final LmsItemData weaponAmmo; // save the related ammo data for a weapon. Null if not applicable
+		@Getter
 		private final int[] itemBonuses;
-
 
 		LmsItemData(int itemId, int... itemBonuses)
 		{
 			this.itemId = itemId;
+			this.weaponAmmo = null;
+			this.itemBonuses = itemBonuses;
+		}
+
+		LmsItemData(int itemId, LmsItemData ammoRangeStr, int... itemBonuses)
+		{
+			this.itemId = itemId;
+			this.weaponAmmo = ammoRangeStr;
 			this.itemBonuses = itemBonuses;
 		}
 
 		public static int[] getItemStats(int itemId)
 		{
-			return itemStats.get(itemId);
+			return itemData.get(itemId).itemBonuses;
 		}
 
-		private static final Map<Integer, int[]> itemStats = new HashMap<>();
-
-		public static int[] calculateBonuses(int[] itemIds)
+		// Get the ammo for a given weaponId. Null if none/not available
+		public static LmsItemData getWeaponAmmo(int itemId)
 		{
-			int[] equipmentBonuses = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0};
-			for (int item : itemIds)
-			{
-				if (item > 512)
-				{
-					int[] bonuses = getItemStats(item - 512);
-
-					if (bonuses == null)
-					{
-						continue;
-					}
-
-					for (int id = 0; id < bonuses.length; id++)
-					{
-
-						equipmentBonuses[id] += bonuses[id];
-					}
-				}
-			}
-			return equipmentBonuses;
+			return itemData.get(itemId).weaponAmmo;
 		}
 
 		static
 		{
 			for (LmsItemData data : LmsItemData.values())
 			{
-
-				itemStats.put(data.getItemId(), data.getItemBonuses());
+				itemData.put(data.getItemId(), data);
 			}
-
 		}
 	}
 }
