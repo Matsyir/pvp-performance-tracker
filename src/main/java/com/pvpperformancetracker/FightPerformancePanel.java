@@ -138,18 +138,18 @@ class FightPerformancePanel extends JPanel
 
 		// third line LEFT: player's deserved dps stats
 		JLabel playerDeservedDpsStats = new JLabel();
-		String playerDeservedDpsStatsStr = fight.getCompetitorDeservedDpsString();
-		playerDeservedDpsStats.setToolTipText("Average damage estimate based on performance, with (difference vs opponent): " + playerDeservedDpsStatsStr);
+		String playerDeservedDpsStatsStr = fight.getCompetitorDeservedDmgString();
+		playerDeservedDpsStats.setToolTipText("Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		playerDeservedDpsStats.setText(playerDeservedDpsStatsStr);
-		playerDeservedDpsStats.setForeground(fight.competitorDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
+		playerDeservedDpsStats.setForeground(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(playerDeservedDpsStats, BorderLayout.WEST);
 
 		// third line RIGHT: opponent's deserved dps stats
 		JLabel opponentDeservedDpsStats = new JLabel();
-		String opponentDeservedDpsStatsStr = fight.getOpponentDeservedDpsString();
-		opponentDeservedDpsStats.setToolTipText("Average damage estimate based on performance, with (difference vs opponent): " + opponentDeservedDpsStatsStr);
+		String opponentDeservedDpsStatsStr = fight.getOpponentDeservedDmgString();
+		opponentDeservedDpsStats.setToolTipText("Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		opponentDeservedDpsStats.setText(opponentDeservedDpsStatsStr);
-		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
+		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 
 		fightPanel.add(playerNamesLine);

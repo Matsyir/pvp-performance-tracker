@@ -147,12 +147,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
 	}
 
-	boolean competitorDeservedDpsIsGreater()
+	boolean competitorDeservedDmgIsGreater()
 	{
 		return competitor.getTotalDamage() > opponent.getTotalDamage();
 	}
 
-	boolean opponentDeservedDpsIsGreater()
+	boolean opponentDeservedDmgIsGreater()
 	{
 		return opponent.getTotalDamage() > competitor.getTotalDamage();
 	}
@@ -195,18 +195,23 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return competitor.getAttackCount() > 0;
 	}
 
-	// get full value of deserved dps as well as difference, for the competitor
-	public String getCompetitorDeservedDpsString()
+	// get full value of deserved dmg as well as difference, for the competitor
+	public String getCompetitorDeservedDmgString()
 	{
 		int difference = competitor.getTotalDamage() - opponent.getTotalDamage();
 		return competitor.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 
-	// get full value of deserved dps as well as difference, for the opponent
-	public String getOpponentDeservedDpsString()
+	// get full value of deserved dmg as well as difference, for the opponent
+	public String getOpponentDeservedDmgString()
 	{
 		int difference = opponent.getTotalDamage() - competitor.getTotalDamage();
 		return opponent.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	public int getCompetitorDeservedDmgDiff()
+	{
+		return competitor.getTotalDamage() - opponent.getTotalDamage();
 	}
 
 	@Override

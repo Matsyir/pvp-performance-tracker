@@ -6,6 +6,13 @@ Tracks PvP performance by keeping track of various stats. Only useful for 1v1 Pv
 
 **2.** Tracks deserved damage. This looks at you and your opponent's current gear, and calculates average damage based on accuracy & strength stats/pray. This does not track your current hits in any way, it doesn't involve hitsplats. More in-depth details on both of these stats below.
 
+The vast majority of the deserved damage statistic was not implemented by myself, it was created by [Mazhar, @maz_rs on twitter](https://twitter.com/maz_rs), [@voiderman1337](https://github.com/voiderman1337) on github. Massive thanks to him, I think it really brings this plugin together since the off-pray hits alone can be misleading in a few relatively common cases.
+
+Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
+
+![Overlay Image](https://i.imgur.com/LhNSB5W.png)
+
+
 Fight history panel:
 
 ![Panel Image](https://i.imgur.com/rfOpoBO.png)
@@ -19,7 +26,7 @@ Config options:
 
 ![Image of config options](https://i.imgur.com/5mN8XzO.png)
 
-Note that I turned off 'Use Simple Overlay' and 'Show Overlay Title' in the gif/video. With Simple Overlay, it only shows the RSN and percentage, no fraction.
+Note that I was not using 'Use Simple Overlay' and 'Show Overlay Title' in the gif/video. With Simple Overlay, it only shows the RSN and off-pray percentage, no fraction and no deserved damage (but they will still be in the panel).
 
 ## General notes
 A component I'm not 100% confident of, although it works very well from the testing I've done so far: target selection. It all comes from the `onInteractingChanged` event, which can have some odd behaviour sometimes since following or trading will also trigger this event. Attacking someone already in combat will also trigger this event. I put a few different checks to validate and ignore this event depending on the state, but I'm sure are other ways it can be improved I didn't think about.

@@ -117,11 +117,11 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFights(FightPerformance[] fights)
 	{
 
+		totalStatsPanel.addFights(fights);
 		SwingUtilities.invokeLater(() ->
 		{
 			for (FightPerformance fight : fights)
 			{
-				totalStatsPanel.addFight(fight);
 				FightPerformancePanel panel = new FightPerformancePanel(fight);
 				panel.setComponentPopupMenu(popupMenu);
 				panel.setBorder(BorderFactory.createCompoundBorder(

@@ -130,13 +130,13 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			overlaySecondLine.setRight(fight.getOpponent().getOffPrayStats(true));
 			overlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 
-			overlayThirdLine.setLeft(fight.getCompetitorDeservedDpsString());
-			overlayThirdLine.setLeftColor(fight.competitorDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
+			overlayThirdLine.setLeft(fight.getCompetitorDeservedDmgString());
+			overlayThirdLine.setLeftColor(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
 			// only show damage for the opponent, since space is restricted here and having both differences
 			// is redundant since the sign is simply flipped.
 			overlayThirdLine.setRight(String.valueOf(fight.getOpponent().getTotalDamage()));
-			overlayThirdLine.setRightColor(fight.opponentDeservedDpsIsGreater() ? Color.GREEN : Color.WHITE);
+			overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		}
 
 		return panelComponent.render(graphics);
