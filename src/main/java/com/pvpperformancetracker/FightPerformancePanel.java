@@ -28,6 +28,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -59,7 +60,7 @@ class FightPerformancePanel extends JPanel
 		setLayout(new BorderLayout(5, 5));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		String tooltipText = "Ended at " + DATE_FORMAT.format(Date.from(fight.getLastFightTime()));
+		String tooltipText = "Ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
 		setToolTipText(tooltipText);
 
 		Color background = getBackground();

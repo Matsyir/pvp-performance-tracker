@@ -87,7 +87,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		FightPerformance fight = plugin.getCurrentFight();
-		if (fight == null || !config.showFightOverlay() ||
+		if (fight == null || !fight.fightStarted() || !config.showFightOverlay() ||
 			(config.restrictToLms() && !plugin.isAtLMS()))
 		{
 			didRender = false;

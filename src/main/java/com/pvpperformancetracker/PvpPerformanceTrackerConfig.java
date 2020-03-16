@@ -54,12 +54,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "saveFightHistory",
-		name = "Save Fight History",
+		keyName = "showFightHistoryPanel",
+		name = "Show Fight History Panel",
 		description = "Enables the side-panel which displays previous fight statistics.",
 		position = 2
 	)
-	default boolean saveFightHistory()
+	default boolean showFightHistoryPanel()
 	{
 		return true;
 	}
@@ -85,6 +85,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "fightHistoryLimit",
+		name = "Fight History Limit",
+		description = "Maximum number of previous fights to save. 0 means unlimited. They are lightweight, but will cause significant ram usage at ridiculously high numbers.",
+		position = 5
+	)
+	default int fightHistoryLimit() { return 1000; }
 
 
 	@ConfigItem(

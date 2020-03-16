@@ -53,7 +53,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	private Fighter opponent;
 	@Expose
-	private Instant lastFightTime;
+	private long lastFightTime;
 
 	// return a random fightPerformance used for testing UI
 	static FightPerformance getTestInstance()
@@ -81,7 +81,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
-		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5);
+		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 	}
 
 	// Used for testing purposes
@@ -102,7 +102,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			opponent.died();
 		}
 
-		lastFightTime = Instant.now().minusSeconds(secondOffset);
+		lastFightTime = Instant.now().minusSeconds(secondOffset).toEpochMilli();
 	}
 
 	// If the given playerName is in this fight, check the Fighter's current animation,
@@ -120,7 +120,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (attackStyle != null)
 			{
 				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), opponent.getPlayer(), animationType);
-				lastFightTime = Instant.now();
+				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
 		else if (playerName.equals(opponent.getName()))
@@ -130,7 +130,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (attackStyle != null)
 			{
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), competitor.getPlayer(), animationType);
-				lastFightTime = Instant.now();
+				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
 	}
@@ -175,14 +175,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 			isOver = true;
 		}
 		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds
-		if (Duration.between(lastFightTime, Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
+		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
 		{
 			isOver = true;
 		}
 
 		if (isOver)
 		{
-			lastFightTime = Instant.now();
+			lastFightTime = Instant.now().toEpochMilli();
 		}
 
 		return isOver;
@@ -212,6 +212,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Override
 	public int compareTo(FightPerformance o)
 	{
-		return lastFightTime.compareTo(o.lastFightTime);
+		long diff = lastFightTime - o.lastFightTime;
+
+		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and safely a small int.
+		return diff == 0 ? 0 :
+			(int)(diff / Math.abs(diff));
 	}
 }

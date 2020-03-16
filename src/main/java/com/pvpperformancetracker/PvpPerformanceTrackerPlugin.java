@@ -126,15 +126,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		importFightHistory(savedFights);
 
 		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//		for (int i = 0; i < 20; i++)
+//		savedFights = new FightPerformance[1500];
+//		for (int i = 0; i < 1500; i++)
 //		{
 //			FightPerformance fight = FightPerformance.getTestInstance();
-//			addToFightHistory(fight);
+//			savedFights[i] = fight;
 //		}
+//
+//		importFightHistory(savedFights);
 
 
 		// add the panel's nav button depending on config
-		if (config.saveFightHistory() &&
+		if (config.showFightHistoryPanel() &&
 			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS())))
 		{
 			navButtonShown = true;
@@ -163,16 +166,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		switch(event.getKey())
 		{
-			case "saveFightHistory":
+			case "showFightHistoryPanel":
 			case "restrictToLms":
 				boolean isAtLms = isAtLMS();
-				if (!navButtonShown && config.saveFightHistory() &&
+				if (!navButtonShown && config.showFightHistoryPanel() &&
 					(!config.restrictToLms() || isAtLms))
 				{
 					SwingUtilities.invokeLater(() -> clientToolbar.addNavigation(navButton));
 					navButtonShown = true;
 				}
-				else if (navButtonShown && (!config.saveFightHistory() || (config.restrictToLms() && !isAtLms)))
+				else if (navButtonShown && (!config.showFightHistoryPanel() || (config.restrictToLms() && !isAtLms)))
 				{
 					SwingUtilities.invokeLater(() -> clientToolbar.removeNavigation(navButton));
 					navButtonShown = false;
@@ -181,6 +184,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "useSimpleOverlay":
 			case "showOverlayTitle":
 				overlay.setLines();
+				break;
+			case "fightHistoryLimit":
+				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+				{
+					int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+					// Remove oldest fightHistory until the size is smaller than the limit.
+					// Should only remove one fight in most cases.
+					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+					panel.rebuild();
+				}
 				break;
 		}
 	}
@@ -247,7 +260,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			if (isAtLMS())
 			{
-				if (!navButtonShown && config.saveFightHistory())
+				if (!navButtonShown && config.showFightHistoryPanel())
 				{
 					clientToolbar.addNavigation(navButton);
 					navButtonShown = true;
@@ -297,12 +310,31 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	void addToFightHistory(FightPerformance fight)
 	{
 		fightHistory.add(fight);
-		panel.addFight(fight);
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		{
+			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+			// Remove oldest fightHistory until the size is equal to the limit.
+			// Should only remove one fight in most cases.
+			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			panel.rebuild();
+		}
+		else
+		{
+			panel.addFight(fight);
+		}
 	}
 
 	void importFightHistory(FightPerformance[] fights)
 	{
 		fightHistory.addAll(Arrays.asList(fights));
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		{
+			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+			// Remove oldest fightHistory until the size is equal to the limit.
+			// Should only remove one fight in most cases.
+			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			panel.rebuild();
+		}
 		panel.rebuild();
 	}
 
