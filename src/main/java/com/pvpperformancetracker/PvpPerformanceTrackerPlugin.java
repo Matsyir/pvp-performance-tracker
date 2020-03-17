@@ -132,7 +132,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 //			FightPerformance fight = FightPerformance.getTestInstance();
 //			savedFights[i] = fight;
 //		}
-//
 //		importFightHistory(savedFights);
 
 

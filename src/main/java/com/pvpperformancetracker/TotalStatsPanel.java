@@ -48,11 +48,20 @@ public class TotalStatsPanel extends JPanel
 
 	private int numFights = 0;
 
-	private int totalDeservedDamage = 0;
-	private int totalDeservedDamageDiff = 0;
+	private int totalDeservedDmg = 0;
+	private int totalDeservedDmgDiff = 0;
+	private double avgDeservedDmg = 0;
+	private double avgDeservedDmgDiff = 0;
 
-	private double averageDeservedDamage = 0;
-	private double averageDeservedDamageDiff = 0;
+	private int killTotalDeservedDmg = 0;
+	private int killTotalDeservedDmgDiff = 0;
+	private double killAvgDeservedDmg = 0;
+	private double killAvgDeservedDmgDiff = 0;
+
+	private int deathTotalDeservedDmg = 0;
+	private int deathTotalDeservedDmgDiff = 0;
+	private double deathAvgDeservedDmg = 0;
+	private double deathAvgDeservedDmgDiff = 0;
 
 	TotalStatsPanel()
 	{
@@ -127,7 +136,7 @@ public class TotalStatsPanel extends JPanel
 
 	private void setLabels()
 	{
-		double avgDeservedDmgDiffOneDecimal = Math.round(averageDeservedDamageDiff * 10) / 10.0;
+		double avgDeservedDmgDiffOneDecimal = Math.round(avgDeservedDmgDiff * 10) / 10.0;
 
 		killsLabel.setText(numKills + " Kill" + (numKills != 1 ? "s" : ""));
 		deathsLabel.setText(numDeaths + " Death" + (numDeaths != 1 ? "s" : ""));
@@ -135,7 +144,7 @@ public class TotalStatsPanel extends JPanel
 		if (totalStats.getAttackCount() >= 10000)
 		{
 			offPrayStatsLabel.setText(Math.round(totalStats.getSuccessCount() / 100.0) / 10.0 + "K/" +
-				Math.round(totalStats.getAttackCount() / 100.0) / 10.0 + "(" +
+				Math.round(totalStats.getAttackCount() / 100.0) / 10.0 + "K (" +
 				Math.round(totalStats.calculateSuccessPercentage()) + "%)");
 		}
 		else
@@ -146,29 +155,46 @@ public class TotalStatsPanel extends JPanel
 			totalStats.getAttackCount() + " total attacks (" +
 			(Math.round(totalStats.calculateSuccessPercentage() * 100) / 100.0) + "%)");
 
-		deservedDmgStatsLabel.setText((int)averageDeservedDamage + " (" +
+		deservedDmgStatsLabel.setText(Math.round(avgDeservedDmg) + " (" +
 			(avgDeservedDmgDiffOneDecimal > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
-		deservedDmgStatsLabel.setToolTipText("Average of " + Math.round(averageDeservedDamage * 10) / 10.0 +
-			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiffOneDecimal > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal);
+		deservedDmgStatsLabel.setToolTipText("Avg of " + Math.round(avgDeservedDmg * 10) / 10.0 +
+			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiffOneDecimal > 0 ? "+" : "") +
+			avgDeservedDmgDiffOneDecimal + ". On Kills: " + Math.round(killAvgDeservedDmg * 10) / 10.0 +
+			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + Math.round(killAvgDeservedDmgDiff * 10) / 10.0 +
+			"). On Deaths: " + Math.round(deathAvgDeservedDmg * 10) / 10.0 +
+			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + Math.round(deathAvgDeservedDmgDiff * 10) / 10.0 + ").");
 	}
 
 	public void addFight(FightPerformance fight)
 	{
 		numFights++;
-		totalDeservedDamage += fight.getCompetitor().getTotalDamage();
-		totalDeservedDamageDiff += fight.getCompetitorDeservedDmgDiff();
+		totalDeservedDmg += fight.getCompetitor().getTotalDamage();
+		totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 
-		averageDeservedDamage = (double)totalDeservedDamage / numFights;
-		averageDeservedDamageDiff = (double)totalDeservedDamageDiff / numFights;
+		avgDeservedDmg = (double) totalDeservedDmg / numFights;
+		avgDeservedDmgDiff = (double) totalDeservedDmgDiff / numFights;
 
 		if (fight.getCompetitor().isDead())
 		{
 			numDeaths++;
+
+			deathTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 		}
 		if (fight.getOpponent().isDead())
 		{
 			numKills++;
+
+			killTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 		}
+
+		killAvgDeservedDmg = (double) killTotalDeservedDmg / numKills;
+		killAvgDeservedDmgDiff = (double) killTotalDeservedDmgDiff / numKills;
+
+		deathAvgDeservedDmg = (double) deathTotalDeservedDmg / numDeaths;
+		deathAvgDeservedDmgDiff = (double) deathTotalDeservedDmgDiff / numDeaths;
+
 		totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getTotalDamage());
 
 		SwingUtilities.invokeLater(this::setLabels);
@@ -179,22 +205,34 @@ public class TotalStatsPanel extends JPanel
 		numFights += fights.length;
 		for (FightPerformance fight : fights)
 		{
-			totalDeservedDamage += fight.getCompetitor().getTotalDamage();
-			totalDeservedDamageDiff += fight.getCompetitorDeservedDmgDiff();
+			totalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 
 			if (fight.getCompetitor().isDead())
 			{
 				numDeaths++;
+
+				deathTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+				deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 			}
 			if (fight.getOpponent().isDead())
 			{
 				numKills++;
+
+				killTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+				killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 			}
 			totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getTotalDamage());
 		}
 
-		averageDeservedDamage = (double) totalDeservedDamage / numFights;
-		averageDeservedDamageDiff = (double) totalDeservedDamageDiff / numFights;
+		avgDeservedDmg = (double) totalDeservedDmg / numFights;
+		avgDeservedDmgDiff = (double) totalDeservedDmgDiff / numFights;
+
+		killAvgDeservedDmg = (double) killTotalDeservedDmg / numKills;
+		killAvgDeservedDmgDiff = (double) killTotalDeservedDmgDiff / numKills;
+
+		deathAvgDeservedDmg = (double) deathTotalDeservedDmg / numDeaths;
+		deathAvgDeservedDmgDiff = (double) deathTotalDeservedDmgDiff / numDeaths;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -205,11 +243,19 @@ public class TotalStatsPanel extends JPanel
 		numDeaths = 0;
 		numKills = 0;
 
-		totalDeservedDamage = 0;
-		totalDeservedDamageDiff = 0;
+		totalDeservedDmg = 0;
+		totalDeservedDmgDiff = 0;
+		killTotalDeservedDmg = 0;
+		killTotalDeservedDmgDiff = 0;
+		deathTotalDeservedDmg = 0;
+		deathTotalDeservedDmgDiff = 0;
 
-		averageDeservedDamage = 0;
-		averageDeservedDamageDiff = 0;
+		avgDeservedDmg = 0;
+		avgDeservedDmgDiff = 0;
+		killAvgDeservedDmg = 0;
+		killAvgDeservedDmgDiff = 0;
+		deathAvgDeservedDmg = 0;
+		deathAvgDeservedDmgDiff = 0;
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);
