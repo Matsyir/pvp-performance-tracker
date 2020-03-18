@@ -119,6 +119,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
+		// update pvp damage calc's bolt choices to current config
+		PvpDamageCalc.boltChoice = config.boltChoice();
+		PvpDamageCalc.strongBoltChoice = config.strongBoltChoice();
+		PvpDamageCalc.bpDartChoice = config.bpDartChoice();
+
 		fightHistory = new ArrayList<>();
 		gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		log.info(config.fightHistoryData());
@@ -193,6 +198,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
 					panel.rebuild();
 				}
+				break;
+			case "boltChoice":
+				PvpDamageCalc.boltChoice = config.boltChoice();
+				break;
+			case "strongBoltChoice":
+				PvpDamageCalc.strongBoltChoice = config.strongBoltChoice();
+				break;
+			case "bpDartChoice":
+				PvpDamageCalc.bpDartChoice = config.bpDartChoice();
 				break;
 		}
 	}

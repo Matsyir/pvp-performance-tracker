@@ -92,8 +92,43 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Maximum number of previous fights to save. 0 means unlimited. They are lightweight, but will cause significant ram usage at ridiculously high numbers.",
 		position = 5
 	)
-	default int fightHistoryLimit() { return 1000; }
+	default int fightHistoryLimit()
+	{
+		return 1000;
+	}
 
+	@ConfigItem(
+		keyName = "boltChoice",
+		name = "RCB Ammo",
+		description = "Bolts used for rune crossbow's deserved damage estimate. LMS uses diamond (e). Dragonfire protection not accounted for.",
+		position = 6
+	)
+	default RangeAmmoData.BoltAmmo boltChoice()
+	{
+		return RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
+	}
+
+	@ConfigItem(
+		keyName = "strongBoltChoice",
+		name = "ACB/DCB/DHCB Ammo",
+		description = "Bolts used for ACB/DCB/DHCB's deserved damage estimate. LMS uses regular diamond (e). Dragonfire protection not accounted for.",
+		position = 7
+	)
+	default RangeAmmoData.StrongBoltAmmo strongBoltChoice()
+	{
+		return RangeAmmoData.StrongBoltAmmo.DIAMOND_BOLTS_E;
+	}
+
+	@ConfigItem(
+		keyName = "bpDartChoice",
+		name = "Blowpipe Ammo",
+		description = "Darts used for blowpipe deserved damage estimate.",
+		position = 8
+	)
+	default RangeAmmoData.DartAmmo bpDartChoice()
+	{
+		return RangeAmmoData.DartAmmo.DRAGON_DARTS;
+	}
 
 	@ConfigItem(
 		hidden = true,
@@ -102,5 +137,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "You shouldn't be seeing this without looking at the code. Fight history data is saved here. Do not edit.",
 		position = 999
 	)
-	default String fightHistoryData() { return "[]"; }
+	default String fightHistoryData()
+	{
+		return "[]";
+	}
 }
