@@ -23,12 +23,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import java.util.Map;
-import static com.pvpperformancetracker.AnimationID.*;
+import static matsyir.pvpperformancetracker.AnimationID.*;
 
 // These are AnimationID groupings to represent specific attack types, that are each treated
 // uniquely when it comes to damage calculation.

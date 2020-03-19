@@ -53,7 +53,15 @@ This also is not 100% reliable, but it too should work in the vast majority of c
 
 The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/RangeAmmoData.java) 
 
-### Supported Range weapons/ammo & Spells (Deserved Damage)
+### Supported Weapons (Deserved Damage)
+All weapon & gear stats are loaded dynamically. The exceptions to this are bolt/ammo stats, and base magic spell damage. Special attacks with damage or accuracy modifiers have to be manually hardcoded.
+#### Melee - Here are supported special attacks:
+- Dragon Claws
+- Dragon Dagger
+- Armadyl Godsword
+- Vesta's Longsword
+- Statius' Warhammer
+
 #### Range: ammo is either specified in config, or assumed. LMS uses regular diamond bolts (e) even for ACB so that is default. Bolt specs assume no diary completion.
 - Rune Crossbow [config ammo]
 - Dragon Crossbow [config ammo]

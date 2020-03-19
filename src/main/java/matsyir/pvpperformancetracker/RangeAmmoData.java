@@ -22,46 +22,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import lombok.Getter;
 
 public interface RangeAmmoData
 {
-	static final int RANGE_LEVEL = 112;
+	int RANGE_LEVEL = 112; // assume lvl 99 + potted
 
 	int getRangeStr();
-	double getBonusMaxHit();
-	double getAccuracyMultiplier();
-	double getDmgMultiplier(); // passive damage modifier for things like bolt specs.
+	double getBonusMaxHit(); // damage bonus from bolt specs.
+	double getDmgModifier(); // damage modifier from bolt specs.
 
-	public interface RangeAmmoConfigData extends RangeAmmoData
+	interface RangeAmmoConfigData extends RangeAmmoData
 	{
 		String getName();
 	}
 
 	@Getter
-	public enum BoltAmmo implements RangeAmmoConfigData
+	enum BoltAmmo implements RangeAmmoConfigData
 	{
-		RUNITE_BOLTS("Runite Bolts", 115, 0, 1, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * 0.2)) * 0.06, 1, 1),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 0, 1.1, 1.015);
+		RUNITE_BOLTS("Runite Bolts", 115, 0, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * 0.2)) * 0.06, 1),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 0, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.RUNE_CROSSBOW, EquipmentData.RUNE_CROSSBOW_PVP };
 
 		private String name;
 		private int rangeStr;
 		private double bonusMaxHit;
-		private double accuracyMultiplier;
-		private double dmgMultiplier;
+		private double dmgModifier;
 
-		BoltAmmo(String name, int rangeStr, double bonusMaxHit, double accuracyMultiplier, double dmgMultiplier)
+		BoltAmmo(String name, int rangeStr, double bonusMaxHit, double dmgModifier)
 		{
 			this.name = name;
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = bonusMaxHit;
-			this.accuracyMultiplier = accuracyMultiplier;
-			this.dmgMultiplier = dmgMultiplier;
+			this.dmgModifier = dmgModifier;
 		}
 
 		@Override
@@ -72,14 +69,14 @@ public interface RangeAmmoData
 	}
 
 	@Getter
-	public enum StrongBoltAmmo implements RangeAmmoConfigData
+	enum StrongBoltAmmo implements RangeAmmoConfigData
 	{
-		RUNITE_BOLTS("Runite Bolts", 115, 0, 1, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * 0.2)) * 0.06, 1, 1),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 0, 1.1, 1.015),
-		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 122, ((int)(RANGE_LEVEL * 0.2)) * 0.06, 1, 1),
-		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 122, ((int)(RANGE_LEVEL * 0.1)) * 0.05, 1, 1),
-		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 122, 0, 1.1, 1.015);
+		RUNITE_BOLTS("Runite Bolts", 115, 0, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * .2)) * .06, 1),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 0, 1.015),
+		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 122, ((int)(RANGE_LEVEL * .2)) * .06, 1),
+		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 122, ((int)(RANGE_LEVEL * .1)) * .05, 1),
+		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 122, 0, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = {
 			EquipmentData.ARMADYL_CROSSBOW,
@@ -91,16 +88,14 @@ public interface RangeAmmoData
 		private String name;
 		private int rangeStr;
 		private double bonusMaxHit;
-		private double accuracyMultiplier;
-		private double dmgMultiplier;
+		private double dmgModifier;
 
-		StrongBoltAmmo(String name, int rangeStr, double bonusMaxHit, double accuracyMultiplier, double dmgMultiplier)
+		StrongBoltAmmo(String name, int rangeStr, double bonusMaxHit, double dmgModifier)
 		{
 			this.name = name;
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = bonusMaxHit;
-			this.accuracyMultiplier = accuracyMultiplier;
-			this.dmgMultiplier = dmgMultiplier;
+			this.dmgModifier = dmgModifier;
 		}
 
 
@@ -114,25 +109,23 @@ public interface RangeAmmoData
 	@Getter
 	public enum DartAmmo implements RangeAmmoConfigData
 	{
-		ADAMANT_DARTS("Adamant Darts", 10, 0, 1, 1),
-		RUNE_DARTS("Rune Darts", 14, 0, 1, 1),
-		DRAGON_DARTS("Dragon Darts", 20, 0, 1, 1);
+		ADAMANT_DARTS("Adamant Darts", 10, 0, 1),
+		RUNE_DARTS("Rune Darts", 14, 0, 1),
+		DRAGON_DARTS("Dragon Darts", 20, 0, 1);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.TOXIC_BLOWPIPE };
 
 		private String name;
 		private int rangeStr;
 		private double bonusMaxHit;
-		private double accuracyMultiplier;
-		private double dmgMultiplier;
+		private double dmgModifier;
 
-		DartAmmo(String name, int rangeStr, double bonusMaxHit, double accuracyMultiplier, double dmgMultiplier)
+		DartAmmo(String name, int rangeStr, double bonusMaxHit, double dmgModifier)
 		{
 			this.name = name;
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = bonusMaxHit;
-			this.accuracyMultiplier = accuracyMultiplier;
-			this.dmgMultiplier = dmgMultiplier;
+			this.dmgModifier = dmgModifier;
 		}
 
 		@Override
@@ -151,15 +144,13 @@ public interface RangeAmmoData
 
 		private int rangeStr;
 		private double bonusMaxHit;
-		private double accuracyMultiplier;
-		private double dmgMultiplier;
+		private double dmgModifier;
 
 		OtherAmmo(int rangeStr)
 		{
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = 0;
-			this.accuracyMultiplier = 1;
-			this.dmgMultiplier = 1;
+			this.dmgModifier = 1;
 		}
 	}
 }

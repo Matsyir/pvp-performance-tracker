@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
 import lombok.Getter;
@@ -42,7 +42,7 @@ class Fighter
 	@Expose
 	private int successCount; // total number of successful attacks
 	@Expose
-	private int totalDamage; // total deserved damage based on gear & opponent's pray
+	private double totalDamage; // total deserved damage based on gear & opponent's pray
 	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
 	private PvpDamageCalc pvpDamageCalc;
@@ -75,7 +75,7 @@ class Fighter
 	// also update the success rate with the new counts.
 	void addAttack(boolean successful, Player competitor, Player opponent, AnimationAttackType animationType)
 	{
-		int deservedDamage = pvpDamageCalc.getDamage(competitor, opponent, successful, animationType);
+		double deservedDamage = pvpDamageCalc.getDamage(competitor, opponent, successful, animationType);
 		attackCount++;
 		totalDamage += deservedDamage;
 		log.warn("attacker" + competitor.getName());
@@ -88,14 +88,7 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total)
-	{
-		successCount += success;
-		attackCount += total;
-	}
-
-	// this is to be used for debug purposes
-	void addAttacks(int success, int total, int damage)
+	void addAttacks(int success, int total, double damage)
 	{
 		successCount += success;
 		attackCount += total;

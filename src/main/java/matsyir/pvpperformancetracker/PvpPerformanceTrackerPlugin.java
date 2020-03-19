@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -63,10 +63,12 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	public static PvpPerformanceTrackerConfig CONFIG;
+	public List<FightPerformance> fightHistory;
+
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
 
-	public List<FightPerformance> fightHistory;
 
 	@Getter(AccessLevel.PACKAGE)
 	private NavigationButton navButton;
@@ -110,6 +112,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		CONFIG = config;
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		navButton = NavigationButton.builder()
@@ -119,14 +122,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		// update pvp damage calc's bolt choices to current config
-		PvpDamageCalc.boltChoice = config.boltChoice();
-		PvpDamageCalc.strongBoltChoice = config.strongBoltChoice();
-		PvpDamageCalc.bpDartChoice = config.bpDartChoice();
-
 		fightHistory = new ArrayList<>();
 		gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		log.info(config.fightHistoryData());
+
 		FightPerformance[] savedFights = gson.fromJson(config.fightHistoryData(), FightPerformance[].class);
 		importFightHistory(savedFights);
 
@@ -168,6 +167,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		if (!event.getGroup().equals("pvpperformancetracker")) { return; }
 
+		CONFIG = config;
+
 		switch(event.getKey())
 		{
 			case "showFightHistoryPanel":
@@ -198,15 +199,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
 					panel.rebuild();
 				}
-				break;
-			case "boltChoice":
-				PvpDamageCalc.boltChoice = config.boltChoice();
-				break;
-			case "strongBoltChoice":
-				PvpDamageCalc.strongBoltChoice = config.strongBoltChoice();
-				break;
-			case "bpDartChoice":
-				PvpDamageCalc.bpDartChoice = config.bpDartChoice();
 				break;
 		}
 	}

@@ -22,14 +22,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import lombok.Getter;
 import net.runelite.api.HeadIcon;
-
-import static com.pvpperformancetracker.AnimationID.*;
+import static matsyir.pvpperformancetracker.AnimationID.*;
 
 // These are AnimationID groupings to represent the three main attack styles,
 // simply Melee/Mage/Ranged.

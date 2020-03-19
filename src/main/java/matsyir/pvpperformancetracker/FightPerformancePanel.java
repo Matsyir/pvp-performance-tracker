@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -138,17 +138,15 @@ class FightPerformancePanel extends JPanel
 
 		// third line LEFT: player's deserved dps stats
 		JLabel playerDeservedDpsStats = new JLabel();
-		String playerDeservedDpsStatsStr = fight.getCompetitorDeservedDmgString();
-		playerDeservedDpsStats.setToolTipText("Average damage deserved based on gear/pray (difference vs opponent in brackets)");
-		playerDeservedDpsStats.setText(playerDeservedDpsStatsStr);
+		playerDeservedDpsStats.setText(fight.getCompetitorDeservedDmgString());
+		playerDeservedDpsStats.setToolTipText(fight.getLongCompetitorDeservedDmgString() +  ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		playerDeservedDpsStats.setForeground(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(playerDeservedDpsStats, BorderLayout.WEST);
 
 		// third line RIGHT: opponent's deserved dps stats
 		JLabel opponentDeservedDpsStats = new JLabel();
-		String opponentDeservedDpsStatsStr = fight.getOpponentDeservedDmgString();
-		opponentDeservedDpsStats.setToolTipText("Average damage deserved based on gear/pray (difference vs opponent in brackets)");
-		opponentDeservedDpsStats.setText(opponentDeservedDpsStatsStr);
+		opponentDeservedDpsStats.setText(fight.getOpponentDeservedDmgString());
+		opponentDeservedDpsStats.setToolTipText(fight.getLongOpponentDeservedDmgString() + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 

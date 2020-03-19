@@ -23,9 +23,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
-import static com.pvpperformancetracker.AnimationAttackType.*;
+import static matsyir.pvpperformancetracker.AnimationAttackType.*;
 import java.util.Arrays;
 import java.text.NumberFormat;
 import lombok.extern.slf4j.Slf4j;
@@ -35,15 +35,9 @@ import net.runelite.http.api.item.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
 
-import static com.pvpperformancetracker.RangeAmmoData.*;
-
 @Slf4j
 public class PvpDamageCalc
 {
-	public static BoltAmmo boltChoice;
-	public static StrongBoltAmmo strongBoltChoice;
-	public static DartAmmo bpDartChoice;
-
 	private static final int WEAPON_SLOT = 3, CHEST_SLOT = 4, LEG_SLOT = 7,
 		STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3, RANGE_ATTACK = 4,
 		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
@@ -56,67 +50,63 @@ public class PvpDamageCalc
 	private static final double MAGIC_LEVEL = 99;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
-	private static final double UNSUCCESSFUL_PRAY_DMG_MULTIPLIER = 0.6; // modifier for when you don't successfully hit off-pray
+	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you don't successfully hit off-pray
 
 	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
-	private static final double ATTACK_OFFENSIVE_PRAYER_MULTIPLIER = 1.2;
-	private static final double STRENGTH_OFFENSIVE_PRAYER_MULTIPLIER = 1.23;
-	private static final double MAGIC_OFFENSIVE_PRAYER_MULTIPLIER = 1.25;
-	private static final double RANGE_OFFENSIVE_PRAYER_DMG_MULTIPLIER = 1.23;
-	private static final double RANGE_OFFENSIVE_PRAYER_ATTACK_MULTIPLIER = 1.2;
+	private static final double ATTACK_OFFENSIVE_PRAYER_MODIFIER = 1.2;
+	private static final double STRENGTH_OFFENSIVE_PRAYER_MODIFIER = 1.23;
+	private static final double MAGIC_OFFENSIVE_PRAYER_MODIFIER = 1.25;
+	private static final double RANGE_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.23;
+	private static final double RANGE_OFFENSIVE_PRAYER_ATTACK_MODIFIER = 1.2;
 
 	// Defensive pray: Assume you have one of the defensive prays active, but don't assume you have augury
 	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
-	private static final double MELEE_DEFENSIVE_PRAYER_MULTIPLIER = 1.25;
-	private static final double MAGIC_DEFENSIVE_DEF_PRAYER_MULTIPLIER = 1.25;
-	private static final double MAGIC_DEFENSIVE_MAGE_PRAYER_MULTIPLIER = 1;
-	private static final double RANGE_DEFENSIVE_PRAYER_MULTIPLIER = 1.25;
+	private static final double MELEE_DEFENSIVE_PRAYER_MODIFIER = 1.25;
+	private static final double MAGIC_DEFENSIVE_DEF_PRAYER_MODIFIER = 1.25;
+	private static final double MAGIC_DEFENSIVE_MAGE_PRAYER_MODIFIER = 1;
+	private static final double RANGE_DEFENSIVE_PRAYER_MODIFIER = 1.25;
 
 	private static final int BARRAGE_BASE_DMG = 30;
 	private static final int BLITZ_BASE_DMG = 26;
 
-	private static final double DIAMOND_BOLTS_DMG_MULTIPLIER = 1.015;
+	private static final double BALLISTA_SPEC_ACCURACY_MODIFIER = 1.25;
+	private static final double BALLISTA_SPEC_DMG_MODIFIER = 1.25;
 
-	private static final double BALLISTA_SPEC_ACCURACY_MULTIPLIER = 1.25;
-	private static final double BALLISTA_SPEC_DMG_MULTIPLIER = 1.25;
+	private static final int ACB_SPEC_ACCURACY_MODIFIER = 2;
 
-	private static final int ACB_SPEC_ACCURACY_MULTIPLIER = 2;
-
-	private static final int DBOW_DMG_MULTIPLIER = 2;
-	private static final int DBOW_SPEC_DMG_MULTIPLIER = 3;
+	private static final int DBOW_DMG_MODIFIER = 2;
+	private static final int DBOW_SPEC_DMG_MODIFIER = 3;
 	private static final int DBOW_SPEC_MIN_HIT = 16;
 
-	private static final double DDS_SPEC_ACCURACY_MULTIPLIER = 1.25;
-	private static final double DDS_SPEC_DMG_MULTIPLIER = 2.3;
+	private static final double DDS_SPEC_ACCURACY_MODIFIER = 1.25;
+	private static final double DDS_SPEC_DMG_MODIFIER = 2.3;
 
-	private static final int AGS_SPEC_ACCURACY_MULTIPLIER = 2;
-	private static final double AGS_SPEC_INITIAL_DMG_MULTIPLIER = 1.1;
-	private static final double AGS_SPEC_FINAL_DMG_MULTIPLIER = 1.25;
+	private static final int AGS_SPEC_ACCURACY_MODIFIER = 2;
+	private static final double AGS_SPEC_INITIAL_DMG_MODIFIER = 1.1;
+	private static final double AGS_SPEC_FINAL_DMG_MODIFIER = 1.25;
 
 
-	private static final double VLS_SPEC_DMG_MULTIPLIER = 1.2;
+	private static final double VLS_SPEC_DMG_MODIFIER = 1.2;
+	private static final double VLS_SPEC_MIN_DMG_MODIFIER = .2;
 	private static final double VLS_SPEC_DEFENCE_SCALE = .25;
-	private static final double SWH_SPEC_DMG_MULTIPLIER = 1.25;
+	private static final double SWH_SPEC_DMG_MODIFIER = 1.25;
+	private static final double SWH_SPEC_MIN_DMG_MODIFIER = .25;
 
-	private final ItemManager itemManager;
+	private ItemManager itemManager;
 
-//	@Inject
-//	private PvpPerformanceTrackerConfig config;
-//
-//	@Inject
 	public PvpDamageCalc(ItemManager itemManager)
 	{
-		//log.warn("DO WE HAVE CONFIG? HERE IS A BOLT: " + config.boltChoice());
 		this.itemManager = itemManager;
 	}
 
-	public int getDamage(Player attacker, Player defender, boolean success, AnimationAttackType animationType)
+	public double getDamage(Player attacker, Player defender, boolean success, AnimationAttackType animationType)
 	{
+		//client.lookup(defender.getName(), HiscoreEndpoint.NORMAL);
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
 		int maxHit;
 		double accuracy;
-		int averageHit;
+		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
 		log.warn("attacker");
@@ -178,7 +168,7 @@ public class PvpDamageCalc
 		return averageHit;
 	}
 
-	private int getAverageHit(int maxHit, double accuracy, boolean success, EquipmentData weapon, boolean usingSpec)
+	private double getAverageHit(int maxHit, double accuracy, boolean success, EquipmentData weapon, boolean usingSpec)
 	{
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -186,15 +176,15 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
-		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MULTIPLIER : 1;
-		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MULTIPLIER;
+		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MODIFIER : 1;
+		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
 		if ((dbow || vls || swh) && usingSpec)
 		{
 			double accuracyAdjuster = dbow ? accuracy : 1;
 			int minHit = dbow ? DBOW_SPEC_MIN_HIT : 0;
-			minHit = vls ? (int) (maxHit * VLS_SPEC_DMG_MULTIPLIER) : minHit;
-			minHit = swh ? (int) (maxHit * SWH_SPEC_DMG_MULTIPLIER) : minHit;
+			minHit = vls ? (int) (maxHit * VLS_SPEC_MIN_DMG_MODIFIER) : minHit;
+			minHit = swh ? (int) (maxHit * SWH_SPEC_MIN_DMG_MODIFIER) : minHit;
 
 			int total = 0;
 
@@ -203,23 +193,23 @@ public class PvpDamageCalc
 				total += i < minHit ? minHit / accuracyAdjuster : i;
 			}
 
-			averageSuccessfulHit = total / maxHit;
+			averageSuccessfulHit = (double) total / maxHit;
 		}
 		else if (claws && usingSpec)
 		{
 			double invertedAccuracy = 1 - accuracy;
 			double averageSuccessfulRegularHit = maxHit / 2;
-			double higherMultiplierChance = 1 - (accuracy + (accuracy * invertedAccuracy));
-			double lowerMultiplierChance = 1 - ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
-			double averageSpecialHit = (higherMultiplierChance * 2) + (lowerMultiplierChance * 1.5) * averageSuccessfulRegularHit;
+			double higherModifierChance = 1 - (accuracy + (accuracy * invertedAccuracy));
+			double lowerModifierChance = 1 - ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
+			double averageSpecialHit = (higherModifierChance * 2) + (lowerModifierChance * 1.5) * averageSuccessfulRegularHit;
 
-			return (int) (averageSpecialHit * prayerModifier);
+			return averageSpecialHit * prayerModifier;
 		}
 		else
 		{
-			averageSuccessfulHit = maxHit / 2;
+			averageSuccessfulHit = maxHit / 2.0;
 		}
-		return (int) (accuracy * averageSuccessfulHit * prayerModifier * agsModifier);
+		return accuracy * averageSuccessfulHit * prayerModifier * agsModifier;
 	}
 
 	private int getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon)
@@ -229,14 +219,13 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
-		int effectiveLevel = (int) Math.floor((STRENGTH_LEVEL * STRENGTH_OFFENSIVE_PRAYER_MULTIPLIER) + 8 + 3);
+		int effectiveLevel = (int) Math.floor((STRENGTH_LEVEL * STRENGTH_OFFENSIVE_PRAYER_MODIFIER) + 8 + 3);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
-		double amplifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MULTIPLIER : 1;
-		amplifier = (swh && usingSpec) ? SWH_SPEC_DMG_MULTIPLIER : amplifier;
-		amplifier = (dds && usingSpec) ? DDS_SPEC_DMG_MULTIPLIER : amplifier;
-		amplifier = (vls && usingSpec) ? VLS_SPEC_DMG_MULTIPLIER : amplifier;
-
-		return (int) (amplifier * baseDamage);
+		double modifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MODIFIER : 1;
+		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
+		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
+		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
+		return (int) (modifier * baseDamage);
 	}
 
 	private int getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon)
@@ -249,16 +238,16 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		int effectiveLevel = (int) Math.floor((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_DMG_MULTIPLIER) + 8);
+		int effectiveLevel = (int) Math.floor((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_DMG_MODIFIER) + 8);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
-		double multiplier = weaponAmmo == null ? 1 : weaponAmmo.getDmgMultiplier();
-		multiplier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MULTIPLIER : multiplier;
-		multiplier = dbow && !usingSpec ? DBOW_DMG_MULTIPLIER : multiplier;
-		multiplier = dbow && usingSpec ? DBOW_SPEC_DMG_MULTIPLIER : multiplier;
+		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
+		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
+		modifier = dbow && !usingSpec ? DBOW_DMG_MODIFIER : modifier;
+		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
 		return weaponAmmo == null ?
-			(int) (multiplier * baseDamage) :
-			(int) ((multiplier * baseDamage) + weaponAmmo.getBonusMaxHit());
+			(int) (modifier * baseDamage) :
+			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit());
 	}
 
 	private int getMagicMaxHit(int mageDamageBonus, AnimationAttackType animationType)
@@ -290,22 +279,22 @@ public class PvpDamageCalc
 		double defenderChance = 0;
 
 		double hitChance;
-		double accuracyMultiplier = dds ? DDS_SPEC_ACCURACY_MULTIPLIER : ags ? AGS_SPEC_ACCURACY_MULTIPLIER : 1;
+		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER : ags ? AGS_SPEC_ACCURACY_MODIFIER : 1;
 
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((ATTACK_LEVEL * ATTACK_OFFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((ATTACK_LEVEL * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		final double attackBonus = animationType == Stab ? stabBonusPlayer
 			: animationType == Slash ? slashBonusPlayer : crushBonusPlayer;
 
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));
 //        log.debug("baseChance : " + baseChance );
-//        log.debug("baseChance : " + accuracyMultiplier );
+//        log.debug("baseChance : " + accuracyModifier );
 		if (usingSpec)
 		{
-			baseChance = baseChance * accuracyMultiplier;
+			baseChance = baseChance * accuracyModifier;
 		}
 
 		attackerChance = baseChance;
@@ -315,7 +304,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MELEE_DEFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MELEE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
 		{
@@ -356,6 +345,7 @@ public class PvpDamageCalc
 	private double getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+		boolean diamonds = ArrayUtils.contains(new RangeAmmoData[] { RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E, RangeAmmoData.StrongBoltAmmo.DIAMOND_BOLTS_E, RangeAmmoData.StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E }, weaponAmmo);
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;
 		double rangeModifier;
@@ -366,17 +356,17 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_ATTACK_MULTIPLIER) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_ATTACK_MODIFIER) + STANCE_BONUS) + 8);
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));
 		if (usingSpec)
 		{
 			boolean acb = weapon == EquipmentData.ARMADYL_CROSSBOW || weapon == EquipmentData.ARMADYL_CROSSBOW_PVP;
 			boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA || weapon == EquipmentData.HEAVY_BALLISTA_PVP;
 
-			double specAccuracyMultiplier = acb ? ACB_SPEC_ACCURACY_MULTIPLIER :
-				ballista ? BALLISTA_SPEC_ACCURACY_MULTIPLIER : 1;
+			double specAccuracyModifier = acb ? ACB_SPEC_ACCURACY_MODIFIER :
+				ballista ? BALLISTA_SPEC_ACCURACY_MODIFIER : 1;
 
-			attackerChance = Math.floor(rangeModifier * specAccuracyMultiplier);
+			attackerChance = Math.floor(rangeModifier * specAccuracyModifier);
 		}
 		else
 		{
@@ -386,7 +376,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * RANGE_DEFENSIVE_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * RANGE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
 		/**
@@ -405,7 +395,9 @@ public class PvpDamageCalc
 		nf.setMaximumFractionDigits(2);
 		nf.format(hitChance);
 
-		return weaponAmmo == null ? hitChance : hitChance * weaponAmmo.getAccuracyMultiplier();
+		// diamond bolts accuracy: 10% of attacks are 100% accuracy, so apply avg accuracy as:
+		// (90% of normal accuracy) + (10% of 100% accuracy)
+		return diamonds ? (hitChance * .9) + .1 : hitChance;
 	}
 
 	private double getMagicAccuracy(int playerMageAtt, int opponentMageDef)
@@ -427,15 +419,15 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((MAGIC_LEVEL * MAGIC_OFFENSIVE_PRAYER_MULTIPLIER)) + 8);
+		effectiveLevelPlayer = Math.floor(((MAGIC_LEVEL * MAGIC_OFFENSIVE_PRAYER_MODIFIER)) + 8);
 		magicModifier = Math.floor(effectiveLevelPlayer * ((double) playerMageAtt + 64));
 		attackerChance = magicModifier;
 
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MAGIC_DEFENSIVE_DEF_PRAYER_MULTIPLIER) + STANCE_BONUS) + 8);
-		effectiveMagicLevelTarget = Math.floor((MAGIC_LEVEL * MAGIC_DEFENSIVE_MAGE_PRAYER_MULTIPLIER) * 0.70);
+		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MAGIC_DEFENSIVE_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveMagicLevelTarget = Math.floor((MAGIC_LEVEL * MAGIC_DEFENSIVE_MAGE_PRAYER_MODIFIER) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
 		defenderChance = Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
@@ -519,3 +511,4 @@ public class PvpDamageCalc
 
 
 }
+

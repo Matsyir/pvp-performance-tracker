@@ -22,12 +22,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Random;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
@@ -60,11 +59,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 	{
 		int cTotal = (int)(Math.random() * 60) + 8;
 		int cSuccess = (int)(Math.random() * (cTotal - 4)) + 4;
-		int cDamage = (int)(Math.random() * (cSuccess * 25));
+		double cDamage = (Math.random() * (cSuccess * 25));
 
 		int oTotal = (int)(Math.random() * 60) + 8;
 		int oSuccess = (int)(Math.random() * (oTotal - 4)) + 4;
-		int oDamage = (int)(Math.random() * (oSuccess * 25));
+		double oDamage = (Math.random() * (oSuccess * 25));
 
 		int secOffset = (int)(Math.random() * 57600) - 28800;
 
@@ -85,7 +84,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// Used for testing purposes
-	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, int cDamage, int oSuccess, int oTotal, int oDamage, boolean cDead, int secondOffset)
+	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset)
 	{
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
@@ -198,18 +197,32 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// get full value of deserved dmg as well as difference, for the competitor
 	public String getCompetitorDeservedDmgString()
 	{
-		int difference = competitor.getTotalDamage() - opponent.getTotalDamage();
-		return competitor.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		int difference = (int)Math.round(competitor.getTotalDamage() - opponent.getTotalDamage());
+		return (int)Math.round(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 
 	// get full value of deserved dmg as well as difference, for the opponent
 	public String getOpponentDeservedDmgString()
 	{
-		int difference = opponent.getTotalDamage() - competitor.getTotalDamage();
-		return opponent.getTotalDamage() + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		int difference = (int)Math.round(opponent.getTotalDamage() - competitor.getTotalDamage());
+		return (int)Math.round(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 
-	public int getCompetitorDeservedDmgDiff()
+	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
+	public String getLongCompetitorDeservedDmgString()
+	{
+		double difference = Math.round((competitor.getTotalDamage() - opponent.getTotalDamage()) * 10) / 10.0;
+		return Math.round(competitor.getTotalDamage() * 10) / 10.0 + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	// get full value of deserved dmg as well as difference, for the opponent
+	public String getLongOpponentDeservedDmgString()
+	{
+		double difference = Math.round((opponent.getTotalDamage() - competitor.getTotalDamage()) * 10) / 10.0;
+		return Math.round(opponent.getTotalDamage() * 10) / 10.0 + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	public double getCompetitorDeservedDmgDiff()
 	{
 		return competitor.getTotalDamage() - opponent.getTotalDamage();
 	}

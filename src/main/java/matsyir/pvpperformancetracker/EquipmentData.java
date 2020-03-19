@@ -23,13 +23,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
-
-import static com.pvpperformancetracker.PvpDamageCalc.boltChoice;
-import static com.pvpperformancetracker.PvpDamageCalc.bpDartChoice;
-import static com.pvpperformancetracker.PvpDamageCalc.strongBoltChoice;
+package matsyir.pvpperformancetracker;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Inject;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -112,6 +109,7 @@ public enum EquipmentData
 	@Getter
 	private final int[] itemBonuses;
 
+	@Inject
 	EquipmentData(int itemId, int... itemBonuses)
 	{
 		this.itemId = itemId;
@@ -129,15 +127,15 @@ public enum EquipmentData
 	{
 		if (ArrayUtils.contains(RangeAmmoData.BoltAmmo.WEAPONS_USING, weapon))
 		{
-			return boltChoice;
+			return PvpPerformanceTrackerPlugin.CONFIG.boltChoice();
 		}
 		else if (ArrayUtils.contains(RangeAmmoData.StrongBoltAmmo.WEAPONS_USING, weapon))
 		{
-			return strongBoltChoice;
+			return PvpPerformanceTrackerPlugin.CONFIG.strongBoltChoice();
 		}
 		else if (ArrayUtils.contains(RangeAmmoData.DartAmmo.WEAPONS_USING, weapon))
 		{
-			return bpDartChoice;
+			return PvpPerformanceTrackerPlugin.CONFIG.bpDartChoice();
 		}
 		else if (weapon == HEAVY_BALLISTA || weapon == HEAVY_BALLISTA_PVP || weapon == LIGHT_BALLISTA)
 		{
