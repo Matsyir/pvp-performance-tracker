@@ -73,14 +73,14 @@ class Fighter
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player competitor, Player opponent, AnimationAttackType animationType)
+	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
 	{
-		double deservedDamage = pvpDamageCalc.getDamage(competitor, opponent, successful, animationType);
+		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
 		attackCount++;
 		totalDamage += deservedDamage;
-		log.warn("attacker" + competitor.getName());
-		log.warn("defender" + opponent.getName());
-		log.warn("deservedDamage" + deservedDamage);
+		log.warn("attacker: " + name);
+		log.warn("defender: " + opponent.getName());
+		log.warn("deservedDamage: " + deservedDamage);
 		if (successful)
 		{
 			successCount++;

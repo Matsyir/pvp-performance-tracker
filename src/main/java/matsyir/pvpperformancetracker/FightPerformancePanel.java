@@ -27,6 +27,8 @@ package matsyir.pvpperformancetracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Image;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -41,6 +43,12 @@ import net.runelite.client.util.ImageUtil;
 class FightPerformancePanel extends JPanel
 {
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
+	private static final NumberFormat nf = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf.setMaximumFractionDigits(2);
+		nf.setRoundingMode(RoundingMode.HALF_UP);
+	}
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -106,7 +114,6 @@ class FightPerformancePanel extends JPanel
 		opponentStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
 
-
 		// SECOND LINE: both player's off-pray hit stats
 		JPanel offPrayStatsLine = new JPanel();
 		offPrayStatsLine.setLayout(new BorderLayout());
@@ -114,19 +121,19 @@ class FightPerformancePanel extends JPanel
 
 		// second line LEFT: player's off-pray hit stats
 		JLabel playerOffPrayStats = new JLabel();
+		playerOffPrayStats.setText(fight.getCompetitor().getOffPrayStats());
 		playerOffPrayStats.setToolTipText(fight.getCompetitor().getSuccessCount() + " successful off-pray attacks/" +
 			fight.getCompetitor().getAttackCount() + " total attacks (" +
-			(Math.round(fight.getCompetitor().calculateSuccessPercentage() * 100) / 100.0) + "%)");
-		playerOffPrayStats.setText(fight.getCompetitor().getOffPrayStats());
+			nf.format(fight.getCompetitor().calculateSuccessPercentage()) + "%)");
 		playerOffPrayStats.setForeground(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(playerOffPrayStats, BorderLayout.WEST);
 
 		// second line RIGHT:, opponent's off-pray hit stats
 		JLabel opponentOffPrayStats = new JLabel();
+		opponentOffPrayStats.setText(fight.getOpponent().getOffPrayStats());
 		opponentOffPrayStats.setToolTipText(fight.getOpponent().getSuccessCount() + " successful off-pray attacks/" +
 			fight.getOpponent().getAttackCount() + " total attacks (" +
-			(Math.round(fight.getOpponent().calculateSuccessPercentage() * 100) / 100.0) + "%)");
-		opponentOffPrayStats.setText(fight.getOpponent().getOffPrayStats());
+			nf.format(fight.getOpponent().calculateSuccessPercentage()) + "%)");
 		opponentOffPrayStats.setForeground(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(opponentOffPrayStats, BorderLayout.EAST);
 

@@ -29,6 +29,8 @@ import static matsyir.pvpperformancetracker.AnimationAttackType.*;
 import java.util.Arrays;
 import java.text.NumberFormat;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.game.ItemManager;
 import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
@@ -41,7 +43,7 @@ public class PvpDamageCalc
 	private static final int WEAPON_SLOT = 3, CHEST_SLOT = 4, LEG_SLOT = 7,
 		STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3, RANGE_ATTACK = 4,
 		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
-		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 13;
+		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
 	private static final double ATTACK_LEVEL = 118;
 	private static final double STRENGTH_LEVEL = 118;
@@ -85,7 +87,6 @@ public class PvpDamageCalc
 	private static final double AGS_SPEC_INITIAL_DMG_MODIFIER = 1.1;
 	private static final double AGS_SPEC_FINAL_DMG_MODIFIER = 1.25;
 
-
 	private static final double VLS_SPEC_DMG_MODIFIER = 1.2;
 	private static final double VLS_SPEC_MIN_DMG_MODIFIER = .2;
 	private static final double VLS_SPEC_DEFENCE_SCALE = .25;
@@ -101,7 +102,26 @@ public class PvpDamageCalc
 
 	public double getDamage(Player attacker, Player defender, boolean success, AnimationAttackType animationType)
 	{
-		//client.lookup(defender.getName(), HiscoreEndpoint.NORMAL);
+		// have never seen this occur, but just in case
+		if (attacker == null)
+		{
+			log.warn("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
+			String chatMessage = new ChatMessageBuilder()
+				.append(ChatColorType.NORMAL).append("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
+				.build();
+			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
+			return 0;
+		}
+		if (defender == null)
+		{
+			log.warn("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
+			String chatMessage = new ChatMessageBuilder()
+				.append(ChatColorType.NORMAL).append("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
+				.build();
+			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
+			return 0;
+		}
+
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
 		int maxHit;
@@ -109,11 +129,9 @@ public class PvpDamageCalc
 		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
-		log.warn("attacker");
-		log.warn(Arrays.toString(playerStats));
-		log.warn("defender");
-		log.warn(Arrays.toString(opponentStats));
-		log.warn("animationType" + animationType.toString());
+		log.warn("attackerStats: " + Arrays.toString(playerStats));
+		log.warn("defenderStats: " + Arrays.toString(opponentStats));
+		log.warn("animationType: " + animationType.toString());
 		boolean isSpecial = animationType.isSpecial;
 		if (isSpecial)
 		{
@@ -142,29 +160,34 @@ public class PvpDamageCalc
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
 
-//		NumberFormat nf = NumberFormat.getInstance();
-//		nf.setMaximumFractionDigits(2);
-//		String accuracyString = nf.format(accuracy);
-//
-//        String chatMessage = new ChatMessageBuilder()
-//                .append(ChatColorType.HIGHLIGHT)
-//                .append("Type: ")
-//                .append(ChatColorType.NORMAL)
-//                .append(adjustedType)
-//                .append(ChatColorType.HIGHLIGHT)
-//                .append("  Max: ")
-//                .append(ChatColorType.NORMAL)
-//                .append("" + maxHit)
-//                .append(ChatColorType.HIGHLIGHT)
-//                .append("  Acc: ")
-//                .append(ChatColorType.NORMAL)
-//                .append("" + accuracyString)
-//                .append(ChatColorType.HIGHLIGHT)
-//                .append("  AvgHit: ")
-//                .append(ChatColorType.NORMAL)
-//                .append("" + averageHit)
-//                .build();
-//        lmsPlugin.log(chatMessage);
+
+		NumberFormat nf = NumberFormat.getInstance();
+		nf.setMaximumFractionDigits(2);
+		String accuracyString = nf.format(accuracy);
+		String averageHitString = nf.format(averageHit);
+
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
+
+        String chatMessage = new ChatMessageBuilder()
+				.append(ChatColorType.NORMAL).append(attacker.getName())
+                .append(ChatColorType.HIGHLIGHT).append("Type: ")
+                .append(ChatColorType.NORMAL).append(animationType.toString())
+                .append(ChatColorType.HIGHLIGHT).append("  Max: ")
+                .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
+                .append(ChatColorType.HIGHLIGHT).append("  Acc: ")
+                .append(ChatColorType.NORMAL).append(accuracyString)
+                .append(ChatColorType.HIGHLIGHT).append("  AvgHit: ")
+                .append(ChatColorType.NORMAL).append(averageHitString)
+				.append(ChatColorType.HIGHLIGHT).append(" Spec?: ")
+				.append(ChatColorType.NORMAL).append(isSpecial ? "Y" : "N")
+				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
+				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
+				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
+				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
+                .build();
+		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
+
 		return averageHit;
 	}
 
@@ -345,7 +368,7 @@ public class PvpDamageCalc
 	private double getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		boolean diamonds = ArrayUtils.contains(new RangeAmmoData[] { RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E, RangeAmmoData.StrongBoltAmmo.DIAMOND_BOLTS_E, RangeAmmoData.StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E }, weaponAmmo);
+		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;
 		double rangeModifier;
@@ -453,40 +476,50 @@ public class PvpDamageCalc
 
 	// Retrieve item stats for a single item, returned as an int array so they can be modified.
 	// First, try to get the item stats from the item manager. If stats weren't present in the
-	// itemManager, try the EquipmentData. If it's not defined in EquipmentData, it will return null
+	// itemManager, try get the 'real' item id from the EquipmentData. If it's not defined in EquipmentData, it will return null
 	// and count as 0 stats, but that should be very rare.
 	public int[] getItemStats(int itemId)
 	{
-		final ItemStats itemStats = this.itemManager.getItemStats(itemId, false);
+		ItemStats itemStats = this.itemManager.getItemStats(itemId, false);
+		if (itemStats == null)
+		{
+			EquipmentData itemData = EquipmentData.getEquipmentDataFor(itemId);
+			if (itemData != null)
+			{
+				itemId = itemData.getRealItemId();
+				itemStats = this.itemManager.getItemStats(itemId, false);
+			}
+		}
+
 		if (itemStats != null)
 		{
 			final ItemEquipmentStats equipmentStats = itemStats.getEquipment();
 			return new int[] {
-				equipmentStats.getAstab(),
-				equipmentStats.getAslash(),
-				equipmentStats.getAcrush(),
-				equipmentStats.getAmagic(),
-				equipmentStats.getArange(),
-				equipmentStats.getDstab(),
-				equipmentStats.getDslash(),
-				equipmentStats.getDcrush(),
-				equipmentStats.getDmagic(),
-				equipmentStats.getDrange(),
-				equipmentStats.getStr(),
-				equipmentStats.getRstr(),
-				equipmentStats.getMdmg(),
+				equipmentStats.getAstab(),	// 0
+				equipmentStats.getAslash(),	// 1
+				equipmentStats.getAcrush(),	// 2
+				equipmentStats.getAmagic(),	// 3
+				equipmentStats.getArange(),	// 4
+				equipmentStats.getDstab(),	// 5
+				equipmentStats.getDslash(),	// 6
+				equipmentStats.getDcrush(),	// 7
+				equipmentStats.getDmagic(),	// 8
+				equipmentStats.getDrange(),	// 9
+				equipmentStats.getStr(),	// 10
+				equipmentStats.getRstr(),	// 11
+				equipmentStats.getMdmg(),	// 12
 			};
 		}
-		else
-		{
-			return EquipmentData.getEquipmentDataFor(itemId).getItemBonuses();
-		}
+
+		// when combining multiple items' stats, null stats will just be skipped, without affecting
+		// the total stats.
+		return null;
 	}
 
 	// Calculate total equipment bonuses for all given items
 	private int[] calculateBonuses(int[] itemIds)
 	{
-		int[] equipmentBonuses = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0};
+		int[] equipmentBonuses = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PvpPerformanceTrackerPlugin.CONFIG.assumeZerkRing() ? 4 : 0, 0, 0 };
 		for (int item : itemIds)
 		{
 			if (item > 512)
@@ -504,11 +537,8 @@ public class PvpDamageCalc
 				}
 			}
 		}
+
 		return equipmentBonuses;
 	}
-
-
-
-
 }
 

@@ -1,6 +1,6 @@
 # PvP Performance Tracker
 
-Tracks PvP performance by keeping track of various stats. Only useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, LMS being the perfect example. Multi will cause problems.
+Tracks PvP performance by keeping track of various stats. Only useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, LMS being the perfect example. Multi will cause problems. Potentially inaccurate outsite of LMS. 
 
 **1.** Tracks if you successfully hit your opponent off-pray or not. For example, if your opponent is using protect from melee, you must hit him with magic or ranged for a successful off-pray hit.
 
@@ -51,18 +51,20 @@ Currently, it does not check for offensive prayers. It assumes that you always u
 
 This also is not 100% reliable, but it too should work in the vast majority of cases. This component is able to retrieve item stats dynamically, from cached wiki data, for the vast majority of relevant items. Some very obscure items won't have stats. One problem is bolts/ammo, we can't detect which are used, so there are configs to choose which ones are used for the estimations. Base spell damage also needs to be hardcoded based on animation, which is not completely possible since animations are shared between different spells. However, all other melee gear stats or general range/mage gear stats can be automatically retrieved.
 
-The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/RangeAmmoData.java) 
+The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/RangeAmmoData.java). 
 
+**Stats are currently assumed for both the player and opponent**, using potted LMS stats: 118 Attack/Strength, 75 Defence, 112 Range, 99 Magic
 ### Supported Weapons (Deserved Damage)
-All weapon & gear stats are loaded dynamically. The exceptions to this are bolt/ammo stats, and base magic spell damage. Special attacks with damage or accuracy modifiers have to be manually hardcoded.
-#### Melee - Here are supported special attacks:
+All weapon & gear stats are loaded dynamically. The exceptions to this are stats for rings and ammo (bolts/arrows), and base magic spell damage. We can't detect what bolts/rings are used, and we must manually hardcode all base spell damage. Special attacks with damage or accuracy modifiers also have to be manually hardcoded.
+#### Melee - Supported special attacks:
 - Dragon Claws
 - Dragon Dagger
 - Armadyl Godsword
 - Vesta's Longsword
 - Statius' Warhammer
 
-#### Range: ammo is either specified in config, or assumed. LMS uses regular diamond bolts (e) even for ACB so that is default. Bolt specs assume no diary completion.
+#### Range: - Supported weapons/specs/ammo:
+Ammo is either specified in config, or assumed. LMS uses regular diamond bolts (e) even for ACB so that is default. Bolt specs assume no diary completion. Antifire potions & anti-dragon shields are never taken into account for dragonfire bolts, if chosen.
 - Rune Crossbow [config ammo]
 - Dragon Crossbow [config ammo]
 - Armadyl Crossbow (w/ spec) [config ammo]
@@ -78,9 +80,9 @@ All weapon & gear stats are loaded dynamically. The exceptions to this are bolt/
 **RCB Ammo config options:**
 - Runite Bolts
 - Diamond Bolts (e)
-- Dragonfire Bolts (e) [any form of antifire is not taken into account]
+- Dragonfire Bolts (e)
 
-**DCB/ACB/DHCB Ammo config options (includes RCB Ammo):**
+**ACB/DCB/DHCB Ammo config options (includes RCB Ammo):**
 - Diamond Dragon Bolts (e)
 - Dragonfire Dragon Bolts (e)
 - Opal Diamond Bolts (e)
@@ -98,6 +100,7 @@ Based on animations, which are re-used for many spells, so can't be fully accura
 Since these are currently the only specified spells, anything that isn't a multi-target ancient spell will use ice blitz damage to avoid being completely off.
 
 ## Known issues
+- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has mostly been seen with Ahrim's staff, but it's a rare occurence.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
 - **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.

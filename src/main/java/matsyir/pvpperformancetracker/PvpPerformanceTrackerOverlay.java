@@ -135,7 +135,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 			// only show damage for the opponent, since space is restricted here and having both differences
 			// is redundant since the sign is simply flipped.
-			overlayThirdLine.setRight(String.valueOf(fight.getOpponent().getTotalDamage()));
+			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getTotalDamage())));
 			overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		}
 

@@ -29,6 +29,11 @@ import lombok.Getter;
 public interface RangeAmmoData
 {
 	int RANGE_LEVEL = 112; // assume lvl 99 + potted
+	static RangeAmmoData[] DIAMOND_BOLTS = {
+		BoltAmmo.DIAMOND_BOLTS_E,
+		StrongBoltAmmo.DIAMOND_BOLTS_E,
+		StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E
+	};
 
 	int getRangeStr();
 	double getBonusMaxHit(); // damage bonus from bolt specs.
@@ -43,7 +48,7 @@ public interface RangeAmmoData
 	enum BoltAmmo implements RangeAmmoConfigData
 	{
 		RUNITE_BOLTS("Runite Bolts", 115, 0, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * 0.2)) * 0.06, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * .2)) * 0.06, 1),
 		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 0, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.RUNE_CROSSBOW, EquipmentData.RUNE_CROSSBOW_PVP };

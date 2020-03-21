@@ -25,6 +25,8 @@
 package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
@@ -46,13 +48,19 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
+	private static final NumberFormat nf = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf.setMaximumFractionDigits(1);
+		nf.setRoundingMode(RoundingMode.HALF_UP);
+	}
 
 	@Expose
 	private Fighter competitor;
 	@Expose
 	private Fighter opponent;
 	@Expose
-	private long lastFightTime;
+	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 
 	// return a random fightPerformance used for testing UI
 	static FightPerformance getTestInstance()
@@ -118,7 +126,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationAttackType animationType = competitor.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), opponent.getPlayer(), animationType);
+				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), animationType);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -128,7 +136,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationAttackType animationType = opponent.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), competitor.getPlayer(), animationType);
+				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), animationType);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -211,15 +219,17 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
 	public String getLongCompetitorDeservedDmgString()
 	{
-		double difference = Math.round((competitor.getTotalDamage() - opponent.getTotalDamage()) * 10) / 10.0;
-		return Math.round(competitor.getTotalDamage() * 10) / 10.0 + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		double difference = competitor.getTotalDamage() - opponent.getTotalDamage();
+		String differenceStr = nf.format(difference);
+		return nf.format(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
 	}
 
 	// get full value of deserved dmg as well as difference, for the opponent
 	public String getLongOpponentDeservedDmgString()
 	{
-		double difference = Math.round((opponent.getTotalDamage() - competitor.getTotalDamage()) * 10) / 10.0;
-		return Math.round(opponent.getTotalDamage() * 10) / 10.0 + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		double difference = opponent.getTotalDamage() - competitor.getTotalDamage();
+		String differenceStr = nf.format(difference);
+		return nf.format(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
 	}
 
 	public double getCompetitorDeservedDmgDiff()

@@ -39,12 +39,15 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -64,6 +67,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	public static PvpPerformanceTrackerConfig CONFIG;
+	public static PvpPerformanceTrackerPlugin PLUGIN;
 	public List<FightPerformance> fightHistory;
 
 	// Last man standing map regions, including lobby
@@ -96,6 +100,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private PvpPerformanceTrackerOverlay overlay;
 
 	@Inject
+	private ChatMessageManager chatMessageManager;
+
+	@Inject
 	private ItemManager itemManager;
 
 	@Getter
@@ -113,6 +120,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		CONFIG = config;
+		PLUGIN = this;
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		navButton = NavigationButton.builder()
@@ -130,13 +138,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		importFightHistory(savedFights);
 
 		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//		savedFights = new FightPerformance[1500];
-//		for (int i = 0; i < 1500; i++)
-//		{
-//			FightPerformance fight = FightPerformance.getTestInstance();
-//			savedFights[i] = fight;
-//		}
-//		importFightHistory(savedFights);
+		savedFights = new FightPerformance[1500];
+		for (int i = 0; i < 1500; i++)
+		{
+			FightPerformance fight = FightPerformance.getTestInstance();
+			savedFights[i] = fight;
+		}
+		importFightHistory(savedFights);
 
 
 		// add the panel's nav button depending on config
@@ -166,8 +174,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void onConfigChanged(ConfigChanged event)
 	{
 		if (!event.getGroup().equals("pvpperformancetracker")) { return; }
-
-		CONFIG = config;
 
 		switch(event.getKey())
 		{
@@ -361,5 +367,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		return false;
+	}
+
+	public void log(String chatMessage)
+	{
+		chatMessageManager
+			.queue(QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(chatMessage)
+				.build());
 	}
 }

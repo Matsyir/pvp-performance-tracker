@@ -131,6 +131,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "assumeZerkRing",
+		name = "Assume B Ring",
+		description = "Assume both players are using an unimbued Berserker Ring, the starting LMS ring. Can't dynamically determine the ring.",
+		position = 9
+	)
+	default boolean assumeZerkRing()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		hidden = true,
 		keyName = "fightHistoryData",
 		name = "Fight History Data",

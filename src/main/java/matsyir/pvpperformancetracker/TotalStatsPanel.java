@@ -27,6 +27,8 @@ package matsyir.pvpperformancetracker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -37,6 +39,22 @@ import net.runelite.client.ui.ColorScheme;
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
 {
+	// number format for 1 decimal digit
+	private static final NumberFormat nf1 = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf1.setMaximumFractionDigits(1);
+		nf1.setRoundingMode(RoundingMode.HALF_UP);
+	}
+
+	// number format for 2 decimal digits
+	private static final NumberFormat nf2 = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf2.setMaximumFractionDigits(2);
+		nf2.setRoundingMode(RoundingMode.HALF_UP);
+	}
+
 	private JLabel offPrayStatsLabel;
 	private JLabel deservedDmgStatsLabel;
 	private JLabel killsLabel;
@@ -136,15 +154,15 @@ public class TotalStatsPanel extends JPanel
 
 	private void setLabels()
 	{
-		double avgDeservedDmgDiffOneDecimal = Math.round(avgDeservedDmgDiff * 10) / 10.0;
+		String avgDeservedDmgDiffOneDecimal = nf1.format(avgDeservedDmgDiff);
 
 		killsLabel.setText(numKills + " Kill" + (numKills != 1 ? "s" : ""));
 		deathsLabel.setText(numDeaths + " Death" + (numDeaths != 1 ? "s" : ""));
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
-			offPrayStatsLabel.setText(Math.round(totalStats.getSuccessCount() / 100.0) / 10.0 + "K/" +
-				Math.round(totalStats.getAttackCount() / 100.0) / 10.0 + "K (" +
+			offPrayStatsLabel.setText(nf1.format(totalStats.getSuccessCount() / 1000.0) + "K/" +
+				nf1.format(totalStats.getAttackCount() / 1000.0) + "K (" +
 				Math.round(totalStats.calculateSuccessPercentage()) + "%)");
 		}
 		else
@@ -153,16 +171,16 @@ public class TotalStatsPanel extends JPanel
 		}
 		offPrayStatsLabel.setToolTipText(totalStats.getSuccessCount() + " successful off-pray attacks/" +
 			totalStats.getAttackCount() + " total attacks (" +
-			(Math.round(totalStats.calculateSuccessPercentage() * 100) / 100.0) + "%)");
+			nf2.format(totalStats.calculateSuccessPercentage()) + "%)");
 
 		deservedDmgStatsLabel.setText(Math.round(avgDeservedDmg) + " (" +
-			(avgDeservedDmgDiffOneDecimal > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
-		deservedDmgStatsLabel.setToolTipText("Avg of " + Math.round(avgDeservedDmg * 10) / 10.0 +
-			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiffOneDecimal > 0 ? "+" : "") +
-			avgDeservedDmgDiffOneDecimal + ". On Kills: " + Math.round(killAvgDeservedDmg * 10) / 10.0 +
-			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + Math.round(killAvgDeservedDmgDiff * 10) / 10.0 +
-			"). On Deaths: " + Math.round(deathAvgDeservedDmg * 10) / 10.0 +
-			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + Math.round(deathAvgDeservedDmgDiff * 10) / 10.0 + ").");
+			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
+		deservedDmgStatsLabel.setToolTipText("Avg of " + nf1.format(avgDeservedDmg) +
+			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
+			avgDeservedDmgDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDeservedDmg) +
+			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
+			"). On Deaths: " + nf1.format(deathAvgDeservedDmg) +
+			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ").");
 	}
 
 	public void addFight(FightPerformance fight)
