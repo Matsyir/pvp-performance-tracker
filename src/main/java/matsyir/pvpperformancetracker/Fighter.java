@@ -78,9 +78,6 @@ class Fighter
 		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
 		attackCount++;
 		totalDamage += deservedDamage;
-		log.warn("attacker: " + name);
-		log.warn("defender: " + opponent.getName());
-		log.warn("deservedDamage: " + deservedDamage);
 		if (successful)
 		{
 			successCount++;

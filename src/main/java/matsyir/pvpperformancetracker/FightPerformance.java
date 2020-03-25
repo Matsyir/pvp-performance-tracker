@@ -62,24 +62,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 
-	// return a random fightPerformance used for testing UI
-	static FightPerformance getTestInstance()
-	{
-		int cTotal = (int)(Math.random() * 60) + 8;
-		int cSuccess = (int)(Math.random() * (cTotal - 4)) + 4;
-		double cDamage = (Math.random() * (cSuccess * 25));
-
-		int oTotal = (int)(Math.random() * 60) + 8;
-		int oSuccess = (int)(Math.random() * (oTotal - 4)) + 4;
-		double oDamage = (Math.random() * (oSuccess * 25));
-
-		int secOffset = (int)(Math.random() * 57600) - 28800;
-
-		boolean cDead = Math.random() >= 0.5;
-
-		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset);
-	}
-
 	// constructor which initializes a fight from the 2 Players, starting stats at 0.
 	FightPerformance(Player competitor, Player opponent, ItemManager itemManager)
 	{
@@ -89,27 +71,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
-	}
-
-	// Used for testing purposes
-	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset)
-	{
-		this.competitor = new Fighter(cName);
-		this.opponent = new Fighter(oName);
-
-		competitor.addAttacks(cSuccess, cTotal, cDamage);
-		opponent.addAttacks(oSuccess, oTotal, oDamage);
-
-		if (cDead)
-		{
-			competitor.died();
-		}
-		else
-		{
-			opponent.died();
-		}
-
-		lastFightTime = Instant.now().minusSeconds(secondOffset).toEpochMilli();
 	}
 
 	// If the given playerName is in this fight, check the Fighter's current animation,

@@ -103,22 +103,8 @@ public class PvpDamageCalc
 	public double getDamage(Player attacker, Player defender, boolean success, AnimationAttackType animationType)
 	{
 		// have never seen this occur, but just in case
-		if (attacker == null)
+		if (attacker == null || defender == null)
 		{
-			log.warn("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
-			String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
-				.build();
-			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-			return 0;
-		}
-		if (defender == null)
-		{
-			log.warn("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
-			String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
-				.build();
-			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
 			return 0;
 		}
 
@@ -129,9 +115,6 @@ public class PvpDamageCalc
 		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
-		log.warn("attackerStats: " + Arrays.toString(playerStats));
-		log.warn("defenderStats: " + Arrays.toString(opponentStats));
-		log.warn("animationType: " + animationType.toString());
 		boolean isSpecial = animationType.isSpecial;
 		if (isSpecial)
 		{
@@ -159,40 +142,6 @@ public class PvpDamageCalc
 		}
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
-
-
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-		String accuracyString = nf.format(accuracy);
-		String averageHitString = nf.format(averageHit);
-
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
-
-		boolean animKnown = AnimationAttackStyle.styleForAnimation(attacker.getAnimation()) != null;
-
-        String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append(attacker.getName())
-                .append(ChatColorType.HIGHLIGHT).append("Type: ")
-                .append(ChatColorType.NORMAL).append(animationType.toString())
-                .append(ChatColorType.HIGHLIGHT).append("  Max: ")
-                .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
-                .append(ChatColorType.HIGHLIGHT).append("  Acc: ")
-                .append(ChatColorType.NORMAL).append(accuracyString)
-                .append(ChatColorType.HIGHLIGHT).append("  AvgHit: ")
-                .append(ChatColorType.NORMAL).append(averageHitString)
-				.append(ChatColorType.HIGHLIGHT).append(" Spec?: ")
-				.append(ChatColorType.NORMAL).append(isSpecial ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
-				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
-				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" Anim:")
-				// show animation + U/K for unknown/known
-				.append(ChatColorType.NORMAL).append((String.valueOf(attacker.getAnimation())))
-				.append(animKnown ? ChatColorType.NORMAL : ChatColorType.HIGHLIGHT).append(animKnown ? "K " : "U ")
-                .build();
-		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
 
 		return averageHit;
 	}
@@ -319,16 +268,12 @@ public class PvpDamageCalc
 			: animationType == Slash ? slashBonusPlayer : crushBonusPlayer;
 
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));
-//        log.debug("baseChance : " + baseChance );
-//        log.debug("baseChance : " + accuracyModifier );
 		if (usingSpec)
 		{
 			baseChance = baseChance * accuracyModifier;
 		}
 
 		attackerChance = baseChance;
-//        log.debug("MELEE ATTACK: " + attackerChance );
-//        log.debug("dds : " + dds );
 
 		/**
 		 * Defender Chance
@@ -351,7 +296,7 @@ public class PvpDamageCalc
 		{
 			defenderChance = Math.floor(effectiveLevelTarget * (crushBonusTarget + 64));
 		}
-//        log.debug("MELEE ATTACK: " + defenderChance );
+
 		/**
 		 * Calculate Accuracy
 		 */

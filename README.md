@@ -10,7 +10,7 @@ The vast majority of the deserved damage statistic was not implemented by myself
 
 Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
-![Overlay Image](https://i.imgur.com/LhNSB5W.png)
+![Overlay Image](https://i.imgur.com/wYorhLe.png)
 
 
 Fight history panel:
@@ -24,7 +24,11 @@ Here's a full 10 min match if you want to see more (pre-deserved damage tracker)
 
 Config options:
 
-![Image of config options](https://i.imgur.com/5mN8XzO.png)
+![Image of config options](https://i.imgur.com/SqdE9Em.png)
+
+Detailed tooltips:
+
+![Tooltip example](https://i.imgur.com/zQOIg9W.png)
 
 Note that I was not using 'Use Simple Overlay' and 'Show Overlay Title' in the gif/video. With Simple Overlay, it only shows the RSN and off-pray percentage, no fraction and no deserved damage (but they will still be in the panel).
 
@@ -49,7 +53,7 @@ This directly takes all of you and your opponent's gear, calculates the total st
 
 Currently, it does not check for offensive prayers. It assumes that you always use the right offensive prayer, and it assumes that you are using one of the 25% prayers for defence, but not augury while getting maged, since you would more likely be trying to range/melee at that time. This works the same for both players so the differences are handed out equally. We could detect the player's offensive prayer, but not the opponent's. To make that fair, we use equal estimations for both players.
 
-This also is not 100% reliable, but it too should work in the vast majority of cases. This component is able to retrieve item stats dynamically, from cached wiki data, for the vast majority of relevant items. Some very obscure items won't have stats. One problem is bolts/ammo, we can't detect which are used, so there are configs to choose which ones are used for the estimations. Base spell damage also needs to be hardcoded based on animation, which is not completely possible since animations are shared between different spells. However, all other melee gear stats or general range/mage gear stats can be automatically retrieved.
+This also is not 100% reliable, but it too should work in the vast majority of cases. This component is able to retrieve item stats dynamically, from cached wiki data, for the vast majority of relevant items. Some very obscure items won't have stats. One problem is bolts/ammo, we can't detect which are used, so there are configs to choose which ones are used for the estimations. Another is rings, we can't detect that either. Base spell damage also needs to be hardcoded based on animation, which is not completely possible since animations are shared between different spells. However, all other melee gear stats or general range/mage gear stats can be automatically retrieved and used for damage calculations.
 
 The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/RangeAmmoData.java). 
 
@@ -105,6 +109,7 @@ Since these are currently the only specified spells, anything that isn't a multi
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
 - **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
+- Attacks before both players took part of the fight are not saved. This is done to prevent other interactions during a fight being interpreted as getting a new target.
 
 
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
