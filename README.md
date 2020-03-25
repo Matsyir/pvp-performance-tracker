@@ -100,7 +100,8 @@ Based on animations, which are re-used for many spells, so can't be fully accura
 Since these are currently the only specified spells, anything that isn't a multi-target ancient spell will use ice blitz damage to avoid being completely off.
 
 ## Known issues
-- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has mostly been seen with Ahrim's staff, but it's a rare occurence.
+- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons.
+- For the deserved dps statistic, crossbow animations occasionally have an issue where we cannot detect the ammo, so the deserved damage is lower than the real value. At least, this should happen relatively equally between both players. This seems to occur mostly when 1ticking.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
 - **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.

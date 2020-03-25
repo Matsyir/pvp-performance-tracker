@@ -138,13 +138,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		importFightHistory(savedFights);
 
 		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-		savedFights = new FightPerformance[1500];
-		for (int i = 0; i < 1500; i++)
-		{
-			FightPerformance fight = FightPerformance.getTestInstance();
-			savedFights[i] = fight;
-		}
-		importFightHistory(savedFights);
+//		savedFights = new FightPerformance[1500];
+//		for (int i = 0; i < 1500; i++)
+//		{
+//			FightPerformance fight = FightPerformance.getTestInstance();
+//			savedFights[i] = fight;
+//		}importFightHistory(savedFights);
 
 
 		// add the panel's nav button depending on config

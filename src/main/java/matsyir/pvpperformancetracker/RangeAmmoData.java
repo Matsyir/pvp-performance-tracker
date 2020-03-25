@@ -29,7 +29,7 @@ import lombok.Getter;
 public interface RangeAmmoData
 {
 	int RANGE_LEVEL = 112; // assume lvl 99 + potted
-	static RangeAmmoData[] DIAMOND_BOLTS = {
+	RangeAmmoData[] DIAMOND_BOLTS = {
 		BoltAmmo.DIAMOND_BOLTS_E,
 		StrongBoltAmmo.DIAMOND_BOLTS_E,
 		StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E

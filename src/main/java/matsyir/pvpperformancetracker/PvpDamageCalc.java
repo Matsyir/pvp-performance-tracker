@@ -169,6 +169,8 @@ public class PvpDamageCalc
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 
+		boolean animKnown = AnimationAttackStyle.styleForAnimation(attacker.getAnimation()) != null;
+
         String chatMessage = new ChatMessageBuilder()
 				.append(ChatColorType.NORMAL).append(attacker.getName())
                 .append(ChatColorType.HIGHLIGHT).append("Type: ")
@@ -184,7 +186,11 @@ public class PvpDamageCalc
 				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
 				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
 				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
-				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
+				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
+				.append(ChatColorType.HIGHLIGHT).append(" Anim:")
+				// show animation + U/K for unknown/known
+				.append(ChatColorType.NORMAL).append((String.valueOf(attacker.getAnimation())))
+				.append(animKnown ? ChatColorType.NORMAL : ChatColorType.HIGHLIGHT).append(animKnown ? "K " : "U ")
                 .build();
 		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
 
