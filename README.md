@@ -10,12 +10,12 @@ The vast majority of the deserved damage statistic was not implemented by myself
 
 Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
-![Overlay Image](https://i.imgur.com/wYorhLe.png)
+![Overlay Image](https://i.imgur.com/LhNSB5W.png)
 
 
 Fight history panel:
 
-![Panel Image](https://i.imgur.com/rfOpoBO.png)
+![Panel Image](https://i.imgur.com/wYorhLe.png)
 
 
 [Gif of LMS gameplay (pre-deserved damage tracker)](https://gfycat.com/LittleCompleteGannet)
