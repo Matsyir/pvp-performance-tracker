@@ -1,0 +1,131 @@
+/*
+ * Copyright (c) 2020, Mazhar <https://twitter.com/maz_rs>
+ * Copyright (c) 2020, Matsyir <https://github.com/matsyir>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package matsyir.pvpperformancetracker;
+
+import com.google.common.collect.ImmutableMap;
+import lombok.Getter;
+import java.util.Map;
+import static matsyir.pvpperformancetracker.AnimationID.*;
+
+// These are AnimationID groupings to represent specific attack types, that are each treated
+// uniquely when it comes to damage calculation.
+public enum AnimationAttackType
+{
+	Stab(false, null,
+		MELEE_SPEAR_STAB,
+		MELEE_SWORD_STAB,
+		MELEE_STAFF_STAB,
+		MELEE_GHAZI_RAPIER_STAB
+	),
+	Slash(false, null,
+		MELEE_DAGGER_SLASH,
+		MELEE_SCIM_SLASH,
+		MELEE_STAFF_SLASH,
+		MELEE_ABYSSAL_WHIP,
+		MELEE_DHAROKS_GREATAXE_SLASH,
+		MELEE_LEAF_BLADED_BATTLEAXE_SLASH,
+		MELEE_GODSWORD_SLASH
+	),
+	Crush(false, null,
+		MELEE_STAFF_CRUSH,
+		MELEE_GRANITE_MAUL,
+		MELEE_DHAROKS_GREATAXE_CRUSH,
+		MELEE_LEAF_BLADED_BATTLEAXE_CRUSH,
+		MELEE_BARRELCHEST_ANCHOR_CRUSH,
+		MELEE_GODSWORD_CRUSH,
+		MELEE_ELDER_MAUL
+	),
+	Blitz(false, null,
+		MAGIC_ANCIENT_SINGLE_TARGET
+	),
+	Barrage(false, null,
+		MAGIC_ANCIENT_MULTI_TARGET
+	),
+	Ranged(false, null,
+		RANGED_SHORTBOW,
+ 		RANGED_RUNE_KNIFE_PVP,
+		RANGED_CROSSBOW_PVP,
+		RANGED_BLOWPIPE,
+		RANGED_DARTS,
+		RANGED_BALLISTA,
+		RANGED_BALLISTA_2,
+		RANGED_RUNE_CROSSBOW,
+		RANGED_RUNE_KNIFE,
+		RANGED_DRAGON_KNIFE,
+		RANGED_DRAGON_KNIFE_POISONED
+	),
+	Special_Stab(true, Stab),
+	Special_Slash(true, Slash,
+		MELEE_ARMADYL_GODSWORD_SPEC,
+		MELEE_DRAGON_CLAWS_SPEC,
+		MELEE_DRAGON_DAGGER_SPEC
+	),
+	Special_Crush(true, Crush,
+		MELEE_DRAGON_WARHAMMER_SPEC,
+		MELEE_GRANITE_MAUL_SPEC
+	),
+	Special_Range(true, Ranged,
+		RANGED_MAGIC_SHORTBOW_SPEC,
+	  	RANGED_DRAGON_KNIFE_SPEC,
+		RANGED_DRAGON_THROWNAXE_SPEC
+	);
+
+	static AnimationAttackType[] MELEE_STYLES = { Stab, Slash, Crush };
+	private static final Map<Integer, AnimationAttackType> TYPES;
+
+	boolean isSpecial; // true if the attack type is a special attack
+	@Getter
+	private AnimationAttackType rootType; // root attack type for special attacks, null if not a special.
+	@Getter
+	private final int[] animationIds;
+
+	AnimationAttackType(boolean isSpecial, AnimationAttackType rootType, int... animationIds)
+	{
+		this.isSpecial = isSpecial;
+		this.rootType = rootType;
+		this.animationIds = animationIds;
+	}
+
+	static
+	{
+		ImmutableMap.Builder<Integer, AnimationAttackType> builder = new ImmutableMap.Builder<>();
+
+		for (AnimationAttackType type : values())
+		{
+			for (int animationId : type.animationIds)
+			{
+				builder.put(animationId, type);
+			}
+		}
+
+		TYPES = builder.build();
+	}
+
+	public static AnimationAttackType typeForAnimation(int animationId)
+	{
+		return TYPES.get(animationId);
+	}
+}

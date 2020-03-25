@@ -22,13 +22,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
+import com.google.gson.annotations.Expose;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
+import net.runelite.client.game.ItemManager;
 
 // Basic class to hold information about PvP fight performances. A "successful" attack
 // is dealt by not attacking with the style of the opponent's overhead. For example,
@@ -36,26 +41,36 @@ import net.runelite.api.Player;
 // attack. Using melee against someone using protect from melee is not successful.
 // This is not a guaranteed way of determining the better competitor, since someone casting
 // barrage in full tank gear can count as a successful attack. It's a good general idea, though.
+@Slf4j
 @Getter
-public class FightPerformance
+public class FightPerformance implements Comparable<FightPerformance>
 {
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
+	private static final NumberFormat nf = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf.setMaximumFractionDigits(1);
+		nf.setRoundingMode(RoundingMode.HALF_UP);
+	}
 
+	@Expose
 	private Fighter competitor;
+	@Expose
 	private Fighter opponent;
-	private Instant lastFightTime;
+	@Expose
+	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0.
-	FightPerformance(Player competitor, Player opponent)
+	FightPerformance(Player competitor, Player opponent, ItemManager itemManager)
 	{
-		this.competitor = new Fighter(competitor);
-		this.opponent = new Fighter(opponent);
+		this.competitor = new Fighter(competitor, itemManager);
+		this.opponent = new Fighter(opponent, itemManager);
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
-		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5);
+		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 	}
 
 	// If the given playerName is in this fight, check the Fighter's current animation,
@@ -63,40 +78,51 @@ public class FightPerformance
 	// to determine if successful.
 	void checkForAttackAnimations(String playerName)
 	{
+		if(playerName == null) {
+			return;
+		}
 		if (playerName.equals(competitor.getName()))
 		{
 			AnimationAttackStyle attackStyle = competitor.getAnimationAttackStyle();
+			AnimationAttackType animationType = competitor.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection());
-				lastFightTime = Instant.now();
+				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), animationType);
+				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
 		else if (playerName.equals(opponent.getName()))
 		{
 			AnimationAttackStyle attackStyle = opponent.getAnimationAttackStyle();
+			AnimationAttackType animationType = opponent.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection());
-				lastFightTime = Instant.now();
+				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), animationType);
+				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
 	}
 
-	// returns true if competitor success rate > opponent success rate.
-	// could be "wrong" about winning in some cases, if someone is eating a lot and not actually attacking
-	// much, they could have a higher success rate than the person clearly winning. Although it is hard to
-	// judge by comparing attack counts since someone using fast weapons against slow weapons
-	// could cause a situation opposite of the one described above.
-	boolean playerWinning()
+	// returns true if competitor off-pray hit success rate > opponent success rate.
+	boolean competitorOffPraySuccessIsGreater()
 	{
 		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
 	}
 
-	// returns true if opponent success rate > competitor success rate.
-	boolean opponentWinning()
+	// returns true if opponent off-pray hit success rate > competitor success rate.
+	boolean opponentOffPraySuccessIsGreater()
 	{
 		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
+	}
+
+	boolean competitorDeservedDmgIsGreater()
+	{
+		return competitor.getTotalDamage() > opponent.getTotalDamage();
+	}
+
+	boolean opponentDeservedDmgIsGreater()
+	{
+		return opponent.getTotalDamage() > competitor.getTotalDamage();
 	}
 
 	// Will return true and stop the fight if the fight should be over.
@@ -117,14 +143,14 @@ public class FightPerformance
 			isOver = true;
 		}
 		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds
-		if (Duration.between(lastFightTime, Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
+		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
 		{
 			isOver = true;
 		}
 
 		if (isOver)
 		{
-			lastFightTime = Instant.now();
+			lastFightTime = Instant.now().toEpochMilli();
 		}
 
 		return isOver;
@@ -135,5 +161,51 @@ public class FightPerformance
 	boolean fightStarted()
 	{
 		return competitor.getAttackCount() > 0;
+	}
+
+	// get full value of deserved dmg as well as difference, for the competitor
+	public String getCompetitorDeservedDmgString()
+	{
+		int difference = (int)Math.round(competitor.getTotalDamage() - opponent.getTotalDamage());
+		return (int)Math.round(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	// get full value of deserved dmg as well as difference, for the opponent
+	public String getOpponentDeservedDmgString()
+	{
+		int difference = (int)Math.round(opponent.getTotalDamage() - competitor.getTotalDamage());
+		return (int)Math.round(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+	}
+
+	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
+	public String getLongCompetitorDeservedDmgString()
+	{
+		double difference = competitor.getTotalDamage() - opponent.getTotalDamage();
+		String differenceStr = nf.format(difference);
+		return nf.format(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+	}
+
+	// get full value of deserved dmg as well as difference, for the opponent
+	public String getLongOpponentDeservedDmgString()
+	{
+		double difference = opponent.getTotalDamage() - competitor.getTotalDamage();
+		String differenceStr = nf.format(difference);
+		return nf.format(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+	}
+
+	public double getCompetitorDeservedDmgDiff()
+	{
+		return competitor.getTotalDamage() - opponent.getTotalDamage();
+	}
+
+	@Override
+	public int compareTo(FightPerformance o)
+	{
+		long diff = lastFightTime - o.lastFightTime;
+
+		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and safely a small int.
+		return diff == 0 ? 0 :
+			(int)(diff / Math.abs(diff));
 	}
 }

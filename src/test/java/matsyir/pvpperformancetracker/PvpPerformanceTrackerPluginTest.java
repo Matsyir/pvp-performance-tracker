@@ -1,4 +1,4 @@
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;

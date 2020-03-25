@@ -22,11 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
@@ -34,15 +39,19 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -57,8 +66,13 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	public static PvpPerformanceTrackerConfig CONFIG;
+	public static PvpPerformanceTrackerPlugin PLUGIN;
+	public List<FightPerformance> fightHistory;
+
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
+
 
 	@Getter(AccessLevel.PACKAGE)
 	private NavigationButton navButton;
@@ -77,16 +91,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private ClientToolbar clientToolbar;
 
 	@Inject
+	private ConfigManager configManager;
+
+	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
 	private PvpPerformanceTrackerOverlay overlay;
 
+	@Inject
+	private ChatMessageManager chatMessageManager;
+
+	@Inject
+	private ItemManager itemManager;
+
 	@Getter
 	private FightPerformance currentFight;
 
+	private Gson gson;
+
 	@Provides
-	PvpPerformanceTrackerConfig provideConfig(ConfigManager configManager)
+	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(PvpPerformanceTrackerConfig.class);
 	}
@@ -94,6 +119,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		CONFIG = config;
+		PLUGIN = this;
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		navButton = NavigationButton.builder()
@@ -103,8 +130,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
+		fightHistory = new ArrayList<>();
+		gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		FightPerformance[] savedFights = gson.fromJson(config.fightHistoryData(), FightPerformance[].class);
+		importFightHistory(savedFights);
+
 		// add the panel's nav button depending on config
-		if (config.saveFightHistory() &&
+		if (config.showFightHistoryPanel() &&
 			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS())))
 		{
 			navButtonShown = true;
@@ -117,6 +149,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		fightHistory.sort(FightPerformance::compareTo);
+		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
+		configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
+
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
 	}
@@ -125,23 +161,39 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (event.getGroup().equals("pvpperformancetracker"))
+		if (!event.getGroup().equals("pvpperformancetracker")) { return; }
+
+		switch(event.getKey())
 		{
-			if (event.getKey().equals("saveFightHistory") || event.getKey().equals("restrictToLms"))
-			{
+			case "showFightHistoryPanel":
+			case "restrictToLms":
 				boolean isAtLms = isAtLMS();
-				if (!navButtonShown && config.saveFightHistory() &&
+				if (!navButtonShown && config.showFightHistoryPanel() &&
 					(!config.restrictToLms() || isAtLms))
 				{
 					SwingUtilities.invokeLater(() -> clientToolbar.addNavigation(navButton));
 					navButtonShown = true;
 				}
-				else if (navButtonShown && (!config.saveFightHistory() || (config.restrictToLms() && !isAtLms)))
+				else if (navButtonShown && (!config.showFightHistoryPanel() || (config.restrictToLms() && !isAtLms)))
 				{
 					SwingUtilities.invokeLater(() -> clientToolbar.removeNavigation(navButton));
 					navButtonShown = false;
 				}
-			}
+				break;
+			case "useSimpleOverlay":
+			case "showOverlayTitle":
+				overlay.setLines();
+				break;
+			case "fightHistoryLimit":
+				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+				{
+					int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+					// Remove oldest fightHistory until the size is smaller than the limit.
+					// Should only remove one fight in most cases.
+					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+					panel.rebuild();
+				}
+				break;
 		}
 	}
 
@@ -187,10 +239,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// start a new fight with the new found opponent, if a new one.
-		if (!hasOpponent() ||
-			(hasOpponent() && !opponent.getName().equals(currentFight.getOpponent().getName())))
+		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
-			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
+			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
+			overlay.setFight(currentFight);
 		}
 	}
 
@@ -207,7 +259,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			if (isAtLMS())
 			{
-				if (!navButtonShown && config.saveFightHistory())
+				if (!navButtonShown && config.showFightHistoryPanel())
 				{
 					clientToolbar.addNavigation(navButton);
 					navButtonShown = true;
@@ -248,10 +300,46 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// add fight to fight history if it actually started
 			if (currentFight.fightStarted())
 			{
-				panel.addFight(currentFight);
+				addToFightHistory(currentFight);
 			}
 			currentFight = null;
 		}
+	}
+
+	void addToFightHistory(FightPerformance fight)
+	{
+		fightHistory.add(fight);
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		{
+			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+			// Remove oldest fightHistory until the size is equal to the limit.
+			// Should only remove one fight in most cases.
+			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			panel.rebuild();
+		}
+		else
+		{
+			panel.addFight(fight);
+		}
+	}
+
+	void importFightHistory(FightPerformance[] fights)
+	{
+		fightHistory.addAll(Arrays.asList(fights));
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		{
+			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+			// Remove oldest fightHistory until the size is equal to the limit.
+			// Should only remove one fight in most cases.
+			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			panel.rebuild();
+		}
+		panel.rebuild();
+	}
+
+	void resetFightHistory()
+	{
+		fightHistory.clear();
 	}
 
 	boolean isAtLMS()

@@ -22,28 +22,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.pvpperformancetracker;
+package matsyir.pvpperformancetracker;
 
+import com.google.gson.annotations.Expose;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Player;
+import net.runelite.client.game.ItemManager;
 
+@Slf4j
 @Getter
 class Fighter
 {
 	private Player player;
+	@Expose
 	private String name; // username
+	@Expose
 	private int attackCount; // total number of attacks
+	@Expose
 	private int successCount; // total number of successful attacks
+	@Expose
+	private double totalDamage; // total deserved damage based on gear & opponent's pray
+	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
+	private PvpDamageCalc pvpDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
-	Fighter(Player player)
+	Fighter(Player player, ItemManager itemManager)
 	{
 		this.player = player;
 		name = player.getName();
 		attackCount = 0;
 		successCount = 0;
+		totalDamage = 0;
 		dead = false;
+		pvpDamageCalc = new PvpDamageCalc(itemManager);
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -54,14 +67,17 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		successCount = 0;
+		totalDamage = 0;
 		dead = false;
 	}
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful)
+	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
 	{
+		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
 		attackCount++;
+		totalDamage += deservedDamage;
 		if (successful)
 		{
 			successCount++;
@@ -69,10 +85,11 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total)
+	void addAttacks(int success, int total, double damage)
 	{
 		successCount += success;
 		attackCount += total;
+		totalDamage += damage;
 	}
 
 	void died()
@@ -85,11 +102,24 @@ class Fighter
 		return AnimationAttackStyle.styleForAnimation(player.getAnimation());
 	}
 
+	AnimationAttackType getAnimationAttackType()
+	{
+		return AnimationAttackType.typeForAnimation(player.getAnimation());
+	}
+
 	// Return a simple string to display the current player's success rate.
 	// ex. "42/59 (71%)". The name is not included as it will be in a separate view.
-	String getStats()
+	// if shortString is true, the percentage is omitted, it only returns the fraction.
+	String getOffPrayStats(boolean shortString)
 	{
-		return successCount + "/" + attackCount + " (" + Math.round(calculateSuccessPercentage()) + "%)";
+		return shortString ?
+			successCount + "/" + attackCount :
+			successCount + "/" + attackCount + " (" + Math.round(calculateSuccessPercentage()) + "%)";
+	}
+
+	String getOffPrayStats()
+	{
+		return getOffPrayStats(false);
 	}
 
 	double calculateSuccessPercentage()
