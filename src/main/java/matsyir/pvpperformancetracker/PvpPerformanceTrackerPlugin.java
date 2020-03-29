@@ -46,6 +46,7 @@ import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
@@ -86,6 +87,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private ClientToolbar clientToolbar;
@@ -294,7 +298,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		if (hasOpponent() && event.getActor() != null)
 		{
-			currentFight.checkForAttackAnimations(event.getActor().getName());
+			clientThread.invokeLater(() -> currentFight.checkForAttackAnimations(event.getActor().getName()));
 		}
 	}
 

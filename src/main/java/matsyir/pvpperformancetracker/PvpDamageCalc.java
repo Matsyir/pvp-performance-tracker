@@ -131,8 +131,8 @@ public class PvpDamageCalc
 		int[] opponentStats = this.calculateBonuses(defenderItems);
 		log.warn("attackerStats: " + Arrays.toString(playerStats));
 		log.warn("defenderStats: " + Arrays.toString(opponentStats));
-		log.warn("animationType: " + animationType.toString());
-		boolean isSpecial = animationType.isSpecial;
+		log.warn("animationType: " + (animationType == null ? "null" : animationType.toString()));
+		boolean isSpecial = animationType != null && animationType.isSpecial;
 		if (isSpecial)
 		{
 			animationType = animationType.getRootType();
@@ -174,7 +174,7 @@ public class PvpDamageCalc
         String chatMessage = new ChatMessageBuilder()
 				.append(ChatColorType.NORMAL).append(attacker.getName())
                 .append(ChatColorType.HIGHLIGHT).append("Type: ")
-                .append(ChatColorType.NORMAL).append(animationType.toString())
+                .append(ChatColorType.NORMAL).append(animationType == null ? "null" : animationType.toString())
                 .append(ChatColorType.HIGHLIGHT).append("  Max: ")
                 .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
                 .append(ChatColorType.HIGHLIGHT).append("  Acc: ")

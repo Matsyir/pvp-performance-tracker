@@ -76,11 +76,13 @@ class Fighter
 	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
 	{
 		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
-		attackCount++;
 		totalDamage += deservedDamage;
+		attackCount++;
+
 		log.warn("attacker: " + name);
 		log.warn("defender: " + opponent.getName());
 		log.warn("deservedDamage: " + deservedDamage);
+
 		if (successful)
 		{
 			successCount++;
