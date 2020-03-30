@@ -106,9 +106,9 @@ Since these are currently the only specified spells, anything that isn't a multi
 ## Known issues
 - Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons. This is probably related to 'blocking' animations.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
-- **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
+- **Darts will often not get counted** as their animation can last longer than their attack so the animation doesn't change in sync with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
-- Attacks before both players took part of the fight are not saved. This is done to prevent other interactions during a fight being interpreted as getting a new target.
+- Attacks before both players took part of the fight are not saved. This is an unintended consequence of preventing unrelated interactions during a fight being interpreted as getting a new target/starting a new fight.
 
 
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
