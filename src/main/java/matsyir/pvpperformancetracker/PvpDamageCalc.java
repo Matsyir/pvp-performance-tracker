@@ -115,7 +115,7 @@ public class PvpDamageCalc
 		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
-		boolean isSpecial = animationType.isSpecial;
+		boolean isSpecial = animationType != null && animationType.isSpecial;
 		if (isSpecial)
 		{
 			animationType = animationType.getRootType();
@@ -142,7 +142,6 @@ public class PvpDamageCalc
 		}
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
-
 		return averageHit;
 	}
 

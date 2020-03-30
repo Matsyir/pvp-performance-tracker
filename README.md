@@ -1,6 +1,6 @@
 # PvP Performance Tracker
 
-Tracks PvP performance by keeping track of various stats. Only useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, LMS being the perfect example. Multi will cause problems. Potentially inaccurate outsite of LMS. 
+Tracks PvP performance by keeping track of various stats. Only useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, LMS being the perfect example. Multi will cause problems. Potentially inaccurate outside of LMS. 
 
 **1.** Tracks if you successfully hit your opponent off-pray or not. For example, if your opponent is using protect from melee, you must hit him with magic or ranged for a successful off-pray hit.
 
@@ -15,7 +15,7 @@ Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
 Fight history panel:
 
-![Panel Image](https://i.imgur.com/rfOpoBO.png)
+![Panel Image](https://i.imgur.com/wYorhLe.png)
 
 
 [Gif of LMS gameplay (pre-deserved damage tracker)](https://gfycat.com/LittleCompleteGannet)
@@ -41,7 +41,7 @@ The stats are displayed as such: "successful off-pray hits / total attacks (succ
 **I can't guarantee accuracy for use outside of LMS**, because of the way attack styles are determined: that is by checking the Player's current animation. There are definitely a few random weapons I still haven't thought about that won't be included. But I am **confident it will work in over 90% of cases**, since people tend to stick to fairly common pking loadouts. Thankfully, most weapons AnimationIDs are re-used (e.g all normal scim slashes share one animation, crossbow is same with all bolts). Due to this, loads of weapons I haven't even tested are supported.
 
 ### Supported Weapons (Off-pray hits)
-It would take forever to make a nicely formatted list of these, and on top of that many weapon animations are re-used, so more than I know are supported. Check out the variable names & comments in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/com/pvpperformancetracker/AnimationID.java) for a full breakdown of supported weapons/what I've tested. All LMS gear should be supported, as well as general popular pking gear, including some less common weapons like anchor, the 4 godsword specs, revenant weapons, dmace, etc. Basically all F2P weapons should be supported as well but I don't think this would be useful for F2P. There are surely some uncommon but relevant weapons or specs I forgot about so feel free to submit those as an issue if you notice it in a fight, or not mentioned in the file.
+It would take forever to make a nicely formatted list of these, and on top of that many weapon animations are re-used, so more than I know are supported. Check out the variable names & comments in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/matsyir/pvpperformancetracker/AnimationID.java) for a full breakdown of supported weapons/what I've tested. All LMS gear should be supported, as well as general popular pking gear, including some less common weapons like anchor, the 4 godsword specs, revenant weapons, dmace, etc. Basically all F2P weapons should be supported as well but I don't think this would be useful for F2P. There are surely some uncommon but relevant weapons or specs I forgot about so feel free to submit those as an issue if you notice it in a fight, or not mentioned in the file.
 
 ### Known unsupported weapons (Off-pray hits)
 Not because they can't work, simply because I don't have their AnimationIDs.
@@ -51,11 +51,11 @@ Not because they can't work, simply because I don't have their AnimationIDs.
 ## Statistic #2: Deserved Damage
 This directly takes all of you and your opponent's gear, calculates the total stats, and gives you an average damage value, using OSRS accuracy/damage calculations, depending on opponent's gear, pray, if you're using a special attack, among other factors. It does not involve hitsplats in any way, does not look at actual damage dealt. It only calculates average "deserved" damage. This is also displayed on the overlay & panel, on the 3rd line, showing the cumulative value for that fight and the difference with the opponent. For example, if you've dealt 3 attacks, granting 14, 9, and 12 damage respectively, you'd have 35 total deserved damage. If your opponent had 40 damage at the time, your deserved damage would be displayed as "35 (-5)".
 
-Currently, it does not check for offensive prayers. It assumes that you always use the right offensive prayer, and it assumes that you are using one of the 25% prayers for defence, but not augury while getting maged, since you would more likely be trying to range/melee at that time. This works the same for both players so the differences are handed out equally. We could detect the player's offensive prayer, but not the opponent's. To make that fair, we use equal estimations for both players.
+Currently, it does not check for offensive prayers. It assumes that you always use the right offensive prayer, and it assumes that you are using one of the 25% prayers for defence, but not augury while getting maged, since you would more likely be trying to range/melee at that time. We could detect the player's offensive prayer, but not the opponent's. To make that fair, we use equal estimations for both players, and the inaccuracies should be handed out evenly.
 
 This also is not 100% reliable, but it too should work in the vast majority of cases. This component is able to retrieve item stats dynamically, from cached wiki data, for the vast majority of relevant items. Some very obscure items won't have stats. One problem is bolts/ammo, we can't detect which are used, so there are configs to choose which ones are used for the estimations. Another is rings, we can't detect that either. Base spell damage also needs to be hardcoded based on animation, which is not completely possible since animations are shared between different spells. However, all other melee gear stats or general range/mage gear stats can be automatically retrieved and used for damage calculations.
 
-The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/deserved-dps-tracker/src/main/java/com/pvpperformancetracker/RangeAmmoData.java). 
+The damage calculations can be found all across [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/matsyir/pvpperformancetracker/PvpDamageCalc.java). Range Ammo Data is in [this file](https://github.com/Matsyir/pvp-performance-tracker/blob/master/src/main/java/matsyir/pvpperformancetracker/RangeAmmoData.java). 
 
 **Stats are currently assumed for both the player and opponent**, using potted LMS stats: 118 Attack/Strength, 75 Defence, 112 Range, 99 Magic
 ### Supported Weapons (Deserved Damage)
@@ -104,8 +104,7 @@ Based on animations, which are re-used for many spells, so can't be fully accura
 Since these are currently the only specified spells, anything that isn't a multi-target ancient spell will use ice blitz damage to avoid being completely off.
 
 ## Known issues
-- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons.
-- For the deserved dps statistic, crossbow animations occasionally have an issue where we cannot detect the ammo, so the deserved damage is lower than the real value. At least, this should happen relatively equally between both players. This seems to occur mostly when 1ticking.
+- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons. This is probably related to 'blocking' animations.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
 - **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.

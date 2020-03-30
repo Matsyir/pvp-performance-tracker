@@ -76,8 +76,9 @@ class Fighter
 	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
 	{
 		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
-		attackCount++;
 		totalDamage += deservedDamage;
+		attackCount++;
+
 		if (successful)
 		{
 			successCount++;
