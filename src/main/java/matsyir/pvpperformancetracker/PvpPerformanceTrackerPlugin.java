@@ -298,7 +298,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		if (hasOpponent() && event.getActor() != null)
 		{
-			clientThread.invokeLater(() -> currentFight.checkForAttackAnimations(event.getActor().getName()));
+			clientThread.invokeLater(() ->
+			{
+				// must perform null checks again since this occurs a moment after the inital check.
+				if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
+				{
+					currentFight.checkForAttackAnimations(event.getActor().getName());
+				}
+			});
 		}
 	}
 

@@ -117,9 +117,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// to determine if successful.
 	void checkForAttackAnimations(String playerName)
 	{
-		if(playerName == null) {
+		if (playerName == null)
+		{
 			return;
 		}
+		
 		if (playerName.equals(competitor.getName()))
 		{
 			AnimationAttackStyle attackStyle = competitor.getAnimationAttackStyle();
