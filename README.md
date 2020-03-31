@@ -8,9 +8,10 @@ Tracks PvP performance by keeping track of various stats. Only useful for 1v1 Pv
 
 The vast majority of the deserved damage statistic was not implemented by myself, it was created by [Mazhar, @maz_rs on twitter](https://twitter.com/maz_rs), [@voiderman1337](https://github.com/voiderman1337) on github. Massive thanks to him, I think it really brings this plugin together since the off-pray hits alone can be misleading in a few relatively common cases.
 
+------------------------------------------------------
 Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
-![Overlay Image](https://i.imgur.com/wYorhLe.png)
+![Overlay Image](https://i.imgur.com/LhNSB5W.png)
 
 
 Fight history panel:
@@ -109,6 +110,5 @@ Since these are currently the only specified spells, anything that isn't a multi
 - **Darts will often not get counted** as their animation can last longer than their attack so the animation doesn't change in sync with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
 - Attacks before both players took part of the fight are not saved. This is an unintended consequence of preventing unrelated interactions during a fight being interpreted as getting a new target/starting a new fight.
-
-
+------------------------------------------------------
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
