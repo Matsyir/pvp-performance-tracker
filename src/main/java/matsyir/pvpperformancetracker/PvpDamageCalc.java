@@ -26,11 +26,8 @@
 package matsyir.pvpperformancetracker;
 
 import static matsyir.pvpperformancetracker.AnimationAttackType.*;
-import java.util.Arrays;
 import java.text.NumberFormat;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.game.ItemManager;
 import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
@@ -115,7 +112,7 @@ public class PvpDamageCalc
 		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
-		boolean isSpecial = animationType.isSpecial;
+		boolean isSpecial = animationType != null && animationType.isSpecial;
 		if (isSpecial)
 		{
 			animationType = animationType.getRootType();
@@ -142,7 +139,6 @@ public class PvpDamageCalc
 		}
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
-
 		return averageHit;
 	}
 

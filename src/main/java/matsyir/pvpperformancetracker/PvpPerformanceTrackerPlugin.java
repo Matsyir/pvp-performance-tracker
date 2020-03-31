@@ -39,15 +39,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.InteractingChanged;
-import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -88,6 +86,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private ClientThread clientThread;
+
+	@Inject
 	private ClientToolbar clientToolbar;
 
 	@Inject
@@ -98,9 +99,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private PvpPerformanceTrackerOverlay overlay;
-
-	@Inject
-	private ChatMessageManager chatMessageManager;
 
 	@Inject
 	private ItemManager itemManager;
@@ -283,7 +281,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		if (hasOpponent() && event.getActor() != null)
 		{
-			currentFight.checkForAttackAnimations(event.getActor().getName());
+			clientThread.invokeLater(() ->
+			{
+				// must perform null checks again since this occurs a moment after the inital check.
+				if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
+				{
+					currentFight.checkForAttackAnimations(event.getActor().getName());
+				}
+			});
 		}
 	}
 

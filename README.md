@@ -8,6 +8,7 @@ Tracks PvP performance by keeping track of various stats. Only useful for 1v1 Pv
 
 The vast majority of the deserved damage statistic was not implemented by myself, it was created by [Mazhar, @maz_rs on twitter](https://twitter.com/maz_rs), [@voiderman1337](https://github.com/voiderman1337) on github. Massive thanks to him, I think it really brings this plugin together since the off-pray hits alone can be misleading in a few relatively common cases.
 
+------------------------------------------------------
 Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
 ![Overlay Image](https://i.imgur.com/LhNSB5W.png)
@@ -51,7 +52,7 @@ Not because they can't work, simply because I don't have their AnimationIDs.
 ## Statistic #2: Deserved Damage
 This directly takes all of you and your opponent's gear, calculates the total stats, and gives you an average damage value, using OSRS accuracy/damage calculations, depending on opponent's gear, pray, if you're using a special attack, among other factors. It does not involve hitsplats in any way, does not look at actual damage dealt. It only calculates average "deserved" damage. This is also displayed on the overlay & panel, on the 3rd line, showing the cumulative value for that fight and the difference with the opponent. For example, if you've dealt 3 attacks, granting 14, 9, and 12 damage respectively, you'd have 35 total deserved damage. If your opponent had 40 damage at the time, your deserved damage would be displayed as "35 (-5)".
 
-Currently, it does not check for offensive prayers. It assumes that you always use the right offensive prayer, and it assumes that you are using one of the 25% prayers for defence, but not augury while getting maged, since you would more likely be trying to range/melee at that time. This works the same for both players so the differences are handed out equally. We could detect the player's offensive prayer, but not the opponent's. To make that fair, we use equal estimations for both players.
+Currently, it does not check for offensive prayers. It assumes that you always use the right offensive prayer, and it assumes that you are using one of the 25% prayers for defence, but not augury while getting maged, since you would more likely be trying to range/melee at that time. We could detect the player's offensive prayer, but not the opponent's. To make that fair, we use equal estimations for both players, and the inaccuracies should be handed out evenly.
 
 This also is not 100% reliable, but it too should work in the vast majority of cases. This component is able to retrieve item stats dynamically, from cached wiki data, for the vast majority of relevant items. Some very obscure items won't have stats. One problem is bolts/ammo, we can't detect which are used, so there are configs to choose which ones are used for the estimations. Another is rings, we can't detect that either. Base spell damage also needs to be hardcoded based on animation, which is not completely possible since animations are shared between different spells. However, all other melee gear stats or general range/mage gear stats can be automatically retrieved and used for damage calculations.
 
@@ -104,12 +105,10 @@ Based on animations, which are re-used for many spells, so can't be fully accura
 Since these are currently the only specified spells, anything that isn't a multi-target ancient spell will use ice blitz damage to avoid being completely off.
 
 ## Known issues
-- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons.
-- For the deserved dps statistic, crossbow animations occasionally have an issue where we cannot detect the ammo, so the deserved damage is lower than the real value. At least, this should happen relatively equally between both players. This seems to occur mostly when 1ticking.
+- Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons. This is probably related to 'blocking' animations.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
-- **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
+- **Darts will often not get counted** as their animation can last longer than their attack so the animation doesn't change in sync with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
-- Attacks before both players took part of the fight are not saved. This is done to prevent other interactions during a fight being interpreted as getting a new target.
-
-
+- Attacks before both players took part of the fight are not saved. This is an unintended consequence of preventing unrelated interactions during a fight being interpreted as getting a new target/starting a new fight.
+------------------------------------------------------
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
