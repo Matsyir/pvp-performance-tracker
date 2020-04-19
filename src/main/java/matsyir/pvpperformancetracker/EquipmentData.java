@@ -37,6 +37,9 @@ import org.apache.commons.lang3.ArrayUtils;
 public enum EquipmentData
 {
 	// Non-LMS items:
+	DRAGON_DAGGER_P(1231, 1231), // dragon dagger (p)
+	DRAGON_DAGGER_PP(5680, 5680), // dragon dagger (p+)
+	DRAGON_DAGGER_PPP(5698, 5698), // dragon dagger (p++)
 	RUNE_CROSSBOW_PVP(9185, 9185),
 	ARMADYL_CROSSBOW_PVP(11785, 11785),
 	DRAGON_CROSSBOW(21902, 21902),
@@ -161,6 +164,10 @@ public enum EquipmentData
 		for (EquipmentData data : EquipmentData.values())
 		{
 			itemData.put(data.getLmsItemId(), data);
+			if (!itemData.containsKey(data.getRealItemId()))
+			{
+				itemData.put(data.getRealItemId(), data);
+			}
 		}
 	}
 }
