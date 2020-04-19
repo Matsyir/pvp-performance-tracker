@@ -244,7 +244,8 @@ public class PvpDamageCalc
 	private int getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
-		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
+		boolean dds = weapon == EquipmentData.DRAGON_DAGGER || weapon == EquipmentData.DRAGON_DAGGER_P ||
+			weapon == EquipmentData.DRAGON_DAGGER_PP || weapon == EquipmentData.DRAGON_DAGGER_PPP;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 

@@ -4,10 +4,16 @@ Tracks PvP performance by keeping track of various stats. Only useful for 1v1 Pv
 
 **1.** Tracks if you successfully hit your opponent off-pray or not. For example, if your opponent is using protect from melee, you must hit him with magic or ranged for a successful off-pray hit.
 
-**2.** Tracks deserved damage. This looks at you and your opponent's current gear, and calculates average damage based on accuracy & strength stats/pray. This does not track your current hits in any way, it doesn't involve hitsplats. More in-depth details on both of these stats below.
+**2.** Tracks deserved damage. Every hit, this looks at you and your opponent's current gear, and calculates average damage based on accuracy, strength, & prayers. This does **not** track your *actual* hits in any way, it doesn't involve hitsplats. More in-depth details on both of these stats below.
 
 The vast majority of the deserved damage statistic was not implemented by myself, it was created by [Mazhar, @maz_rs on twitter](https://twitter.com/maz_rs), [@voiderman1337](https://github.com/voiderman1337) on github. Massive thanks to him, I think it really brings this plugin together since the off-pray hits alone can be misleading in a few relatively common cases.
 
+## Note about the recent 1v1 Tournament:
+
+The plugin is perfect to practice/improve for this type of tournament, it was great to see it used & discussed so much. It was a great stress-test to verify that everything is working. The plugin isn't perfect due to the available data we have to make these estimations, but for the most part it should have been accurate for the tournament. All the gear used is supported. Aside from some previously known minor issues (listed below), we found that special attacks outside of LMS were not detected properly, and therefore had invalid damage. This *could* make a significant difference in the outcome of deserved damage - so it was a fairly important problem. But, the issue was present for both players, so in most cases it shouldn't have made much of a difference. At least it only affected special attacks - any other regular attack should have worked as intended. This has since been fixed. Thanks once again to Mazhar for noticing the bug and helping to test solutions.
+
+
+------------------------------------------------------
 Current Fight overlay (the *2 mins* label is an unrelated in-game overlay):
 
 ![Overlay Image](https://i.imgur.com/LhNSB5W.png)
@@ -62,7 +68,7 @@ The damage calculations can be found all across [this file](https://github.com/M
 All weapon & gear stats are loaded dynamically. The exceptions to this are stats for rings and ammo (bolts/arrows), and base magic spell damage. We can't detect what bolts/rings are used, and we must manually hardcode all base spell damage. Special attacks with damage or accuracy modifiers also have to be manually hardcoded.
 #### Melee - Supported special attacks:
 - Dragon Claws
-- Dragon Dagger
+- Dragon Dagger (all variations)
 - Armadyl Godsword
 - Vesta's Longsword
 - Statius' Warhammer
@@ -106,9 +112,8 @@ Since these are currently the only specified spells, anything that isn't a multi
 ## Known issues
 - Occasionally, certain attacks won't be counted when attacking each other at the same time, since their animation will be cancelled and the attack will go undetected. Since attack styles are currently determined using animations, I don't think it's possible to fix at the moment. This has only been seen with Ahrim's staff, but it's a rare occurence. It must be possible with other weapons. This is probably related to 'blocking' animations.
 - **Double deaths *not* on the same tick are not tracked.** This can be fixed using the onPlayerDeath event - it's changing how the existing code works around deaths that is tricky.  
-- **Darts will often not get counted** as their animation lasts longer than their attack so the animation doesn't change in line with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
+- **Darts will often not get counted** as their animation can last longer than their attack so the animation doesn't change in sync with the attacks. I don't think this can currently be fixed with how attack styles are determined. This probably happens with other fast weapons I haven't found yet. Blowpipe works fine.
 - There is no attempt to support multi at the moment, but I would assume it works to a certain extent, on 1 opponent at a time.
-- Attacks before both players took part of the fight are not saved. This is done to prevent other interactions during a fight being interpreted as getting a new target.
-
-
+- Attacks before both players took part of the fight are not saved. This is an unintended consequence of preventing unrelated interactions during a fight being interpreted as getting a new target/starting a new fight.
+------------------------------------------------------
 I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.

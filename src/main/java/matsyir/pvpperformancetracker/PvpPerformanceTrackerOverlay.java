@@ -56,8 +56,6 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
 	private LineComponent overlayThirdLine; // right: player's deserved dps stats, right: opponent's deserved dps stats
 
-	private boolean didRender;
-
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
 	{
@@ -79,8 +77,6 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayThirdLine = LineComponent.builder().build();
 
 		setLines();
-
-		didRender = false;
 	}
 
 	@Override
@@ -90,29 +86,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		if (fight == null || !fight.fightStarted() || !config.showFightOverlay() ||
 			(config.restrictToLms() && !plugin.isAtLMS()))
 		{
-			didRender = false;
 			return null;
-		}
-
-		// Adjust size to fix potential text overlap due to long RSN if displaying full RSN, on first render.
-		if (!didRender)
-		{
-			if (config.useSimpleOverlay())
-			{
-				FontMetrics metrics = graphics.getFontMetrics();
-				panelComponent.setPreferredSize(new Dimension(
-					Math.max(ComponentConstants.STANDARD_WIDTH,
-						Math.max(metrics.stringWidth(fight.getCompetitor().getName()),
-							metrics.stringWidth(fight.getOpponent().getName()))
-							+ metrics.stringWidth("100%") + 6),
-					0));
-			}
-			else
-			{
-				panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
-			}
-
-			didRender = true;
 		}
 
 		if (config.useSimpleOverlay())
@@ -175,7 +149,5 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayFirstLine.setLeft(cName.substring(0, Math.min(6, cName.length())));
 		String oName = fight.getOpponent().getName();
 		overlayFirstLine.setRight(oName.substring(0, Math.min(6, oName.length())));
-
-		didRender = false;
 	}
 }
