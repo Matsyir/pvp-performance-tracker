@@ -279,8 +279,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		stopFightIfOver();
 
+		// We will need to re-do this check later, but do it initially to prevent unnecessarily creating a thread
+		// that won't be used
 		if (hasOpponent() && event.getActor() != null)
 		{
+			// delay the animation processing, since we will also want to use equipment information for deserved,
+			// damage, and equipment updates are loaded after the animation updates.
 			clientThread.invokeLater(() ->
 			{
 				// must perform null checks again since this occurs a moment after the inital check.
