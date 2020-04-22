@@ -42,9 +42,12 @@ class Fighter
 	@Expose
 	private int successCount; // total number of successful attacks
 	@Expose
-	private double totalDamage; // total deserved damage based on gear & opponent's pray
+	private double deservedDamage; // total deserved damage based on gear & opponent's pray
+	@Expose
+	private int damageDealt;
 	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
+
 	private PvpDamageCalc pvpDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
@@ -54,7 +57,8 @@ class Fighter
 		name = player.getName();
 		attackCount = 0;
 		successCount = 0;
-		totalDamage = 0;
+		deservedDamage = 0;
+		damageDealt = 0;
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(itemManager);
 	}
@@ -67,7 +71,8 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		successCount = 0;
-		totalDamage = 0;
+		deservedDamage = 0;
+		damageDealt = 0;
 		dead = false;
 	}
 
@@ -76,7 +81,7 @@ class Fighter
 	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
 	{
 		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
-		totalDamage += deservedDamage;
+		this.deservedDamage += deservedDamage;
 		attackCount++;
 
 		log.warn("attacker: " + name);
@@ -90,11 +95,16 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total, double damage)
+	void addAttacks(int success, int total, double deservedDamage)
 	{
 		successCount += success;
 		attackCount += total;
-		totalDamage += damage;
+		this.deservedDamage += deservedDamage;
+	}
+
+	void addDamageDealt(int damage)
+	{
+		this.damageDealt += damage;
 	}
 
 	void died()

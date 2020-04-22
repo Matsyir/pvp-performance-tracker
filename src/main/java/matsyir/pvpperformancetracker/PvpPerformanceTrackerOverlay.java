@@ -26,7 +26,6 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
@@ -55,6 +54,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlayFirstLine; // Left: player's RSN, Right: Opponent RSN
 	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
 	private LineComponent overlayThirdLine; // right: player's deserved dps stats, right: opponent's deserved dps stats
+	private LineComponent overlayFourthLine; // right: player's damage dealt stats, right: opponent's damage dealt stats
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -75,6 +75,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayFirstLine = LineComponent.builder().build();
 		overlaySecondLine = LineComponent.builder().build();
 		overlayThirdLine = LineComponent.builder().build();
+		overlayFourthLine = LineComponent.builder().build();
 
 		setLines();
 	}
@@ -109,8 +110,14 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 			// only show damage for the opponent, since space is restricted here and having both differences
 			// is redundant since the sign is simply flipped.
-			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getTotalDamage())));
+			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage())));
 			overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
+
+			overlayFourthLine.setLeft(String.valueOf(fight.getCompetitor().getDamageDealt()));
+			overlayFourthLine.setLeftColor(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+
+			overlayFourthLine.setRight(String.valueOf(fight.getOpponent().getDamageDealt()));
+			overlayFourthLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
 		}
 
 		return panelComponent.render(graphics);
@@ -134,9 +141,22 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		else
 		{
-			panelComponent.getChildren().add(overlayFirstLine);
-			panelComponent.getChildren().add(overlaySecondLine);
-			panelComponent.getChildren().add(overlayThirdLine);
+			if (config.showOverlayNames())
+			{
+				panelComponent.getChildren().add(overlayFirstLine);
+			}
+			if (config.showOverlayOffPray())
+			{
+				panelComponent.getChildren().add(overlaySecondLine);
+			}
+			if (config.showOverlayDeservedDmg())
+			{
+				panelComponent.getChildren().add(overlayThirdLine);
+			}
+			if (config.showOverlayDmgDealt())
+			{
+				panelComponent.getChildren().add(overlayFourthLine);
+			}
 		}
 	}
 

@@ -144,13 +144,27 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 	}
 
+	void addDamageDealt(String playerName, int damage)
+	{
+		if (playerName == null) { return; }
+
+		if (playerName.equals(competitor.getName()))
+		{
+			opponent.addDamageDealt(damage);
+		}
+		else if (playerName.equals(opponent.getName()))
+		{
+			competitor.addDamageDealt(damage);
+		}
+	}
+
 	// returns true if competitor off-pray hit success rate > opponent success rate.
+	// the following functions have similar behaviour.
 	boolean competitorOffPraySuccessIsGreater()
 	{
 		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
 	}
 
-	// returns true if opponent off-pray hit success rate > competitor success rate.
 	boolean opponentOffPraySuccessIsGreater()
 	{
 		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
@@ -158,12 +172,22 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	boolean competitorDeservedDmgIsGreater()
 	{
-		return competitor.getTotalDamage() > opponent.getTotalDamage();
+		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
 	}
 
 	boolean opponentDeservedDmgIsGreater()
 	{
-		return opponent.getTotalDamage() > competitor.getTotalDamage();
+		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
+	}
+
+	boolean competitorDmgDealtIsGreater()
+	{
+		return competitor.getDamageDealt() > opponent.getDamageDealt();
+	}
+
+	boolean opponentDmgDealtIsGreater()
+	{
+		return opponent.getDamageDealt() > competitor.getDamageDealt();
 	}
 
 	// Will return true and stop the fight if the fight should be over.
@@ -207,36 +231,36 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// get full value of deserved dmg as well as difference, for the competitor
 	public String getCompetitorDeservedDmgString()
 	{
-		int difference = (int)Math.round(competitor.getTotalDamage() - opponent.getTotalDamage());
-		return (int)Math.round(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		int difference = (int)Math.round(competitor.getDeservedDamage() - opponent.getDeservedDamage());
+		return (int)Math.round(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 
 	// get full value of deserved dmg as well as difference, for the opponent
 	public String getOpponentDeservedDmgString()
 	{
-		int difference = (int)Math.round(opponent.getTotalDamage() - competitor.getTotalDamage());
-		return (int)Math.round(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		int difference = (int)Math.round(opponent.getDeservedDamage() - competitor.getDeservedDamage());
+		return (int)Math.round(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 
 	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
 	public String getLongCompetitorDeservedDmgString()
 	{
-		double difference = competitor.getTotalDamage() - opponent.getTotalDamage();
+		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
 		String differenceStr = nf.format(difference);
-		return nf.format(competitor.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+		return nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
 	}
 
 	// get full value of deserved dmg as well as difference, for the opponent
 	public String getLongOpponentDeservedDmgString()
 	{
-		double difference = opponent.getTotalDamage() - competitor.getTotalDamage();
+		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
 		String differenceStr = nf.format(difference);
-		return nf.format(opponent.getTotalDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+		return nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
 	}
 
 	public double getCompetitorDeservedDmgDiff()
 	{
-		return competitor.getTotalDamage() - opponent.getTotalDamage();
+		return competitor.getDeservedDamage() - opponent.getDeservedDamage();
 	}
 
 	@Override

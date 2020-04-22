@@ -186,7 +186,7 @@ public class TotalStatsPanel extends JPanel
 	public void addFight(FightPerformance fight)
 	{
 		numFights++;
-		totalDeservedDmg += fight.getCompetitor().getTotalDamage();
+		totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 		totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 
 		avgDeservedDmg = totalDeservedDmg / numFights;
@@ -196,14 +196,14 @@ public class TotalStatsPanel extends JPanel
 		{
 			numDeaths++;
 
-			deathTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 			deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 		}
 		if (fight.getOpponent().isDead())
 		{
 			numKills++;
 
-			killTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 			killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 		}
 
@@ -213,7 +213,7 @@ public class TotalStatsPanel extends JPanel
 		deathAvgDeservedDmg = deathTotalDeservedDmg / numDeaths;
 		deathAvgDeservedDmgDiff = deathTotalDeservedDmgDiff / numDeaths;
 
-		totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getTotalDamage());
+		totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getDeservedDamage());
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -223,24 +223,24 @@ public class TotalStatsPanel extends JPanel
 		numFights += fights.length;
 		for (FightPerformance fight : fights)
 		{
-			totalDeservedDmg += fight.getCompetitor().getTotalDamage();
+			totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 			totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 
 			if (fight.getCompetitor().isDead())
 			{
 				numDeaths++;
 
-				deathTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+				deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 				deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 			}
 			if (fight.getOpponent().isDead())
 			{
 				numKills++;
 
-				killTotalDeservedDmg += fight.getCompetitor().getTotalDamage();
+				killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
 				killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
 			}
-			totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getTotalDamage());
+			totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(), fight.getCompetitor().getDeservedDamage());
 		}
 
 		avgDeservedDmg = totalDeservedDmg / numFights;

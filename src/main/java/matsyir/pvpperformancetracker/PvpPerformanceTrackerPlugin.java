@@ -42,9 +42,12 @@ import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Hitsplat;
+import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
@@ -197,6 +200,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				break;
 			case "useSimpleOverlay":
 			case "showOverlayTitle":
+			case "showOverlayNames":
+			case "showOverlayOffPray":
+			case "showOverlayDeservedDmg":
+			case "showOverlayDmgDealt":
 				overlay.setLines();
 				break;
 			case "fightHistoryLimit":
@@ -312,6 +319,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			});
 		}
 	}
+
+	@Subscribe
+public void onHitsplatApplied(HitsplatApplied event)
+{
+	HitsplatType hitType = event.getHitsplat().getHitsplatType();
+	if (!hasOpponent() || event.getActor() == null || !(event.getActor() instanceof Player) ||
+		!(hitType == HitsplatType.DAMAGE_ME || hitType == HitsplatType.DAMAGE_OTHER ||
+			hitType == HitsplatType.POISON || hitType == HitsplatType.VENOM))
+	{
+		return;
+	}
+
+	currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
+}
 
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()

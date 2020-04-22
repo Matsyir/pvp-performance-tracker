@@ -157,9 +157,29 @@ class FightPerformancePanel extends JPanel
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 
+		// FOURTH LINE: both player's damage dealt
+		JPanel dmgDealtStatsLine = new JPanel();
+		dmgDealtStatsLine.setLayout(new BorderLayout());
+		dmgDealtStatsLine.setBackground(background);
+
+		// fourth line LEFT: player's damage dealt
+		JLabel playerdmgDealtStats = new JLabel();
+		playerdmgDealtStats.setText(String.valueOf(fight.getCompetitor().getDamageDealt()));
+		playerdmgDealtStats.setToolTipText(fight.getCompetitor().getName() + " dealt " + fight.getCompetitor().getDamageDealt() + " damage.");
+		playerdmgDealtStats.setForeground(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+		dmgDealtStatsLine.add(playerdmgDealtStats, BorderLayout.WEST);
+
+		// fourth line RIGHT: opponent's damage dealt
+		JLabel opponentdmgDealtStats = new JLabel();
+		opponentdmgDealtStats.setText(String.valueOf(fight.getOpponent().getDamageDealt()));
+		opponentdmgDealtStats.setToolTipText(fight.getOpponent().getName() + " dealt " + fight.getOpponent().getDamageDealt() + " damage.");
+		opponentdmgDealtStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
+		dmgDealtStatsLine.add(opponentdmgDealtStats, BorderLayout.EAST);
+
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
 		fightPanel.add(deservedDpsStatsLine);
+		fightPanel.add(dmgDealtStatsLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 	}

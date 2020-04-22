@@ -45,11 +45,12 @@ public class PvpDamageCalc
 		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
 		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
-	private static final double ATTACK_LEVEL = 118;
-	private static final double STRENGTH_LEVEL = 118;
-	private static final double DEFENCE_LEVEL = 75;
-	private static final int RANGE_LEVEL = 112;
-	private static final double MAGIC_LEVEL = 99;
+	private static PvpPerformanceTrackerConfig config;
+//	private static final double ATTACK_LEVEL = 118;
+//	private static final double STRENGTH_LEVEL = 118;
+//	private static final double DEFENCE_LEVEL = 75;
+//	private static final int RANGE_LEVEL = 112;
+//	private static final double MAGIC_LEVEL = 99;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
 	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you don't successfully hit off-pray
@@ -97,6 +98,7 @@ public class PvpDamageCalc
 
 	public PvpDamageCalc(ItemManager itemManager)
 	{
+		config = PvpPerformanceTrackerPlugin.CONFIG;
 		this.itemManager = itemManager;
 	}
 
@@ -249,7 +251,7 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
-		int effectiveLevel = (int) Math.floor((STRENGTH_LEVEL * STRENGTH_OFFENSIVE_PRAYER_MODIFIER) + 8 + 3);
+		int effectiveLevel = (int) Math.floor((config.strengthLevel() * STRENGTH_OFFENSIVE_PRAYER_MODIFIER) + 8 + 3);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
 		double modifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MODIFIER : 1;
 		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
@@ -268,7 +270,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		int effectiveLevel = (int) Math.floor((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_DMG_MODIFIER) + 8);
+		int effectiveLevel = (int) Math.floor((config.rangedLevel() * RANGE_OFFENSIVE_PRAYER_DMG_MODIFIER) + 8);
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
@@ -314,7 +316,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((ATTACK_LEVEL * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((config.attackLevel() * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		final double attackBonus = animationType == Stab ? stabBonusPlayer
 			: animationType == Slash ? slashBonusPlayer : crushBonusPlayer;
@@ -334,7 +336,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MELEE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((config.defenceLevel() * MELEE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
 		{
@@ -386,7 +388,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((RANGE_LEVEL * RANGE_OFFENSIVE_PRAYER_ATTACK_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((config.rangedLevel() * RANGE_OFFENSIVE_PRAYER_ATTACK_MODIFIER) + STANCE_BONUS) + 8);
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));
 		if (usingSpec)
 		{
@@ -406,7 +408,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * RANGE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((config.defenceLevel() * RANGE_DEFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
 		/**
@@ -449,18 +451,24 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((MAGIC_LEVEL * MAGIC_OFFENSIVE_PRAYER_MODIFIER)) + 8);
+		effectiveLevelPlayer = Math.floor(((config.magicLevel() * MAGIC_OFFENSIVE_PRAYER_MODIFIER)) + 8);
 		magicModifier = Math.floor(effectiveLevelPlayer * ((double) playerMageAtt + 64));
 		attackerChance = magicModifier;
 
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((DEFENCE_LEVEL * MAGIC_DEFENSIVE_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
-		effectiveMagicLevelTarget = Math.floor((MAGIC_LEVEL * MAGIC_DEFENSIVE_MAGE_PRAYER_MODIFIER) * 0.70);
+		effectiveLevelTarget = Math.floor(((config.defenceLevel() * MAGIC_DEFENSIVE_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveMagicLevelTarget = Math.floor((config.magicLevel() * MAGIC_DEFENSIVE_MAGE_PRAYER_MODIFIER) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
-		defenderChance = Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
+
+		// 0.975x is a simplified brimstone accuracy formula, where x = mage def
+		// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
+		// original formula: 0.25(0.9x) + 0.75x
+		defenderChance = config.ringChoice() == RingData.BRIMSTONE_RING ?
+			Math.floor(effectiveMagicDefenceTarget * ((0.975 * opponentMageDef) + 64)) :
+			Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
 		/**
 		 * Calculate Accuracy
@@ -526,7 +534,18 @@ public class PvpDamageCalc
 	// Calculate total equipment bonuses for all given items
 	private int[] calculateBonuses(int[] itemIds)
 	{
-		int[] equipmentBonuses = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PvpPerformanceTrackerPlugin.CONFIG.assumeZerkRing() ? 4 : 0, 0, 0 };
+		int[] equipmentBonuses = config.ringChoice() == RingData.NONE ?
+			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
+			getItemStats(config.ringChoice().getItemId());
+
+		if (equipmentBonuses == null)
+		{
+			equipmentBonuses = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		}
+
+		log.warn("base equipment bonuses (ring only): " + Arrays.toString(equipmentBonuses));
+
+		//int[] equipmentBonuses = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PvpPerformanceTrackerPlugin.CONFIG.assumeZerkRing() ? 4 : 0, 0, 0 };
 		for (int item : itemIds)
 		{
 			if (item > 512)
