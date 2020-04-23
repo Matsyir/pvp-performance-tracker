@@ -95,11 +95,12 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total, double deservedDamage)
+	void addAttacks(int success, int total, double deservedDamage, int damageDealt)
 	{
 		successCount += success;
 		attackCount += total;
 		this.deservedDamage += deservedDamage;
+		this.damageDealt += damageDealt;
 	}
 
 	void addDamageDealt(int damage)

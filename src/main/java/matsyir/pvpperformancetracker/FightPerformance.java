@@ -97,8 +97,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage);
-		opponent.addAttacks(oSuccess, oTotal, oDamage);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage);
 
 		if (cDead)
 		{
@@ -229,38 +229,60 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// get full value of deserved dmg as well as difference, for the competitor
+	public String getCompetitorDeservedDmgString(int precision, boolean onlyDiff)
+	{
+//		int difference = (int)Math.round(competitor.getDeservedDamage() - opponent.getDeservedDamage());
+//		return (int)Math.round(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		nf.setMaximumFractionDigits(precision);
+		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
+		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+			nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+	}
 	public String getCompetitorDeservedDmgString()
 	{
-		int difference = (int)Math.round(competitor.getDeservedDamage() - opponent.getDeservedDamage());
-		return (int)Math.round(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		return getCompetitorDeservedDmgString(0, false);
 	}
 
 	// get full value of deserved dmg as well as difference, for the opponent
+	public String getOpponentDeservedDmgString(int precision, boolean onlyDiff)
+	{
+//		int difference = (int)Math.round(opponent.getDeservedDamage() - competitor.getDeservedDamage());
+//		return (int)Math.round(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		nf.setMaximumFractionDigits(precision);
+		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
+		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+			nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+	}
+
 	public String getOpponentDeservedDmgString()
 	{
-		int difference = (int)Math.round(opponent.getDeservedDamage() - competitor.getDeservedDamage());
-		return (int)Math.round(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
+		return getOpponentDeservedDmgString(0, false);
 	}
 
 	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
-	public String getLongCompetitorDeservedDmgString()
-	{
-		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
-		String differenceStr = nf.format(difference);
-		return nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
-	}
-
-	// get full value of deserved dmg as well as difference, for the opponent
-	public String getLongOpponentDeservedDmgString()
-	{
-		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
-		String differenceStr = nf.format(difference);
-		return nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
-	}
+//	public String getLongCompetitorDeservedDmgString()
+//	{
+//		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
+//		String differenceStr = nf.format(difference);
+//		return nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+//	}
+//
+//	// get full value of deserved dmg as well as difference, for the opponent. 1 decimal space
+//	public String getLongOpponentDeservedDmgString()
+//	{
+//		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
+//		String differenceStr = nf.format(difference);
+//		return nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
+//	}
 
 	public double getCompetitorDeservedDmgDiff()
 	{
 		return competitor.getDeservedDamage() - opponent.getDeservedDamage();
+	}
+
+	public double getCompetitorDmgDealtDiff()
+	{
+		return competitor.getDamageDealt() - opponent.getDamageDealt();
 	}
 
 	@Override

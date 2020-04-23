@@ -146,14 +146,20 @@ class FightPerformancePanel extends JPanel
 		// third line LEFT: player's deserved dps stats
 		JLabel playerDeservedDpsStats = new JLabel();
 		playerDeservedDpsStats.setText(fight.getCompetitorDeservedDmgString());
-		playerDeservedDpsStats.setToolTipText(fight.getLongCompetitorDeservedDmgString() +  ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		//playerDeservedDpsStats.setToolTipText(fight.getCompetitorDeservedDmgString(1, false) +  ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		playerDeservedDpsStats.setToolTipText(
+			fight.getCompetitor().getName() + " deserved to deal " + fight.getCompetitor().getDeservedDamage() +
+			" damage based on gear/pray (" + fight.getCompetitorDeservedDmgString(1, true) + " vs opponent)");
 		playerDeservedDpsStats.setForeground(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(playerDeservedDpsStats, BorderLayout.WEST);
 
 		// third line RIGHT: opponent's deserved dps stats
 		JLabel opponentDeservedDpsStats = new JLabel();
 		opponentDeservedDpsStats.setText(fight.getOpponentDeservedDmgString());
-		opponentDeservedDpsStats.setToolTipText(fight.getLongOpponentDeservedDmgString() + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		//opponentDeservedDpsStats.setToolTipText(fight.getOpponentDeservedDmgString(1, false) + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		opponentDeservedDpsStats.setToolTipText(
+			fight.getOpponent().getName() + " deserved to deal " + fight.getOpponent().getDeservedDamage() +
+			" damage based on gear/pray (" + fight.getOpponentDeservedDmgString(1, true) + " vs opponent)");
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 

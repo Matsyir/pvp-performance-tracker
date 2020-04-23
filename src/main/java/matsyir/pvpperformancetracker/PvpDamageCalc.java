@@ -94,6 +94,11 @@ public class PvpDamageCalc
 	private static final double SWH_SPEC_DMG_MODIFIER = 1.25;
 	private static final double SWH_SPEC_MIN_DMG_MODIFIER = .25;
 
+	// 0.975x is a simplified brimstone mage def formula, where x = opponent's mage def
+	// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
+	// original formula: 0.25(0.9x) + 0.75x ==> 0.975x
+	public static final double BRIMSTONE_RING_OPPONENT_DEF_MODIFIER = 0.975;
+
 	private ItemManager itemManager;
 
 	public PvpDamageCalc(ItemManager itemManager)
@@ -263,8 +268,8 @@ public class PvpDamageCalc
 	private int getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA || weapon == EquipmentData.HEAVY_BALLISTA_PVP;
-		boolean dbow = weapon == EquipmentData.DARK_BOW || weapon == EquipmentData.DARK_BOW_PVP;
+		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
+		boolean dbow = weapon == EquipmentData.DARK_BOW;
 
 		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
 
@@ -392,8 +397,8 @@ public class PvpDamageCalc
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));
 		if (usingSpec)
 		{
-			boolean acb = weapon == EquipmentData.ARMADYL_CROSSBOW || weapon == EquipmentData.ARMADYL_CROSSBOW_PVP;
-			boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA || weapon == EquipmentData.HEAVY_BALLISTA_PVP;
+			boolean acb = weapon == EquipmentData.ARMADYL_CROSSBOW;
+			boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 
 			double specAccuracyModifier = acb ? ACB_SPEC_ACCURACY_MODIFIER :
 				ballista ? BALLISTA_SPEC_ACCURACY_MODIFIER : 1;
@@ -464,10 +469,8 @@ public class PvpDamageCalc
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
 
 		// 0.975x is a simplified brimstone accuracy formula, where x = mage def
-		// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
-		// original formula: 0.25(0.9x) + 0.75x
 		defenderChance = config.ringChoice() == RingData.BRIMSTONE_RING ?
-			Math.floor(effectiveMagicDefenceTarget * ((0.975 * opponentMageDef) + 64)) :
+			Math.floor(effectiveMagicDefenceTarget * ((BRIMSTONE_RING_OPPONENT_DEF_MODIFIER * opponentMageDef) + 64)) :
 			Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
 		/**
@@ -501,7 +504,7 @@ public class PvpDamageCalc
 			EquipmentData itemData = EquipmentData.getEquipmentDataFor(itemId);
 			if (itemData != null)
 			{
-				itemId = itemData.getRealItemId();
+				itemId = itemData.getItemId();
 				itemStats = this.itemManager.getItemStats(itemId, false);
 			}
 		}
