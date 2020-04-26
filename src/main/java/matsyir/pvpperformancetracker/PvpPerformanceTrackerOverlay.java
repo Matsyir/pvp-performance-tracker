@@ -50,11 +50,12 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent simpleConfigOverlayFirstLine; // Left: player's RSN, Right: off-pray %
 	private LineComponent simpleConfigOverlaySecondLine; // Same as above but for opponent
 
-	// The main overlay is like the panel.
+	// The main overlay is like the panel, each line is optionally turned off.
 	private LineComponent overlayFirstLine; // Left: player's RSN, Right: Opponent RSN
 	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
-	private LineComponent overlayThirdLine; // right: player's deserved dps stats, right: opponent's deserved dps stats
-	private LineComponent overlayFourthLine; // right: player's damage dealt stats, right: opponent's damage dealt stats
+	private LineComponent overlayThirdLine; // left: player's deserved dps stats, right: opponent's deserved dps stats
+	private LineComponent overlayFourthLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
+	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -76,6 +77,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlaySecondLine = LineComponent.builder().build();
 		overlayThirdLine = LineComponent.builder().build();
 		overlayFourthLine = LineComponent.builder().build();
+		overlayFifthLine = LineComponent.builder().build();
 
 		setLines();
 	}
@@ -118,6 +120,12 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 			overlayFourthLine.setRight(String.valueOf(fight.getOpponent().getDamageDealt()));
 			overlayFourthLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+
+			overlayFifthLine.setLeft(String.valueOf(fight.getCompetitor().getMagicHitStats()));
+			overlayFifthLine.setLeftColor(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+
+			overlayFifthLine.setRight(String.valueOf(fight.getOpponent().getMagicHitStats()));
+			overlayFifthLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		}
 
 		return panelComponent.render(graphics);
@@ -156,6 +164,10 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			if (config.showOverlayDmgDealt())
 			{
 				panelComponent.getChildren().add(overlayFourthLine);
+			}
+			if (config.showOverlayMagicHits())
+			{
+				panelComponent.getChildren().add(overlayFifthLine);
 			}
 		}
 	}

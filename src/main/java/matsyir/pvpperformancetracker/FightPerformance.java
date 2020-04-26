@@ -97,8 +97,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 12, 13);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 14, 13);
 
 		if (cDead)
 		{
@@ -128,8 +128,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationAttackType animationType = competitor.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), animationType);
+				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), attackStyle, animationType);
 				lastFightTime = Instant.now().toEpochMilli();
+			}
+			else
+			{
+				log.info(competitor.getName() + " used an unknown animation ID: " + competitor.getPlayer().getAnimation());
 			}
 		}
 		else if (playerName.equals(opponent.getName()))
@@ -138,12 +142,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationAttackType animationType = opponent.getAnimationAttackType();
 			if (attackStyle != null)
 			{
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), animationType);
+				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), attackStyle, animationType);
 				lastFightTime = Instant.now().toEpochMilli();
+			}
+			else
+			{
+				log.info(opponent.getName() + " used an unknown animation ID: " + opponent.getPlayer().getAnimation());
 			}
 		}
 	}
 
+	// add damage dealt to the opposite player.
+	// the player name being passed in is the one who has the hitsplat on them.
 	void addDamageDealt(String playerName, int damage)
 	{
 		if (playerName == null) { return; }
@@ -158,36 +168,20 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 	}
 
-	// returns true if competitor off-pray hit success rate > opponent success rate.
-	// the following functions have similar behaviour.
-	boolean competitorOffPraySuccessIsGreater()
+	// add a splash to the opposite player that it's on.
+	// the player name being passed in is the one who has the splash animation on them.
+	void addSplash(String playerName)
 	{
-		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
-	}
+		if (playerName == null) { return; }
 
-	boolean opponentOffPraySuccessIsGreater()
-	{
-		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
-	}
-
-	boolean competitorDeservedDmgIsGreater()
-	{
-		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
-	}
-
-	boolean opponentDeservedDmgIsGreater()
-	{
-		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
-	}
-
-	boolean competitorDmgDealtIsGreater()
-	{
-		return competitor.getDamageDealt() > opponent.getDamageDealt();
-	}
-
-	boolean opponentDmgDealtIsGreater()
-	{
-		return opponent.getDamageDealt() > competitor.getDamageDealt();
+		if (playerName.equals(competitor.getName()))
+		{
+			opponent.addSplash();
+		}
+		else if (playerName.equals(opponent.getName()))
+		{
+			competitor.addSplash();
+		}
 	}
 
 	// Will return true and stop the fight if the fight should be over.
@@ -228,6 +222,50 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return competitor.getAttackCount() > 0;
 	}
 
+	// returns true if competitor off-pray hit success rate > opponent success rate.
+	// the following functions have similar behaviour.
+	boolean competitorOffPraySuccessIsGreater()
+	{
+		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
+	}
+
+	boolean opponentOffPraySuccessIsGreater()
+	{
+		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
+	}
+
+	boolean competitorDeservedDmgIsGreater()
+	{
+		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
+	}
+
+	boolean opponentDeservedDmgIsGreater()
+	{
+		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
+	}
+
+	boolean competitorDmgDealtIsGreater()
+	{
+		return competitor.getDamageDealt() > opponent.getDamageDealt();
+	}
+
+	boolean opponentDmgDealtIsGreater()
+	{
+		return opponent.getDamageDealt() > competitor.getDamageDealt();
+	}
+
+	boolean competitorMagicHitsLuckier()
+	{
+		return (competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved()) >
+			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+	}
+
+	boolean opponentMagicHitsLuckier()
+	{
+		return (opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved()) >
+			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+	}
+
 	// get full value of deserved dmg as well as difference, for the competitor
 	public String getCompetitorDeservedDmgString(int precision, boolean onlyDiff)
 	{
@@ -250,7 +288,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 //		return (int)Math.round(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
 		nf.setMaximumFractionDigits(precision);
 		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
-		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
 			nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
 
@@ -258,22 +296,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 	{
 		return getOpponentDeservedDmgString(0, false);
 	}
-
-	// get full value of deserved dmg as well as difference, for the competitor. 1 decimal space.
-//	public String getLongCompetitorDeservedDmgString()
-//	{
-//		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
-//		String differenceStr = nf.format(difference);
-//		return nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
-//	}
-//
-//	// get full value of deserved dmg as well as difference, for the opponent. 1 decimal space
-//	public String getLongOpponentDeservedDmgString()
-//	{
-//		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
-//		String differenceStr = nf.format(difference);
-//		return nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + differenceStr + ")";
-//	}
 
 	public double getCompetitorDeservedDmgDiff()
 	{

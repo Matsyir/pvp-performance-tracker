@@ -42,11 +42,13 @@ import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.GraphicID;
 import net.runelite.api.Hitsplat;
 import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GraphicChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.callback.ClientThread;
@@ -321,18 +323,33 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-public void onHitsplatApplied(HitsplatApplied event)
-{
-	HitsplatType hitType = event.getHitsplat().getHitsplatType();
-	if (!hasOpponent() || event.getActor() == null || !(event.getActor() instanceof Player) ||
-		!(hitType == HitsplatType.DAMAGE_ME || hitType == HitsplatType.DAMAGE_OTHER ||
-			hitType == HitsplatType.POISON || hitType == HitsplatType.VENOM))
+	public void onHitsplatApplied(HitsplatApplied event)
 	{
-		return;
+		HitsplatType hitType = event.getHitsplat().getHitsplatType();
+		if (!hasOpponent() || !(event.getActor() instanceof Player) ||
+			!(hitType == HitsplatType.DAMAGE_ME || hitType == HitsplatType.DAMAGE_OTHER ||
+				hitType == HitsplatType.POISON || hitType == HitsplatType.VENOM))
+		{
+			return;
+		}
+
+		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
 
-	currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
-}
+//	@Subscribe
+//	public void onGraphicChanged(GraphicChanged event)
+//	{
+//		log.warn("graphic changed!");
+//		if (!hasOpponent() || !(event.getActor() instanceof Player) || event.getActor().getGraphic() != GraphicID.SPLASH)
+//		{
+//			return;
+//		}
+//
+//		log("We got a splash: " + event.getActor().getName() + " ~ " + event.getActor().getGraphic());
+//		log.warn("we got a splash!");
+//
+//		currentFight.addSplash(event.getActor().getName());
+//	}
 
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()

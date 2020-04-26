@@ -35,6 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.overlay.components.LineComponent;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
@@ -60,6 +61,7 @@ public class TotalStatsPanel extends JPanel
 	private JLabel offPrayStatsLabel;
 	private JLabel deservedDmgStatsLabel;
 	private JLabel dmgDealtStatsLabel;
+	private JLabel magicHitCountStatsLabel;
 	private Fighter totalStats;
 
 	private int numKills = 0;
@@ -97,13 +99,11 @@ public class TotalStatsPanel extends JPanel
 	private double deathAvgDmgDealt = 0;
 	private double deathAvgDmgDealtDiff = 0;
 
-
-
 	TotalStatsPanel()
 	{
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(4, 1));
+		setLayout(new GridLayout(6, 1));
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -170,23 +170,41 @@ public class TotalStatsPanel extends JPanel
 		deservedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(deservedDmgStatsPanel);
 
-		// FIFTH LINE dmgDealtStatsLabel
-		// panel to show the average deserved damage stats (average damage & average diff)
+		// FIFTH LINE
+		// panel to show the average damage dealt stats (average damage & average diff)
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
 
-		// left label with a label to say it's deserved dmg stats
+		// left label with a label to say it's avg dmg dealt
 		JLabel dmgDealtStatsLeftLabel = new JLabel();
-		dmgDealtStatsLeftLabel.setText("Avg Deserved Dmg:");
+		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
 		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
 		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
 
-		// label to show deserved dmg stats
+		// label to show avg dmg dealt
 		dmgDealtStatsLabel = new JLabel();
 		dmgDealtStatsLabel.setForeground(Color.WHITE);
-		dmgDealtStatsPanel.add(deservedDmgStatsLabel, BorderLayout.EAST);
+		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
 		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(dmgDealtStatsPanel);
+
+		// SIXTH LINE
+		// panel to show the total magic hit count and deserved hit count
+		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's magic hit count stats
+		JLabel magicHitStatsLeftLabel = new JLabel();
+		magicHitStatsLeftLabel.setText("Magic Hits Luck:");
+		magicHitStatsLeftLabel.setForeground(Color.WHITE);
+		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show magic hit count stats
+		magicHitCountStatsLabel = new JLabel();
+		magicHitCountStatsLabel.setForeground(Color.WHITE);
+		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
+
+		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		add(magicHitStatsPanel);
 
 		setLabels();
 	}
@@ -225,11 +243,23 @@ public class TotalStatsPanel extends JPanel
 		dmgDealtStatsLabel.setText(Math.round(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
 		dmgDealtStatsLabel.setToolTipText("Avg of " + nf1.format(avgDmgDealt) +
-			" deserved damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
+			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
 			avgDmgDealtDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
 			"). On Deaths: " + nf1.format(deathAvgDmgDealt) +
 			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ").");
+
+		if (totalStats.getMagicHitCountDeserved() >= 10000)
+		{
+			magicHitCountStatsLabel.setText(nf1.format(totalStats.getMagicHitCount() / 1000.0) + "K/" +
+				nf1.format(totalStats.getMagicHitCountDeserved() / 1000.0) + "K");
+		}
+		else
+		{
+			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
+		}
+		magicHitCountStatsLabel.setToolTipText("You hit " + totalStats.getMagicHitCount() +
+			" magic attacks, but deserved to hit " + nf1.format(totalStats.getMagicHitCountDeserved()) + ".");
 	}
 
 	public void addFight(FightPerformance fight)
@@ -283,7 +313,8 @@ public class TotalStatsPanel extends JPanel
 		}
 
 		totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(),
-			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt());
+			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+			fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved());
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -320,7 +351,8 @@ public class TotalStatsPanel extends JPanel
 				killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 			}
 			totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(),
-				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt());
+				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+				fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved());
 		}
 
 		avgDeservedDmg = totalDeservedDmg / numFights;
@@ -356,6 +388,12 @@ public class TotalStatsPanel extends JPanel
 		killTotalDeservedDmgDiff = 0;
 		deathTotalDeservedDmg = 0;
 		deathTotalDeservedDmgDiff = 0;
+		totalDmgDealt = 0;
+		totalDmgDealtDiff = 0;
+		killTotalDmgDealt = 0;
+		killTotalDmgDealtDiff = 0;
+		deathTotalDmgDealt = 0;
+		deathTotalDmgDealtDiff = 0;
 
 		avgDeservedDmg = 0;
 		avgDeservedDmgDiff = 0;
@@ -363,6 +401,12 @@ public class TotalStatsPanel extends JPanel
 		killAvgDeservedDmgDiff = 0;
 		deathAvgDeservedDmg = 0;
 		deathAvgDeservedDmgDiff = 0;
+		avgDmgDealt = 0;
+		avgDmgDealtDiff = 0;
+		killAvgDmgDealt = 0;
+		killAvgDmgDealtDiff = 0;
+		deathAvgDmgDealt = 0;
+		deathAvgDmgDealtDiff = 0;
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);

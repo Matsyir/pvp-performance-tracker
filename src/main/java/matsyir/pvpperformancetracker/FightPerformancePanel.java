@@ -65,6 +65,10 @@ class FightPerformancePanel extends JPanel
 	//
 	FightPerformancePanel(FightPerformance fight)
 	{
+		// save Fighters temporarily for more direct access
+		Fighter competitor = fight.getCompetitor();
+		Fighter opponent = fight.getOpponent();
+
 		setLayout(new BorderLayout(5, 5));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -95,22 +99,22 @@ class FightPerformancePanel extends JPanel
 
 		// first line LEFT: player name
 		JLabel playerStatsName = new JLabel();
-		if (fight.getCompetitor().isDead())
+		if (competitor.isDead())
 		{
 			playerStatsName.setIcon(icon);
 		}
-		playerStatsName.setText(fight.getCompetitor().getName());
+		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 
 		// first line RIGHT: opponent name
 		JLabel opponentStatsName = new JLabel();
-		if (fight.getOpponent().isDead())
+		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(icon);
 		}
-		opponentStatsName.setText(fight.getOpponent().getName());
+		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
 
@@ -121,19 +125,19 @@ class FightPerformancePanel extends JPanel
 
 		// second line LEFT: player's off-pray hit stats
 		JLabel playerOffPrayStats = new JLabel();
-		playerOffPrayStats.setText(fight.getCompetitor().getOffPrayStats());
-		playerOffPrayStats.setToolTipText(fight.getCompetitor().getSuccessCount() + " successful off-pray attacks/" +
-			fight.getCompetitor().getAttackCount() + " total attacks (" +
-			nf.format(fight.getCompetitor().calculateSuccessPercentage()) + "%)");
+		playerOffPrayStats.setText(competitor.getOffPrayStats());
+		playerOffPrayStats.setToolTipText(competitor.getSuccessCount() + " successful off-pray attacks/" +
+			competitor.getAttackCount() + " total attacks (" +
+			nf.format(competitor.calculateSuccessPercentage()) + "%)");
 		playerOffPrayStats.setForeground(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(playerOffPrayStats, BorderLayout.WEST);
 
 		// second line RIGHT:, opponent's off-pray hit stats
 		JLabel opponentOffPrayStats = new JLabel();
-		opponentOffPrayStats.setText(fight.getOpponent().getOffPrayStats());
-		opponentOffPrayStats.setToolTipText(fight.getOpponent().getSuccessCount() + " successful off-pray attacks/" +
-			fight.getOpponent().getAttackCount() + " total attacks (" +
-			nf.format(fight.getOpponent().calculateSuccessPercentage()) + "%)");
+		opponentOffPrayStats.setText(opponent.getOffPrayStats());
+		opponentOffPrayStats.setToolTipText(opponent.getSuccessCount() + " successful off-pray attacks/" +
+			opponent.getAttackCount() + " total attacks (" +
+			nf.format(opponent.calculateSuccessPercentage()) + "%)");
 		opponentOffPrayStats.setForeground(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(opponentOffPrayStats, BorderLayout.EAST);
 
@@ -148,7 +152,7 @@ class FightPerformancePanel extends JPanel
 		playerDeservedDpsStats.setText(fight.getCompetitorDeservedDmgString());
 		//playerDeservedDpsStats.setToolTipText(fight.getCompetitorDeservedDmgString(1, false) +  ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		playerDeservedDpsStats.setToolTipText(
-			fight.getCompetitor().getName() + " deserved to deal " + fight.getCompetitor().getDeservedDamage() +
+			competitor.getName() + " deserved to deal " + nf.format(competitor.getDeservedDamage()) +
 			" damage based on gear/pray (" + fight.getCompetitorDeservedDmgString(1, true) + " vs opponent)");
 		playerDeservedDpsStats.setForeground(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(playerDeservedDpsStats, BorderLayout.WEST);
@@ -158,7 +162,7 @@ class FightPerformancePanel extends JPanel
 		opponentDeservedDpsStats.setText(fight.getOpponentDeservedDmgString());
 		//opponentDeservedDpsStats.setToolTipText(fight.getOpponentDeservedDmgString(1, false) + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		opponentDeservedDpsStats.setToolTipText(
-			fight.getOpponent().getName() + " deserved to deal " + fight.getOpponent().getDeservedDamage() +
+			opponent.getName() + " deserved to deal " + nf.format(opponent.getDeservedDamage()) +
 			" damage based on gear/pray (" + fight.getOpponentDeservedDmgString(1, true) + " vs opponent)");
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
@@ -169,23 +173,47 @@ class FightPerformancePanel extends JPanel
 		dmgDealtStatsLine.setBackground(background);
 
 		// fourth line LEFT: player's damage dealt
-		JLabel playerdmgDealtStats = new JLabel();
-		playerdmgDealtStats.setText(String.valueOf(fight.getCompetitor().getDamageDealt()));
-		playerdmgDealtStats.setToolTipText(fight.getCompetitor().getName() + " dealt " + fight.getCompetitor().getDamageDealt() + " damage.");
-		playerdmgDealtStats.setForeground(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
-		dmgDealtStatsLine.add(playerdmgDealtStats, BorderLayout.WEST);
+		JLabel playerDmgDealtStats = new JLabel();
+		playerDmgDealtStats.setText(String.valueOf(competitor.getDamageDealt()));
+		playerDmgDealtStats.setToolTipText(competitor.getName() + " dealt " + competitor.getDamageDealt() + " damage.");
+		playerDmgDealtStats.setForeground(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+		dmgDealtStatsLine.add(playerDmgDealtStats, BorderLayout.WEST);
 
 		// fourth line RIGHT: opponent's damage dealt
-		JLabel opponentdmgDealtStats = new JLabel();
-		opponentdmgDealtStats.setText(String.valueOf(fight.getOpponent().getDamageDealt()));
-		opponentdmgDealtStats.setToolTipText(fight.getOpponent().getName() + " dealt " + fight.getOpponent().getDamageDealt() + " damage.");
-		opponentdmgDealtStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
-		dmgDealtStatsLine.add(opponentdmgDealtStats, BorderLayout.EAST);
+		JLabel opponentDmgDealtStats = new JLabel();
+		opponentDmgDealtStats.setText(String.valueOf(opponent.getDamageDealt()));
+		opponentDmgDealtStats.setToolTipText(opponent.getName() + " dealt " + opponent.getDamageDealt() + " damage.");
+		opponentDmgDealtStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
+		dmgDealtStatsLine.add(opponentDmgDealtStats, BorderLayout.EAST);
+
+		// FIFTH LINE: both player's magic hit stats (successful magic attacks/deserved successful magic attacks)
+		JPanel magicHitStatsLine = new JPanel();
+		magicHitStatsLine.setLayout(new BorderLayout());
+		magicHitStatsLine.setBackground(background);
+
+		// fifth line LEFT: player's magic hit stats
+		JLabel playerMagicHitStats = new JLabel();
+		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
+		playerMagicHitStats.setToolTipText(competitor.getName() + " hit " +
+			competitor.getMagicHitCount() + " magic attacks, but deserved to hit " +
+			nf.format(competitor.getMagicHitCountDeserved()) + ".");
+		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
+
+		// fifth line RIGHT: opponent's magic hit stats
+		JLabel opponentMagicHitStats = new JLabel();
+		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
+		opponentMagicHitStats.setToolTipText(opponent.getName() + " hit " +
+			opponent.getMagicHitCount() + " magic attacks, but deserved to hit " +
+			nf.format(opponent.getMagicHitCountDeserved()) + ".");
+		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
 		fightPanel.add(deservedDpsStatsLine);
 		fightPanel.add(dmgDealtStatsLine);
+		fightPanel.add(magicHitStatsLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 	}

@@ -46,11 +46,6 @@ public class PvpDamageCalc
 		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
 	private static PvpPerformanceTrackerConfig config;
-//	private static final double ATTACK_LEVEL = 118;
-//	private static final double STRENGTH_LEVEL = 118;
-//	private static final double DEFENCE_LEVEL = 75;
-//	private static final int RANGE_LEVEL = 112;
-//	private static final double MAGIC_LEVEL = 99;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
 	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you don't successfully hit off-pray
@@ -100,6 +95,9 @@ public class PvpDamageCalc
 	public static final double BRIMSTONE_RING_OPPONENT_DEF_MODIFIER = 0.975;
 
 	private ItemManager itemManager;
+//	private int prevMagicAttack; // player's magic attack bonuses during player's previous magic attack
+//	private int prevMagicDefense; // opponent's magic defense bonuses during player's previous magic attack
+	private double prevMagicAccuracy = 0;
 
 	public PvpDamageCalc(ItemManager itemManager)
 	{
@@ -163,6 +161,11 @@ public class PvpDamageCalc
 		{
 			maxHit = this.getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationType);
 			accuracy = this.getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF]);
+
+			if (animationType == Barrage || animationType == Blitz)
+			{
+				prevMagicAccuracy = accuracy;
+			}
 		}
 
 		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
@@ -194,10 +197,6 @@ public class PvpDamageCalc
 				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
 				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
 				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" Anim:")
-				// show animation + U/K for unknown/known
-				.append(ChatColorType.NORMAL).append((String.valueOf(attacker.getAnimation())))
-				.append(animKnown ? ChatColorType.NORMAL : ChatColorType.HIGHLIGHT).append(animKnown ? "K " : "U ")
                 .build();
 		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
 
@@ -209,7 +208,7 @@ public class PvpDamageCalc
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
 		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MODIFIER : 1;
@@ -253,7 +252,7 @@ public class PvpDamageCalc
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER || weapon == EquipmentData.DRAGON_DAGGER_P ||
 			weapon == EquipmentData.DRAGON_DAGGER_PP || weapon == EquipmentData.DRAGON_DAGGER_PPP;
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
 		int effectiveLevel = (int) Math.floor((config.strengthLevel() * STRENGTH_OFFENSIVE_PRAYER_MODIFIER) + 8 + 3);
@@ -296,7 +295,7 @@ public class PvpDamageCalc
 
 	private double getMeleeAccuracy(int[] playerStats, int[] opponentStats, AnimationAttackType animationType, boolean usingSpec, EquipmentData weapon)
 	{
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 
@@ -492,6 +491,12 @@ public class PvpDamageCalc
 		return hitChance;
 	}
 
+	// return the magic accuracy last used on a magic attack, to determine deserved splash chance.
+	public double getLastUsedMagicAccuracy()
+	{
+		return prevMagicAccuracy;
+	}
+
 	// Retrieve item stats for a single item, returned as an int array so they can be modified.
 	// First, try to get the item stats from the item manager. If stats weren't present in the
 	// itemManager, try get the 'real' item id from the EquipmentData. If it's not defined in EquipmentData, it will return null
@@ -571,3 +576,13 @@ public class PvpDamageCalc
 	}
 }
 
+//public class PvpDamageInfo
+//{
+//	int damage;
+//	AnimationAttackStyle style;
+//
+//	public PvpDamageInfo(int damage, AnimationAttackStyle style)
+//	{
+//
+//	}
+//}

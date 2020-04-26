@@ -25,8 +25,11 @@
 package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
 import net.runelite.client.game.ItemManager;
 
@@ -34,6 +37,13 @@ import net.runelite.client.game.ItemManager;
 @Getter
 class Fighter
 {
+	private static final NumberFormat nf = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf.setMaximumFractionDigits(1);
+		nf.setRoundingMode(RoundingMode.HALF_UP);
+	}
+
 	private Player player;
 	@Expose
 	private String name; // username
@@ -45,6 +55,10 @@ class Fighter
 	private double deservedDamage; // total deserved damage based on gear & opponent's pray
 	@Expose
 	private int damageDealt;
+	@Expose
+	private int magicHitCount;
+	@Expose
+	private double magicHitCountDeserved;
 	@Expose
 	private boolean dead; // will be true if the fighter died in the fight
 
@@ -59,6 +73,8 @@ class Fighter
 		successCount = 0;
 		deservedDamage = 0;
 		damageDealt = 0;
+		magicHitCount = 0;
+		magicHitCountDeserved = 0;
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(itemManager);
 	}
@@ -73,16 +89,34 @@ class Fighter
 		successCount = 0;
 		deservedDamage = 0;
 		damageDealt = 0;
+		magicHitCount = 0;
+		magicHitCountDeserved = 0;
 		dead = false;
 	}
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player opponent, AnimationAttackType animationType)
+	void addAttack(boolean successful, Player opponent, AnimationAttackStyle attackStyle, AnimationAttackType animationType)
 	{
 		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
 		this.deservedDamage += deservedDamage;
 		attackCount++;
+
+		// Assume every magic attack is a successful hit, but reduce a hit afterwards if a splash is detected.
+		if (attackStyle == AnimationAttackStyle.Magic)
+		{
+			magicHitCountDeserved += pvpDamageCalc.getLastUsedMagicAccuracy();
+
+			if (opponent.getGraphic() != GraphicID.SPLASH)
+			{
+				PvpPerformanceTrackerPlugin.PLUGIN.log(name + ": we got a mage attack, no splash");
+				magicHitCount++;
+			}
+			else
+			{
+				PvpPerformanceTrackerPlugin.PLUGIN.log(name + ": we got a mage attack, SPLASH");
+			}
+		}
 
 		log.warn("attacker: " + name);
 		log.warn("defender: " + opponent.getName());
@@ -95,17 +129,24 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total, double deservedDamage, int damageDealt)
+	void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved)
 	{
 		successCount += success;
 		attackCount += total;
 		this.deservedDamage += deservedDamage;
 		this.damageDealt += damageDealt;
+		this.magicHitCount += magicHitCount;
+		this.magicHitCountDeserved += magicHitCountDeserved;
 	}
 
 	void addDamageDealt(int damage)
 	{
 		this.damageDealt += damage;
+	}
+
+	void addSplash()
+	{
+		magicHitCount--;
 	}
 
 	void died()
@@ -136,6 +177,11 @@ class Fighter
 	String getOffPrayStats()
 	{
 		return getOffPrayStats(false);
+	}
+
+	String getMagicHitStats()
+	{
+		return magicHitCount + "/" + nf.format(magicHitCountDeserved);
 	}
 
 	double calculateSuccessPercentage()
