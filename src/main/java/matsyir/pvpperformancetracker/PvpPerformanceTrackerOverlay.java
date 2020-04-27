@@ -102,25 +102,30 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		else
 		{
+			// Second line: off-pray hit success stats
 			overlaySecondLine.setLeft(fight.getCompetitor().getOffPrayStats(true));
 			overlaySecondLine.setLeftColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 			overlaySecondLine.setRight(fight.getOpponent().getOffPrayStats(true));
 			overlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 
-			overlayThirdLine.setLeft(fight.getCompetitorDeservedDmgString());
+			// Third line: Deserved damage stats
+			// only show deserved damage difference on the competitor, since space is restricted here and having both
+			// differences is redundant since the sign is simply flipped.
+			overlayThirdLine.setLeft(fight.getCompetitor().getDeservedDmgString(fight.getOpponent()));
 			overlayThirdLine.setLeftColor(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
-			// only show damage for the opponent, since space is restricted here and having both differences
-			// is redundant since the sign is simply flipped.
 			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage())));
 			overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
-			overlayFourthLine.setLeft(String.valueOf(fight.getCompetitor().getDamageDealt()));
+			// Fouth line: Damage dealt stats
+			// same thing for damage dealt, the difference is only on the competitor.
+			overlayFourthLine.setLeft(String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent())));
 			overlayFourthLine.setLeftColor(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
 
 			overlayFourthLine.setRight(String.valueOf(fight.getOpponent().getDamageDealt()));
 			overlayFourthLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
 
+			// Fifth line: magic hit stats/luck
 			overlayFifthLine.setLeft(String.valueOf(fight.getCompetitor().getMagicHitStats()));
 			overlayFifthLine.setLeftColor(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 

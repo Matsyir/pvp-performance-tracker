@@ -124,11 +124,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 		
 		if (playerName.equals(competitor.getName()))
 		{
-			AnimationAttackStyle attackStyle = competitor.getAnimationAttackStyle();
-			AnimationAttackType animationType = competitor.getAnimationAttackType();
-			if (attackStyle != null)
+			AnimationData animationData = competitor.getAnimationData();
+			if (animationData != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != attackStyle.getProtection(), opponent.getPlayer(), attackStyle, animationType);
+				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+					opponent.getPlayer(), animationData);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 			else
@@ -138,11 +138,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 		else if (playerName.equals(opponent.getName()))
 		{
-			AnimationAttackStyle attackStyle = opponent.getAnimationAttackStyle();
-			AnimationAttackType animationType = opponent.getAnimationAttackType();
-			if (attackStyle != null)
+			AnimationData animationData = opponent.getAnimationData();
+			if (animationData != null)
 			{
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != attackStyle.getProtection(), competitor.getPlayer(), attackStyle, animationType);
+				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+					competitor.getPlayer(), animationData);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 			else
@@ -266,37 +266,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
 	}
 
-	// get full value of deserved dmg as well as difference, for the competitor
-	public String getCompetitorDeservedDmgString(int precision, boolean onlyDiff)
-	{
-//		int difference = (int)Math.round(competitor.getDeservedDamage() - opponent.getDeservedDamage());
-//		return (int)Math.round(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
-		nf.setMaximumFractionDigits(precision);
-		double difference = competitor.getDeservedDamage() - opponent.getDeservedDamage();
-		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
-			nf.format(competitor.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
-	}
-	public String getCompetitorDeservedDmgString()
-	{
-		return getCompetitorDeservedDmgString(0, false);
-	}
-
-	// get full value of deserved dmg as well as difference, for the opponent
-	public String getOpponentDeservedDmgString(int precision, boolean onlyDiff)
-	{
-//		int difference = (int)Math.round(opponent.getDeservedDamage() - competitor.getDeservedDamage());
-//		return (int)Math.round(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + difference + ")";
-		nf.setMaximumFractionDigits(precision);
-		double difference = opponent.getDeservedDamage() - competitor.getDeservedDamage();
-		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
-			nf.format(opponent.getDeservedDamage()) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
-	}
-
-	public String getOpponentDeservedDmgString()
-	{
-		return getOpponentDeservedDmgString(0, false);
-	}
-
 	public double getCompetitorDeservedDmgDiff()
 	{
 		return competitor.getDeservedDamage() - opponent.getDeservedDamage();
@@ -307,13 +276,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return competitor.getDamageDealt() - opponent.getDamageDealt();
 	}
 
+	// use to sort by last fight time, to sort fights by date/time.
 	@Override
 	public int compareTo(FightPerformance o)
 	{
 		long diff = lastFightTime - o.lastFightTime;
 
 		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
-		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and safely a small int.
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
 			(int)(diff / Math.abs(diff));
 	}

@@ -206,6 +206,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayOffPray":
 			case "showOverlayDeservedDmg":
 			case "showOverlayDmgDealt":
+			case "showOverlayMagicHits":
 				overlay.setLines();
 				break;
 			case "fightHistoryLimit":
@@ -335,21 +336,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
-
-//	@Subscribe
-//	public void onGraphicChanged(GraphicChanged event)
-//	{
-//		log.warn("graphic changed!");
-//		if (!hasOpponent() || !(event.getActor() instanceof Player) || event.getActor().getGraphic() != GraphicID.SPLASH)
-//		{
-//			return;
-//		}
-//
-//		log("We got a splash: " + event.getActor().getName() + " ~ " + event.getActor().getGraphic());
-//		log.warn("we got a splash!");
-//
-//		currentFight.addSplash(event.getActor().getName());
-//	}
 
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()

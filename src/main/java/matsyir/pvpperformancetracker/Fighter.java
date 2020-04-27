@@ -96,14 +96,14 @@ class Fighter
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player opponent, AnimationAttackStyle attackStyle, AnimationAttackType animationType)
+	void addAttack(boolean successful, Player opponent, AnimationData animationData)
 	{
-		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationType);
+		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationData);
 		this.deservedDamage += deservedDamage;
 		attackCount++;
 
 		// Assume every magic attack is a successful hit, but reduce a hit afterwards if a splash is detected.
-		if (attackStyle == AnimationAttackStyle.Magic)
+		if (animationData.attackStyle == AnimationData.AttackStyle.Magic)
 		{
 			magicHitCountDeserved += pvpDamageCalc.getLastUsedMagicAccuracy();
 
@@ -154,14 +154,9 @@ class Fighter
 		dead = true;
 	}
 
-	AnimationAttackStyle getAnimationAttackStyle()
+	AnimationData getAnimationData()
 	{
-		return AnimationAttackStyle.styleForAnimation(player.getAnimation());
-	}
-
-	AnimationAttackType getAnimationAttackType()
-	{
-		return AnimationAttackType.typeForAnimation(player.getAnimation());
+		return AnimationData.dataForAnimation(player.getAnimation());
 	}
 
 	// Return a simple string to display the current player's success rate.
@@ -181,7 +176,33 @@ class Fighter
 
 	String getMagicHitStats()
 	{
+		nf.setMaximumFractionDigits(2);
 		return magicHitCount + "/" + nf.format(magicHitCountDeserved);
+	}
+
+	String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
+	{
+		nf.setMaximumFractionDigits(precision);
+		double difference = deservedDamage - opponent.deservedDamage;
+		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+			nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+	}
+	String getDeservedDmgString(Fighter opponent)
+	{
+		return getDeservedDmgString(opponent, 0, false);
+	}
+
+
+	String getDmgDealtString(Fighter opponent, int precision, boolean onlyDiff)
+	{
+		nf.setMaximumFractionDigits(precision);
+		double difference = damageDealt - opponent.damageDealt;
+		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+			nf.format(damageDealt) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+	}
+	String getDmgDealtString(Fighter opponent)
+	{
+		return getDmgDealtString(opponent, 0, false);
 	}
 
 	double calculateSuccessPercentage()
