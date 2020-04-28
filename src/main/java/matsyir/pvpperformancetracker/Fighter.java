@@ -25,6 +25,7 @@
 package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import lombok.Getter;
@@ -46,20 +47,28 @@ class Fighter
 
 	private Player player;
 	@Expose
+	@SerializedName("n") // use 1 letter serialized variable names for more compact storage
 	private String name; // username
 	@Expose
+	@SerializedName("a")
 	private int attackCount; // total number of attacks
 	@Expose
+	@SerializedName("s")
 	private int successCount; // total number of successful attacks
 	@Expose
+	@SerializedName("d")
 	private double deservedDamage; // total deserved damage based on gear & opponent's pray
 	@Expose
+	@SerializedName("h") // h for "hitsplats", real hits
 	private int damageDealt;
 	@Expose
+	@SerializedName("m")
 	private int magicHitCount;
 	@Expose
+	@SerializedName("M")
 	private double magicHitCountDeserved;
 	@Expose
+	@SerializedName("x") // x for X_X
 	private boolean dead; // will be true if the fighter died in the fight
 
 	private PvpDamageCalc pvpDamageCalc;
@@ -103,7 +112,7 @@ class Fighter
 		attackCount++;
 
 		// Assume every magic attack is a successful hit, but reduce a hit afterwards if a splash is detected.
-		if (animationData.attackStyle == AnimationData.AttackStyle.Magic)
+		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			magicHitCountDeserved += pvpDamageCalc.getLastUsedMagicAccuracy();
 
@@ -164,9 +173,10 @@ class Fighter
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
 	String getOffPrayStats(boolean shortString)
 	{
+		nf.setMaximumFractionDigits(0);
 		return shortString ?
 			successCount + "/" + attackCount :
-			successCount + "/" + attackCount + " (" + Math.round(calculateSuccessPercentage()) + "%)";
+			nf.format(successCount) + "/" + nf.format(attackCount) + " (" + Math.round(calculateSuccessPercentage()) + "%)";
 	}
 
 	String getOffPrayStats()
@@ -176,8 +186,11 @@ class Fighter
 
 	String getMagicHitStats()
 	{
+		nf.setMaximumFractionDigits(0);
+		String stats = nf.format(magicHitCount);
 		nf.setMaximumFractionDigits(2);
-		return magicHitCount + "/" + nf.format(magicHitCountDeserved);
+		stats += "/" + nf.format(magicHitCountDeserved);
+		return stats;
 	}
 
 	String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
@@ -193,16 +206,15 @@ class Fighter
 	}
 
 
-	String getDmgDealtString(Fighter opponent, int precision, boolean onlyDiff)
+	String getDmgDealtString(Fighter opponent, boolean onlyDiff)
 	{
-		nf.setMaximumFractionDigits(precision);
-		double difference = damageDealt - opponent.damageDealt;
-		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
-			nf.format(damageDealt) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+		int difference = damageDealt - opponent.damageDealt;
+		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + difference + ")" :
+			damageDealt + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 	String getDmgDealtString(Fighter opponent)
 	{
-		return getDmgDealtString(opponent, 0, false);
+		return getDmgDealtString(opponent, false);
 	}
 
 	double calculateSuccessPercentage()

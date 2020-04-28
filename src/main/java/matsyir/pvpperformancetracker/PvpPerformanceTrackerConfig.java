@@ -264,10 +264,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return 99;
 	}
 
+	@Range(
+		min = 1,
+		max = 1300
+	)
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Fight History Limit",
-		description = "Maximum number of previous fights to save. 0 means unlimited. They are lightweight, but will cause significant ram usage at ridiculously high numbers.",
+		description = "Maximum number of previous fights to save and display in the panel.",
 		position = 19
 	)
 	default int fightHistoryLimit()

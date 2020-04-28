@@ -40,6 +40,13 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
 {
+	// number format for 0 decimal digit (mostly for commas in large numbers)
+	private static final NumberFormat nf = NumberFormat.getInstance();
+	static // initialize number format
+	{
+		nf.setMaximumFractionDigits(1);
+		nf.setRoundingMode(RoundingMode.HALF_UP);
+	}
 	// number format for 1 decimal digit
 	private static final NumberFormat nf1 = NumberFormat.getInstance();
 	static // initialize number format
@@ -194,7 +201,7 @@ public class TotalStatsPanel extends JPanel
 
 		// left label with a label to say it's magic hit count stats
 		JLabel magicHitStatsLeftLabel = new JLabel();
-		magicHitStatsLeftLabel.setText("Magic Hits Luck:");
+		magicHitStatsLeftLabel.setText("Magic Luck:");
 		magicHitStatsLeftLabel.setForeground(Color.WHITE);
 		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
 
@@ -214,8 +221,8 @@ public class TotalStatsPanel extends JPanel
 		String avgDeservedDmgDiffOneDecimal = nf1.format(avgDeservedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
-		killsLabel.setText(numKills + " Kill" + (numKills != 1 ? "s" : ""));
-		deathsLabel.setText(numDeaths + " Death" + (numDeaths != 1 ? "s" : ""));
+		killsLabel.setText(nf.format(numKills) + " Kill" + (numKills != 1 ? "s" : ""));
+		deathsLabel.setText(nf.format(numDeaths) + " Death" + (numDeaths != 1 ? "s" : ""));
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -227,27 +234,27 @@ public class TotalStatsPanel extends JPanel
 		{
 			offPrayStatsLabel.setText(totalStats.getOffPrayStats());
 		}
-		offPrayStatsLabel.setToolTipText(totalStats.getSuccessCount() + " successful off-pray attacks/" +
-			totalStats.getAttackCount() + " total attacks (" +
+		offPrayStatsLabel.setToolTipText(nf.format(totalStats.getSuccessCount()) + " successful off-pray attacks/" +
+			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateSuccessPercentage()) + "%)");
 
-		deservedDmgStatsLabel.setText(Math.round(avgDeservedDmg) + " (" +
+		deservedDmgStatsLabel.setText(nf.format(avgDeservedDmg) + " (" +
 			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
 		deservedDmgStatsLabel.setToolTipText("Avg of " + nf1.format(avgDeservedDmg) +
 			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
 			avgDeservedDmgDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDeservedDmg) +
 			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
 			"). On Deaths: " + nf1.format(deathAvgDeservedDmg) +
-			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ").");
+			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")");
 
-		dmgDealtStatsLabel.setText(Math.round(avgDmgDealt) + " (" +
+		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
 		dmgDealtStatsLabel.setToolTipText("Avg of " + nf1.format(avgDmgDealt) +
 			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
 			avgDmgDealtDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
 			"). On Deaths: " + nf1.format(deathAvgDmgDealt) +
-			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ").");
+			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")");
 
 		if (totalStats.getMagicHitCountDeserved() >= 10000)
 		{
@@ -258,8 +265,8 @@ public class TotalStatsPanel extends JPanel
 		{
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
-		magicHitCountStatsLabel.setToolTipText("You hit " + totalStats.getMagicHitCount() +
-			" magic attacks, but deserved to hit " + nf1.format(totalStats.getMagicHitCountDeserved()) + ".");
+		magicHitCountStatsLabel.setToolTipText("You hit " + nf1.format(totalStats.getMagicHitCount()) +
+			" magic attacks, but deserved to hit " + nf1.format(totalStats.getMagicHitCountDeserved()));
 	}
 
 	public void addFight(FightPerformance fight)

@@ -149,19 +149,19 @@ public class PvpDamageCalc
 		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
 		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
 
-		if (animationStyle == AttackStyle.Melee)
+		if (animationStyle == AttackStyle.MELEE)
 		{
 			maxHit = this.getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon);
 			accuracy = this.getMeleeAccuracy(playerStats, opponentStats, animationType, isSpecial, weapon);
 		}
-		else if (animationStyle == AttackStyle.Ranged)
+		else if (animationStyle == AttackStyle.RANGED)
 		{
 			maxHit = this.getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon);
 			accuracy = this.getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon);
 		}
 		// this should always be true at this point, but just in case.
 		// unknown animation styles won't make it here, they should be stopped in FightPerformance::checkForAttackAnimations
-		else if (animationStyle == AttackStyle.Magic)
+		else if (animationStyle == AttackStyle.MAGIC)
 		{
 			maxHit = this.getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData.baseSpellDamage);
 			accuracy = this.getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF]);
@@ -318,11 +318,11 @@ public class PvpDamageCalc
 		 */
 		effectiveLevelPlayer = Math.floor(((config.attackLevel() * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
-		final double attackBonus = animationType == AttackType.Stab ? stabBonusPlayer
-			: animationType == AttackType.Slash ? slashBonusPlayer : crushBonusPlayer;
+		final double attackBonus = animationType == AttackType.STAB ? stabBonusPlayer
+			: animationType == AttackType.SLASH ? slashBonusPlayer : crushBonusPlayer;
 
-		final double targetDefenceBonus = animationType == AttackType.Stab ? stabBonusTarget
-			: animationType == AttackType.Slash ? slashBonusTarget : crushBonusTarget;
+		final double targetDefenceBonus = animationType == AttackType.STAB ? stabBonusTarget
+			: animationType == AttackType.SLASH ? slashBonusTarget : crushBonusTarget;
 
 
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));

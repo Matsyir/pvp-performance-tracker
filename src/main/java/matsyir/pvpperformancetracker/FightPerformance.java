@@ -25,6 +25,7 @@
 package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -56,10 +57,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	@Expose
+	@SerializedName("c") // use 1 letter serialized variable names for more compact storage
 	private Fighter competitor;
 	@Expose
+	@SerializedName("o")
 	private Fighter opponent;
 	@Expose
+	@SerializedName("t")
 	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 
 	// return a random fightPerformance used for testing UI

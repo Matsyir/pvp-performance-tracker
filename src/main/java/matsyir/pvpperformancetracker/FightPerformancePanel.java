@@ -163,7 +163,7 @@ class FightPerformancePanel extends JPanel
 		//opponentDeservedDpsStats.setToolTipText(fight.getOpponentDeservedDmgString(1, false) + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
 		opponentDeservedDpsStats.setToolTipText(
 			opponent.getName() + " deserved to deal " + nf.format(opponent.getDeservedDamage()) +
-			" damage based on gear/pray (" + opponent.getDeservedDmgString(competitor, 1, true) + " vs opponent)");
+			" damage based on gear/pray (" + opponent.getDeservedDmgString(competitor, 1, true) + " vs you)");
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 
@@ -174,15 +174,17 @@ class FightPerformancePanel extends JPanel
 
 		// fourth line LEFT: player's damage dealt
 		JLabel playerDmgDealtStats = new JLabel();
-		playerDmgDealtStats.setText(String.valueOf(competitor.getDamageDealt()));
-		playerDmgDealtStats.setToolTipText(competitor.getName() + " dealt " + competitor.getDamageDealt() + " damage.");
+		playerDmgDealtStats.setText(competitor.getDmgDealtString(opponent));
+		playerDmgDealtStats.setToolTipText(competitor.getName() + " dealt " + competitor.getDamageDealt() +
+			" damage (" + competitor.getDmgDealtString(opponent, true) + "vs opponent)");
 		playerDmgDealtStats.setForeground(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
 		dmgDealtStatsLine.add(playerDmgDealtStats, BorderLayout.WEST);
 
 		// fourth line RIGHT: opponent's damage dealt
 		JLabel opponentDmgDealtStats = new JLabel();
 		opponentDmgDealtStats.setText(String.valueOf(opponent.getDamageDealt()));
-		opponentDmgDealtStats.setToolTipText(opponent.getName() + " dealt " + opponent.getDamageDealt() + " damage.");
+		opponentDmgDealtStats.setToolTipText(opponent.getName() + " dealt " + opponent.getDamageDealt() +
+			" damage (" + opponent.getDmgDealtString(competitor, true) + "vs you)");
 		opponentDmgDealtStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		dmgDealtStatsLine.add(opponentDmgDealtStats, BorderLayout.EAST);
 
@@ -196,7 +198,7 @@ class FightPerformancePanel extends JPanel
 		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
 		playerMagicHitStats.setToolTipText(competitor.getName() + " hit " +
 			competitor.getMagicHitCount() + " magic attacks, but deserved to hit " +
-			nf.format(competitor.getMagicHitCountDeserved()) + ".");
+			nf.format(competitor.getMagicHitCountDeserved()));
 		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
 
@@ -205,7 +207,7 @@ class FightPerformancePanel extends JPanel
 		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
 		opponentMagicHitStats.setToolTipText(opponent.getName() + " hit " +
 			opponent.getMagicHitCount() + " magic attacks, but deserved to hit " +
-			nf.format(opponent.getMagicHitCountDeserved()) + ".");
+			nf.format(opponent.getMagicHitCountDeserved()));
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 

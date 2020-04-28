@@ -27,11 +27,16 @@ package matsyir.pvpperformancetracker;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
@@ -42,13 +47,10 @@ import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.GraphicID;
-import net.runelite.api.Hitsplat;
 import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GraphicChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.callback.ClientThread;
@@ -140,20 +142,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.build();
 
 		fightHistory = new ArrayList<>();
-		gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+
+		gson = new GsonBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
+			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
+				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero
+				: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
+			).create();
 		log.info(config.fightHistoryData());
 
-		FightPerformance[] savedFights = gson.fromJson(config.fightHistoryData(), FightPerformance[].class);
-		importFightHistory(savedFights);
-
-		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//		savedFights = new FightPerformance[1500];
-//		for (int i = 0; i < 1500; i++)
-//		{
-//			FightPerformance fight = FightPerformance.getTestInstance();
-//			savedFights[i] = fight;
-//		}importFightHistory(savedFights);
-
+		importFightHistory();
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
@@ -358,6 +356,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	void addToFightHistory(FightPerformance fight)
 	{
+		if (fight == null) { return; }
 		fightHistory.add(fight);
 		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
@@ -373,9 +372,22 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	void importFightHistory(FightPerformance[] fights)
+	void importFightHistory()
 	{
-		fightHistory.addAll(Arrays.asList(fights));
+		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
+//		FightPerformance[] savedFights = new FightPerformance[500];
+//		for (int i = 0; i < 500; i++)
+//		{
+//			FightPerformance fight = FightPerformance.getTestInstance();
+//			savedFights[i] = fight;
+//		}fightHistory.addAll(Arrays.asList(savedFights));
+
+		List<FightPerformance> savedFights = Arrays.asList(
+			gson.fromJson(config.fightHistoryData(), FightPerformance[].class));
+		savedFights.removeIf(Objects::isNull);
+		fightHistory.addAll(savedFights);
+
+		fightHistory.sort(FightPerformance::compareTo);
 		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
 			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
