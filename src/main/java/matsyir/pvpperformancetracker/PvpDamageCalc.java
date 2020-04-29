@@ -25,10 +25,9 @@
  */
 package matsyir.pvpperformancetracker;
 
-import static matsyir.pvpperformancetracker.AnimationData.AttackType;
+import lombok.Getter;
 import static matsyir.pvpperformancetracker.AnimationData.AttackStyle;
 import java.util.Arrays;
-import java.text.NumberFormat;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -49,7 +48,7 @@ public class PvpDamageCalc
 	private static PvpPerformanceTrackerConfig config;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
-	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you don't successfully hit off-pray
+	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you unsuccessfully hit off-pray
 
 	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
 	private static final double ATTACK_OFFENSIVE_PRAYER_MODIFIER = 1.2;
@@ -93,7 +92,15 @@ public class PvpDamageCalc
 	public static final double BRIMSTONE_RING_OPPONENT_DEF_MODIFIER = 0.975;
 
 	private ItemManager itemManager;
-	private double prevMagicAccuracy = 0;
+
+	@Getter
+	private double averageHit = 0;
+	@Getter
+	private double accuracy = 0;
+	@Getter
+	private int minHit = 0;
+	@Getter
+	private int maxHit = 0;
 
 	public PvpDamageCalc(ItemManager itemManager)
 	{
@@ -101,7 +108,7 @@ public class PvpDamageCalc
 		this.itemManager = itemManager;
 	}
 
-	public double getDamage(Player attacker, Player defender, boolean success, AnimationData animationData)
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData)
 	{
 		// have never seen this occur, but just in case
 		if (attacker == null)
@@ -111,7 +118,7 @@ public class PvpDamageCalc
 				.append(ChatColorType.NORMAL).append("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
 				.build();
 			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-			return 0;
+			return;
 		}
 		if (defender == null)
 		{
@@ -120,87 +127,85 @@ public class PvpDamageCalc
 				.append(ChatColorType.NORMAL).append("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
 				.build();
 			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-			return 0;
+			return;
 		}
 
-		AnimationData.AttackStyle animationStyle = animationData.attackStyle; // basic style: melee/ranged/magic
-		AnimationData.AttackType animationType = animationData.attackType; // in-depth style: crush/slash/etc
+		averageHit = 0;
+		accuracy = 0;
+		minHit = 0;
+		maxHit = 0;
+
+		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
-		int maxHit = 0;
-		double accuracy = 0;
-		double averageHit;
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
 		log.warn("attackerStats: " + Arrays.toString(playerStats));
 		log.warn("defenderStats: " + Arrays.toString(opponentStats));
-		log.warn("animationType: " + (animationType == null ? "null" : animationType.toString()));
+		log.warn("attackStyle: " + attackStyle.toString());
 
 		// if it's a special attack, save that as a boolean, but change the animationType to be the root type
-		// so that accuracy calculations are properly done. Special effect used will be determined based on the
-		// currently used weapon.
-		boolean isSpecial = animationType != null && animationType.isSpecial;
-		if (isSpecial)
-		{
-			animationType = animationType.getRootType();
-		}
+		// so that accuracy calculations are properly done. Special attack used will be determined based on the
+		// currently used weapon, if its special attack has been implemented.
+		boolean isSpecial = animationData.isSpecial;
 
 		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
 		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
 
-		if (animationStyle == AttackStyle.MELEE)
+		if (ArrayUtils.contains(AttackStyle.MELEE_STYLES, attackStyle))
 		{
-			maxHit = this.getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon);
-			accuracy = this.getMeleeAccuracy(playerStats, opponentStats, animationType, isSpecial, weapon);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon);
 		}
-		else if (animationStyle == AttackStyle.RANGED)
+		else if (attackStyle == AttackStyle.RANGED)
 		{
-			maxHit = this.getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon);
-			accuracy = this.getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon);
 		}
-		// this should always be true at this point, but just in case.
-		// unknown animation styles won't make it here, they should be stopped in FightPerformance::checkForAttackAnimations
-		else if (animationStyle == AttackStyle.MAGIC)
+		// this should always be true at this point, but just in case. unknown animation styles won't
+		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
+		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			maxHit = this.getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData.baseSpellDamage);
-			accuracy = this.getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF]);
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData.baseSpellDamage);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF]);
 		}
 
-		averageHit = this.getAverageHit(maxHit, accuracy, success, weapon, isSpecial);
+		getAverageHit(success, weapon, isSpecial);
+
+		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+
 
 		// number format used for outputs.
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-		String accuracyString = nf.format(accuracy);
-		String averageHitString = nf.format(averageHit);
+//		NumberFormat nf = NumberFormat.getInstance();
+//		nf.setMaximumFractionDigits(2);
+//		String accuracyString = nf.format(accuracy);
+//		String averageHitString = nf.format(averageHit);
+//
+//		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+//		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
-
-        String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append(attacker.getName())
-                .append(ChatColorType.HIGHLIGHT).append("Type: ")
-                .append(ChatColorType.NORMAL).append(animationType == null ? "null" : animationType.toString())
-                .append(ChatColorType.HIGHLIGHT).append("  Max: ")
-                .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
-                .append(ChatColorType.HIGHLIGHT).append("  Acc: ")
-                .append(ChatColorType.NORMAL).append(accuracyString)
-                .append(ChatColorType.HIGHLIGHT).append("  AvgHit: ")
-                .append(ChatColorType.NORMAL).append(averageHitString)
-				.append(ChatColorType.HIGHLIGHT).append(" Spec?: ")
-				.append(ChatColorType.NORMAL).append(isSpecial ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
-				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
-				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
-				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
-                .build();
-		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-
-		return averageHit;
+//        String chatMessage = new ChatMessageBuilder()
+//				.append(ChatColorType.NORMAL).append(attacker.getName())
+//                .append(ChatColorType.HIGHLIGHT).append("Type: ")
+//                .append(ChatColorType.NORMAL).append(animationType == null ? "null" : animationType.toString())
+//                .append(ChatColorType.HIGHLIGHT).append("  Max: ")
+//                .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
+//                .append(ChatColorType.HIGHLIGHT).append("  Acc: ")
+//                .append(ChatColorType.NORMAL).append(accuracyString)
+//                .append(ChatColorType.HIGHLIGHT).append("  AvgHit: ")
+//                .append(ChatColorType.NORMAL).append(averageHitString)
+//				.append(ChatColorType.HIGHLIGHT).append(" Spec?: ")
+//				.append(ChatColorType.NORMAL).append(isSpecial ? "Y" : "N")
+//				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
+//				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
+//				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
+//				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
+//                .build();
+//		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
 	}
 
-	private double getAverageHit(int maxHit, double accuracy, boolean success, EquipmentData weapon, boolean usingSpec)
+	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -211,10 +216,10 @@ public class PvpDamageCalc
 		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MODIFIER : 1;
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
-		if ((dbow || vls || swh) && usingSpec)
+		if (usingSpec && (dbow || vls || swh))
 		{
 			double accuracyAdjuster = dbow ? accuracy : 1;
-			int minHit = dbow ? DBOW_SPEC_MIN_HIT : 0;
+			minHit = dbow ? DBOW_SPEC_MIN_HIT : 0;
 			minHit = vls ? (int) (maxHit * VLS_SPEC_MIN_DMG_MODIFIER) : minHit;
 			minHit = swh ? (int) (maxHit * SWH_SPEC_MIN_DMG_MODIFIER) : minHit;
 
@@ -227,7 +232,7 @@ public class PvpDamageCalc
 
 			averageSuccessfulHit = (double) total / maxHit;
 		}
-		else if (claws && usingSpec)
+		else if (usingSpec && claws)
 		{
 			double invertedAccuracy = 1 - accuracy;
 			double averageSuccessfulRegularHit = maxHit / 2;
@@ -235,20 +240,23 @@ public class PvpDamageCalc
 			double lowerModifierChance = 1 - ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
 			double averageSpecialHit = (higherModifierChance * 2) + (lowerModifierChance * 1.5) * averageSuccessfulRegularHit;
 
-			return averageSpecialHit * prayerModifier;
+			averageHit = averageSpecialHit * prayerModifier;
+			accuracy = higherModifierChance + lowerModifierChance;
+			maxHit = (maxHit * 2 + 1);
+			return;
 		}
 		else
 		{
 			averageSuccessfulHit = maxHit / 2.0;
 		}
-		return accuracy * averageSuccessfulHit * prayerModifier * agsModifier;
+
+		averageHit = accuracy * averageSuccessfulHit * prayerModifier * agsModifier;
 	}
 
-	private int getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon)
+	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
-		boolean dds = weapon == EquipmentData.DRAGON_DAGGER || weapon == EquipmentData.DRAGON_DAGGER_P ||
-			weapon == EquipmentData.DRAGON_DAGGER_PP || weapon == EquipmentData.DRAGON_DAGGER_PPP;
+		boolean dds = ArrayUtils.contains(EquipmentData.DRAGON_DAGGERS, weapon);
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
@@ -258,10 +266,10 @@ public class PvpDamageCalc
 		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
 		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
 		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
-		return (int) (modifier * baseDamage);
+		maxHit = (int) (modifier * baseDamage);
 	}
 
-	private int getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon)
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
@@ -278,18 +286,18 @@ public class PvpDamageCalc
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
 		modifier = dbow && !usingSpec ? DBOW_DMG_MODIFIER : modifier;
 		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
-		return weaponAmmo == null ?
+		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit());
 	}
 
-	private int getMagicMaxHit(int mageDamageBonus, int baseSpellDamage)
+	private void getMagicMaxHit(int mageDamageBonus, int baseSpellDamage)
 	{
 		double magicBonus = 1 + (mageDamageBonus / 100);
-		return (int) (baseSpellDamage * magicBonus);
+		maxHit = (int) (baseSpellDamage * magicBonus);
 	}
 
-	private double getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackType animationType, boolean usingSpec, EquipmentData weapon)
+	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -310,7 +318,6 @@ public class PvpDamageCalc
 		double attackerChance;
 		double defenderChance = 0;
 
-		double hitChance;
 		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER : ags ? AGS_SPEC_ACCURACY_MODIFIER : 1;
 
 		/**
@@ -318,11 +325,11 @@ public class PvpDamageCalc
 		 */
 		effectiveLevelPlayer = Math.floor(((config.attackLevel() * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
-		final double attackBonus = animationType == AttackType.STAB ? stabBonusPlayer
-			: animationType == AttackType.SLASH ? slashBonusPlayer : crushBonusPlayer;
+		final double attackBonus = attackStyle == AttackStyle.STAB ? stabBonusPlayer
+			: attackStyle == AttackStyle.SLASH ? slashBonusPlayer : crushBonusPlayer;
 
-		final double targetDefenceBonus = animationType == AttackType.STAB ? stabBonusTarget
-			: animationType == AttackType.SLASH ? slashBonusTarget : crushBonusTarget;
+		final double targetDefenceBonus = attackStyle == AttackStyle.STAB ? stabBonusTarget
+			: attackStyle == AttackStyle.SLASH ? slashBonusTarget : crushBonusTarget;
 
 
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));
@@ -356,21 +363,15 @@ public class PvpDamageCalc
 		 */
 		if (attackerChance > defenderChance)
 		{
-			hitChance = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
+			accuracy = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
 		}
 		else
 		{
-			hitChance = attackerChance / (2 * (defenderChance + 1));
+			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
-
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-		nf.format(hitChance);
-
-		return hitChance;
 	}
 
-	private double getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
@@ -379,7 +380,6 @@ public class PvpDamageCalc
 		double rangeModifier;
 		double attackerChance;
 		double defenderChance;
-		double hitChance;
 
 		/**
 		 * Attacker Chance
@@ -412,23 +412,19 @@ public class PvpDamageCalc
 		 */
 		if (attackerChance > defenderChance)
 		{
-			hitChance = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
+			accuracy = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
 		}
 		else
 		{
-			hitChance = attackerChance / (2 * (defenderChance + 1));
+			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
-
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-		nf.format(hitChance);
 
 		// diamond bolts accuracy: 10% of attacks are 100% accuracy, so apply avg accuracy as:
 		// (90% of normal accuracy) + (10% of 100% accuracy)
-		return diamonds ? (hitChance * .9) + .1 : hitChance;
+		accuracy = diamonds ? (accuracy * .9) + .1 : accuracy;
 	}
 
-	private double getMagicAccuracy(int playerMageAtt, int opponentMageDef)
+	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef)
 	{
 		double effectiveLevelPlayer;
 
@@ -442,7 +438,6 @@ public class PvpDamageCalc
 
 		double attackerChance;
 		double defenderChance;
-		double hitChance;
 
 		/**
 		 * Attacker Chance
@@ -469,25 +464,12 @@ public class PvpDamageCalc
 		 */
 		if (attackerChance > defenderChance)
 		{
-			hitChance = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
+			accuracy = 1 - (defenderChance + 2) / (2 * (attackerChance + 1));
 		}
 		else
 		{
-			hitChance = attackerChance / (2 * (defenderChance + 1));
+			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
-
-		NumberFormat nf = NumberFormat.getInstance();
-		nf.setMaximumFractionDigits(2);
-		nf.format(hitChance);
-
-		prevMagicAccuracy = hitChance; // save previously used magic accuracy.
-		return hitChance;
-	}
-
-	// return the magic accuracy last used on a magic attack, to determine deserved splash chance.
-	public double getLastUsedMagicAccuracy()
-	{
-		return prevMagicAccuracy;
 	}
 
 	// Retrieve item stats for a single item, returned as an int array so they can be modified.
@@ -568,14 +550,3 @@ public class PvpDamageCalc
 		return equipmentBonuses;
 	}
 }
-
-//public class PvpDamageInfo
-//{
-//	int damage;
-//	AnimationAttackStyle style;
-//
-//	public PvpDamageInfo(int damage, AnimationAttackStyle style)
-//	{
-//
-//	}
-//}

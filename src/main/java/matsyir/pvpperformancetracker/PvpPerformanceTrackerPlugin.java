@@ -146,7 +146,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		gson = new GsonBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
-				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero
+				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
 				: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
 			).create();
 		log.info(config.fightHistoryData());

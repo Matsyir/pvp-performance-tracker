@@ -100,6 +100,7 @@ public enum EquipmentData
 	IMBUED_GUTHIX_CAPE(23603, 21793),
 	IMBUED_SARADOMIN_CAPE(23607, 21791);
 
+	public static final EquipmentData[] DRAGON_DAGGERS = { DRAGON_DAGGER, DRAGON_DAGGER_P, DRAGON_DAGGER_PP, DRAGON_DAGGER_PPP };
 	private static final Map<Integer, EquipmentData> itemData = new HashMap<>();
 
 	@Getter

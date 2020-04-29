@@ -30,6 +30,8 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
@@ -169,22 +171,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 		else if (playerName.equals(opponent.getName()))
 		{
 			competitor.addDamageDealt(damage);
-		}
-	}
-
-	// add a splash to the opposite player that it's on.
-	// the player name being passed in is the one who has the splash animation on them.
-	void addSplash(String playerName)
-	{
-		if (playerName == null) { return; }
-
-		if (playerName.equals(competitor.getName()))
-		{
-			opponent.addSplash();
-		}
-		else if (playerName.equals(opponent.getName()))
-		{
-			competitor.addSplash();
 		}
 	}
 

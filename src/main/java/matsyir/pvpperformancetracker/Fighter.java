@@ -28,6 +28,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.GraphicID;
@@ -71,6 +72,8 @@ class Fighter
 	@SerializedName("x") // x for X_X
 	private boolean dead; // will be true if the fighter died in the fight
 
+	private ArrayList<FightLogEntry> fightLogEntries;
+
 	private PvpDamageCalc pvpDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
@@ -86,6 +89,7 @@ class Fighter
 		magicHitCountDeserved = 0;
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(itemManager);
+		fightLogEntries = new ArrayList<>();
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -107,14 +111,19 @@ class Fighter
 	// also update the success rate with the new counts.
 	void addAttack(boolean successful, Player opponent, AnimationData animationData)
 	{
-		double deservedDamage = pvpDamageCalc.getDamage(this.player, opponent, successful, animationData);
-		this.deservedDamage += deservedDamage;
 		attackCount++;
+		if (successful)
+		{
+			successCount++;
+		}
+
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		deservedDamage += pvpDamageCalc.getAverageHit();
 
 		// Assume every magic attack is a successful hit, but reduce a hit afterwards if a splash is detected.
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
-			magicHitCountDeserved += pvpDamageCalc.getLastUsedMagicAccuracy();
+			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
 
 			if (opponent.getGraphic() != GraphicID.SPLASH)
 			{
@@ -131,10 +140,9 @@ class Fighter
 		log.warn("defender: " + opponent.getName());
 		log.warn("deservedDamage: " + deservedDamage);
 
-		if (successful)
-		{
-			successCount++;
-		}
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc);
+		PvpPerformanceTrackerPlugin.PLUGIN.log(fightLogEntry.toChatMessage(name));
+		fightLogEntries.add(fightLogEntry);
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
@@ -151,11 +159,6 @@ class Fighter
 	void addDamageDealt(int damage)
 	{
 		this.damageDealt += damage;
-	}
-
-	void addSplash()
-	{
-		magicHitCount--;
 	}
 
 	void died()
