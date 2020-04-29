@@ -375,17 +375,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	void importFightHistory()
 	{
 		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//		FightPerformance[] savedFights = new FightPerformance[500];
-//		for (int i = 0; i < 500; i++)
-//		{
-//			FightPerformance fight = FightPerformance.getTestInstance();
-//			savedFights[i] = fight;
-//		}fightHistory.addAll(Arrays.asList(savedFights));
+		FightPerformance[] savedFights = new FightPerformance[500];
+		for (int i = 0; i < 500; i++)
+		{
+			FightPerformance fight = FightPerformance.getTestInstance();
+			savedFights[i] = fight;
+		}fightHistory.addAll(Arrays.asList(savedFights));
 
-		List<FightPerformance> savedFights = Arrays.asList(
-			gson.fromJson(config.fightHistoryData(), FightPerformance[].class));
-		savedFights.removeIf(Objects::isNull);
-		fightHistory.addAll(savedFights);
+//		List<FightPerformance> savedFights = Arrays.asList(
+//			gson.fromJson(config.fightHistoryData(), FightPerformance[].class));
+//		savedFights.removeIf(Objects::isNull);
+//		fightHistory.addAll(savedFights);
 
 		fightHistory.sort(FightPerformance::compareTo);
 		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())

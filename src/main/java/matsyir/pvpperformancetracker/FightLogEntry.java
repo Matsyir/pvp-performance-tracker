@@ -44,10 +44,10 @@ public class FightLogEntry
 	private double accuracy;
 	@Expose
 	@SerializedName("h") // h for highest hit
-	private double maxHit;
+	private int maxHit;
 	@Expose
 	@SerializedName("l") // l for lowest hit
-	private double minHit;
+	private int minHit;
 	@Expose
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed

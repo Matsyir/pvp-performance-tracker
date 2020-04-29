@@ -222,6 +222,7 @@ class Fighter
 
 	double calculateSuccessPercentage()
 	{
-		return (double) successCount / attackCount * 100.0;
+		return attackCount == 0 ? 0 :
+		(double) successCount / attackCount * 100.0;
 	}
 }

@@ -26,7 +26,10 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -35,6 +38,7 @@ import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.util.ImageUtil;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
@@ -218,5 +222,41 @@ class FightPerformancePanel extends JPanel
 		fightPanel.add(magicHitStatsLine);
 
 		add(fightPanel, BorderLayout.NORTH);
+
+// setup mouse events for hovering and clicking to open
+MouseAdapter itemPanelMouseListener = new MouseAdapter()
+{
+	@Override
+	public void mouseEntered(MouseEvent e)
+	{
+		//matchComponentBackground(panel, ColorScheme.DARK_GRAY_HOVER_COLOR);
+		setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+		setCursor(new Cursor(Cursor.HAND_CURSOR));
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e)
+	{
+//				for (JPanel panel : panels)
+//				{
+//					matchComponentBackground(panel, background);
+//				}
+		setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e)
+	{
+		JFrame x = new JFrame("Test");
+		JPanel mainPanel = new JPanel(new BorderLayout(4,4));
+		mainPanel.add(new JLabel("BEEP BOOP"));
+		x.add(mainPanel);
+		x.setVisible(true);
+		//geLink(name, itemID);
+	}
+};
+
+addMouseListener(itemPanelMouseListener);
 	}
 }
