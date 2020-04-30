@@ -31,12 +31,16 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.client.game.ItemManager;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // Basic class to hold information about PvP fight performances. A "successful" attack
 // is dealt by not attacking with the style of the opponent's overhead. For example,
@@ -83,7 +87,19 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		boolean cDead = Math.random() >= 0.5;
 
-		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset);
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>();
+		int [] attackerItems = {0, 0, 0};
+		int [] defenderItems = {0, 0, 0};
+		String attackerName = "testname";
+		FightLogEntry fightLogEntry = new FightLogEntry(attackerItems, 21, 0.5, 1, 12, defenderItems, attackerName);
+		FightLogEntry fightLogEntry2 = new FightLogEntry(attackerItems, 11, 0.2, 1, 41, defenderItems, attackerName);
+		FightLogEntry fightLogEntry3 = new FightLogEntry(attackerItems, 12, 0.3, 1, 21, defenderItems, attackerName);
+		FightLogEntry fightLogEntry4 = new FightLogEntry(attackerItems, 43, 0.1, 1, 23, defenderItems, attackerName);
+		fightLogEntries.add(fightLogEntry);
+		fightLogEntries.add(fightLogEntry2);
+		fightLogEntries.add(fightLogEntry3);
+		fightLogEntries.add(fightLogEntry4);
+		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset, fightLogEntries);
 	}
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0.
@@ -98,10 +114,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// Used for testing purposes
-	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset)
+	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset, ArrayList<FightLogEntry> fightLogs)
 	{
-		this.competitor = new Fighter(cName);
-		this.opponent = new Fighter(oName);
+		this.competitor = new Fighter(cName, fightLogs);
+		this.opponent = new Fighter(oName, fightLogs);
 
 		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 12, 13);
 		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 14, 13);
@@ -205,6 +221,16 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return isOver;
 	}
 
+	ArrayList<FightLogEntry> sortFights() {
+		ArrayList<FightLogEntry> competitorActions = competitor.getFightLogEntries();
+		ArrayList<FightLogEntry> opponentActions = opponent.getFightLogEntries();
+		ArrayList<FightLogEntry> combinedList = new ArrayList<FightLogEntry>();
+		combinedList.addAll(competitorActions);
+		combinedList.addAll(opponentActions);
+		Collections.sort(combinedList, new ListComparator());
+		return combinedList;
+	}
+
 	// only count the fight as started if the competitor attacked, not the enemy because
 	// the person the competitor clicked on might be attacking someone else
 	boolean fightStarted()
@@ -276,5 +302,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
 			(int)(diff / Math.abs(diff));
+	}
+}
+
+class ListComparator implements Comparator<FightLogEntry> {
+	public int compare(FightLogEntry f1, FightLogEntry f2) {
+		return (int) (f1.getTime() - f2.getTime());
 	}
 }
