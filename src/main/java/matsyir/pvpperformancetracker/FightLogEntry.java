@@ -92,12 +92,12 @@ public class FightLogEntry
 		this.attackerName = attackerName;
 		this.attackerGear = attackerGear;
 		this.attackerOverhead = HeadIcon.MAGIC;
-		this.animationData = AnimationData.MELEE_DAGGER_SLASH;
+		this.animationData = Math.random() >= 0.5 ? AnimationData.MELEE_DAGGER_SLASH : AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
 		this.deservedDamage = deservedDamage;
 		this.accuracy = accuracy;
 		this.minHit = minHit;
 		this.maxHit = maxHit;
-		this.splash = false;
+		this.splash = Math.random() >= 0.5;
 		this.time = Instant.now().toEpochMilli();
 		this.defenderGear = defenderGear;
 		this.defenderOverhead = HeadIcon.MAGIC;
