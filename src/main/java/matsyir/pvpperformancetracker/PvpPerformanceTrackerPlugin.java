@@ -60,6 +60,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -74,6 +75,7 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	public static SpriteManager SPRITE_MANAGER;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
 	public List<FightPerformance> fightHistory;
@@ -91,6 +93,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private PvpPerformanceTrackerConfig config;
+
+	@Inject
+	private SpriteManager spriteManager;
 
 	@Inject
 	private Client client;
@@ -140,7 +145,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.priority(6)
 			.panel(panel)
 			.build();
-
+		SPRITE_MANAGER = spriteManager;
 		fightHistory = new ArrayList<>();
 
 		gson = new GsonBuilder()

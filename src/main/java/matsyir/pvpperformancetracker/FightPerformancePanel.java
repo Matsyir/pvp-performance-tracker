@@ -27,15 +27,23 @@ package matsyir.pvpperformancetracker;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
+import java.nio.Buffer;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import javax.inject.Inject;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+
+import net.runelite.api.HeadIcon;
+import net.runelite.api.SpriteID;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.util.ImageUtil;
@@ -44,6 +52,7 @@ import org.apache.commons.text.WordUtils;
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
 // stats are fixed to the right.
+
 class FightPerformancePanel extends JPanel
 {
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
@@ -259,21 +268,60 @@ class FightPerformancePanel extends JPanel
 				JFrame x = new JFrame(title);
 				x.setPreferredSize(new Dimension(400, 300));
 				JPanel mainPanel = new JPanel(new BorderLayout(4,4));
-				String [][] stats = new String[100][100];
+				Object [][] stats = new Object[fight.sortFights().size()][10];
 				int i = 0;
+				long initialTime = 0;
+
 				for (FightLogEntry fightEntry : fight.sortFights()) {
+					if (i == 0) {
+						initialTime = fightEntry.getTime();
+					}
+					int styleIcon;
+					if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.RANGED) {
+						styleIcon = SpriteID.COMBAT_STYLE_CROSSBOW_RAPID;
+					} else if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC) {
+						styleIcon = SpriteID.COMBAT_STYLE_MAGIC_RAPID;
+					} else {
+						styleIcon = SpriteID.COMBAT_STYLE_SWORD_SLASH;
+					}
+					int prayIcon = 0;
+					boolean noOverhead = false;
+					if (fightEntry.getDefenderOverhead() == HeadIcon.RANGED) {
+						prayIcon = SpriteID.PRAYER_PROTECT_FROM_MISSILES;
+					} else if (fightEntry.getDefenderOverhead() == HeadIcon.MAGIC) {
+						prayIcon = SpriteID.PRAYER_PROTECT_FROM_MAGIC;
+					}  else if (fightEntry.getDefenderOverhead() == HeadIcon.MELEE) {
+						prayIcon = SpriteID.PRAYER_PROTECT_FROM_MELEE;
+					} else {
+						noOverhead = true;
+					}
+					int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
+					BufferedImage freezeIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(freezeIcon, 0);
+					BufferedImage styleIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(styleIcon, 0);
 					stats[i][0] = fightEntry.getAttackerName();
-					stats[i][1] = WordUtils.capitalizeFully(fightEntry.getAnimationData().attackStyle.toString());
+					stats[i][1] = styleIconRendered;
 					stats[i][2] = fightEntry.getHitRange();
 					stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
 					stats[i][4] = nf.format(fightEntry.getDeservedDamage());
-					stats[i][5] = fightEntry.getAnimationData().isSpecial ? "Y" : "N";
-					stats[i][6] = fightEntry.success() ? "Y" : "N";
+					stats[i][5] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
+					stats[i][6] = fightEntry.success() ? "✔" : "✖";
+					stats[i][7] = noOverhead ? "" : PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(prayIcon, 0);
+					if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC) {
+						stats[i][8] = freezeIconRendered;
+					} else {
+						stats[i][8] = "";
+
+					}
+					stats[i][9] = nf.format((fightEntry.getTime() - initialTime) / 1000);
 					i++;
 				}
 
-				String[] header = { "Attacker", "Style", "Hit", "Acc", "AvgHit", "Spec?", "OffP?" };
+				String[] header = { "Attacker", "Style", "Hit", "Acc", "AvgHit", "Spec?", "OffP?", "D Prayer", "Splash", "Time" };
 				JTable table = new JTable(stats, header);
+				table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer());
+				table.getColumnModel().getColumn(7).setCellRenderer(new BufferedImageCellRenderer());
+				table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
+				table.setRowHeight(30);
 				mainPanel.add(new JScrollPane(table));
 
 				x.setSize(550, 400);
@@ -283,5 +331,19 @@ class FightPerformancePanel extends JPanel
 		};
 
 addMouseListener(itemPanelMouseListener);
+	}
+}
+
+class BufferedImageCellRenderer extends DefaultTableCellRenderer {
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+		super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		if (value instanceof BufferedImage) {
+			setIcon(new ImageIcon((BufferedImage)value));
+			setText("");
+		} else {
+			setText("");
+		}
+		return this;
 	}
 }
