@@ -236,9 +236,9 @@ public class PvpDamageCalc
 		{
 			double invertedAccuracy = 1 - accuracy;
 			double averageSuccessfulRegularHit = maxHit / 2;
-			double higherModifierChance = 1 - (accuracy + (accuracy * invertedAccuracy));
-			double lowerModifierChance = 1 - ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
-			double averageSpecialHit = (higherModifierChance * 2) + (lowerModifierChance * 1.5) * averageSuccessfulRegularHit;
+			double higherModifierChance = (accuracy + (accuracy * invertedAccuracy));
+			double lowerModifierChance = ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
+			double averageSpecialHit = ((higherModifierChance * 2) + (lowerModifierChance * 1.5)) * averageSuccessfulRegularHit;
 
 			averageHit = averageSpecialHit * prayerModifier;
 			accuracy = higherModifierChance + lowerModifierChance;

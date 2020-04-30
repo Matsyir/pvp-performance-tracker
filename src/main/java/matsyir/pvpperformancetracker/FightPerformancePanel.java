@@ -24,22 +24,22 @@
  */
 package matsyir.pvpperformancetracker;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.util.ImageUtil;
+import org.apache.commons.text.WordUtils;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
@@ -53,6 +53,16 @@ class FightPerformancePanel extends JPanel
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 	}
+
+	private void matchComponentBackground(JPanel panel, Color color)
+	{
+		panel.setBackground(color);
+		for (Component c : panel.getComponents())
+		{
+			c.setBackground(color);
+		}
+	}
+
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -223,39 +233,54 @@ class FightPerformancePanel extends JPanel
 
 		add(fightPanel, BorderLayout.NORTH);
 
-// setup mouse events for hovering and clicking to open
-MouseAdapter itemPanelMouseListener = new MouseAdapter()
-{
-	@Override
-	public void mouseEntered(MouseEvent e)
-	{
-		//matchComponentBackground(panel, ColorScheme.DARK_GRAY_HOVER_COLOR);
-		setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
-		setCursor(new Cursor(Cursor.HAND_CURSOR));
-	}
+		// setup mouse events for hovering and clicking to open
+		MouseAdapter itemPanelMouseListener = new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				matchComponentBackground(fightPanel, ColorScheme.DARK_GRAY_HOVER_COLOR);
+				setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+				setCursor(new Cursor(Cursor.HAND_CURSOR));
+			}
 
-	@Override
-	public void mouseExited(MouseEvent e)
-	{
-//				for (JPanel panel : panels)
-//				{
-//					matchComponentBackground(panel, background);
-//				}
-		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	}
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				matchComponentBackground(fightPanel, ColorScheme.DARKER_GRAY_COLOR);
+				setBackground(ColorScheme.DARKER_GRAY_COLOR);
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
 
-	@Override
-	public void mouseReleased(MouseEvent e)
-	{
-		JFrame x = new JFrame("Test");
-		JPanel mainPanel = new JPanel(new BorderLayout(4,4));
-		mainPanel.add(new JLabel("BEEP BOOP"));
-		x.add(mainPanel);
-		x.setVisible(true);
-		//geLink(name, itemID);
-	}
-};
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				String title = competitor.getName() + " vs " + opponent.getName();
+				JFrame x = new JFrame(title);
+				x.setPreferredSize(new Dimension(400, 300));
+				JPanel mainPanel = new JPanel(new BorderLayout(4,4));
+				String [][] stats = new String[100][100];
+				int i = 0;
+				for (FightLogEntry fightEntry : fight.sortFights()) {
+					stats[i][0] = fightEntry.getAttackerName();
+					stats[i][1] = WordUtils.capitalizeFully(fightEntry.getAnimationData().attackStyle.toString());
+					stats[i][2] = fightEntry.getHitRange();
+					stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
+					stats[i][4] = nf.format(fightEntry.getDeservedDamage());
+					stats[i][5] = fightEntry.getAnimationData().isSpecial ? "Y" : "N";
+					stats[i][6] = fightEntry.success() ? "Y" : "N";
+					i++;
+				}
+
+				String[] header = { "Attacker", "Style", "Hit", "Acc", "AvgHit", "Spec?", "OffP?" };
+				JTable table = new JTable(stats, header);
+				mainPanel.add(new JScrollPane(table));
+
+				x.setSize(550, 400);
+				x.add(mainPanel);
+				x.setVisible(true);
+			}
+		};
 
 addMouseListener(itemPanelMouseListener);
 	}

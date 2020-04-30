@@ -5,6 +5,9 @@ import com.google.gson.annotations.SerializedName;
 import java.awt.Color;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.time.Instant;
+
+import lombok.Getter;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
@@ -14,6 +17,7 @@ import net.runelite.client.chat.QueuedMessage;
 import org.apache.commons.text.WordUtils;
 
 // A fight log entry for a single Fighter. Will be saved in a List of FightLogEntries in the Fighter class.
+@Getter
 public class FightLogEntry
 {
 	public static final NumberFormat nf;
@@ -59,9 +63,16 @@ public class FightLogEntry
 	@Expose
 	@SerializedName("o")
 	private HeadIcon defenderOverhead;
+	@Expose
+	@SerializedName("t")
+	private long time;
+	@Expose
+	@SerializedName("n")
+	private String attackerName;
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc)
 	{
+		this.attackerName = attacker.getName();
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
 		this.attackerOverhead = attacker.getOverheadIcon();
 		this.animationData = AnimationData.dataForAnimation(attacker.getAnimation());
@@ -70,10 +81,28 @@ public class FightLogEntry
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
+		this.time = Instant.now().toEpochMilli();
 
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
 		this.defenderOverhead = defender.getOverheadIcon();
 	}
+
+	public FightLogEntry(int [] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)
+	{
+		this.attackerName = attackerName;
+		this.attackerGear = attackerGear;
+		this.attackerOverhead = HeadIcon.MAGIC;
+		this.animationData = AnimationData.MELEE_DAGGER_SLASH;
+		this.deservedDamage = deservedDamage;
+		this.accuracy = accuracy;
+		this.minHit = minHit;
+		this.maxHit = maxHit;
+		this.splash = false;
+		this.time = Instant.now().toEpochMilli();
+		this.defenderGear = defenderGear;
+		this.defenderOverhead = HeadIcon.MAGIC;
+	}
+
 
 	public boolean success()
 	{

@@ -92,6 +92,21 @@ class Fighter
 		fightLogEntries = new ArrayList<>();
 	}
 
+	// fighter that is bound to a player and gets updated during a fight
+	Fighter(String name, ArrayList<FightLogEntry> logs)
+	{
+		player = null;
+		this.name = name;
+		attackCount = 0;
+		successCount = 0;
+		deservedDamage = 0;
+		damageDealt = 0;
+		magicHitCount = 0;
+		magicHitCountDeserved = 0;
+		dead = false;
+		fightLogEntries = logs;
+	}
+
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
 	// but not actually updated during a fight.
 	Fighter(String name)
