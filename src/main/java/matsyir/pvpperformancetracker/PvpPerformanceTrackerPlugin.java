@@ -50,6 +50,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Hitsplat.HitsplatType;
@@ -59,6 +60,8 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -101,6 +104,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private SpriteManager spriteManager;
+
+	@Inject
+	private ChatMessageManager chatMessageManager;
 
 	@Inject
 	private Client client;
