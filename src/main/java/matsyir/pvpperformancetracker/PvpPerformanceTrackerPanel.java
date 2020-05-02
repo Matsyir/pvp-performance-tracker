@@ -26,25 +26,24 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import javax.inject.Inject;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import lombok.Getter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
 class PvpPerformanceTrackerPanel extends PluginPanel
 {
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
-	private final JPanel fightHistoryContainer = new JPanel();
+	@Getter
+	private static final JPanel fightHistoryContainer = new JPanel();
 
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
-	private final JPopupMenu popupMenu = new JPopupMenu();
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -63,29 +62,12 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		fightHistoryContainer.setSize(getSize());
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
-
 		add(totalStatsPanel, BorderLayout.NORTH, 0);
 
 		// wrap mainContent with scrollpane so it has a scrollbar
 		JScrollPane scrollableContainer = new JScrollPane(mainContent);
 		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(6, 0));
-
-		// initialize context menu
-		popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-		// Create "Reset All" popup menu item
-		final JMenuItem reset = new JMenuItem("Reset All");
-		reset.addActionListener(e ->
-		{
-			totalStatsPanel.reset();
-			fightHistoryContainer.removeAll();
-			SwingUtilities.invokeLater(this::updateUI);
-			plugin.resetFightHistory();
-		});
-		popupMenu.add(reset);
-
-		setComponentPopupMenu(popupMenu);
-		mainContent.setComponentPopupMenu(popupMenu);
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
 		add(scrollableContainer, BorderLayout.CENTER);
@@ -97,36 +79,17 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		SwingUtilities.invokeLater(() ->
 		{
-			FightPerformancePanel panel = new FightPerformancePanel(fight);
-			panel.setComponentPopupMenu(popupMenu);
-			panel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(4, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
-				BorderFactory.createEmptyBorder(8, 8, 2, 8)  // bottom is 2 due to extra spacing coming from somewhere else.
-			));
-
-			fightHistoryContainer.add(panel, 0);
+			fightHistoryContainer.add(new FightPerformancePanel(fight), 0);
 			updateUI();
 		});
 	}
 
-	public void addFights(FightPerformance[] fights)
+	public void addFights(ArrayList<FightPerformance> fights)
 	{
-
 		totalStatsPanel.addFights(fights);
 		SwingUtilities.invokeLater(() ->
 		{
-			for (FightPerformance fight : fights)
-			{
-				FightPerformancePanel panel = new FightPerformancePanel(fight);
-				panel.setComponentPopupMenu(popupMenu);
-				panel.setBorder(BorderFactory.createCompoundBorder(
-					BorderFactory.createMatteBorder(4, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR),
-					BorderFactory.createEmptyBorder(8, 8, 2, 8)  // bottom is 2 due to extra spacing coming from somewhere else.
-				));
-
-				fightHistoryContainer.add(panel, 0);
-			}
-
+			fights.forEach((FightPerformance f) -> fightHistoryContainer.add(new FightPerformancePanel(f), 0));
 			updateUI();
 		});
 	}
@@ -137,7 +100,8 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		fightHistoryContainer.removeAll();
 		if (plugin.fightHistory.size() > 0)
 		{
-			addFights(plugin.fightHistory.toArray(new FightPerformance[0]));
+			addFights(plugin.fightHistory);
 		}
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 }

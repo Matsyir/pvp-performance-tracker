@@ -26,7 +26,6 @@
 package matsyir.pvpperformancetracker;
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -37,20 +36,17 @@ import org.apache.commons.lang3.ArrayUtils;
 public enum EquipmentData
 {
 	// Non-LMS items:
-	DRAGON_DAGGER_P(1231, 1231), // dragon dagger (p)
-	DRAGON_DAGGER_PP(5680, 5680), // dragon dagger (p+)
-	DRAGON_DAGGER_PPP(5698, 5698), // dragon dagger (p++)
-	RUNE_CROSSBOW_PVP(9185, 9185),
-	ARMADYL_CROSSBOW_PVP(11785, 11785),
-	DRAGON_CROSSBOW(21902, 21902),
-	DRAGON_HUNTER_CROSSBOW(21012, 21012),
-	DARK_BOW_PVP(11235, 11235),
-	HEAVY_BALLISTA_PVP(19481, 19481),
-	LIGHT_BALLISTA(19478, 19478),
-	MAGIC_SHORTBOW(861, 861),
-	MAGIC_SHORTBOW_I(12788, 12788),
-	TOXIC_BLOWPIPE(12926, 12926),
-	CRAWS_BOW(22550, 22550),
+	DRAGON_DAGGER_P(1231), // dragon dagger (p)
+	DRAGON_DAGGER_PP(5680), // dragon dagger (p+)
+	DRAGON_DAGGER_PPP(5698), // dragon dagger (p++)
+	DRAGON_CROSSBOW(21902),
+	DRAGON_HUNTER_CROSSBOW(21012),
+	LIGHT_BALLISTA(19478),
+	MAGIC_SHORTBOW(861),
+	MAGIC_SHORTBOW_I(12788),
+	TOXIC_BLOWPIPE(12926),
+	//CRAWS_BOW(22550),
+	BLIGHTED_VESTAS_LONGSWORD(24617),
 
 	// LMS items:
 	RUNE_CROSSBOW(23601, 9185),
@@ -62,6 +58,7 @@ public enum EquipmentData
 	VESTAS_LONGSWORD(23615, 22613),
 	ARMADYL_GODSWORD(20593, 11802),
 	DRAGON_CLAWS(20784, 13652),
+	DRAGON_DAGGER(20407, 1215),
 	GRANITE_MAUL(20557, 4153),
 	AMULET_OF_FURY(23640, 6585),
 	BANDOS_TASSETS(23646, 11834),
@@ -84,7 +81,6 @@ public enum EquipmentData
 	RUNE_PLATELEGS(20422, 1079),
 	ROCK_CLIMBING_BOOTS(20578, 2203),
 	BARROWS_GLOVES(23593, 7462),
-	DRAGON_DAGGER(20407, 1215),
 	ELDER_MAUL(21205, 21003),
 	INFERNAL_CAPE(23622, 21295),
 	GHRAZI_RAPIER(23628, 22324),
@@ -104,22 +100,24 @@ public enum EquipmentData
 	IMBUED_GUTHIX_CAPE(23603, 21793),
 	IMBUED_SARADOMIN_CAPE(23607, 21791);
 
-	// rings are not detected by the client so we can't add their stats anyways
-	//BERSERKER_RING(23595, 6737),
-	//SEERS_RING_I(23624, 11770),
-
+	public static final EquipmentData[] DRAGON_DAGGERS = { DRAGON_DAGGER, DRAGON_DAGGER_P, DRAGON_DAGGER_PP, DRAGON_DAGGER_PPP };
 	private static final Map<Integer, EquipmentData> itemData = new HashMap<>();
 
 	@Getter
 	private final int lmsItemId;
 	@Getter
-	private final int realItemId;
+	private final int itemId;
 
-	@Inject
-	EquipmentData(int lmsItemId, int realItemId)
+	EquipmentData(int lmsItemId, int itemId)
 	{
 		this.lmsItemId = lmsItemId;
-		this.realItemId = realItemId;
+		this.itemId = itemId;
+	}
+
+	EquipmentData(int itemId)
+	{
+		this.lmsItemId = itemId;
+		this.itemId = itemId;
 	}
 
 	// Get the saved EquipmentData for a given itemId (could be null)
@@ -143,11 +141,11 @@ public enum EquipmentData
 		{
 			return PvpPerformanceTrackerPlugin.CONFIG.bpDartChoice();
 		}
-		else if (weapon == HEAVY_BALLISTA || weapon == HEAVY_BALLISTA_PVP || weapon == LIGHT_BALLISTA)
+		else if (weapon == HEAVY_BALLISTA || weapon == LIGHT_BALLISTA)
 		{
 			return RangeAmmoData.OtherAmmo.DRAGON_JAVELIN;
 		}
-		else if (weapon == DARK_BOW || weapon == DARK_BOW_PVP)
+		else if (weapon == DARK_BOW)
 		{
 			return RangeAmmoData.OtherAmmo.DRAGON_ARROW;
 		}
@@ -164,9 +162,9 @@ public enum EquipmentData
 		for (EquipmentData data : EquipmentData.values())
 		{
 			itemData.put(data.getLmsItemId(), data);
-			if (!itemData.containsKey(data.getRealItemId()))
+			if (!itemData.containsKey(data.getItemId()))
 			{
-				itemData.put(data.getRealItemId(), data);
+				itemData.put(data.getItemId(), data);
 			}
 		}
 	}

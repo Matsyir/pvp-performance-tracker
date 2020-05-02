@@ -26,7 +26,6 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
@@ -51,10 +50,12 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent simpleConfigOverlayFirstLine; // Left: player's RSN, Right: off-pray %
 	private LineComponent simpleConfigOverlaySecondLine; // Same as above but for opponent
 
-	// The main overlay is like the panel.
+	// The main overlay is like the panel, each line is optionally turned off.
 	private LineComponent overlayFirstLine; // Left: player's RSN, Right: Opponent RSN
 	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
-	private LineComponent overlayThirdLine; // right: player's deserved dps stats, right: opponent's deserved dps stats
+	private LineComponent overlayThirdLine; // left: player's deserved dps stats, right: opponent's deserved dps stats
+	private LineComponent overlayFourthLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
+	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -75,6 +76,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayFirstLine = LineComponent.builder().build();
 		overlaySecondLine = LineComponent.builder().build();
 		overlayThirdLine = LineComponent.builder().build();
+		overlayFourthLine = LineComponent.builder().build();
+		overlayFifthLine = LineComponent.builder().build();
 
 		setLines();
 	}
@@ -99,18 +102,35 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		else
 		{
+			// Second line: off-pray hit success stats
 			overlaySecondLine.setLeft(fight.getCompetitor().getOffPrayStats(true));
 			overlaySecondLine.setLeftColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 			overlaySecondLine.setRight(fight.getOpponent().getOffPrayStats(true));
 			overlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 
-			overlayThirdLine.setLeft(fight.getCompetitorDeservedDmgString());
+			// Third line: Deserved damage stats
+			// only show deserved damage difference on the competitor, since space is restricted here and having both
+			// differences is redundant since the sign is simply flipped.
+			overlayThirdLine.setLeft(fight.getCompetitor().getDeservedDmgString(fight.getOpponent()));
 			overlayThirdLine.setLeftColor(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
-			// only show damage for the opponent, since space is restricted here and having both differences
-			// is redundant since the sign is simply flipped.
-			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getTotalDamage())));
+			overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage())));
 			overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
+
+			// Fouth line: Damage dealt stats
+			// same thing for damage dealt, the difference is only on the competitor.
+			overlayFourthLine.setLeft(String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent())));
+			overlayFourthLine.setLeftColor(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+
+			overlayFourthLine.setRight(String.valueOf(fight.getOpponent().getDamageDealt()));
+			overlayFourthLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+
+			// Fifth line: magic hit stats/luck
+			overlayFifthLine.setLeft(String.valueOf(fight.getCompetitor().getMagicHitStats()));
+			overlayFifthLine.setLeftColor(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+
+			overlayFifthLine.setRight(String.valueOf(fight.getOpponent().getMagicHitStats()));
+			overlayFifthLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		}
 
 		return panelComponent.render(graphics);
@@ -134,9 +154,26 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		else
 		{
-			panelComponent.getChildren().add(overlayFirstLine);
-			panelComponent.getChildren().add(overlaySecondLine);
-			panelComponent.getChildren().add(overlayThirdLine);
+			if (config.showOverlayNames())
+			{
+				panelComponent.getChildren().add(overlayFirstLine);
+			}
+			if (config.showOverlayOffPray())
+			{
+				panelComponent.getChildren().add(overlaySecondLine);
+			}
+			if (config.showOverlayDeservedDmg())
+			{
+				panelComponent.getChildren().add(overlayThirdLine);
+			}
+			if (config.showOverlayDmgDealt())
+			{
+				panelComponent.getChildren().add(overlayFourthLine);
+			}
+			if (config.showOverlayMagicHits())
+			{
+				panelComponent.getChildren().add(overlayFifthLine);
+			}
 		}
 	}
 
