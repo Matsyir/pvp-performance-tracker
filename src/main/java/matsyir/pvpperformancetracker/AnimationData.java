@@ -26,8 +26,6 @@
 package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import java.security.InvalidParameterException;
 import java.util.Map;
 import lombok.Getter;
@@ -110,17 +108,9 @@ public enum AnimationData
 
 	private static final Map<Integer, AnimationData> DATA;
 
-	@Expose
-	@SerializedName("a")
 	int animationId;
-	@Expose
-	@SerializedName("s")
 	boolean isSpecial;
-	@Expose
-	@SerializedName("S")
 	AttackStyle attackStyle;
-	@Expose
-	@SerializedName("d")
 	int baseSpellDamage;
 
 	// Simple animation data constructor for all melee and range attacks
@@ -189,8 +179,6 @@ public enum AnimationData
 		static AttackStyle[] MELEE_STYLES = {STAB, SLASH, CRUSH};
 
 		@Getter
-		@Expose
-		@SerializedName("p")
 		private final HeadIcon protection;
 
 		AttackStyle(HeadIcon protection)

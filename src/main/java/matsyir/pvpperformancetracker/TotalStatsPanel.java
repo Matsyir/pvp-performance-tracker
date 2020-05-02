@@ -29,13 +29,17 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.overlay.components.LineComponent;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
@@ -213,6 +217,27 @@ public class TotalStatsPanel extends JPanel
 		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(magicHitStatsPanel);
 
+		JPopupMenu popupMenu = new JPopupMenu();
+
+		// Create "Reset All" popup menu/context menu item
+		final JMenuItem resetAllFights = new JMenuItem("Reset All");
+		resetAllFights.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
+				PLUGIN.resetFightHistory();
+			}
+		});
+
+		// Create "Export Fight History" popup menu/context menu item exportFightHistory
+		final JMenuItem exportFightHistory = new JMenuItem("Export Fight History");
+		exportFightHistory.addActionListener(e -> PLUGIN.exportFightHistory());
+
+		popupMenu.add(resetAllFights);
+		popupMenu.add(exportFightHistory);
+		setComponentPopupMenu(popupMenu);
+
 		setLabels();
 	}
 
@@ -242,18 +267,18 @@ public class TotalStatsPanel extends JPanel
 			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
 		deservedDmgStatsLabel.setToolTipText("Avg of " + nf1.format(avgDeservedDmg) +
 			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
-			avgDeservedDmgDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDeservedDmg) +
+			avgDeservedDmgDiffOneDecimal + ". On kills: " + nf1.format(killAvgDeservedDmg) +
 			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
-			"). On Deaths: " + nf1.format(deathAvgDeservedDmg) +
+			"), on deaths: " + nf1.format(deathAvgDeservedDmg) +
 			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")");
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
 		dmgDealtStatsLabel.setToolTipText("Avg of " + nf1.format(avgDmgDealt) +
 			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
-			avgDmgDealtDiffOneDecimal + ". On Kills: " + nf1.format(killAvgDmgDealt) +
+			avgDmgDealtDiffOneDecimal + ". On kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
-			"). On Deaths: " + nf1.format(deathAvgDmgDealt) +
+			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
 			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")");
 
 		if (totalStats.getMagicHitCountDeserved() >= 10000)
@@ -326,9 +351,9 @@ public class TotalStatsPanel extends JPanel
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
-	public void addFights(FightPerformance[] fights)
+	public void addFights(ArrayList<FightPerformance> fights)
 	{
-		numFights += fights.length;
+		numFights += fights.size();
 		for (FightPerformance fight : fights)
 		{
 			totalDeservedDmg += fight.getCompetitor().getDeservedDamage();

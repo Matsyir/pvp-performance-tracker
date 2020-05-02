@@ -11,14 +11,12 @@ import lombok.Getter;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
-import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
-import net.runelite.client.chat.QueuedMessage;
 import org.apache.commons.text.WordUtils;
 
 // A fight log entry for a single Fighter. Will be saved in a List of FightLogEntries in the Fighter class.
 @Getter
-public class FightLogEntry
+public class FightLogEntry implements Comparable<FightLogEntry>
 {
 	public static final NumberFormat nf;
 	static
@@ -27,6 +25,15 @@ public class FightLogEntry
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 		nf.setMaximumFractionDigits(2);
 	}
+
+	// general data
+	// don't expose attacker name since it is present in the parent class (Fighter), so it is
+	// redundant use of storage
+	public String attackerName;
+	@Expose
+	@SerializedName("t")
+	private long time;
+
 
 	// attacker data
 	@Expose
@@ -63,12 +70,6 @@ public class FightLogEntry
 	@Expose
 	@SerializedName("o")
 	private HeadIcon defenderOverhead;
-	@Expose
-	@SerializedName("t")
-	private long time;
-	@Expose
-	@SerializedName("n")
-	private String attackerName;
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc)
 	{
@@ -92,7 +93,7 @@ public class FightLogEntry
 		this.attackerName = attackerName;
 		this.attackerGear = attackerGear;
 		this.attackerOverhead = HeadIcon.MAGIC;
-		this.animationData = Math.random() >= 0.5 ? AnimationData.MELEE_DAGGER_SLASH : AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
+		this.animationData = Math.random() <= 0.5 ? AnimationData.MELEE_DAGGER_SLASH : AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
 		this.deservedDamage = deservedDamage;
 		this.accuracy = accuracy;
 		this.minHit = minHit;
@@ -109,27 +110,41 @@ public class FightLogEntry
 		return animationData.attackStyle.getProtection() != defenderOverhead;
 	}
 
-	public String toChatMessage(String name)
+	public String toChatMessage()
 	{
+		Color darkRed = new Color(127, 0, 0); // same color as default clan chat color
 		return new ChatMessageBuilder()
-			.append(Color.BLACK, name + ": ")
-			.append(Color.GRAY, "Style: ")
-			.append(Color.BLACK, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
-			.append(Color.GRAY, "  Hit: ")
-			.append(Color.BLACK, getHitRange())
-			.append(Color.GRAY, "  Acc: ")
-			.append(Color.BLACK, nf.format(accuracy))
-			.append(Color.GRAY, "  AvgHit: ")
-			.append(Color.BLACK, nf.format(deservedDamage))
-			.append(Color.GRAY, " Spec?: ")
-			.append(Color.BLACK, animationData.isSpecial ? "Y" : "N")
-			.append(Color.GRAY, " OffP?:")
-			.append(Color.BLACK, success() ? "Y" : "N")
+			.append(darkRed, attackerName + ": ")
+			.append(Color.BLACK, "Style: ")
+			.append(darkRed, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
+			.append(Color.BLACK, "  Hit: ")
+			.append(darkRed, getHitRange())
+			.append(Color.BLACK, "  Acc: ")
+			.append(darkRed, nf.format(accuracy))
+			.append(Color.BLACK, "  AvgHit: ")
+			.append(darkRed, nf.format(deservedDamage))
+			.append(Color.BLACK, " Spec?: ")
+			.append(darkRed, animationData.isSpecial ? "Y" : "N")
+			.append(Color.BLACK, " OffP?:")
+			.append(darkRed, success() ? "Y" : "N")
 			.build();
 	}
 
 	String getHitRange()
 	{
 		return minHit + "-" + maxHit;
+	}
+
+
+	// use to sort by last fight time, to sort fights by date/time.
+	@Override
+	public int compareTo(FightLogEntry o)
+	{
+		long diff = time - o.time;
+
+		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
+		return diff == 0 ? 0 :
+			(int)(diff / Math.abs(diff));
 	}
 }

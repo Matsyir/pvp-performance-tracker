@@ -29,8 +29,7 @@ import lombok.Getter;
 import static matsyir.pvpperformancetracker.AnimationData.AttackStyle;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
+import static matsyir.pvpperformancetracker.FightLogEntry.nf;
 import net.runelite.client.game.ItemManager;
 import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
@@ -110,25 +109,8 @@ public class PvpDamageCalc
 
 	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData)
 	{
-		// have never seen this occur, but just in case
-		if (attacker == null)
-		{
-			log.warn("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
-			String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append("ATTACKER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
-				.build();
-			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-			return;
-		}
-		if (defender == null)
-		{
-			log.warn("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!");
-			String chatMessage = new ChatMessageBuilder()
-				.append(ChatColorType.NORMAL).append("DEFENDER WAS NULL BEFORE AVG DAMAGE CALCULATION!")
-				.build();
-			PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
-			return;
-		}
+		// shouldn't be possible, but just in case
+		if (attacker == null || defender == null) { return; }
 
 		averageHit = 0;
 		accuracy = 0;
@@ -141,9 +123,6 @@ public class PvpDamageCalc
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
-		log.warn("attackerStats: " + Arrays.toString(playerStats));
-		log.warn("defenderStats: " + Arrays.toString(opponentStats));
-		log.warn("attackStyle: " + attackStyle.toString());
 
 		// if it's a special attack, save that as a boolean, but change the animationType to be the root type
 		// so that accuracy calculations are properly done. Special attack used will be determined based on the
@@ -175,34 +154,9 @@ public class PvpDamageCalc
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
-
-		// number format used for outputs.
-//		NumberFormat nf = NumberFormat.getInstance();
-//		nf.setMaximumFractionDigits(2);
-//		String accuracyString = nf.format(accuracy);
-//		String averageHitString = nf.format(averageHit);
-//
-//		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-//		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
-
-//        String chatMessage = new ChatMessageBuilder()
-//				.append(ChatColorType.NORMAL).append(attacker.getName())
-//                .append(ChatColorType.HIGHLIGHT).append("Type: ")
-//                .append(ChatColorType.NORMAL).append(animationType == null ? "null" : animationType.toString())
-//                .append(ChatColorType.HIGHLIGHT).append("  Max: ")
-//                .append(ChatColorType.NORMAL).append(String.valueOf(maxHit))
-//                .append(ChatColorType.HIGHLIGHT).append("  Acc: ")
-//                .append(ChatColorType.NORMAL).append(accuracyString)
-//                .append(ChatColorType.HIGHLIGHT).append("  AvgHit: ")
-//                .append(ChatColorType.NORMAL).append(averageHitString)
-//				.append(ChatColorType.HIGHLIGHT).append(" Spec?: ")
-//				.append(ChatColorType.NORMAL).append(isSpecial ? "Y" : "N")
-//				.append(ChatColorType.HIGHLIGHT).append(" Dia?:")
-//				.append(ChatColorType.NORMAL).append(diamonds ? "Y" : "N")
-//				.append(ChatColorType.HIGHLIGHT).append(" OffP?:")
-//				.append(ChatColorType.NORMAL).append(success ? "Y" : "N")
-//                .build();
-//		PvpPerformanceTrackerPlugin.PLUGIN.log(chatMessage);
+		log.warn("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
+			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
+			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
@@ -525,8 +479,6 @@ public class PvpDamageCalc
 		{
 			equipmentBonuses = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		}
-
-		log.warn("base equipment bonuses (ring only): " + Arrays.toString(equipmentBonuses));
 
 		//int[] equipmentBonuses = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PvpPerformanceTrackerPlugin.CONFIG.assumeZerkRing() ? 4 : 0, 0, 0 };
 		for (int item : itemIds)

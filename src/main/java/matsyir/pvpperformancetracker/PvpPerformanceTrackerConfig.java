@@ -271,12 +271,23 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Fight History Limit",
-		description = "Maximum number of previous fights to save and display in the panel.",
+		description = "Maximum number of previous fights to save and display in the panel. Only 10-15 can be exported to your RL account.",
 		position = 19
 	)
 	default int fightHistoryLimit()
 	{
 		return 1000;
+	}
+
+	@ConfigItem(
+		keyName = "fightLogInChat",
+		name = "Fight Log In Chat",
+		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",
+		position = 20
+	)
+	default boolean fightLogInChat()
+	{
+		return false;
 	}
 
 	// This config item saves a JSON encoded array of FightPerformances.

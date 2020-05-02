@@ -72,6 +72,8 @@ class Fighter
 	@SerializedName("x") // x for X_X
 	private boolean dead; // will be true if the fighter died in the fight
 
+	@Expose
+	@SerializedName("l")
 	private ArrayList<FightLogEntry> fightLogEntries;
 
 	private PvpDamageCalc pvpDamageCalc;
@@ -135,28 +137,21 @@ class Fighter
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 		deservedDamage += pvpDamageCalc.getAverageHit();
 
-		// Assume every magic attack is a successful hit, but reduce a hit afterwards if a splash is detected.
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
 
 			if (opponent.getGraphic() != GraphicID.SPLASH)
 			{
-				PvpPerformanceTrackerPlugin.PLUGIN.log(name + ": we got a mage attack, no splash");
 				magicHitCount++;
-			}
-			else
-			{
-				PvpPerformanceTrackerPlugin.PLUGIN.log(name + ": we got a mage attack, SPLASH");
 			}
 		}
 
-		log.warn("attacker: " + name);
-		log.warn("defender: " + opponent.getName());
-		log.warn("deservedDamage: " + deservedDamage);
-
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc);
-		PvpPerformanceTrackerPlugin.PLUGIN.log(fightLogEntry.toChatMessage(name));
+		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
+		{
+			PvpPerformanceTrackerPlugin.PLUGIN.createChatMessage(fightLogEntry.toChatMessage());
+		}
 		fightLogEntries.add(fightLogEntry);
 	}
 
@@ -215,7 +210,7 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(precision);
 		double difference = deservedDamage - opponent.deservedDamage;
-		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + nf.format(difference) + ")" :
+		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
 			nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
 	String getDeservedDmgString(Fighter opponent)
@@ -227,7 +222,7 @@ class Fighter
 	String getDmgDealtString(Fighter opponent, boolean onlyDiff)
 	{
 		int difference = damageDealt - opponent.damageDealt;
-		return onlyDiff ? "(" + (difference > 0 ? "+" : "") + difference + ")" :
+		return onlyDiff ? (difference > 0 ? "+" : "") + difference:
 			damageDealt + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 	String getDmgDealtString(Fighter opponent)

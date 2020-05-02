@@ -31,16 +31,11 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.client.game.ItemManager;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 // Basic class to hold information about PvP fight performances. A "successful" attack
 // is dealt by not attacking with the style of the opponent's overhead. For example,
@@ -153,10 +148,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 					opponent.getPlayer(), animationData);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
-			else
-			{
-				log.info(competitor.getName() + " used an unknown animation ID: " + competitor.getPlayer().getAnimation());
-			}
 		}
 		else if (playerName.equals(opponent.getName()))
 		{
@@ -166,10 +157,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					competitor.getPlayer(), animationData);
 				lastFightTime = Instant.now().toEpochMilli();
-			}
-			else
-			{
-				log.info(opponent.getName() + " used an unknown animation ID: " + opponent.getPlayer().getAnimation());
 			}
 		}
 	}
@@ -221,13 +208,17 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return isOver;
 	}
 
-	ArrayList<FightLogEntry> sortFights() {
-		ArrayList<FightLogEntry> competitorActions = competitor.getFightLogEntries();
-		ArrayList<FightLogEntry> opponentActions = opponent.getFightLogEntries();
-		ArrayList<FightLogEntry> combinedList = new ArrayList<FightLogEntry>();
-		combinedList.addAll(competitorActions);
-		combinedList.addAll(opponentActions);
-		Collections.sort(combinedList, new ListComparator());
+	ArrayList<FightLogEntry> getAllFightLogEntries()
+	{
+		if (competitor.getFightLogEntries() == null || opponent.getFightLogEntries() == null)
+		{
+			return new ArrayList<>();
+		}
+
+		ArrayList<FightLogEntry> combinedList = new ArrayList<>();
+		combinedList.addAll(competitor.getFightLogEntries());
+		combinedList.addAll(opponent.getFightLogEntries());
+		combinedList.sort(FightLogEntry::compareTo);
 		return combinedList;
 	}
 
@@ -302,11 +293,5 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
 			(int)(diff / Math.abs(diff));
-	}
-}
-
-class ListComparator implements Comparator<FightLogEntry> {
-	public int compare(FightLogEntry f1, FightLogEntry f2) {
-		return (int) (f1.getTime() - f2.getTime());
 	}
 }
