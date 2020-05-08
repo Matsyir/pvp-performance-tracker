@@ -184,9 +184,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		fightHistory.sort(FightPerformance::compareTo);
-		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
-		configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
+		updateFightHistoryData();
 
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
@@ -371,6 +369,23 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	// save the current fightHistory to the config data so it is saved for the next client launch.
+	private void updateFightHistoryData()
+	{
+		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
+		// from continuing to work.
+		try
+		{
+			fightHistory.sort(FightPerformance::compareTo);
+			String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
+			configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
+		}
+		catch (Exception e)
+		{
+			log.info("Error ignored while updating fight history data: " + e.getMessage());
+		}
+	}
+
 	void addToFightHistory(FightPerformance fight)
 	{
 		if (fight == null) { return; }
@@ -387,14 +402,57 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			panel.addFight(fight);
 		}
+
+		updateFightHistoryData();
 	}
 
 	void importFightHistory()
 	{
-		List<FightPerformance> savedFights = null;
+		// catch and ignore any errors we may have forgotten - the import will fail but at least the plugin
+		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
+		// The user will be notified by a modal if this happens.
 		try
 		{
+			List<FightPerformance> savedFights;
 			savedFights = Arrays.asList(gson.fromJson(config.fightHistoryData(), FightPerformance[].class));
+
+
+			// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
+//			savedFights = new ArrayList<>();
+//			for (int i = 0; i < 500; i++)
+//			{
+//				savedFights.add(FightPerformance.getTestInstance());
+//			}
+
+			savedFights.removeIf(Objects::isNull);
+			fightHistory.clear();
+			fightHistory.addAll(savedFights);
+			fightHistory.sort(FightPerformance::compareTo);
+
+			// set fight log names since they aren't serialized but are on the parent class
+			for (FightPerformance f : fightHistory)
+			{
+				// check for nulls in case the data was corrupted and entries are corrupted.
+				if (f.getCompetitor() == null || f.getOpponent() == null ||
+					f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
+				{
+					continue;
+				}
+
+				f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
+					l.attackerName = f.getCompetitor().getName());
+				f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
+					l.attackerName = f.getOpponent().getName());
+			}
+
+			if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+			{
+				int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+				// Remove oldest fightHistory until the size is equal to the limit.
+				// Should only remove one fight in most cases.
+				fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			}
+
 		}
 		catch (Exception e)
 		{
@@ -404,45 +462,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//		savedFights = new ArrayList<>();
-//		for (int i = 0; i < 500; i++)
-//		{
-//			savedFights.add(FightPerformance.getTestInstance());
-//		}
-
-		savedFights.removeIf(Objects::isNull);
-		fightHistory.addAll(savedFights);
-		fightHistory.sort(FightPerformance::compareTo);
-
-		// set fight log names since they aren't serialized but are on the parent class
-		for (FightPerformance f : fightHistory)
-		{
-			if (f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
-			{
-				continue;
-			}
-
-			f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
-				l.attackerName = f.getCompetitor().getName());
-			f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
-				l.attackerName = f.getOpponent().getName());
-		}
-
-		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
-		{
-			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
-			// Remove oldest fightHistory until the size is equal to the limit.
-			// Should only remove one fight in most cases.
-			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-		}
-
 		panel.rebuild();
 	}
 
 	void resetFightHistory()
 	{
 		fightHistory.clear();
+		updateFightHistoryData();
 		panel.rebuild();
 	}
 
@@ -488,7 +514,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			optionPane.setMessage(message);
 			optionPane.setOptionType(JOptionPane.DEFAULT_OPTION);
 			JDialog dialog = optionPane.createDialog(panel, title);
-			dialog.setAlwaysOnTop(dialog.isAlwaysOnTopSupported() && runeliteConfig.gameAlwaysOnTop());
+			if (dialog.isAlwaysOnTopSupported())
+			{
+				dialog.setAlwaysOnTop(runeliteConfig.gameAlwaysOnTop());
+			}
 			dialog.setIconImage(ICON);
 			dialog.setVisible(true);
 		});

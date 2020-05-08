@@ -331,7 +331,7 @@ class FightPerformancePanel extends JPanel
 		}
 
 		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
-		if (fightLogEntries.size() < 1)
+		if (fightLogEntries == null || fightLogEntries.size() < 1)
 		{
 			PLUGIN.createConfirmationModal("Info", "There are no fight log entries available for this fight.");
 			return;
@@ -340,7 +340,10 @@ class FightPerformancePanel extends JPanel
 		fightLogFrame = new JFrame(title);
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
-		fightLogFrame.setAlwaysOnTop(fightLogFrame.isAlwaysOnTopSupported() && PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
+		if (fightLogFrame.isAlwaysOnTopSupported())
+		{
+			fightLogFrame.setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
+		}
 
 		fightLogFrame.setIconImage(frameIcon);
 		fightLogFrame.setSize(765, 503); // default to same as osrs on fixed

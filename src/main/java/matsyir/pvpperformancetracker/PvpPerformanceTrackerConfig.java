@@ -266,7 +266,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	@Range(
 		min = 1,
-		max = 1300
+		max = 1000
 	)
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
@@ -276,7 +276,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default int fightHistoryLimit()
 	{
-		return 1000;
+		return 200;
 	}
 
 	@ConfigItem(
@@ -290,7 +290,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return false;
 	}
 
-	// This config item saves a JSON encoded array of FightPerformances.
+	// This config item saves a JSON encoded array of FightPerformances in order to save fight history.
+	// across client restarts, as well as use between different computers.
 	@ConfigItem(
 		hidden = true,
 		keyName = "fightHistoryData",

@@ -263,14 +263,22 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	boolean competitorMagicHitsLuckier()
 	{
-		return (competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved()) >
+		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
+			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
 			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+
+		return competitorRate > opponentRate;
 	}
 
 	boolean opponentMagicHitsLuckier()
 	{
-		return (opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved()) >
+		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
 			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
+			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+
+		return opponentRate > competitorRate;
 	}
 
 	public double getCompetitorDeservedDmgDiff()
