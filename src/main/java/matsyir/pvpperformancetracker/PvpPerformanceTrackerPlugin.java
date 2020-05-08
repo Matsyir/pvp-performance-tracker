@@ -350,6 +350,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
 
+	@Override
+	public void resetConfiguration()
+	{
+		super.resetConfiguration();
+		resetFightHistory();
+	}
+
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()
 	{
