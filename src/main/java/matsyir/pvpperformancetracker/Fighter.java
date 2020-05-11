@@ -150,7 +150,7 @@ class Fighter
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
-			PvpPerformanceTrackerPlugin.PLUGIN.createChatMessage(fightLogEntry.toChatMessage());
+			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
 		}
 		fightLogEntries.add(fightLogEntry);
 	}

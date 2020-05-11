@@ -34,13 +34,22 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -59,11 +68,13 @@ import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -82,15 +93,22 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
+	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static Image ICON;
 	public static SpriteManager SPRITE_MANAGER;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
-	public ArrayList<FightPerformance> fightHistory;
-
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
 
+	static
+	{
+		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, "pvp-performance-tracker");
+		FIGHT_HISTORY_DATA_DIR.mkdirs();
+	}
+
+	public ArrayList<FightPerformance> fightHistory;
 
 	@Getter(AccessLevel.PACKAGE)
 	private NavigationButton navButton;
@@ -132,6 +150,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private ItemManager itemManager;
+
+	@Inject
+	private ScheduledExecutorService executor;
 
 	@Getter
 	private FightPerformance currentFight;
@@ -190,7 +211,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		overlayManager.remove(overlay);
 	}
 
-	// if a player enables the panel or restricts/unrestricts the location to LMS, hide/show the panel accordingly
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
@@ -198,6 +218,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		switch(event.getKey())
 		{
+			// if a user enables the panel or restricts/unrestricts the location to LMS, hide/show the panel accordingly
 			case "showFightHistoryPanel":
 			case "restrictToLms":
 				boolean isAtLms = isAtLMS();
@@ -213,6 +234,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					navButtonShown = false;
 				}
 				break;
+			// If a user makes any changes to the overlay configuration, reset the shown  lines accordingly
 			case "useSimpleOverlay":
 			case "showOverlayTitle":
 			case "showOverlayNames":
@@ -222,6 +244,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayMagicHits":
 				overlay.setLines();
 				break;
+			// If the user reduces the fight history limit, remove fights accordingly
 			case "fightHistoryLimit":
 				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 				{
@@ -319,27 +342,26 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		stopFightIfOver();
 
-		// We will need to re-do this check later, but do it initially to prevent unnecessarily creating a thread
-		// that won't be used
-		if (hasOpponent() && event.getActor() != null)
+		// delay the animation processing, since we will also want to use equipment information for deserved
+		// damage, and equipment updates are loaded after the animation updates.
+		clientThread.invokeLater(() ->
 		{
-			// delay the animation processing, since we will also want to use equipment information for deserved,
-			// damage, and equipment updates are loaded after the animation updates.
-			clientThread.invokeLater(() ->
+			// must perform null checks again since this occurs a moment after the inital check.
+			if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
 			{
-				// must perform null checks again since this occurs a moment after the inital check.
-				if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
-				{
-					currentFight.checkForAttackAnimations(event.getActor().getName());
-				}
-			});
-		}
+				currentFight.checkForAttackAnimations(event.getActor().getName());
+			}
+		});
 	}
 
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
 		HitsplatType hitType = event.getHitsplat().getHitsplatType();
+
+		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
+		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
+		// Fighters in the fight being hit.
 		if (!hasOpponent() || !(event.getActor() instanceof Player) ||
 			!(hitType == HitsplatType.DAMAGE_ME || hitType == HitsplatType.DAMAGE_OTHER ||
 				hitType == HitsplatType.POISON || hitType == HitsplatType.VENOM))
@@ -350,11 +372,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
 
+	// When the config is reset, also reset the fight history data, as a way to restart
+	// if the current data is causing problems.
 	@Override
 	public void resetConfiguration()
 	{
 		super.resetConfiguration();
 		resetFightHistory();
+	}
+
+	// when the client shuts down, save the fight history data locally.
+	@Subscribe
+	public void onClientShutdown(ClientShutdown event)
+	{
+		event.waitFor(executor.submit(this::updateFightHistoryData));
 	}
 
 	// Returns true if the player has an opponent.
@@ -376,16 +407,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// save the current fightHistory to the config data so it is saved for the next client launch.
+	// save the current fightHistory to the local json data so it is saved for the next client launch.
 	private void updateFightHistoryData()
 	{
 		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
 		// from continuing to work.
 		try
 		{
-			fightHistory.sort(FightPerformance::compareTo);
-			String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
-			configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
+			Writer writer = new FileWriter(fightHistoryData);
+			gson.toJson(fightHistory, writer);
+			writer.flush();
+			writer.close();
 		}
 		catch (Exception e)
 		{
@@ -409,27 +442,31 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			panel.addFight(fight);
 		}
-
-		updateFightHistoryData();
 	}
 
 	void importFightHistory()
 	{
-		// catch and ignore any errors we may have forgotten - the import will fail but at least the plugin
+		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
 		// The user will be notified by a modal if this happens.
 		try
 		{
-			List<FightPerformance> savedFights;
-			savedFights = Arrays.asList(gson.fromJson(config.fightHistoryData(), FightPerformance[].class));
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 
+			// if the fight history data file doesn't exist, create it with an empty array.
+			if (!fightHistoryData.exists())
+			{
+				Writer writer = new BufferedWriter(
+					new OutputStreamWriter(new FileOutputStream(fightHistoryData), StandardCharsets.UTF_8));
+				writer.write("[]");
+			}
 
-			// ADD SOME TEST FIGHTS TO THE HISTORY. - for testing UI
-//			savedFights = new ArrayList<>();
-//			for (int i = 0; i < 500; i++)
-//			{
-//				savedFights.add(FightPerformance.getTestInstance());
-//			}
+			// read the saved fights from the file
+			List<FightPerformance> savedFights = Arrays.asList(
+				gson.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
+
+			// TEST/DEBUG: ADD SOME TEST FIGHTS TO THE HISTORY - for testing UI
+			//savedFights = new ArrayList<>(); for (int i=0; i<2000; i++) {savedFights.add(FightPerformance.getTestInstance());}
 
 			savedFights.removeIf(Objects::isNull);
 			fightHistory.clear();
@@ -463,6 +500,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 		catch (Exception e)
 		{
+			log.warn("Error while importing fight history: " + e.getMessage());
 			// If an error was detected while deserializing fights, display that as a message dialog.
 			createConfirmationModal("Fight History Data Invalid",
 				"PvP Performance Tracker: your fight history data was outdated or corrupted, and could not be imported.");
@@ -501,8 +539,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// Send a message to the chat. Send them messages to the trade chat since it is uncommonly
-	// used while fighting, but game, public, private, and clan chat have their uses.
-	public void createChatMessage(String chatMessage)
+	// used while fighting, but game, public, private, and clan chat all have their uses.
+	public void sendChatMessage(String chatMessage)
 	{
 		chatMessageManager
 			.queue(QueuedMessage.builder()
@@ -511,8 +549,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				.build());
 	}
 
-	// create a simple confirmation modal, using a custom dialog so it can be always on top if the client is, to prevent
-	// being stuck under the client.
+	// create a simple confirmation modal, using a custom dialog so it can be always
+	// on top (if the client is, to prevent being stuck under the client).
 	public void createConfirmationModal(String title, String message)
 	{
 		SwingUtilities.invokeLater(() ->
@@ -530,6 +568,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		});
 	}
 
+	// save the complete fight history data to the clipboard.
 	public void exportFightHistory()
 	{
 		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
