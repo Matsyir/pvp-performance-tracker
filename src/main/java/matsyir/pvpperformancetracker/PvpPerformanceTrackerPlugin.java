@@ -189,7 +189,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
 			).create();
 
-		importFightHistory();
+		importFightHistoryData();
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
@@ -234,7 +234,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					navButtonShown = false;
 				}
 				break;
-			// If a user makes any changes to the overlay configuration, reset the shown  lines accordingly
+			// If a user makes any changes to the overlay configuration, reset the shown lines accordingly
 			case "useSimpleOverlay":
 			case "showOverlayTitle":
 			case "showOverlayNames":
@@ -244,7 +244,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayMagicHits":
 				overlay.setLines();
 				break;
-			// If the user reduces the fight history limit, remove fights accordingly
+			// If the user updates the fight history limit, remove fights as necessary
 			case "fightHistoryLimit":
 				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 				{
@@ -346,7 +346,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// damage, and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
-			// must perform null checks again since this occurs a moment after the inital check.
 			if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
 			{
 				currentFight.checkForAttackAnimations(event.getActor().getName());
@@ -407,7 +406,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// save the current fightHistory to the local json data so it is saved for the next client launch.
+	// save the currently loaded fightHistory to the local json data so it is saved for the next client launch.
 	private void updateFightHistoryData()
 	{
 		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
@@ -426,10 +425,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	// add fight to loaded fight history
 	void addToFightHistory(FightPerformance fight)
 	{
 		if (fight == null) { return; }
 		fightHistory.add(fight);
+		// no need to sort, since they sort chronologically, but they should automatically be added that way.
+
+		// remove fights as necessary to respect the fightHistoryLimit.
 		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
 			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
@@ -444,7 +447,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	void importFightHistory()
+	// import complete fight history data from the saved json data file
+	// this function only handles the direct file processing and json deserialization.
+	// more specific FightPerformance processing is done in importFights()
+	void importFightHistoryData()
 	{
 		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
@@ -465,51 +471,81 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			List<FightPerformance> savedFights = Arrays.asList(
 				gson.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
 
-			// TEST/DEBUG: ADD SOME TEST FIGHTS TO THE HISTORY - for testing UI
-			//savedFights = new ArrayList<>(); for (int i=0; i<2000; i++) {savedFights.add(FightPerformance.getTestInstance());}
-
-			savedFights.removeIf(Objects::isNull);
 			fightHistory.clear();
-			fightHistory.addAll(savedFights);
-			fightHistory.sort(FightPerformance::compareTo);
-
-			// set fight log names since they aren't serialized but are on the parent class
-			for (FightPerformance f : fightHistory)
-			{
-				// check for nulls in case the data was corrupted and entries are corrupted.
-				if (f.getCompetitor() == null || f.getOpponent() == null ||
-					f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
-				{
-					continue;
-				}
-
-				f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
-					l.attackerName = f.getCompetitor().getName());
-				f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
-					l.attackerName = f.getOpponent().getName());
-			}
-
-			if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
-			{
-				int numToRemove = fightHistory.size() - config.fightHistoryLimit();
-				// Remove oldest fightHistory until the size is equal to the limit.
-				// Should only remove one fight in most cases.
-				fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-			}
-
+			importFights(savedFights);
 		}
 		catch (Exception e)
 		{
-			log.warn("Error while importing fight history: " + e.getMessage());
+			log.warn("Error while deserializing fight history data: " + e.getMessage());
 			// If an error was detected while deserializing fights, display that as a message dialog.
 			createConfirmationModal("Fight History Data Invalid",
-				"PvP Performance Tracker: your fight history data was outdated or corrupted, and could not be imported.");
+				"PvP Performance Tracker: your fight history data was invalid, and could not be loaded.");
 			return;
 		}
 
 		panel.rebuild();
 	}
 
+	// import additional/extra fight history data supplied by the user
+	// this only does the direct json deserialization and success response (modals)
+	// more specific FightPerformance processing is done in importFights()
+	void importUserFightHistoryData(String data)
+	{
+		try
+		{
+			// read saved fights from the data string and import them
+			List<FightPerformance> savedFights = Arrays.asList(gson.fromJson(data, FightPerformance[].class));
+			importFights(savedFights);
+			createConfirmationModal("Data Import Successful",
+				"PvP Performance Tracker: your fight history data was successfully imported.");
+		}
+		catch (Exception e)
+		{
+			log.warn("Error while importing user's fight history data: " + e.getMessage());
+			// If an error was detected while deserializing fights, display that as a message dialog.
+			createConfirmationModal("Fight History Data Invalid",
+				"PvP Performance Tracker: your fight history data was invalid, and could not be imported.");
+			return;
+		}
+
+		panel.rebuild();
+	}
+
+	// process and add a list of deserialized json fights to the currently loaded fights
+	// can throw NullPointerException if some of the serialized data is corrupted
+	void importFights(List<FightPerformance> fights) throws NullPointerException
+	{
+		fights.removeIf(Objects::isNull);
+		fightHistory.addAll(fights);
+		fightHistory.sort(FightPerformance::compareTo);
+
+		// remove fights to respect the fightHistoryLimit.
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		{
+			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
+			// Remove oldest fightHistory until the size is equal to the limit.
+			// Should only remove one fight in most cases.
+			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+		}
+
+		// set fight log names since they aren't serialized but are on the parent class
+		for (FightPerformance f : fightHistory)
+		{
+			// check for nulls in case the data was corrupted and entries are corrupted.
+			if (f.getCompetitor() == null || f.getOpponent() == null ||
+				f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
+			{
+				continue;
+			}
+
+			f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
+				l.attackerName = f.getCompetitor().getName());
+			f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
+				l.attackerName = f.getOpponent().getName());
+		}
+	}
+
+	// reset the loaded fight history as well as the saved json data
 	void resetFightHistory()
 	{
 		fightHistory.clear();
@@ -517,6 +553,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		panel.rebuild();
 	}
 
+	// remove a fight from the loaded fight history
 	void removeFight(FightPerformance fight)
 	{
 		fightHistory.remove(fight);
