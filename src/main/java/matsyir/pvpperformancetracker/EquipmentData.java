@@ -45,8 +45,18 @@ public enum EquipmentData
 	MAGIC_SHORTBOW(861),
 	MAGIC_SHORTBOW_I(12788),
 	TOXIC_BLOWPIPE(12926),
-	//CRAWS_BOW(22550),
+	//CRAWS_BOW(22550), // ammo bonus is built into weapon so we don't need to include it
 	BLIGHTED_VESTAS_LONGSWORD(24617),
+	SMOKE_BATTLESTAFF(11998),
+	TOME_OF_FIRE(20714), // (charged tome)
+	VOID_MAGE_HELM(11663, 11674), // the first void helm numbers were tested (11663-11665), the extra IDs purposes are
+	VOID_RANGE_HELM(11664, 11675), // unknown but included in case they are ever used.
+	VOID_MELEE_HELM(11665, 11676),
+	VOID_ELITE_BODY(13072),
+	VOID_ELITE_LEGS(13073),
+	VOID_GLOVES(8842),
+	VOID_BODY(8839, 10611), // same here, not sure why there is a duplicate, but included just in case.
+	VOID_LEGS(8840),
 
 	// LMS items:
 	RUNE_CROSSBOW(23601, 9185),

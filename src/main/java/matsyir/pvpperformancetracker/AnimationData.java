@@ -167,6 +167,21 @@ public enum AnimationData
 		return DATA.get(animationId);
 	}
 
+	public static boolean isStandardSpellbookSpell(AnimationData animationData)
+	{
+		return (animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
+			animationData == MAGIC_STANDARD_WAVE_STAFF ||
+			animationData == MAGIC_STANDARD_SURGE_STAFF);
+	}
+
+	public static boolean isFireSpell(AnimationData animationData)
+	{
+		return (animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
+			animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST ||
+			animationData == MAGIC_STANDARD_WAVE_STAFF ||
+			animationData == MAGIC_STANDARD_SURGE_STAFF);
+	}
+
 	// An enum of combat styles (including stab, slash, crush).
 	public enum AttackStyle
 	{

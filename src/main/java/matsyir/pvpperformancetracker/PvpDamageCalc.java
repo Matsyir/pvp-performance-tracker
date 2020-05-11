@@ -30,6 +30,8 @@ import static matsyir.pvpperformancetracker.AnimationData.AttackStyle;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.FightLogEntry.nf;
+import net.runelite.api.PlayerComposition;
+import net.runelite.api.kit.KitType;
 import net.runelite.client.game.ItemManager;
 import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
@@ -39,7 +41,7 @@ import net.runelite.api.Player;
 @Slf4j
 public class PvpDamageCalc
 {
-	private static final int WEAPON_SLOT = 3, CHEST_SLOT = 4, LEG_SLOT = 7,
+	private static final int WEAPON_SLOT = 3,
 		STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3, RANGE_ATTACK = 4,
 		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
 		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
@@ -85,10 +87,12 @@ public class PvpDamageCalc
 	private static final double SWH_SPEC_DMG_MODIFIER = 1.25;
 	private static final double SWH_SPEC_MIN_DMG_MODIFIER = .25;
 
-	// 0.975x is a simplified brimstone mage def formula, where x = opponent's mage def
+	// 0.975x is a simplified average brimstone mage def formula, where x = opponent's mage def
 	// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
 	// original formula: 0.25(0.9x) + 0.75x ==> 0.975x
 	public static final double BRIMSTONE_RING_OPPONENT_DEF_MODIFIER = 0.975;
+	public static final double SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER = 1.1; // both dmg & accuracy modifier
+	public static final double TOME_OF_FIRE_DMG_MODIFIER = 1.5;
 
 	private ItemManager itemManager;
 
@@ -132,22 +136,24 @@ public class PvpDamageCalc
 		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
 		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
 
+		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition());
+
 		if (ArrayUtils.contains(AttackStyle.MELEE_STYLES, attackStyle))
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData.baseSpellDamage);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF]);
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -207,7 +213,7 @@ public class PvpDamageCalc
 		averageHit = accuracy * averageSuccessfulHit * prayerModifier * agsModifier;
 	}
 
-	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon)
+	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean dds = ArrayUtils.contains(EquipmentData.DRAGON_DAGGERS, weapon);
@@ -221,9 +227,15 @@ public class PvpDamageCalc
 		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
 		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
 		maxHit = (int) (modifier * baseDamage);
+
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
+		{
+			maxHit *= voidStyle.dmgModifier;
+		}
 	}
 
-	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon)
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
@@ -243,15 +255,42 @@ public class PvpDamageCalc
 		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit());
+
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
+		{
+			maxHit *= voidStyle.dmgModifier;
+		}
 	}
 
-	private void getMagicMaxHit(int mageDamageBonus, int baseSpellDamage)
+	private void getMagicMaxHit(int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle)
 	{
 		double magicBonus = 1 + (mageDamageBonus / 100);
-		maxHit = (int) (baseSpellDamage * magicBonus);
+		maxHit = (int) (animationData.baseSpellDamage * magicBonus);
+
+		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
+		boolean tome = weapon == EquipmentData.TOME_OF_FIRE;
+
+		// provide dmg buff from smoke battlestaff if applicable
+		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
+		{
+			maxHit *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
+		}
+
+		// provide dmg buff from tome of fire if applicable
+		if (tome && AnimationData.isFireSpell(animationData))
+		{
+			maxHit *= TOME_OF_FIRE_DMG_MODIFIER;
+		}
+
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
+		{
+			maxHit *= voidStyle.dmgModifier;
+		}
 	}
 
-	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon)
+	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -319,9 +358,15 @@ public class PvpDamageCalc
 		{
 			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
+
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
+		{
+			accuracy *= voidStyle.accuracyModifier;
+		}
 	}
 
-	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
@@ -369,12 +414,18 @@ public class PvpDamageCalc
 			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
 
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
+		{
+			accuracy *= voidStyle.accuracyModifier;
+		}
+
 		// diamond bolts accuracy: 10% of attacks are 100% accuracy, so apply avg accuracy as:
 		// (90% of normal accuracy) + (10% of 100% accuracy)
 		accuracy = diamonds ? (accuracy * .9) + .1 : accuracy;
 	}
 
-	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef)
+	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle)
 	{
 		double effectiveLevelPlayer;
 
@@ -419,6 +470,19 @@ public class PvpDamageCalc
 		else
 		{
 			accuracy = attackerChance / (2 * (defenderChance + 1));
+		}
+
+		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
+		// provide accuracy buff from smoke battlestaff if applicable
+		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
+		{
+			accuracy *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
+		}
+
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
+		{
+			accuracy *= voidStyle.accuracyModifier;
 		}
 	}
 
@@ -471,12 +535,11 @@ public class PvpDamageCalc
 			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
 			getItemStats(config.ringChoice().getItemId());
 
-		if (equipmentBonuses == null)
+		if (equipmentBonuses == null) // shouldn't happen, but as a failsafe if the ring lookup fails
 		{
 			equipmentBonuses = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		}
 
-		//int[] equipmentBonuses = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PvpPerformanceTrackerPlugin.CONFIG.assumeZerkRing() ? 4 : 0, 0, 0 };
 		for (int item : itemIds)
 		{
 			if (item > 512)
@@ -496,5 +559,56 @@ public class PvpDamageCalc
 		}
 
 		return equipmentBonuses;
+	}
+
+	enum VoidStyle
+	{
+		VOID_MELEE(1.1, 1.1),
+		VOID_RANGE(1.1, 1.1),
+		VOID_MAGE(1.45, 1),
+		VOID_ELITE_MELEE(1.1, 1.1),
+		VOID_ELITE_RANGE(1.125, 1.125),
+		VOID_ELITE_MAGE(1.45, 1.025),
+		NONE(1, 1);
+
+		double accuracyModifier;
+		double dmgModifier;
+
+		VoidStyle(double accuracyModifier, double dmgModifier)
+		{
+			this.accuracyModifier = accuracyModifier;
+			this.dmgModifier = dmgModifier;
+		}
+
+		// return a void style for a given PlayerComposition
+		public static VoidStyle getVoidStyleFor(PlayerComposition playerComposition)
+		{
+			if (playerComposition == null) { return NONE; }
+
+			EquipmentData gloves = EquipmentData.getEquipmentDataFor(playerComposition.getEquipmentId(KitType.HANDS));
+
+			if (gloves != EquipmentData.VOID_GLOVES) { return NONE; }
+
+			EquipmentData helm = EquipmentData.getEquipmentDataFor(playerComposition.getEquipmentId(KitType.HEAD));
+			EquipmentData torso = EquipmentData.getEquipmentDataFor(playerComposition.getEquipmentId(KitType.TORSO));
+			EquipmentData legs = EquipmentData.getEquipmentDataFor(playerComposition.getEquipmentId(KitType.LEGS));
+
+			if (torso == EquipmentData.VOID_BODY && legs == EquipmentData.VOID_LEGS)
+			{
+				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_MAGE
+					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_RANGE
+					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_MELEE
+					: NONE;
+			}
+			else if (torso == EquipmentData.VOID_ELITE_BODY && legs == EquipmentData.VOID_ELITE_LEGS)
+			{
+				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_ELITE_MAGE
+					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_ELITE_RANGE
+					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_ELITE_MELEE
+					: NONE;
+			}
+
+			return NONE;
+		}
 	}
 }
