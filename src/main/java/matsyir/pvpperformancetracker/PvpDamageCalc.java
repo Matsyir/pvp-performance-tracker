@@ -104,6 +104,7 @@ public class PvpDamageCalc
 	private int minHit = 0;
 	@Getter
 	private int maxHit = 0;
+	private Player attacker;
 
 	public PvpDamageCalc(ItemManager itemManager)
 	{
@@ -121,6 +122,8 @@ public class PvpDamageCalc
 		minHit = 0;
 		maxHit = 0;
 
+		this.attacker = attacker;
+
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
@@ -128,9 +131,7 @@ public class PvpDamageCalc
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
 
-		// if it's a special attack, save that as a boolean, but change the animationType to be the root type
-		// so that accuracy calculations are properly done. Special attack used will be determined based on the
-		// currently used weapon, if its special attack has been implemented.
+		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		boolean isSpecial = animationData.isSpecial;
 
 		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
@@ -232,18 +233,18 @@ public class PvpDamageCalc
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
 		int effectiveLevel = (int) Math.floor((config.strengthLevel() * STRENGTH_OFFENSIVE_PRAYER_MODIFIER) + 8 + 3);
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
+		{
+			effectiveLevel *= voidStyle.dmgModifier;
+		}
+
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
 		double modifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MODIFIER : 1;
 		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
 		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
 		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
 		maxHit = (int) (modifier * baseDamage);
-
-		// apply void bonus if applicable
-		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
-		{
-			maxHit *= voidStyle.dmgModifier;
-		}
 	}
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
@@ -257,6 +258,11 @@ public class PvpDamageCalc
 		rangeStrength += ammoStrength;
 
 		int effectiveLevel = (int) Math.floor((config.rangedLevel() * RANGE_OFFENSIVE_PRAYER_DMG_MODIFIER) + 8);
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
+		{
+			effectiveLevel *= voidStyle.dmgModifier;
+		}
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
@@ -266,39 +272,32 @@ public class PvpDamageCalc
 		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit());
-
-		// apply void bonus if applicable
-		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
-		{
-			maxHit *= voidStyle.dmgModifier;
-		}
 	}
 
 	private void getMagicMaxHit(int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle)
 	{
-		double magicBonus = 1 + (mageDamageBonus / 100);
-		maxHit = (int) (animationData.baseSpellDamage * magicBonus);
-
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
-		boolean tome = weapon == EquipmentData.TOME_OF_FIRE;
+		boolean tome = EquipmentData.getEquipmentDataFor(
+			this.attacker.getPlayerComposition().getEquipmentId(KitType.SHIELD)) == EquipmentData.TOME_OF_FIRE;
 
+		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		// provide dmg buff from smoke battlestaff if applicable
 		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
 		{
-			maxHit *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
+			magicBonus *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
 		}
-
 		// provide dmg buff from tome of fire if applicable
 		if (tome && AnimationData.isFireSpell(animationData))
 		{
-			maxHit *= TOME_OF_FIRE_DMG_MODIFIER;
+			magicBonus *= TOME_OF_FIRE_DMG_MODIFIER;
 		}
-
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
 		{
-			maxHit *= voidStyle.dmgModifier;
+			magicBonus *= voidStyle.dmgModifier;
 		}
+
+		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
 	}
 
 	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
@@ -328,6 +327,11 @@ public class PvpDamageCalc
 		 * Attacker Chance
 		 */
 		effectiveLevelPlayer = Math.floor(((config.attackLevel() * ATTACK_OFFENSIVE_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
+		{
+			effectiveLevelPlayer *= voidStyle.accuracyModifier;
+		}
 
 		final double attackBonus = attackStyle == AttackStyle.STAB ? stabBonusPlayer
 			: attackStyle == AttackStyle.SLASH ? slashBonusPlayer : crushBonusPlayer;
@@ -369,12 +373,6 @@ public class PvpDamageCalc
 		{
 			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
-
-		// apply void bonus if applicable
-		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
-		{
-			accuracy *= voidStyle.accuracyModifier;
-		}
 	}
 
 	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle)
@@ -391,6 +389,12 @@ public class PvpDamageCalc
 		 * Attacker Chance
 		 */
 		effectiveLevelPlayer = Math.floor(((config.rangedLevel() * RANGE_OFFENSIVE_PRAYER_ATTACK_MODIFIER) + STANCE_BONUS) + 8);
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
+		{
+			effectiveLevelPlayer *= voidStyle.accuracyModifier;
+		}
+
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));
 		if (usingSpec)
 		{
@@ -425,12 +429,6 @@ public class PvpDamageCalc
 			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
 
-		// apply void bonus if applicable
-		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
-		{
-			accuracy *= voidStyle.accuracyModifier;
-		}
-
 		// diamond bolts accuracy: 10% of attacks are 100% accuracy, so apply avg accuracy as:
 		// (90% of normal accuracy) + (10% of 100% accuracy)
 		accuracy = diamonds ? (accuracy * .9) + .1 : accuracy;
@@ -455,6 +453,12 @@ public class PvpDamageCalc
 		 * Attacker Chance
 		 */
 		effectiveLevelPlayer = Math.floor(((config.magicLevel() * MAGIC_OFFENSIVE_PRAYER_MODIFIER)) + 8);
+		// apply void bonus if applicable
+		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
+		{
+			effectiveLevelPlayer *= voidStyle.accuracyModifier;
+		}
+
 		magicModifier = Math.floor(effectiveLevelPlayer * ((double) playerMageAtt + 64));
 		attackerChance = magicModifier;
 
@@ -488,12 +492,6 @@ public class PvpDamageCalc
 		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
 		{
 			accuracy *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
-		}
-
-		// apply void bonus if applicable
-		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
-		{
-			accuracy *= voidStyle.accuracyModifier;
 		}
 	}
 

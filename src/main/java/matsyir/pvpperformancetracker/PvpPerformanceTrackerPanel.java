@@ -33,16 +33,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import lombok.Getter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
 class PvpPerformanceTrackerPanel extends PluginPanel
 {
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
-	@Getter
-	private static final JPanel fightHistoryContainer = new JPanel();
-
+	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
 
 	private final PvpPerformanceTrackerPlugin plugin;
