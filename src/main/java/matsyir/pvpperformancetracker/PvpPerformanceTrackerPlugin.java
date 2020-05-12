@@ -168,8 +168,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		CONFIG = config;
-		PLUGIN = this;
+		CONFIG = config; // save static instances of config/plugin to easily use in
+		PLUGIN = this;   // other contexts without passing them all the way down
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		ICON = new ImageIcon(icon).getImage();
@@ -188,6 +188,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
 				: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
 			).create();
+
+		// Unset old storage config key, which is now un-used, in order to delete redundant use of storage for previous users.
+		configManager.unsetConfiguration("pvpperformancetracker", "fightHistoryData");
 
 		importFightHistoryData();
 

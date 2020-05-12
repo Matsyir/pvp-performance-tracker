@@ -185,6 +185,11 @@ public class PvpDamageCalc
 
 			int total = 0;
 
+			// this odd logic is used to calculate avg hit because when there is a minimum hit,
+			// it does not simply change the potential hit range as you would expect:
+			// potential hit rolls (min=0 max=5): 0, 1, 2, 3, 4, 5
+			// potential hit rolls (min=3 max=5): 3, 3, 3, 3, 4, 5 (intuitively it would just be 3, 4, 5, but nope)
+			// so, it is more common to roll the minimum hit and that has to be accounted for in the average hit.
 			for (int i = 0; i <= maxHit; i++)
 			{
 				total += i < minHit ? minHit / accuracyAdjuster : i;
@@ -194,6 +199,11 @@ public class PvpDamageCalc
 		}
 		else if (usingSpec && claws)
 		{
+			// if first 1-2 claws miss, it's a 150% dmg multiplier because when the 3rd att hits, the last
+			// 2 hits are 75% dmg multiplier, so 75% + 75% = 150%. It's a matter of a 2x multiplier or a
+			// 1.5x multiplier and the chance of a 2x multiplier is what higherModifierChance is for
+
+			// inverted accuracy is used to calculate the chances of missing specifically 1, 2 or 3 times in a row
 			double invertedAccuracy = 1 - accuracy;
 			double averageSuccessfulRegularHit = maxHit / 2;
 			double higherModifierChance = (accuracy + (accuracy * invertedAccuracy));
@@ -202,7 +212,8 @@ public class PvpDamageCalc
 
 			averageHit = averageSpecialHit * prayerModifier;
 			accuracy = higherModifierChance + lowerModifierChance;
-			maxHit = (maxHit * 2 + 1);
+			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
+			maxHit = maxHit * 2 + 1;
 			return;
 		}
 		else
