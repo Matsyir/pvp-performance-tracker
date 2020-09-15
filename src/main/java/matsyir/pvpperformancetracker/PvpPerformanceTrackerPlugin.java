@@ -468,6 +468,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				Writer writer = new BufferedWriter(
 					new OutputStreamWriter(new FileOutputStream(fightHistoryData), StandardCharsets.UTF_8));
 				writer.write("[]");
+				writer.close();
 			}
 
 			// read the saved fights from the file
@@ -480,9 +481,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		catch (Exception e)
 		{
 			log.warn("Error while deserializing fight history data: " + e.getMessage());
-			// If an error was detected while deserializing fights, display that as a message dialog.
-			createConfirmationModal("Fight History Data Invalid",
-				"PvP Performance Tracker: your fight history data was invalid, and could not be loaded.");
+			// Display no modal for this error since it could happen on client load and that has odd behavior.
 			return;
 		}
 
@@ -506,7 +505,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			log.warn("Error while importing user's fight history data: " + e.getMessage());
 			// If an error was detected while deserializing fights, display that as a message dialog.
-			createConfirmationModal("Fight History Data Invalid",
+			createConfirmationModal("Data Import Failed",
 				"PvP Performance Tracker: your fight history data was invalid, and could not be imported.");
 			return;
 		}
@@ -518,6 +517,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// can throw NullPointerException if some of the serialized data is corrupted
 	void importFights(List<FightPerformance> fights) throws NullPointerException
 	{
+		if (fights == null || fights.size() < 1) { return; }
+
 		fights.removeIf(Objects::isNull);
 		fightHistory.addAll(fights);
 		fightHistory.sort(FightPerformance::compareTo);
