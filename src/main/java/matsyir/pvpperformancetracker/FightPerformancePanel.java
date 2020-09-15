@@ -105,6 +105,7 @@ class FightPerformancePanel extends JPanel
 	// Line 3: Player deserved dps stats - opponent deserved dps stats
 	// Line 4: Player damage dealt - opponent damage dealt
 	// Line 5: Player magic hits/deserved magic hits - opponent magic hits/deserved magic hits
+	// Line 6: Player offensive pray stats - N/A (no data)
 	// The greater stats will be highlighted green. In this example, the player would have all the green highlights.
 	// example:
 	//
@@ -113,6 +114,7 @@ class FightPerformancePanel extends JPanel
 	//     176 (+12)          164 (-12)
 	//     156 (-28)          184 (+28)
 	//     8/7.62               11/9.21
+	//     27/55 (49%)              N/A
 	//
 	FightPerformancePanel(FightPerformance fight)
 	{
@@ -174,18 +176,18 @@ class FightPerformancePanel extends JPanel
 		// second line LEFT: player's off-pray hit stats
 		JLabel playerOffPrayStats = new JLabel();
 		playerOffPrayStats.setText(competitor.getOffPrayStats());
-		playerOffPrayStats.setToolTipText(competitor.getSuccessCount() + " successful off-pray attacks/" +
+		playerOffPrayStats.setToolTipText(competitor.getOffPraySuccessCount() + " successful off-pray attacks/" +
 			competitor.getAttackCount() + " total attacks (" +
-			nf.format(competitor.calculateSuccessPercentage()) + "%)");
+			nf.format(competitor.calculateOffPraySuccessPercentage()) + "%)");
 		playerOffPrayStats.setForeground(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(playerOffPrayStats, BorderLayout.WEST);
 
 		// second line RIGHT:, opponent's off-pray hit stats
 		JLabel opponentOffPrayStats = new JLabel();
 		opponentOffPrayStats.setText(opponent.getOffPrayStats());
-		opponentOffPrayStats.setToolTipText(opponent.getSuccessCount() + " successful off-pray attacks/" +
+		opponentOffPrayStats.setToolTipText(opponent.getOffPraySuccessCount() + " successful off-pray attacks/" +
 			opponent.getAttackCount() + " total attacks (" +
-			nf.format(opponent.calculateSuccessPercentage()) + "%)");
+			nf.format(opponent.calculateOffPraySuccessPercentage()) + "%)");
 		opponentOffPrayStats.setForeground(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 		offPrayStatsLine.add(opponentOffPrayStats, BorderLayout.EAST);
 
@@ -258,11 +260,33 @@ class FightPerformancePanel extends JPanel
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
+		// SIXTH LINE: player's offensive pray stats (only player's, no data for opponent)
+		JPanel offensivePrayStatsLine = new JPanel();
+		offensivePrayStatsLine.setLayout(new BorderLayout());
+		offensivePrayStatsLine.setBackground(null);
+
+		// sixth line LEFT: player's offensive pray stats
+		JLabel playerOffensivePrayStats = new JLabel();
+		playerOffensivePrayStats.setText(String.valueOf(competitor.getOffensivePrayStats()));
+		playerOffensivePrayStats.setToolTipText(competitor.getOffensivePrayStats() + " successful offensive prayers/" +
+			competitor.getAttackCount() + " total attacks (" +
+			nf.format(competitor.calculateOffensivePraySuccessPercentage()) + "%)");
+		playerOffensivePrayStats.setForeground(Color.WHITE);
+		offensivePrayStatsLine.add(playerOffensivePrayStats, BorderLayout.WEST);
+
+		// sixth line RIGHT: "N/A", no data.
+		JLabel opponentOffensivePrayStats = new JLabel();
+		opponentOffensivePrayStats.setText("N/A");
+		opponentOffensivePrayStats.setToolTipText("No data is available for the opponent's offensive prayers.");
+		opponentOffensivePrayStats.setForeground(Color.WHITE);
+		offensivePrayStatsLine.add(opponentOffensivePrayStats, BorderLayout.EAST);
+
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
 		fightPanel.add(deservedDpsStatsLine);
 		fightPanel.add(dmgDealtStatsLine);
 		fightPanel.add(magicHitStatsLine);
+		fightPanel.add(offensivePrayStatsLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 

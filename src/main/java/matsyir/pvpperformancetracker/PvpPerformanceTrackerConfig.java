@@ -146,10 +146,21 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showOverlayOffensivePray",
+		name = "Overlay: Show Offensive Pray",
+		description = "The overlay will display offensive pray stats. Does not apply to the simple overlay.",
+		position = 10
+	)
+	default boolean showOverlayOffensivePray()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "ringChoice",
 		name = "Ring Used",
 		description = "Rings used for the deserved damage estimate.",
-		position = 10
+		position = 11
 	)
 	default RingData ringChoice()
 	{
@@ -160,7 +171,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "boltChoice",
 		name = "RCB Ammo",
 		description = "Bolts used for rune crossbow's deserved damage estimate. LMS uses diamond (e). Dragonfire protection not accounted for.",
-		position = 11
+		position = 12
 	)
 	default RangeAmmoData.BoltAmmo boltChoice()
 	{
@@ -171,7 +182,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "strongBoltChoice",
 		name = "ACB/DCB/DHCB Ammo",
 		description = "Bolts used for ACB/DCB/DHCB's deserved damage estimate. LMS uses regular diamond (e). Dragonfire protection not accounted for.",
-		position = 12
+		position = 13
 	)
 	default RangeAmmoData.StrongBoltAmmo strongBoltChoice()
 	{
@@ -182,7 +193,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "bpDartChoice",
 		name = "Blowpipe Ammo",
 		description = "Darts used for blowpipe deserved damage estimate.",
-		position = 13
+		position = 14
 	)
 	default RangeAmmoData.DartAmmo bpDartChoice()
 	{
@@ -197,7 +208,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "attackLevel",
 		name = "Attack Level",
 		description = "Attack level used for the deserved damage estimate (includes potion boost).",
-		position = 14
+		position = 15
 	)
 	default int attackLevel()
 	{
@@ -212,7 +223,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "strengthLevel",
 		name = "Strength Level",
 		description = "Strength level used for the deserved damage estimate (includes potion boost).",
-		position = 15
+		position = 16
 	)
 	default int strengthLevel()
 	{
@@ -227,7 +238,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "defenceLevel",
 		name = "Defence Level",
 		description = "Defence level used for the deserved damage estimate (includes potion boost).",
-		position = 16
+		position = 17
 	)
 	default int defenceLevel()
 	{
@@ -242,7 +253,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "rangedLevel",
 		name = "Ranged Level",
 		description = "Ranged level used for the deserved damage estimate (includes potion boost).",
-		position = 17
+		position = 18
 	)
 	default int rangedLevel()
 	{
@@ -257,7 +268,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "magicLevel",
 		name = "Magic Level",
 		description = "Magic level used for the deserved damage estimate (includes potion boost).",
-		position = 18
+		position = 19
 	)
 	default int magicLevel()
 	{
@@ -271,7 +282,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "fightHistoryLimit",
 		name = "Fight History Limit",
 		description = "Maximum number of previous fights to save and display in the panel. 0 means unlimited. Can cause lag spikes at very high numbers",
-		position = 19
+		position = 20
 	)
 	default int fightHistoryLimit()
 	{
@@ -282,7 +293,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "fightLogInChat",
 		name = "Fight Log In Chat",
 		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",
-		position = 20
+		position = 21
 	)
 	default boolean fightLogInChat()
 	{

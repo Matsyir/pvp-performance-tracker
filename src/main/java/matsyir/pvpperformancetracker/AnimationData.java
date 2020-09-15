@@ -29,7 +29,10 @@ import com.google.common.collect.ImmutableMap;
 import java.security.InvalidParameterException;
 import java.util.Map;
 import lombok.Getter;
+import net.runelite.api.Client;
 import net.runelite.api.HeadIcon;
+import net.runelite.api.Prayer;
+import org.apache.commons.lang3.ArrayUtils;
 
 public enum AnimationData
 {
@@ -199,6 +202,26 @@ public enum AnimationData
 		AttackStyle(HeadIcon protection)
 		{
 			this.protection = protection;
+		}
+
+		public boolean isMelee()
+		{
+			return ArrayUtils.contains(AttackStyle.MELEE_STYLES, this);
+		}
+
+		public boolean isUsingSuccessfulOffensivePray(Client client)
+		{
+			return (
+				(isMelee() &&
+					(client.isPrayerActive(Prayer.PIETY) ||
+					 client.isPrayerActive(Prayer.ULTIMATE_STRENGTH))) ||
+				(this == RANGED &&
+					(client.isPrayerActive(Prayer.RIGOUR) ||
+					 client.isPrayerActive(Prayer.EAGLE_EYE))) ||
+				(this == MAGIC &&
+					(client.isPrayerActive(Prayer.AUGURY) ||
+					 client.isPrayerActive(Prayer.MYSTIC_MIGHT)))
+			);
 		}
 	}
 }

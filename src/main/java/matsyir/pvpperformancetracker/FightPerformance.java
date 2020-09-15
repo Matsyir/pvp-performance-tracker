@@ -144,8 +144,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
 			{
-				competitor.addAttack(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-					opponent.getPlayer(), animationData);
+				competitor.addAttack(
+					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+					opponent.getPlayer(),
+					animationData,
+					animationData.attackStyle.isUsingSuccessfulOffensivePray(PvpPerformanceTrackerPlugin.PLUGIN.client));
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -155,7 +158,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (animationData != null)
 			{
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-					competitor.getPlayer(), animationData);
+					competitor.getPlayer(), animationData, false);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -233,12 +236,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// the following functions have similar behaviour.
 	boolean competitorOffPraySuccessIsGreater()
 	{
-		return competitor.calculateSuccessPercentage() > opponent.calculateSuccessPercentage();
+		return competitor.calculateOffPraySuccessPercentage() > opponent.calculateOffPraySuccessPercentage();
 	}
 
 	boolean opponentOffPraySuccessIsGreater()
 	{
-		return opponent.calculateSuccessPercentage() > competitor.calculateSuccessPercentage();
+		return opponent.calculateOffPraySuccessPercentage() > competitor.calculateOffPraySuccessPercentage();
 	}
 
 	boolean competitorDeservedDmgIsGreater()

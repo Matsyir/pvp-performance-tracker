@@ -139,7 +139,7 @@ public class PvpDamageCalc
 
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition());
 
-		if (ArrayUtils.contains(AttackStyle.MELEE_STYLES, attackStyle))
+		if (attackStyle.isMelee())
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle);

@@ -127,7 +127,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private ChatMessageManager chatMessageManager;
 
 	@Inject
-	private Client client;
+	public Client client;
 
 	@Inject
 	private ClientThread clientThread;

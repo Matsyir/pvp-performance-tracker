@@ -73,6 +73,8 @@ public class TotalStatsPanel extends JPanel
 	private JLabel deservedDmgStatsLabel;
 	private JLabel dmgDealtStatsLabel;
 	private JLabel magicHitCountStatsLabel;
+	private JLabel offensivePrayCountStatsLabel;
+
 	private Fighter totalStats;
 
 	private int numKills = 0;
@@ -217,6 +219,21 @@ public class TotalStatsPanel extends JPanel
 		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(magicHitStatsPanel);
 
+		// SEVENTH LINE
+		// panel to show the offensive prayer success count
+		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's offensive pray stats
+		JLabel offensivePrayStatsLeftLabel = new JLabel();
+		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
+		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
+		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show offensive pray stats
+		offensivePrayCountStatsLabel = new JLabel();
+		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
+		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
+
 		JPopupMenu popupMenu = new JPopupMenu();
 
 		// Create "Reset All" popup menu/context menu item
@@ -265,17 +282,17 @@ public class TotalStatsPanel extends JPanel
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
-			offPrayStatsLabel.setText(nf1.format(totalStats.getSuccessCount() / 1000.0) + "K/" +
+			offPrayStatsLabel.setText(nf1.format(totalStats.getOffPraySuccessCount() / 1000.0) + "K/" +
 				nf1.format(totalStats.getAttackCount() / 1000.0) + "K (" +
-				Math.round(totalStats.calculateSuccessPercentage()) + "%)");
+				Math.round(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 		}
 		else
 		{
 			offPrayStatsLabel.setText(totalStats.getOffPrayStats());
 		}
-		offPrayStatsLabel.setToolTipText(nf.format(totalStats.getSuccessCount()) + " successful off-pray attacks/" +
+		offPrayStatsLabel.setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
-			nf2.format(totalStats.calculateSuccessPercentage()) + "%)");
+			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 
 		deservedDmgStatsLabel.setText(nf.format(avgDeservedDmg) + " (" +
 			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
@@ -306,6 +323,20 @@ public class TotalStatsPanel extends JPanel
 		}
 		magicHitCountStatsLabel.setToolTipText("You hit " + nf1.format(totalStats.getMagicHitCount()) +
 			" magic attacks, but deserved to hit " + nf1.format(totalStats.getMagicHitCountDeserved()));
+
+		if (totalStats.getAttackCount() >= 10000)
+		{
+			offensivePrayCountStatsLabel.setText(nf1.format(totalStats.getOffensivePraySuccessCount() / 1000.0) + "K/" +
+				nf1.format(totalStats.getAttackCount() / 1000.0) + "K (" +
+				Math.round(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
+		}
+		else
+		{
+			offensivePrayCountStatsLabel.setText(totalStats.getOffensivePrayStats());
+		}
+		offensivePrayCountStatsLabel.setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
+			nf.format(totalStats.getAttackCount()) + " total attacks (" +
+			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
 	}
 
 	public void addFight(FightPerformance fight)
@@ -358,9 +389,10 @@ public class TotalStatsPanel extends JPanel
 			killAvgDmgDealtDiff = killTotalDmgDealtDiff / numKills;
 		}
 
-		totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(),
+		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-			fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved());
+			fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved(),
+			fight.getCompetitor().getOffensivePraySuccessCount());
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -396,9 +428,10 @@ public class TotalStatsPanel extends JPanel
 				killTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 				killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 			}
-			totalStats.addAttacks(fight.getCompetitor().getSuccessCount(), fight.getCompetitor().getAttackCount(),
+			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-				fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved());
+				fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved(),
+				fight.getCompetitor().getOffensivePraySuccessCount());
 		}
 
 		avgDeservedDmg = totalDeservedDmg / numFights;
