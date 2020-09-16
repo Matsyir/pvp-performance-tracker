@@ -130,7 +130,7 @@ class Fighter
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player opponent, AnimationData animationData, boolean successOffensive)
+	void addAttack(boolean successful, Player opponent, AnimationData animationData, boolean successOffensive, int offensivePray)
 	{
 		attackCount++;
 		if (successful)
@@ -155,7 +155,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
 			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
@@ -264,6 +264,6 @@ class Fighter
 
 	String getOffensivePrayStats()
 	{
-		return getOffPrayStats(false);
+		return getOffensivePrayStats(false);
 	}
 }

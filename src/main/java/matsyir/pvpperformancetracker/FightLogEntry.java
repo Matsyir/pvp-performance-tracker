@@ -71,7 +71,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("o")
 	private HeadIcon defenderOverhead;
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc)
+	@Expose
+	@SerializedName("p")
+	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
+
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray)
 	{
 		this.attackerName = attacker.getName();
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
@@ -86,6 +90,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
 		this.defenderOverhead = defender.getOverheadIcon();
+		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
 	public FightLogEntry(int [] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)

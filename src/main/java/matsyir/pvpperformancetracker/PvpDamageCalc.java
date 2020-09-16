@@ -161,7 +161,7 @@ public class PvpDamageCalc
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
-		log.warn("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
+		log.info("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
 			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}

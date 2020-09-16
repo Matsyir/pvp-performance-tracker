@@ -374,7 +374,7 @@ class FightPerformancePanel extends JPanel
 		fightLogFrame.setLocation(FightPerformancePanel.this.getRootPane().getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][10];
+		Object[][] stats = new Object[fightLogEntries.size()][11];
 		int i = 0;
 		long initialTime = 0;
 
@@ -437,18 +437,22 @@ class FightPerformancePanel extends JPanel
 				stats[i][8] = "";
 			}
 
+			// offensive pray shown as icon or blank if none(0)
+			stats[i][9] = fightEntry.getAttackerOffensivePray() <= 0 ? "" :
+				PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(fightEntry.getAttackerOffensivePray(), 0);
+
 			long durationLong = fightEntry.getTime() - initialTime;
 			Duration duration = Duration.ofMillis(durationLong);
 			String time = String.format("%02d:%02d.%01d",
 				duration.toMinutes(),
 				duration.getSeconds() % 60,
 				durationLong % 1000 / 100);
-			stats[i][9] = time;
+			stats[i][10] = time;
 
 			i++;
 		}
 
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Time" };
+		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time" };
 		JTable table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
@@ -456,6 +460,7 @@ class FightPerformancePanel extends JPanel
 		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer());
 		table.getColumnModel().getColumn(7).setCellRenderer(new BufferedImageCellRenderer());
 		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
+		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer());
 
 		mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 

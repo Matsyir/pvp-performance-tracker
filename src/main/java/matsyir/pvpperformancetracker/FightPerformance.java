@@ -114,8 +114,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = new Fighter(cName, fightLogs);
 		this.opponent = new Fighter(oName, fightLogs);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 12, 13);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 14, 13);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 12, 13, 11);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 14, 13, 11);
 
 		if (cDead)
 		{
@@ -144,11 +144,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
 			{
+				int pray = PvpPerformanceTrackerPlugin.PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
 					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
 					animationData,
-					animationData.attackStyle.isUsingSuccessfulOffensivePray(PvpPerformanceTrackerPlugin.PLUGIN.client));
+					animationData.attackStyle.isUsingSuccessfulOffensivePray(pray),
+					pray);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -158,7 +160,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (animationData != null)
 			{
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-					competitor.getPlayer(), animationData, false);
+					competitor.getPlayer(), animationData, false, 0);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}

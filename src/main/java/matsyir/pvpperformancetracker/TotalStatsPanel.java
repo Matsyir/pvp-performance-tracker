@@ -116,7 +116,7 @@ public class TotalStatsPanel extends JPanel
 	{
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(6, 1));
+		setLayout(new GridLayout(7, 1));
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -233,6 +233,9 @@ public class TotalStatsPanel extends JPanel
 		offensivePrayCountStatsLabel = new JLabel();
 		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
 		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
+
+		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		add(offensivePrayStatsPanel);
 
 		JPopupMenu popupMenu = new JPopupMenu();
 

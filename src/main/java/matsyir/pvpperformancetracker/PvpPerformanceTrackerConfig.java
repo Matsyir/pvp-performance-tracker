@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
 @ConfigGroup("pvpperformancetracker")
@@ -34,6 +35,27 @@ public interface PvpPerformanceTrackerConfig extends Config
 {
 	int LEVEL_MIN = 1;
 	int LEVEL_MAX = 120;
+
+	@ConfigSection(name = "Overlay",
+		description = "Contains overlay settings (MAX 5 lines, if you use the detailed one)",
+		position = 2,
+		closedByDefault = true
+	)
+	String overlay = "overlay";
+
+	@ConfigSection(name = "Gear/Ammo",
+		description = "Contains gear/ammo settings",
+		position = 11,
+		closedByDefault = true
+	)
+	String gearAmmo = "gearAmmo";
+
+	@ConfigSection(name = "Levels",
+		description = "Contains level settings for the deserved damage statistic",
+		position = 15,
+		closedByDefault = true
+	)
+	String levels = "levels";
 
 	@ConfigItem(
 		keyName = "restrictToLms",
@@ -61,7 +83,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showFightOverlay",
 		name = "Show Fight Overlay",
 		description = "Display an overlay of statistics while fighting.",
-		position = 2
+		position = 2,
+		section = overlay
 	)
 	default boolean showFightOverlay()
 	{
@@ -72,7 +95,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "useSimpleOverlay",
 		name = "Use Simple Overlay",
 		description = "The overlay will only display off-pray percentage as stats rather than various selected stats.",
-		position = 3
+		position = 3,
+		section = overlay
 	)
 	default boolean useSimpleOverlay()
 	{
@@ -83,7 +107,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayTitle",
 		name = "Overlay: Show Title",
 		description = "The overlay will have a title to display that it is PvP Performance.",
-		position = 4
+		position = 4,
+		section = overlay
 	)
 	default boolean showOverlayTitle()
 	{
@@ -94,7 +119,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayNames",
 		name = "Overlay: Show Names",
 		description = "The overlay will display names. Does not apply to the simple overlay.",
-		position = 5
+		position = 5,
+		section = overlay
 	)
 	default boolean showOverlayNames()
 	{
@@ -105,7 +131,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayOffPray",
 		name = "Overlay: Show Off-Pray",
 		description = "The overlay will display off-pray stats as a fraction & percentage. Does not apply to the simple overlay.",
-		position = 6
+		position = 6,
+		section = overlay
 	)
 	default boolean showOverlayOffPray()
 	{
@@ -116,7 +143,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayDeservedDmg",
 		name = "Overlay: Show Deserved Dmg",
 		description = "The overlay will display deserved damage & difference. Does not apply to the simple overlay.",
-		position = 7
+		position = 7,
+		section = overlay
 	)
 	default boolean showOverlayDeservedDmg()
 	{
@@ -127,7 +155,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayDmgDealt",
 		name = "Overlay: Show Dmg Dealt",
 		description = "The overlay will display damage dealt. Does not apply to the simple overlay.",
-		position = 8
+		position = 8,
+		section = overlay
 	)
 	default boolean showOverlayDmgDealt()
 	{
@@ -138,7 +167,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayMagicHits",
 		name = "Overlay: Show Magic Hits",
 		description = "The overlay will display successful magic hits & deserved magic hits. Does not apply to the simple overlay.",
-		position = 9
+		position = 9,
+		section = overlay
 	)
 	default boolean showOverlayMagicHits()
 	{
@@ -149,7 +179,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayOffensivePray",
 		name = "Overlay: Show Offensive Pray",
 		description = "The overlay will display offensive pray stats. Does not apply to the simple overlay.",
-		position = 10
+		position = 10,
+		section = overlay
 	)
 	default boolean showOverlayOffensivePray()
 	{
@@ -160,7 +191,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "ringChoice",
 		name = "Ring Used",
 		description = "Rings used for the deserved damage estimate.",
-		position = 11
+		position = 11,
+		section = gearAmmo
 	)
 	default RingData ringChoice()
 	{
@@ -171,7 +203,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "boltChoice",
 		name = "RCB Ammo",
 		description = "Bolts used for rune crossbow's deserved damage estimate. LMS uses diamond (e). Dragonfire protection not accounted for.",
-		position = 12
+		position = 12,
+		section = gearAmmo
 	)
 	default RangeAmmoData.BoltAmmo boltChoice()
 	{
@@ -182,7 +215,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "strongBoltChoice",
 		name = "ACB/DCB/DHCB Ammo",
 		description = "Bolts used for ACB/DCB/DHCB's deserved damage estimate. LMS uses regular diamond (e). Dragonfire protection not accounted for.",
-		position = 13
+		position = 13,
+		section = gearAmmo
 	)
 	default RangeAmmoData.StrongBoltAmmo strongBoltChoice()
 	{
@@ -193,7 +227,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "bpDartChoice",
 		name = "Blowpipe Ammo",
 		description = "Darts used for blowpipe deserved damage estimate.",
-		position = 14
+		position = 14,
+		section = gearAmmo
 	)
 	default RangeAmmoData.DartAmmo bpDartChoice()
 	{
@@ -208,7 +243,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "attackLevel",
 		name = "Attack Level",
 		description = "Attack level used for the deserved damage estimate (includes potion boost).",
-		position = 15
+		position = 15,
+		section = levels
 	)
 	default int attackLevel()
 	{
@@ -223,7 +259,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "strengthLevel",
 		name = "Strength Level",
 		description = "Strength level used for the deserved damage estimate (includes potion boost).",
-		position = 16
+		position = 16,
+		section = levels
 	)
 	default int strengthLevel()
 	{
@@ -238,7 +275,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "defenceLevel",
 		name = "Defence Level",
 		description = "Defence level used for the deserved damage estimate (includes potion boost).",
-		position = 17
+		position = 17,
+		section = levels
 	)
 	default int defenceLevel()
 	{
@@ -253,7 +291,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "rangedLevel",
 		name = "Ranged Level",
 		description = "Ranged level used for the deserved damage estimate (includes potion boost).",
-		position = 18
+		position = 18,
+		section = levels
 	)
 	default int rangedLevel()
 	{
@@ -268,7 +307,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "magicLevel",
 		name = "Magic Level",
 		description = "Magic level used for the deserved damage estimate (includes potion boost).",
-		position = 19
+		position = 19,
+		section = levels
 	)
 	default int magicLevel()
 	{

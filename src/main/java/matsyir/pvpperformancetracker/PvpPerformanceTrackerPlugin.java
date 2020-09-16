@@ -34,16 +34,12 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,6 +60,8 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
+import net.runelite.api.Prayer;
+import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
@@ -413,7 +411,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private void updateFightHistoryData()
 	{
 		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
-		// from continuing to work.
+		// from continuing to work, even if there are issues saving the data.
 		try
 		{
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
@@ -424,7 +422,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 		catch (Exception e)
 		{
-			log.info("Error ignored while updating fight history data: " + e.getMessage());
+			log.warn("Error ignored while updating fight history data: " + e.getMessage());
 		}
 	}
 
@@ -460,13 +458,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// The user will be notified by a modal if this happens.
 		try
 		{
+			FIGHT_HISTORY_DATA_DIR.mkdirs();
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 
 			// if the fight history data file doesn't exist, create it with an empty array.
 			if (!fightHistoryData.exists())
 			{
-				Writer writer = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(fightHistoryData), StandardCharsets.UTF_8));
+				Writer writer = new FileWriter(fightHistoryData);
 				writer.write("[]");
 				writer.close();
 			}
@@ -613,10 +611,21 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void exportFightHistory()
 	{
 		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
-		configManager.setConfiguration("pvpperformancetracker", "fightHistoryData", fightHistoryDataJson);
 		final StringSelection contents = new StringSelection(fightHistoryDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
 		createConfirmationModal("Fight History Export Succeeded", "Fight history data was copied to the clipboard.");
+	}
+
+	// retrieve offensive pray as SpriteID since that's all we will directly use it for aside from comparison.
+	public int currentlyUsedOffensivePray()
+	{
+		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
+				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
+				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
+				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
+				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
+				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
+				0;
 	}
 }

@@ -29,9 +29,8 @@ import com.google.common.collect.ImmutableMap;
 import java.security.InvalidParameterException;
 import java.util.Map;
 import lombok.Getter;
-import net.runelite.api.Client;
 import net.runelite.api.HeadIcon;
-import net.runelite.api.Prayer;
+import net.runelite.api.SpriteID;
 import org.apache.commons.lang3.ArrayUtils;
 
 public enum AnimationData
@@ -209,18 +208,18 @@ public enum AnimationData
 			return ArrayUtils.contains(AttackStyle.MELEE_STYLES, this);
 		}
 
-		public boolean isUsingSuccessfulOffensivePray(Client client)
+		public boolean isUsingSuccessfulOffensivePray(int pray)
 		{
-			return (
-				(isMelee() &&
-					(client.isPrayerActive(Prayer.PIETY) ||
-					 client.isPrayerActive(Prayer.ULTIMATE_STRENGTH))) ||
+			return (pray != -1 &&
+				((isMelee() &&
+					(pray == SpriteID.PRAYER_PIETY ||
+					 pray == SpriteID.PRAYER_ULTIMATE_STRENGTH)) ||
 				(this == RANGED &&
-					(client.isPrayerActive(Prayer.RIGOUR) ||
-					 client.isPrayerActive(Prayer.EAGLE_EYE))) ||
+					(pray == SpriteID.PRAYER_RIGOUR ||
+					 pray == SpriteID.PRAYER_EAGLE_EYE)) ||
 				(this == MAGIC &&
-					(client.isPrayerActive(Prayer.AUGURY) ||
-					 client.isPrayerActive(Prayer.MYSTIC_MIGHT)))
+					(pray == SpriteID.PRAYER_AUGURY ||
+					 pray == SpriteID.PRAYER_MYSTIC_MIGHT)))
 			);
 		}
 	}

@@ -137,7 +137,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			overlayFifthLine.setRight(String.valueOf(fight.getOpponent().getMagicHitStats()));
 			overlayFifthLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 
-			overlaySixthLine.setLeft(String.valueOf(fight.getCompetitor().getOffensivePrayStats()));
+			overlaySixthLine.setLeft(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)));
 		}
 
 		return panelComponent.render(graphics);
