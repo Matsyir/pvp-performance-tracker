@@ -56,18 +56,19 @@ class Fighter
 	@Expose
 	@SerializedName("s")
 	private int offPraySuccessCount; // total number of successful off-pray attacks
+									 // (when you use a different combat style than your opponent's overhead)
 	@Expose
 	@SerializedName("d")
 	private double deservedDamage; // total deserved damage based on gear & opponent's pray
 	@Expose
 	@SerializedName("h") // h for "hitsplats", real hits
-	private int damageDealt;
+	private int damageDealt; // actual damage dealt based on opponent's hitsplats
 	@Expose
 	@SerializedName("m")
-	private int magicHitCount;
+	private int magicHitCount; // count of 'successful' magic hits (where you don't splash)
 	@Expose
 	@SerializedName("M")
-	private double magicHitCountDeserved;
+	private double magicHitCountDeserved; // cumulative magic accuracy percentage for each attack
 	@Expose
 	@SerializedName("p")
 	private int offensivePraySuccessCount;
@@ -130,14 +131,14 @@ class Fighter
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
-	void addAttack(boolean successful, Player opponent, AnimationData animationData, boolean successOffensive, int offensivePray)
+	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
 	{
 		attackCount++;
 		if (successful)
 		{
 			offPraySuccessCount++;
 		}
-		if (successOffensive)
+		if (animationData.attackStyle.isUsingSuccessfulOffensivePray(offensivePray))
 		{
 			offensivePraySuccessCount++;
 		}

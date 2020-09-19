@@ -190,7 +190,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "ringChoice",
 		name = "Ring Used",
-		description = "Rings used for the deserved damage estimate.",
+		description = "Rings used for the deserved damage calculation.",
 		position = 11,
 		section = gearAmmo
 	)
@@ -202,7 +202,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "boltChoice",
 		name = "RCB Ammo",
-		description = "Bolts used for rune crossbow's deserved damage estimate. LMS uses diamond (e). Dragonfire protection not accounted for.",
+		description = "Bolts used for rune crossbow's deserved damage calculation. LMS uses diamond (e). Dragonfire protection not accounted for.",
 		position = 12,
 		section = gearAmmo
 	)
@@ -214,7 +214,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "strongBoltChoice",
 		name = "ACB/DCB/DHCB Ammo",
-		description = "Bolts used for ACB/DCB/DHCB's deserved damage estimate. LMS uses regular diamond (e). Dragonfire protection not accounted for.",
+		description = "Bolts used for ACB/DCB/DHCB's deserved damage calculation. LMS uses regular diamond (e). Dragonfire protection not accounted for.",
 		position = 13,
 		section = gearAmmo
 	)
@@ -226,7 +226,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "bpDartChoice",
 		name = "Blowpipe Ammo",
-		description = "Darts used for blowpipe deserved damage estimate.",
+		description = "Darts used for blowpipe deserved damage calculation.",
 		position = 14,
 		section = gearAmmo
 	)
@@ -242,7 +242,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "attackLevel",
 		name = "Attack Level",
-		description = "Attack level used for the deserved damage estimate (includes potion boost).",
+		description = "Attack level used for the deserved damage calculation (includes potion boost).",
 		position = 15,
 		section = levels
 	)
@@ -258,7 +258,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "strengthLevel",
 		name = "Strength Level",
-		description = "Strength level used for the deserved damage estimate (includes potion boost).",
+		description = "Strength level used for the deserved damage calculation (includes potion boost).",
 		position = 16,
 		section = levels
 	)
@@ -274,7 +274,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "defenceLevel",
 		name = "Defence Level",
-		description = "Defence level used for the deserved damage estimate (includes potion boost).",
+		description = "Defence level used for the deserved damage calculation (includes potion boost).",
 		position = 17,
 		section = levels
 	)
@@ -290,7 +290,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "rangedLevel",
 		name = "Ranged Level",
-		description = "Ranged level used for the deserved damage estimate (includes potion boost).",
+		description = "Ranged level used for the deserved damage calculation (includes potion boost).",
 		position = 18,
 		section = levels
 	)
@@ -306,7 +306,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "magicLevel",
 		name = "Magic Level",
-		description = "Magic level used for the deserved damage estimate (includes potion boost).",
+		description = "Magic level used for the deserved damage calculation (includes potion boost).",
 		position = 19,
 		section = levels
 	)

@@ -343,11 +343,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		stopFightIfOver();
 
-		// delay the animation processing, since we will also want to use equipment information for deserved
+		// delay the animation processing, since we will also want to use equipment data for deserved
 		// damage, and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
-			if (hasOpponent() && event.getActor() != null && event.getActor().getName() != null)
+			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
 			{
 				currentFight.checkForAttackAnimations(event.getActor().getName());
 			}

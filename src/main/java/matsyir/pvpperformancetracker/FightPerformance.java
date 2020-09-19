@@ -37,12 +37,8 @@ import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.client.game.ItemManager;
 
-// Basic class to hold information about PvP fight performances. A "successful" attack
-// is dealt by not attacking with the style of the opponent's overhead. For example,
-// attacking with range or melee against someone using protect from magic is a successful
-// attack. Using melee against someone using protect from melee is not successful.
-// This is not a guaranteed way of determining the better competitor, since someone casting
-// barrage in full tank gear can count as a successful attack. It's a good general idea, though.
+// Holds two Fighters which contain data about PvP fight performance, and has many methods to
+// add to the fight, display stats or check the status of the fight.
 @Slf4j
 @Getter
 public class FightPerformance implements Comparable<FightPerformance>
@@ -139,7 +135,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 			return;
 		}
 
-		if (playerName.equals(competitor.getName()))
+		// verify that the player is interacting with their tracked opponent before adding attacks
+		if (playerName.equals(competitor.getName()) && opponent.getPlayer().equals(competitor.getPlayer().getInteracting()))
 		{
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
@@ -149,18 +146,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
 					animationData,
-					animationData.attackStyle.isUsingSuccessfulOffensivePray(pray),
 					pray);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
-		else if (playerName.equals(opponent.getName()))
+		else if (playerName.equals(opponent.getName()) && competitor.getPlayer().equals(opponent.getPlayer().getInteracting()))
 		{
 			AnimationData animationData = opponent.getAnimationData();
 			if (animationData != null)
 			{
+				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-					competitor.getPlayer(), animationData, false, 0);
+					competitor.getPlayer(), animationData, 0);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
