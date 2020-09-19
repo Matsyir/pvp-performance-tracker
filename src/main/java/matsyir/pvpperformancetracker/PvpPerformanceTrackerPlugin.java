@@ -243,6 +243,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayDeservedDmg":
 			case "showOverlayDmgDealt":
 			case "showOverlayMagicHits":
+			case "showOverlayOffensivePray":
 				overlay.setLines();
 				break;
 			// If the user updates the fight history limit, remove fights as necessary

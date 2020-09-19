@@ -210,7 +210,7 @@ public enum AnimationData
 
 		public boolean isUsingSuccessfulOffensivePray(int pray)
 		{
-			return (pray != -1 &&
+			return (pray > 0 &&
 				((isMelee() &&
 					(pray == SpriteID.PRAYER_PIETY ||
 					 pray == SpriteID.PRAYER_ULTIMATE_STRENGTH)) ||
