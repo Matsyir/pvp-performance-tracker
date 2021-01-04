@@ -97,6 +97,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static SpriteManager SPRITE_MANAGER;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
+	public static Gson gson;
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
 
@@ -154,8 +155,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Getter
 	private FightPerformance currentFight;
-
-	private Gson gson;
 
 	@Provides
 	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
@@ -616,6 +615,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
 		createConfirmationModal("Fight History Export Succeeded", "Fight history data was copied to the clipboard.");
+	}
+
+	public void exportFight(FightPerformance fight)
+	{
+		if (fight == null) { return; }
+		String fightDataJson = gson.toJson(fight, FightPerformance.class);
+		final StringSelection contents = new StringSelection(fightDataJson);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
+
+		String confirmMessage;
+		if (fight.getCompetitor() != null && fight.getCompetitor().getName() != null &&
+			fight.getOpponent() != null && fight.getOpponent().getName() != null)
+		{
+			confirmMessage = "Fight data of " + fight.getCompetitor().getName() + " vs " +
+				fight.getOpponent().getName() + " was copied to the clipboard.";
+		}
+		else
+		{
+			confirmMessage = "Fight data was copied to the clipboard.";
+		}
+		createConfirmationModal("Fight Export Succeeded", confirmMessage);
 	}
 
 	// retrieve offensive pray as SpriteID since that's all we will directly use it for aside from comparison.

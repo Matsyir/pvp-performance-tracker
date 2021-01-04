@@ -29,6 +29,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -45,6 +47,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -324,11 +327,26 @@ class FightPerformancePanel extends JPanel
 		};
 		addMouseListener(fightPerformanceMouseListener);
 
-		// Create "Remove Fight" popup menu/context menu
+
 		JPopupMenu popupMenu = new JPopupMenu();
+
+		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
-		removeFight.addActionListener(e -> PLUGIN.removeFight(fight));
+		removeFight.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
+				PLUGIN.removeFight(fight);
+			}
+		});
+
+		// Create "Export Fight Data" popup menu/context menu
+		final JMenuItem exportFight = new JMenuItem("Export Fight Data");
+		exportFight.addActionListener(e -> PLUGIN.exportFight(fight));
+
 		popupMenu.add(removeFight);
+		popupMenu.add(exportFight);
 		setComponentPopupMenu(popupMenu);
 	}
 
@@ -354,130 +372,6 @@ class FightPerformancePanel extends JPanel
 			fightLogFrame.dispose();
 		}
 
-		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
-		if (fightLogEntries == null || fightLogEntries.size() < 1)
-		{
-			PLUGIN.createConfirmationModal("Info", "There are no fight log entries available for this fight.");
-			return;
-		}
-		String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
-		fightLogFrame = new JFrame(title);
-		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
-		// on top as well so it can be above the client.
-		if (fightLogFrame.isAlwaysOnTopSupported())
-		{
-			fightLogFrame.setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
-		}
-
-		fightLogFrame.setIconImage(frameIcon);
-		fightLogFrame.setSize(765, 503); // default to same as osrs on fixed
-		fightLogFrame.setLocation(FightPerformancePanel.this.getRootPane().getLocationOnScreen());
-
-		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][11];
-		int i = 0;
-		long initialTime = 0;
-
-		for (FightLogEntry fightEntry : fightLogEntries)
-		{
-			if (i == 0)
-			{
-				initialTime = fightEntry.getTime();
-			}
-			int styleIcon;
-			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.RANGED)
-			{
-				styleIcon = SpriteID.SKILL_RANGED;
-			}
-			else if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-			{
-				styleIcon = SpriteID.SKILL_MAGIC;
-			}
-			else
-			{
-				styleIcon = SpriteID.SKILL_ATTACK;
-			}
-			int prayIcon = 0;
-			boolean noOverhead = false;
-			if (fightEntry.getDefenderOverhead() == HeadIcon.RANGED)
-			{
-				prayIcon = SpriteID.PRAYER_PROTECT_FROM_MISSILES;
-			}
-			else if (fightEntry.getDefenderOverhead() == HeadIcon.MAGIC)
-			{
-				prayIcon = SpriteID.PRAYER_PROTECT_FROM_MAGIC;
-			}
-			else if (fightEntry.getDefenderOverhead() == HeadIcon.MELEE)
-			{
-				prayIcon = SpriteID.PRAYER_PROTECT_FROM_MELEE;
-			}
-			else
-			{
-				noOverhead = true;
-			}
-
-			BufferedImage styleIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(styleIcon, 0);
-			stats[i][0] = fightEntry.getAttackerName();
-			stats[i][1] = styleIconRendered;
-			stats[i][2] = fightEntry.getHitRange();
-			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
-			stats[i][4] = nf.format(fightEntry.getDeservedDamage());
-			stats[i][5] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
-			stats[i][6] = fightEntry.success() ? "✔" : "";
-			stats[i][7] = noOverhead ? "" : PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(prayIcon, 0);
-
-			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-			{
-				int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
-				BufferedImage freezeIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(freezeIcon, 0);
-				stats[i][8] = freezeIconRendered;
-			}
-			else
-			{
-				stats[i][8] = "";
-			}
-
-			// offensive pray shown as icon or blank if none(0)
-			stats[i][9] = fightEntry.getAttackerOffensivePray() <= 0 ? "" :
-				PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(fightEntry.getAttackerOffensivePray(), 0);
-
-			long durationLong = fightEntry.getTime() - initialTime;
-			Duration duration = Duration.ofMillis(durationLong);
-			String time = String.format("%02d:%02d.%01d",
-				duration.toMinutes(),
-				duration.getSeconds() % 60,
-				durationLong % 1000 / 100);
-			stats[i][10] = time;
-
-			i++;
-		}
-
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time" };
-		JTable table = new JTable(stats, header);
-		table.setRowHeight(30);
-		table.setDefaultEditor(Object.class, null);
-
-		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(7).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer());
-
-		mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
-
-		fightLogFrame.add(mainPanel);
-		fightLogFrame.setVisible(true);
-	}
-
-	static class BufferedImageCellRenderer extends DefaultTableCellRenderer
-	{
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
-		{
-			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			setText("");
-			setIcon(value instanceof BufferedImage ? new ImageIcon((BufferedImage)value) : null);
-
-			return this;
-		}
+		fightLogFrame = new FightLogFrame(fight, getRootPane());
 	}
 }
