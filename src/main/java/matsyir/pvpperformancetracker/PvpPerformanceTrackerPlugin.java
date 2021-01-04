@@ -97,6 +97,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static SpriteManager SPRITE_MANAGER;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
+	public static ItemManager ITEM_MANAGER;
 	public static Gson gson;
 	// Last man standing map regions, including lobby
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
@@ -148,7 +149,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private PvpPerformanceTrackerOverlay overlay;
 
 	@Inject
-	private ItemManager itemManager;
+	public ItemManager itemManager;
 
 	@Inject
 	private ScheduledExecutorService executor;
@@ -167,6 +168,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down
+		//ITEM_MANAGER = itemManager;
+
+
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		ICON = new ImageIcon(icon).getImage();
@@ -303,7 +307,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// start a new fight with the new found opponent, if a new one.
 		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
-			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent, itemManager);
+			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
 			overlay.setFight(currentFight);
 		}
 	}
@@ -511,6 +515,22 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		panel.rebuild();
 	}
 
+	// set fight log names after importing since they aren't serialized but are on the parent class
+	void initializeImportedFight(FightPerformance f)
+	{
+		// check for nulls in case the data was corrupted and entries are corrupted.
+		if (f.getCompetitor() == null || f.getOpponent() == null ||
+			f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
+		{
+			return;
+		}
+
+		f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
+			l.attackerName = f.getCompetitor().getName());
+		f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
+			l.attackerName = f.getOpponent().getName());
+	}
+
 	// process and add a list of deserialized json fights to the currently loaded fights
 	// can throw NullPointerException if some of the serialized data is corrupted
 	void importFights(List<FightPerformance> fights) throws NullPointerException
@@ -533,17 +553,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// set fight log names since they aren't serialized but are on the parent class
 		for (FightPerformance f : fightHistory)
 		{
-			// check for nulls in case the data was corrupted and entries are corrupted.
-			if (f.getCompetitor() == null || f.getOpponent() == null ||
-				f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
-			{
-				continue;
-			}
-
-			f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
-				l.attackerName = f.getCompetitor().getName());
-			f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
-				l.attackerName = f.getOpponent().getName());
+			initializeImportedFight(f);
 		}
 	}
 

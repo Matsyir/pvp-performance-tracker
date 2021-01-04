@@ -93,11 +93,49 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset, fightLogEntries);
 	}
 
-	// constructor which initializes a fight from the 2 Players, starting stats at 0.
-	FightPerformance(Player competitor, Player opponent, ItemManager itemManager)
+	// create a more detailed fight performance by merging data from two opposing fight logs
+	// also include the fights for easier access to general info
+	FightPerformance(FightPerformance mainFight, FightPerformance opposingFight,
+			ArrayList<FightLogEntry> mainFightLogEntries, ArrayList<FightLogEntry> opponentFightLogEntries)
 	{
-		this.competitor = new Fighter(competitor, itemManager);
-		this.opponent = new Fighter(opponent, itemManager);
+		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
+		allFightLogEntries.addAll(opponentFightLogEntries);
+
+		String cName = mainFight.competitor.getName();
+		String oName = mainFight.opponent.getName();
+		this.competitor = new Fighter(cName);
+		this.opponent = new Fighter(oName);
+
+		// before looping through logs, set "global"/constant values that won't change depending on dps
+		// calculations: successful magic hits and actual damage dealt.
+		// in case either fighter somehow missed an attack, use the max potential available data
+		// detected, as we could rarely miss an attack but never add an extra one.
+		this.competitor.addDamageDealt(Math.max(mainFight.competitor.getDamageDealt(), opposingFight.opponent.getDamageDealt()));
+		this.opponent.addDamageDealt(Math.max(opposingFight.competitor.getDamageDealt(), mainFight.opponent.getDamageDealt()));
+
+		this.competitor.addMagicHitCount(Math.max(mainFight.competitor.getMagicHitCount(), opposingFight.opponent.getMagicHitCount()));
+		this.opponent.addMagicHitCount(Math.max(opposingFight.competitor.getMagicHitCount(), mainFight.opponent.getMagicHitCount()));
+
+		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
+		for (FightLogEntry logEntry : allFightLogEntries)
+		{
+			if (logEntry.attackerName.equals(cName))
+			{
+				competitor.addAttack(logEntry);
+			}
+			else if (logEntry.attackerName.equals(oName))
+			{
+				opponent.addAttack(logEntry);
+			}
+
+		}
+	}
+
+	// constructor which initializes a fight from the 2 Players, starting stats at 0.
+	FightPerformance(Player competitor, Player opponent)
+	{
+		this.competitor = new Fighter(competitor);
+		this.opponent = new Fighter(opponent);
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.

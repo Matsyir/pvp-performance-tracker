@@ -83,7 +83,7 @@ class Fighter
 	private PvpDamageCalc pvpDamageCalc;
 
 	// fighter that is bound to a player and gets updated during a fight
-	Fighter(Player player, ItemManager itemManager)
+	Fighter(Player player)
 	{
 		this.player = player;
 		name = player.getName();
@@ -95,11 +95,11 @@ class Fighter
 		magicHitCountDeserved = 0;
 		offensivePraySuccessCount = 0;
 		dead = false;
-		pvpDamageCalc = new PvpDamageCalc(itemManager);
+		pvpDamageCalc = new PvpDamageCalc();
 		fightLogEntries = new ArrayList<>();
 	}
 
-	// fighter that is bound to a player and gets updated during a fight
+	// fighter for merging fight logs together for detailed data (fight analysis)
 	Fighter(String name, ArrayList<FightLogEntry> logs)
 	{
 		player = null;
@@ -111,6 +111,7 @@ class Fighter
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
+		pvpDamageCalc = new PvpDamageCalc();
 		fightLogEntries = logs;
 	}
 
@@ -127,10 +128,13 @@ class Fighter
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
+		pvpDamageCalc = new PvpDamageCalc();
+		fightLogEntries = new ArrayList<>();
 	}
 
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
+	// Used for regular, ongoing fights
 	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
 	{
 		attackCount++;
@@ -164,6 +168,41 @@ class Fighter
 		fightLogEntries.add(fightLogEntry);
 	}
 
+	// add an attack from fight log, without player references, for merging fight logs (fight analysis)
+	void addAttack(FightLogEntry logEntry)
+	{
+		attackCount++;
+		if (logEntry.success())
+		{
+			offPraySuccessCount++;
+		}
+		if (logEntry.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(logEntry.getAttackerOffensivePray()))
+		{
+			offensivePraySuccessCount++;
+		}
+
+		pvpDamageCalc.updateDamageStats(logEntry);
+		deservedDamage += pvpDamageCalc.getAverageHit();
+
+		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
+		{
+			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
+
+			// magicHitCount can be directly added, as it can no longer be detected and should have been accurate initially.
+//			if (opponent.getGraphic() != GraphicID.SPLASH)
+//			{
+//				magicHitCount++;
+//			}
+		}
+
+		FightLogEntry fightLogEntry = new FightLogEntry(logEntry, pvpDamageCalc);
+//		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
+//		{
+//			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
+//		}
+		fightLogEntries.add(fightLogEntry);
+	}
+
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
 	void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
 	{
@@ -179,6 +218,12 @@ class Fighter
 	void addDamageDealt(int damage)
 	{
 		this.damageDealt += damage;
+	}
+
+	// will be used for merging fight logs (fight analysis)
+	void addMagicHitCount(int count)
+	{
+		this.magicHitCount += count;
 	}
 
 	void died()

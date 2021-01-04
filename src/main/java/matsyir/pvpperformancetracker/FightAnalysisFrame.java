@@ -24,14 +24,13 @@
  */
 package matsyir.pvpperformancetracker;
 
+import com.sun.tools.javac.util.List;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -39,10 +38,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.util.ImageUtil;
 
@@ -57,6 +54,7 @@ public class FightAnalysisFrame extends JFrame
 
 	private FightPerformance mainFight;
 	private FightPerformance opponentFight;
+	private FightPerformance analyzedFight;
 
 	static
 	{
@@ -81,18 +79,12 @@ public class FightAnalysisFrame extends JFrame
 		setSize(765, 256);
 		setLocation(rootPane.getLocationOnScreen());
 
-		//mainPanel = new JPanel(new BorderLayout(4, 4));
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setPreferredSize(getSize());
 		mainPanel.setVisible(true);
+		mainPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
 		add(mainPanel);
-//		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
-//		if (fightLogEntries == null || fightLogEntries.size() < 1)
-//		{
-//			PLUGIN.createConfirmationModal("Info", "There are no fight log entries available for this fight.");
-//			return;
-//		}
 
 		//mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 		setVisible(true);
@@ -103,11 +95,10 @@ public class FightAnalysisFrame extends JFrame
 	// two single related fightPerformance json data.
 	private void initializeFrame()
 	{
-
 		mainPanel.removeAll();
+
 		JPanel instructionLabelLine = new JPanel(new BorderLayout(4, 4));
 		JPanel textLabelLine = new JPanel(new BorderLayout(4, 4));
-		textLabelLine.setPreferredSize(new Dimension(getWidth(), 18));
 		JPanel textAreaLine = new JPanel(new BorderLayout(4, 4));
 		JPanel actionLine = new JPanel(new BorderLayout(4, 4));
 
@@ -143,33 +134,89 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.add(textLabelLine);
 		mainPanel.add(textAreaLine);
 		mainPanel.add(actionLine);
+		validate();
+	}
+
+	// parse fights into mainFight / opponentFight. Returns false if either are invalid.
+	private boolean parseFights()
+	{
+		try
+		{
+			// if either fight or their log entries are null, error
+			mainFight = PLUGIN.gson.fromJson(mainFightJsonInput.getText().trim(), FightPerformance.class);
+			if (mainFight == null || mainFight.getAllFightLogEntries() == null || mainFight.getAllFightLogEntries().size() < 1)
+			{
+				PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 1's fight data.");
+				mainFight = null;
+
+				return false;
+			}
+
+			opponentFight = PLUGIN.gson.fromJson(opponentFightJsonInput.getText().trim(), FightPerformance.class);
+			if (opponentFight == null || opponentFight.getAllFightLogEntries() == null || opponentFight.getAllFightLogEntries().size() < 1)
+			{
+				PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 2's fight data.");
+				opponentFight = null;
+
+				return false;
+			}
+
+
+			PLUGIN.initializeImportedFight(mainFight);
+			PLUGIN.initializeImportedFight(opponentFight);
+		}
+		catch(Exception e)
+		{
+			PLUGIN.createConfirmationModal("Error", "Error while parsing fight data.");
+			return false;
+		}
+
+		return true;
 	}
 
 	// start fight parsing, and if fights are valid then move onto the next "state" of the frame
 	// where we will display stats about the fight.
 	private void performAnalysis()
 	{
-		parseFights();
+		boolean fightsValid = parseFights();
 
-		// do stuff
+		if (!fightsValid) { return; }
+
+		// now that we know fights are valid, merge them to get more detailed data:
+		// only save attacks sent by the client/"main" fighter, so ones with the competitor's RSN
+		ArrayList<FightLogEntry> mainFightDetailedEntries = new ArrayList<>(mainFight.getAllFightLogEntries());
+		mainFightDetailedEntries.removeIf(e -> !e.attackerName.equals(mainFight.getCompetitor().getName()));
+
+		ArrayList<FightLogEntry> oppFightDetailedEntries = new ArrayList<>(opponentFight.getAllFightLogEntries());
+		oppFightDetailedEntries.removeIf(e -> !e.attackerName.equals(opponentFight.getCompetitor().getName()));
+
+
+		analyzedFight = new FightPerformance(mainFight, opponentFight, mainFightDetailedEntries, oppFightDetailedEntries);
+
+		// now that we've got the merged fight, display results;
+		displayAnalysis();
 	}
 
-	private void parseFights()
+	private void displayAnalysis()
 	{
-		mainFight = PLUGIN.gson.fromJson(mainFightJsonInput.getText().trim(), FightPerformance.class);
-		if (mainFight == null || mainFight.getAllFightLogEntries() == null || mainFight.getAllFightLogEntries().size() < 1)
-		{
-			// error
-			PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 1's fight data.");
-			mainFight = null;
-		}
+		mainPanel.removeAll();
 
-		opponentFight = PLUGIN.gson.fromJson(opponentFightJsonInput.getText().trim(), FightPerformance.class);
-		if (opponentFight == null || opponentFight.getAllFightLogEntries() == null || opponentFight.getAllFightLogEntries().size() < 1)
-		{
-			// error
-			PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 2's fight data.");
-			opponentFight = null;
-		}
+		JPanel backButtonLine = new JPanel(new BorderLayout(4, 4));
+		JButton backButton = new JButton("Return to setup");
+		backButton.addActionListener(e -> initializeFrame());
+		backButtonLine.add(backButton);
+
+		JPanel fightPanelLine = new JPanel(new BorderLayout(12, 12));
+		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, false, false, null);
+		FightPerformancePanel opponentFightPanel = new FightPerformancePanel(opponentFight, false, false, false, null);
+		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight, false, false, true, opponentFight);
+
+		fightPanelLine.add(mainFightPanel, BorderLayout.WEST);
+		fightPanelLine.add(opponentFightPanel, BorderLayout.EAST);
+		fightPanelLine.add(analyzedFightPanel, BorderLayout.CENTER);
+
+		mainPanel.add(backButtonLine);
+		mainPanel.add(fightPanelLine);
+		validate();
 	}
 }

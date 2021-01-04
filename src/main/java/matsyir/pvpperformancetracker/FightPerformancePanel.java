@@ -99,6 +99,7 @@ class FightPerformancePanel extends JPanel
 	}
 
 	private FightPerformance fight;
+	private boolean showBorders;
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -121,6 +122,12 @@ class FightPerformancePanel extends JPanel
 	//
 	FightPerformancePanel(FightPerformance fight)
 	{
+		this(fight, true, true, false, null);
+	}
+
+	FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentOffensive, FightPerformance oppFight)
+	{
+		this.showBorders = showBorders;
 		if (frameIcon == null || deathIcon == null)
 		{
 			// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
@@ -138,7 +145,11 @@ class FightPerformancePanel extends JPanel
 
 		String tooltipText = "Ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
 		setToolTipText(tooltipText);
-		setBorder(normalBorder);
+
+		if (showBorders)
+		{
+			setBorder(normalBorder);
+		}
 
 		// boxlayout panel to hold each of the lines.
 		JPanel fightPanel = new JPanel();
@@ -274,14 +285,35 @@ class FightPerformancePanel extends JPanel
 		playerOffensivePrayStats.setToolTipText(competitor.getOffensivePrayStats() + " successful offensive prayers/" +
 			competitor.getAttackCount() + " total attacks (" +
 			nf.format(competitor.calculateOffensivePraySuccessPercentage()) + "%)");
-		playerOffensivePrayStats.setForeground(Color.WHITE);
+
+		playerOffensivePrayStats.setForeground(
+			(showOpponentOffensive && competitor.calculateOffensivePraySuccessPercentage() >
+				oppFight.getCompetitor().calculateOffensivePraySuccessPercentage()) ?
+				Color.GREEN : Color.WHITE);
+
 		offensivePrayStatsLine.add(playerOffensivePrayStats, BorderLayout.WEST);
 
+		//
 		// sixth line RIGHT: "N/A", no data.
 		JLabel opponentOffensivePrayStats = new JLabel();
-		opponentOffensivePrayStats.setText("N/A");
-		opponentOffensivePrayStats.setToolTipText("No data is available for the opponent's offensive prayers.");
-		opponentOffensivePrayStats.setForeground(Color.WHITE);
+		if (showOpponentOffensive)
+		{
+			Fighter oppComp = oppFight.getCompetitor();
+
+			opponentOffensivePrayStats.setText(String.valueOf(oppComp.getOffensivePrayStats()));
+			opponentOffensivePrayStats.setToolTipText(oppComp.getOffensivePrayStats() + " successful offensive prayers/" +
+				oppComp.getAttackCount() + " total attacks (" +
+				nf.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
+			opponentOffensivePrayStats.setForeground(
+				oppFight.getCompetitor().calculateOffensivePraySuccessPercentage() > competitor.calculateOffensivePraySuccessPercentage()
+					? Color.GREEN : Color.WHITE);
+		}
+		else
+		{
+			opponentOffensivePrayStats.setText("N/A");
+			opponentOffensivePrayStats.setToolTipText("No data is available for the opponent's offensive prayers.");
+			opponentOffensivePrayStats.setForeground(Color.WHITE);
+		}
 		offensivePrayStatsLine.add(opponentOffensivePrayStats, BorderLayout.EAST);
 
 		fightPanel.add(playerNamesLine);
@@ -327,6 +359,8 @@ class FightPerformancePanel extends JPanel
 		};
 		addMouseListener(fightPerformanceMouseListener);
 
+		// skip the remaining code if we aren't showing actions.
+		if (!showActions) { return; }
 
 		JPopupMenu popupMenu = new JPopupMenu();
 
@@ -361,7 +395,10 @@ class FightPerformancePanel extends JPanel
 
 	private void setOutline(boolean visible)
 	{
-		this.setBorder(visible ? hoverBorder : normalBorder);
+		if (showBorders)
+		{
+			this.setBorder(visible ? hoverBorder : normalBorder);
+		}
 	}
 
 	private void createFightLogFrame()

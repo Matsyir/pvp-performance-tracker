@@ -93,6 +93,24 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
+	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc)
+	{
+		this.attackerName = e.attackerName;
+		this.attackerGear = e.attackerGear;
+		this.attackerOverhead = e.attackerOverhead;
+		this.animationData = e.animationData;
+		this.deservedDamage = pvpDamageCalc.getAverageHit();
+		this.accuracy = pvpDamageCalc.getAccuracy();
+		this.minHit = pvpDamageCalc.getMinHit();
+		this.maxHit = pvpDamageCalc.getMaxHit();
+		this.splash = e.splash;
+		this.time = e.time;
+
+		this.defenderGear = e.defenderGear;
+		this.defenderOverhead = e.defenderOverhead;
+		this.attackerOffensivePray = e.attackerOffensivePray;
+	}
+
 	public FightLogEntry(int [] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)
 	{
 		this.attackerName = attackerName;
