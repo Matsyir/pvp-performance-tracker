@@ -101,4 +101,9 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		}
 		SwingUtilities.invokeLater(this::updateUI);
 	}
+
+	public void setConfigWarning(boolean enable)
+	{
+		totalStatsPanel.setConfigWarning(enable);
+	}
 }

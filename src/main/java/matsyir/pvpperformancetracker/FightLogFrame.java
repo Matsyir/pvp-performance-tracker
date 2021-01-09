@@ -67,10 +67,9 @@ public class FightLogFrame extends JFrame
 		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
 		if (fightLogEntries == null || fightLogEntries.size() < 1)
 		{
-			PLUGIN.createConfirmationModal("Info", "There are no fight log entries available for this fight.");
+			PLUGIN.createConfirmationModal("Error", "There are no fight log entries available for this fight.");
 			return;
 		}
-
 
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.

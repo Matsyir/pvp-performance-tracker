@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Matsyir <https://github.com/matsyir>
+ * Copyright (c) 2021, Matsyir <https://github.com/matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,31 +25,37 @@
 package matsyir.pvpperformancetracker;
 
 import lombok.Getter;
+import net.runelite.api.Client;
+import net.runelite.api.Skill;
 
+// Basic class that will be used to save current combat levels (including boosts/drains)
 @Getter
-public enum RingData
+public class CombatLevels
 {
-	SEERS_RING("Seers Ring", 6731),
-	ARCHERS_RING("Archers Ring", 6733),
-	BERSERKER_RING("Berserker Ring", 6737),
-	SEERS_RING_I("Seers Ring (i)", 11770),
-	ARCHERS_RING_I("Archers Ring (i)", 11771),
-	BERSERKER_RING_I("Berserker Ring (i)", 11773),
-	BRIMSTONE_RING("Brimstone Ring", 22975),
-	NONE("None", -1);
+	int atk;
+	int str;
+	int def;
+	int range;
+	int mage;
+	int hp; // not currently used but potential dh support in future?
 
-	private String name;
-	private int itemId;
-
-	RingData(String name, int itemId)
+	public CombatLevels(int atk, int str, int def, int range, int mage, int hp)
 	{
-		this.name = name;
-		this.itemId = itemId;
+		this.atk = atk;
+		this.str = str;
+		this.def = def;
+		this.range = range;
+		this.mage = mage;
+		this.hp = hp;
 	}
 
-	@Override
-	public String toString()
+	public CombatLevels(Client client)
 	{
-		return name;
+		this.atk = client.getBoostedSkillLevel(Skill.ATTACK);
+		this.str = client.getBoostedSkillLevel(Skill.STRENGTH);
+		this.def = client.getBoostedSkillLevel(Skill.DEFENCE);
+		this.range = client.getBoostedSkillLevel(Skill.RANGED);
+		this.mage = client.getBoostedSkillLevel(Skill.MAGIC);
+		this.hp = client.getBoostedSkillLevel(Skill.HITPOINTS);
 	}
 }

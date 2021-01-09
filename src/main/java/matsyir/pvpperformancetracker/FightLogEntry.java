@@ -1,3 +1,28 @@
+/*
+ * Copyright (c) 2021, Matsyir <https://github.com/matsyir>
+ * Copyright (c) 2020, Mazhar <https://twitter.com/maz_rs>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
@@ -6,7 +31,6 @@ import java.awt.Color;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Instant;
-
 import lombok.Getter;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
@@ -33,6 +57,15 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("t")
 	private long time;
+
+	// this boolean represents if this is a "complete" fight log entry or not.
+	// if a fight log entry is full/complete, then it has all attack data.
+	// an "incomplete" fight log entry means it's only holding the current attacker's defensive stats to be used with
+	// an opposing attack, to be matched up with fight analysis/data merging
+	// very rough way to do this but itll work
+	@Expose
+	@SerializedName("f")
+	private boolean isFullEntry;
 
 
 	// attacker data
@@ -63,6 +96,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed
 
+	@Expose
+	@SerializedName("C")
+	private CombatLevels attackerLevels; // CAN BE NULL
+
+
 	// defender data
 	@Expose
 	@SerializedName("g")
@@ -75,9 +113,15 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray)
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels)
 	{
+		this.isFullEntry = true;
+
+		// general
 		this.attackerName = attacker.getName();
+		this.time = Instant.now().toEpochMilli();
+
+		// attacker data
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
 		this.attackerOverhead = attacker.getOverheadIcon();
 		this.animationData = AnimationData.dataForAnimation(attacker.getAnimation());
@@ -86,16 +130,34 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
-		this.time = Instant.now().toEpochMilli();
+		this.attackerLevels = levels; // CAN BE NULL
 
+		// defender data
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
 		this.defenderOverhead = defender.getOverheadIcon();
 		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
+	// create incomplete entry to save competitor's defensive stats which are only client side
+	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray)
+	{
+		this.isFullEntry = false;
+
+		this.attackerName = attackerName;
+		this.attackerLevels = levels;
+		this.attackerOffensivePray = attackerOffensivePray;
+	}
+
+	// create new fightlogentry based on existing entry but new damage calcs (fight analysis/stat merging)
 	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc)
 	{
+		this.isFullEntry = true;
+
+		// general
 		this.attackerName = e.attackerName;
+		this.time = e.time;
+
+		// attacker data
 		this.attackerGear = e.attackerGear;
 		this.attackerOverhead = e.attackerOverhead;
 		this.animationData = e.animationData;
@@ -104,13 +166,14 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = e.splash;
-		this.time = e.time;
 
+		// defender data
 		this.defenderGear = e.defenderGear;
 		this.defenderOverhead = e.defenderOverhead;
 		this.attackerOffensivePray = e.attackerOffensivePray;
 	}
 
+	// randomized entry used for testing
 	public FightLogEntry(int [] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)
 	{
 		this.attackerName = attackerName;
@@ -158,6 +221,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		return minHit + "-" + maxHit;
 	}
 
+	public boolean isSameGameTickAs(FightLogEntry entry)
+	{
+		return Math.abs(time - entry.time) < 500;
+	}
 
 	// use to sort by last fight time, to sort fights by date/time.
 	@Override

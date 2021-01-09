@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2020, Matsyir <https://github.com/Matsyir>
+ * Copyright (c) 2021, Matsyir <https://github.com/Matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -39,6 +40,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
 
@@ -70,6 +72,7 @@ public class TotalStatsPanel extends JPanel
 
 	private static JFrame fightAnalysisFrame;
 
+	// labels to be updated
 	private JLabel killsLabel;
 	private JLabel deathsLabel;
 	private JLabel offPrayStatsLabel;
@@ -77,6 +80,8 @@ public class TotalStatsPanel extends JPanel
 	private JLabel dmgDealtStatsLabel;
 	private JLabel magicHitCountStatsLabel;
 	private JLabel offensivePrayCountStatsLabel;
+
+	private JLabel settingsWarningLabel; // to be hidden/shown
 
 	private Fighter totalStats;
 
@@ -119,7 +124,7 @@ public class TotalStatsPanel extends JPanel
 	{
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(7, 1));
+		setLayout(new GridLayout(CONFIG.settingsConfigured() ? 7 : 8, 1));
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -130,6 +135,19 @@ public class TotalStatsPanel extends JPanel
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
 		add(titleLabel);
+
+		// if settings haven't been configured, add a red label to display that they should be.
+		if (!CONFIG.settingsConfigured())
+		{
+			settingsWarningLabel = new JLabel();
+			settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
+			settingsWarningLabel.setToolTipText("Please verify that the plugin is configured according to your needs.");
+			settingsWarningLabel.setForeground(Color.RED);
+			Font f = settingsWarningLabel.getFont();
+			settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
+			settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			add(settingsWarningLabel);
+		}
 
 		// SECOND LINE
 		// panel to show total kills/deaths
@@ -253,12 +271,17 @@ public class TotalStatsPanel extends JPanel
 			}
 		});
 
-		// Create "Export Fight History" popup menu/context menu item
-		final JMenuItem exportFightHistory = new JMenuItem("Export Fight History");
+		// Create "Configure Settings" popup menu/context menu item
+		// TODO
+		//final JMenuItem configureSettings = new JMenuItem("Configure Settings");
+		//configureSettings.addActionListener(e -> );
+
+		// Create "Copy Fight History Data" popup menu/context menu item
+		final JMenuItem exportFightHistory = new JMenuItem("Copy Fight History Data");
 		exportFightHistory.addActionListener(e -> PLUGIN.exportFightHistory());
 
-		// Create "Import Fight History" popup menu/context menu item
-		final JMenuItem importFightHistory = new JMenuItem("Import Fight History");
+		// Create "Import Fight History Data" popup menu/context menu item
+		final JMenuItem importFightHistory = new JMenuItem("Import Fight History Data");
 		importFightHistory.addActionListener(e ->
 		{
 			// display a simple input dialog to request json data to import.
@@ -509,5 +532,35 @@ public class TotalStatsPanel extends JPanel
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);
+	}
+
+	public void setConfigWarning(boolean enable)
+	{
+		if (enable)
+		{
+			setLayout(new GridLayout(8, 1));
+
+			if (settingsWarningLabel == null)
+			{
+				settingsWarningLabel = new JLabel();
+				settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
+				settingsWarningLabel.setForeground(Color.RED);
+				Font f = settingsWarningLabel.getFont();
+				settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
+				settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			}
+			add(settingsWarningLabel, 1);
+		}
+		else
+		{
+			if (getComponentCount() > 7)
+			{
+				remove(settingsWarningLabel);
+				settingsWarningLabel = null;
+			}
+			setLayout(new GridLayout(7, 1));
+		}
+
+		validate();
 	}
 }

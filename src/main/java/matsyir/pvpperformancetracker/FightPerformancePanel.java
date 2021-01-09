@@ -375,8 +375,8 @@ class FightPerformancePanel extends JPanel
 			}
 		});
 
-		// Create "Export Fight Data" popup menu/context menu
-		final JMenuItem exportFight = new JMenuItem("Export Fight Data");
+		// Create "Export/Copy Fight Data" popup menu/context menu
+		final JMenuItem exportFight = new JMenuItem("Copy Fight Data");
 		exportFight.addActionListener(e -> PLUGIN.exportFight(fight));
 
 		popupMenu.add(removeFight);

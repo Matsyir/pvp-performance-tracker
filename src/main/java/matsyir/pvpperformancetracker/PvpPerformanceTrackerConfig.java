@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Matsyir <https://github.com/Matsyir>
+ * Copyright (c) 2021, Matsyir <https://github.com/Matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	int LEVEL_MAX = 120;
 
 	@ConfigSection(name = "Overlay",
-		description = "Contains overlay settings (MAX 5 lines, if you use the detailed one)",
+		description = "Contains overlay settings (MAX of 5 lines)",
 		position = 2,
 		closedByDefault = true
 	)
@@ -46,16 +46,29 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigSection(name = "Gear/Ammo",
 		description = "Contains gear/ammo settings",
 		position = 11,
-		closedByDefault = true
+		closedByDefault = false
 	)
 	String gearAmmo = "gearAmmo";
 
 	@ConfigSection(name = "Levels",
 		description = "Contains level settings for the deserved damage statistic",
 		position = 15,
-		closedByDefault = true
+		closedByDefault = false
 	)
 	String levels = "levels";
+
+	// ================================= Done sections, config items below =================================
+
+	@ConfigItem(
+		keyName = "settingsConfigured",
+		name = "I have verified my settings",
+		description = "Some settings affect damage calculations, and every player should set them based on how they're pking. Please confirm them and tick this box.",
+		position = -1
+	)
+	default boolean settingsConfigured()
+	{
+		return false;
+	}
 
 	@ConfigItem(
 		keyName = "restrictToLms",
@@ -94,7 +107,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "useSimpleOverlay",
 		name = "Use Simple Overlay",
-		description = "The overlay will only display off-pray percentage as stats rather than various selected stats.",
+		description = "The overlay will only display off-pray percentage as stats rather than configured stats.",
 		position = 3,
 		section = overlay
 	)
@@ -243,7 +256,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "attackLevel",
 		name = "Attack Level",
 		description = "Attack level used for the deserved damage calculation (includes potion boost).",
-		position = 15,
+		position = 16,
 		section = levels
 	)
 	default int attackLevel()
@@ -259,7 +272,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "strengthLevel",
 		name = "Strength Level",
 		description = "Strength level used for the deserved damage calculation (includes potion boost).",
-		position = 16,
+		position = 17,
 		section = levels
 	)
 	default int strengthLevel()
@@ -275,7 +288,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "defenceLevel",
 		name = "Defence Level",
 		description = "Defence level used for the deserved damage calculation (includes potion boost).",
-		position = 17,
+		position = 18,
 		section = levels
 	)
 	default int defenceLevel()
@@ -291,7 +304,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "rangedLevel",
 		name = "Ranged Level",
 		description = "Ranged level used for the deserved damage calculation (includes potion boost).",
-		position = 18,
+		position = 19,
 		section = levels
 	)
 	default int rangedLevel()
@@ -307,7 +320,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "magicLevel",
 		name = "Magic Level",
 		description = "Magic level used for the deserved damage calculation (includes potion boost).",
-		position = 19,
+		position = 20,
 		section = levels
 	)
 	default int magicLevel()
@@ -322,7 +335,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "fightHistoryLimit",
 		name = "Fight History Limit",
 		description = "Maximum number of previous fights to save and display in the panel. 0 means unlimited. Can cause lag spikes at very high numbers",
-		position = 20
+		position = 21
 	)
 	default int fightHistoryLimit()
 	{
@@ -333,7 +346,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "fightLogInChat",
 		name = "Fight Log In Chat",
 		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",
-		position = 21
+		position = 22
 	)
 	default boolean fightLogInChat()
 	{

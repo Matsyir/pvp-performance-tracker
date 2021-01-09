@@ -39,7 +39,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
 
 // calculates numbers
-// formulas source thread QFC: 317,318,461,66138854
+// combat formulas source thread QFC: 317,318,461,66138854
 @Slf4j
 public class PvpDamageCalc
 {
@@ -62,7 +62,7 @@ public class PvpDamageCalc
 	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
 	private static final double PIETY_DEF_PRAYER_MODIFIER = 1.25;
 	private static final double AUGURY_DEF_PRAYER_MODIFIER = 1.25;
-	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1;
+	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1; // assume we never use augury during defence for now.
 	private static final double RIGOUR_DEF_PRAYER_MODIFIER = 1.25;
 
 	private static final double BALLISTA_SPEC_ACCURACY_MODIFIER = 1.25;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2020, Matsyir <https://github.com/Matsyir>
+ * Copyright (c)  2021, Matsyir <https://github.com/Matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,6 +137,12 @@ class Fighter
 	// Used for regular, ongoing fights
 	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
 	{
+		addAttack(successful, opponent, animationData, offensivePray, null);
+	}
+
+	// Levels can be null
+	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	{
 		attackCount++;
 		if (successful)
 		{
@@ -160,7 +166,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
 			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
@@ -187,20 +193,11 @@ class Fighter
 		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
-
-			// magicHitCount can be directly added, as it can no longer be detected and should have been accurate initially.
-//			if (opponent.getGraphic() != GraphicID.SPLASH)
-//			{
-//				magicHitCount++;
-//			}
+			// actual magicHitCount is directly added, as it can no longer
+			// be detected and should have been accurate initially.
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(logEntry, pvpDamageCalc);
-//		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
-//		{
-//			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
-//		}
-		fightLogEntries.add(fightLogEntry);
+		fightLogEntries.add(new FightLogEntry(logEntry, pvpDamageCalc));
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
@@ -234,6 +231,12 @@ class Fighter
 	AnimationData getAnimationData()
 	{
 		return AnimationData.dataForAnimation(player.getAnimation());
+	}
+
+	// the "addAttack" for a defensive log that creates an "incomplete" fight log entry.
+	void addDefensiveLogs(CombatLevels levels, int offensivePray)
+	{
+		fightLogEntries.add(new FightLogEntry(name, levels, offensivePray));
 	}
 
 	// Return a simple string to display the current player's success rate.

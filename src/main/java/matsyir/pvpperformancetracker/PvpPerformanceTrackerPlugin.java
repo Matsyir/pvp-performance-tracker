@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Matsyir <https://github.com/Matsyir>
+ * Copyright (c) 2021, Matsyir <https://github.com/Matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,16 +61,19 @@ import net.runelite.api.GameState;
 import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
 import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
@@ -82,7 +85,6 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.config.RuneLiteConfig;
 import org.apache.commons.lang3.ArrayUtils;
 
 @Slf4j
@@ -91,6 +93,15 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	// Thanks boost plugin
+	private static final Set<Skill> BOOSTABLE_COMBAT_SKILLS = ImmutableSet.of(
+		Skill.ATTACK,
+		Skill.STRENGTH,
+		Skill.DEFENCE,
+		Skill.RANGED,
+		Skill.MAGIC);
+	public static final String CONFIG_KEY = "pvpperformancetracker";
+	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static Image ICON;
@@ -104,7 +115,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	static
 	{
-		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, "pvp-performance-tracker");
+		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER);
 		FIGHT_HISTORY_DATA_DIR.mkdirs();
 	}
 
@@ -168,8 +179,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down
-		//ITEM_MANAGER = itemManager;
-
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
@@ -191,7 +200,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			).create();
 
 		// Unset old storage config key, which is now un-used, in order to delete redundant use of storage for previous users.
-		configManager.unsetConfiguration("pvpperformancetracker", "fightHistoryData");
+		configManager.unsetConfiguration(CONFIG_KEY, "fightHistoryData");
 
 		importFightHistoryData();
 
@@ -218,7 +227,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (!event.getGroup().equals("pvpperformancetracker")) { return; }
+		if (!event.getGroup().equals(CONFIG_KEY)) { return; }
 
 		switch(event.getKey())
 		{
@@ -260,6 +269,37 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					panel.rebuild();
 				}
 				break;
+			case "settingsConfigured":
+				boolean enableConfigWarning = !config.settingsConfigured();
+				panel.setConfigWarning(enableConfigWarning);
+				break;
+				// potential future code for level presets/dynamic config if RL ever supports it.
+//			case "attackLevel":
+//			case "strengthLevel":
+//			case "defenceLevel":
+//			case "rangedLevel":
+//			case "magicLevel":
+//				log.info("TEST-just set a level");
+//				configManager.setConfiguration(CONFIG_KEY, "levelPresetChoice", LevelConfigPreset.CUSTOM);
+//				break;
+//			case "levelPresetChoice":
+//				log.info("TEST- just chose level preset choice");
+//				LevelConfigPreset p = config.levelPresetChoice();
+//				switch (p)
+//				{
+//					case CUSTOM:
+//						break;
+//					case LMS_STATS:
+//					case NH_STAKE:
+//						configManager.setConfiguration(CONFIG_KEY, "attackLevel", p.getAtk());
+//						configManager.setConfiguration(CONFIG_KEY, "strengthLevel", p.getStr());
+//						configManager.setConfiguration(CONFIG_KEY, "defenceLevel", p.getDef());
+//						configManager.setConfiguration(CONFIG_KEY, "rangedLevel", p.getRange());
+//						configManager.setConfiguration(CONFIG_KEY, "magicLevel", p.getMage());
+//						break;
+//
+//				}
+//				break;
 		}
 	}
 
@@ -353,7 +393,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
 			{
-				currentFight.checkForAttackAnimations(event.getActor().getName());
+				currentFight.checkForAttackAnimations(event.getActor().getName(), new CombatLevels(client));
 			}
 		});
 	}
@@ -375,6 +415,49 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
+
+//	@Subscribe
+//	public void onStatChanged(StatChanged statChanged)
+//	{
+//		Skill skill = statChanged.getSkill();
+//
+//		if (!BOOSTABLE_COMBAT_SKILLS.contains(skill))
+//		{
+//			return;
+//		}
+//
+//		int skillIdx = skill.ordinal();
+//		int last = lastSkillLevels[skillIdx];
+//		int cur = client.getBoostedSkillLevel(skill);
+//
+//		if (cur == last - 1)
+//		{
+//			// Stat was restored down (from buff)
+//			lastChangeDown = client.getTickCount();
+//		}
+//
+//		if (cur == last + 1)
+//		{
+//			// Stat was restored up (from debuff)
+//			lastChangeUp = client.getTickCount();
+//		}
+//
+//		lastSkillLevels[skillIdx] = cur;
+//		updateBoostedStats();
+//
+//		int boostThreshold = config.boostThreshold();
+//
+//		if (boostThreshold != 0 && config.notifyOnBoost())
+//		{
+//			int real = client.getRealSkillLevel(skill);
+//			int lastBoost = last - real;
+//			int boost = cur - real;
+//			if (boost <= boostThreshold && boostThreshold < lastBoost)
+//			{
+//				notifier.notify(skill.getName() + " level is getting low!");
+//			}
+//		}
+//	}
 
 	// When the config is reset, also reset the fight history data, as a way to restart
 	// if the current data is causing problems.
@@ -500,15 +583,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// read saved fights from the data string and import them
 			List<FightPerformance> savedFights = Arrays.asList(gson.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
-			createConfirmationModal("Data Import Successful",
-				"PvP Performance Tracker: your fight history data was successfully imported.");
+			createConfirmationModal("Success", "Fight history data was successfully imported.");
 		}
 		catch (Exception e)
 		{
 			log.warn("Error while importing user's fight history data: " + e.getMessage());
 			// If an error was detected while deserializing fights, display that as a message dialog.
-			createConfirmationModal("Data Import Failed",
-				"PvP Performance Tracker: your fight history data was invalid, and could not be imported.");
+			createConfirmationModal("Error", "Fight history data was invalid, and could not be imported.");
 			return;
 		}
 
@@ -607,7 +688,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			JOptionPane optionPane = new JOptionPane();
 			optionPane.setMessage(message);
 			optionPane.setOptionType(JOptionPane.DEFAULT_OPTION);
-			JDialog dialog = optionPane.createDialog(panel, title);
+			JDialog dialog = optionPane.createDialog(panel, "PvP Tracker: " + title);
 			if (dialog.isAlwaysOnTopSupported())
 			{
 				dialog.setAlwaysOnTop(runeliteConfig.gameAlwaysOnTop());
@@ -624,7 +705,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		final StringSelection contents = new StringSelection(fightHistoryDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
-		createConfirmationModal("Fight History Export Succeeded", "Fight history data was copied to the clipboard.");
+		createConfirmationModal("Success", "Fight history data was copied to the clipboard.");
 	}
 
 	public void exportFight(FightPerformance fight)
@@ -634,21 +715,24 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		final StringSelection contents = new StringSelection(fightDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
+		String titleMsg;
 		String confirmMessage;
 		if (fight.getCompetitor() != null && fight.getCompetitor().getName() != null &&
 			fight.getOpponent() != null && fight.getOpponent().getName() != null)
 		{
+			titleMsg = "Success";
 			confirmMessage = "Fight data of " + fight.getCompetitor().getName() + " vs " +
 				fight.getOpponent().getName() + " was copied to the clipboard.";
 		}
 		else
 		{
-			confirmMessage = "Fight data was copied to the clipboard.";
+			titleMsg = "Error";
+			confirmMessage = "Warning: Fight data was copied to the clipboard, but it's likely corrupted.";
 		}
-		createConfirmationModal("Fight Export Succeeded", confirmMessage);
+		createConfirmationModal(titleMsg, confirmMessage);
 	}
 
-	// retrieve offensive pray as SpriteID since that's all we will directly use it for aside from comparison.
+	// retrieve offensive pray as SpriteID since that's all we will directly use it for aside from comparison
 	public int currentlyUsedOffensivePray()
 	{
 		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :

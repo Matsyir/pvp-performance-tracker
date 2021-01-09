@@ -24,7 +24,6 @@
  */
 package matsyir.pvpperformancetracker;
 
-import com.sun.tools.javac.util.List;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Image;
@@ -86,12 +85,11 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
 		add(mainPanel);
 
-		//mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 		setVisible(true);
 		initializeFrame();
 	}
 
-	// setup the initial frame contents, which should be two textareas used to input
+	// setup the initial frame contents, which should be two text inputs used to input
 	// two single related fightPerformance json data.
 	private void initializeFrame()
 	{
@@ -103,17 +101,17 @@ public class FightAnalysisFrame extends JFrame
 		JPanel actionLine = new JPanel(new BorderLayout(4, 4));
 
 		JLabel instructionLabel = new JLabel();
-		instructionLabel.setText("This panel is used to merge two fighter's fights in order to get more accurate stats about the fight, as some data is only client-side.");
+		instructionLabel.setText("This panel is used to merge two opposing fighter's fight data in order to get more accurate stats about the fight.");
 		instructionLabel.setForeground(Color.WHITE);
 		instructionLabelLine.add(instructionLabel, BorderLayout.NORTH);
 
 		JLabel firstFightLabel = new JLabel();
-		firstFightLabel.setText("Enter fight JSON data for Fighter 1:");
+		firstFightLabel.setText("Enter fight data for Fighter 1:");
 		firstFightLabel.setForeground(Color.WHITE);
 		textLabelLine.add(firstFightLabel, BorderLayout.WEST);
 
 		JLabel secondFightLabel = new JLabel();
-		secondFightLabel.setText("Enter fight JSON data for Fighter 2:");
+		secondFightLabel.setText("Enter fight data data for Fighter 2:");
 		secondFightLabel.setForeground(Color.WHITE);
 		textLabelLine.add(secondFightLabel, BorderLayout.EAST);
 
@@ -124,10 +122,7 @@ public class FightAnalysisFrame extends JFrame
 		textAreaLine.add(opponentFightJsonInput, BorderLayout.EAST);
 
 		JButton confirmButton = new JButton("Merge & Analyze");
-		confirmButton.addActionListener(e -> {
-			// do stuff on click
-			performAnalysis();
-		});
+		confirmButton.addActionListener(e -> performAnalysis());
 		actionLine.add(confirmButton, BorderLayout.CENTER);
 
 		mainPanel.add(instructionLabelLine);

@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
+import net.runelite.api.Client;
 import net.runelite.api.Player;
-import net.runelite.client.game.ItemManager;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
 // add to the fight, display stats or check the status of the fight.
@@ -62,6 +62,17 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	@SerializedName("t")
 	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
+
+	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
+	FightPerformance(Player competitor, Player opponent)
+	{
+		this.competitor = new Fighter(competitor);
+		this.opponent = new Fighter(opponent);
+
+		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
+		// determine the opponent from is not fully reliable.
+		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
+	}
 
 	// return a random fightPerformance used for testing UI
 	static FightPerformance getTestInstance()
@@ -95,16 +106,15 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
+	// the fight log entry lists should only include one player in each
 	FightPerformance(FightPerformance mainFight, FightPerformance opposingFight,
 			ArrayList<FightLogEntry> mainFightLogEntries, ArrayList<FightLogEntry> opponentFightLogEntries)
 	{
-		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
-		allFightLogEntries.addAll(opponentFightLogEntries);
-
 		String cName = mainFight.competitor.getName();
 		String oName = mainFight.opponent.getName();
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
+		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
 
 		// before looping through logs, set "global"/constant values that won't change depending on dps
 		// calculations: successful magic hits and actual damage dealt.
@@ -116,7 +126,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor.addMagicHitCount(Math.max(mainFight.competitor.getMagicHitCount(), opposingFight.opponent.getMagicHitCount()));
 		this.opponent.addMagicHitCount(Math.max(opposingFight.competitor.getMagicHitCount(), mainFight.opponent.getMagicHitCount()));
 
-		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
+		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
+		allFightLogEntries.addAll(opponentFightLogEntries);
+
 		for (FightLogEntry logEntry : allFightLogEntries)
 		{
 			if (logEntry.attackerName.equals(cName))
@@ -127,19 +139,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				opponent.addAttack(logEntry);
 			}
-
 		}
-	}
-
-	// constructor which initializes a fight from the 2 Players, starting stats at 0.
-	FightPerformance(Player competitor, Player opponent)
-	{
-		this.competitor = new Fighter(competitor);
-		this.opponent = new Fighter(opponent);
-
-		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
-		// determine the opponent from is not fully reliable.
-		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 	}
 
 	// Used for testing purposes
@@ -166,7 +166,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// If the given playerName is in this fight, check the Fighter's current animation,
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
-	void checkForAttackAnimations(String playerName)
+	void checkForAttackAnimations(String playerName, CombatLevels competitorLevels)
 	{
 		if (playerName == null)
 		{
@@ -184,7 +184,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
 					animationData,
-					pray);
+					pray,
+					competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -196,6 +197,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					competitor.getPlayer(), animationData, 0);
+				competitor.addDefensiveLogs(competitorLevels, PvpPerformanceTrackerPlugin.PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
