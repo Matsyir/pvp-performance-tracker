@@ -24,7 +24,10 @@
  */
 package matsyir.pvpperformancetracker;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
 
@@ -32,11 +35,33 @@ import net.runelite.api.Skill;
 @Getter
 public class CombatLevels
 {
+	public static CombatLevels getConfigLevels()
+	{
+		return new CombatLevels(CONFIG.attackLevel(),
+			CONFIG.strengthLevel(),
+			CONFIG.defenceLevel(),
+			CONFIG.rangedLevel(),
+			CONFIG.magicLevel(),
+			99);
+	}
+
+	@Expose
+	@SerializedName("a")
 	int atk;
+	@Expose
+	@SerializedName("s")
 	int str;
+	@Expose
+	@SerializedName("d")
 	int def;
+	@Expose
+	@SerializedName("r")
 	int range;
+	@Expose
+	@SerializedName("m")
 	int mage;
+	@Expose
+	@SerializedName("h")
 	int hp; // not currently used but potential dh support in future?
 
 	public CombatLevels(int atk, int str, int def, int range, int mage, int hp)

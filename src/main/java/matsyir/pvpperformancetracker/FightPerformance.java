@@ -26,15 +26,19 @@ package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.sun.media.sound.InvalidFormatException;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.Collectors;
+import javafx.util.Pair;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
-import net.runelite.api.Client;
 import net.runelite.api.Player;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
@@ -106,15 +110,149 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
-	// the fight log entry lists should only include one player in each
-	FightPerformance(FightPerformance mainFight, FightPerformance opposingFight,
-			ArrayList<FightLogEntry> mainFightLogEntries, ArrayList<FightLogEntry> opponentFightLogEntries)
+	///////// OLD COMMENT: the fight log entry lists should only include one player in each
+	FightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
 	{
 		String cName = mainFight.competitor.getName();
 		String oName = mainFight.opponent.getName();
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
 		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
+
+		ArrayList<FightLogEntry> mainFightLogEntries = mainFight.getAllFightLogEntries();
+		ArrayList<FightLogEntry> opponentFightLogEntries = opposingFight.getAllFightLogEntries();
+
+		// save only full entries into separate arrays, as we'll loop through those a lot.
+		ArrayList<FightLogEntry> fullMainFightLogEntries = mainFightLogEntries.stream()
+			.filter(FightLogEntry::isFullEntry).collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<FightLogEntry> fullOpponentFightLogEntries = opponentFightLogEntries.stream()
+			.filter(FightLogEntry::isFullEntry).collect(Collectors.toCollection(ArrayList::new));
+
+		int offsetsToCheck = 4; // total number of mainFight offsets to start from and find matches in the opposing fight.
+		int attacksToCheck = 6; // total number of opposing attacks to check starting from the offset.
+
+		// save matching logs as pairs:
+		// key = main fight log entry match
+		// value = opposing fight log entry match
+		// for each different offset start (from mainFight), save an array of the matching logs.
+		ArrayList<ArrayList<Pair<FightLogEntry, FightLogEntry>>> matchingLogs = new ArrayList<>();
+
+
+		// go through up to the first 5 full logs to match with the opponent's first 5 attacks.
+		// do this with a few different offsets and go with the results that had the most matches in 5 attacks.
+		for (int offset = 0; offset < offsetsToCheck; offset++)
+		{
+			ArrayList<Pair<FightLogEntry, FightLogEntry>> currentOffsetMatches = new ArrayList<>();
+			int highestMatchIdx = -1;
+			for (int i = offset; i < fullMainFightLogEntries.size() && i < attacksToCheck; i++)
+			{
+				FightLogEntry entry = fullMainFightLogEntries.get(i);
+
+
+				// .skip: do not check for matches on an attack we already got a match for, so skip it.
+				// .limit: similarly, reduce the amount of attacks we check by the amount we skipped.
+				// .filter: find matching fight log entries from the opposing fight.
+				// do not use dps calc values for comparison as they can be different depending on each player's
+				// config. could potentially fix this by recalculating fights first, but comparing all of these
+				// should be ok enough. if gear and pray is the same, then so would dps anyways (before we do
+				// the proper brew/level merge we are currently doing)
+				FightLogEntry matchingOppLog = fullOpponentFightLogEntries.stream()
+					.skip(highestMatchIdx + 1)
+					.limit(attacksToCheck - (highestMatchIdx + 1))
+					.filter(oppEntry -> entry.attackerName.equals(oppEntry.attackerName) &&
+						entry.getAnimationData() == oppEntry.getAnimationData() &&
+						Arrays.equals(entry.getAttackerGear(), oppEntry.getAttackerGear()) &&
+						Arrays.equals(entry.getDefenderGear(), oppEntry.getDefenderGear()) &&
+						entry.getAttackerOverhead() == oppEntry.getAttackerOverhead() &&
+						entry.getDefenderOverhead() == oppEntry.getDefenderOverhead() &&
+						entry.success() == oppEntry.success() &&
+						entry.isSplash() == oppEntry.isSplash())
+					//.forEach(matchingOppLog -> currentOffsetMatches.add(new Pair<>(entry, matchingOppLog)));
+					.findFirst()
+					.orElse(null);
+
+				// if a match was found, save the index of the match, and add both entries to the current offset matches.
+				if (matchingOppLog != null)
+				{
+					int logEntryIdx = fullOpponentFightLogEntries.indexOf(matchingOppLog);
+
+					if (logEntryIdx < highestMatchIdx) // this should never happen.
+					{
+						throw new Exception("I fucked up");
+					}
+
+					highestMatchIdx = logEntryIdx;
+					currentOffsetMatches.add(new Pair<>(entry, matchingOppLog));
+				}
+			}
+
+			if (currentOffsetMatches.size() > 0)
+			{
+				matchingLogs.add(currentOffsetMatches);
+			}
+		}
+
+
+		if (matchingLogs.size() < 1)
+		{
+			throw new Exception("Unable to match initial attacks for fight analysis.");
+		}
+
+		// sort log matches by size, meaning most matches.
+		matchingLogs.sort(Comparator.comparing(ArrayList<Pair<FightLogEntry, FightLogEntry>>::size).reversed());
+		// get the array of log entry matches that has the highest number of matches, as it should be the most accurate.
+		// we'll use the matches in this array to determine the tick offset between the two sets of logs.
+//		ArrayList<Pair<FightLogEntry, FightLogEntry>> bestMatchPairs =
+//			matchingLogs.stream().max(Comparator.comparing(ArrayList::size)).get();
+
+
+		//ArrayList<Pair<FightLogEntry, FightLogEntry>> bestMatchPairs = null;
+		int bestTickDiff = 0;
+		boolean foundValidTickDiff = false;
+		for (ArrayList<Pair<FightLogEntry, FightLogEntry>> logMatches : matchingLogs)
+		{
+			int tickDiff = 0;
+			boolean tickDiffValid = false;
+			for (int i = 0; i < logMatches.size(); i++)
+			{
+				Pair<FightLogEntry, FightLogEntry> match = logMatches.get(i);
+
+				int curTickDiff = match.getKey().getTick() - match.getValue().getTick();
+
+				// ensure we have a consistent tick difference between the first few matching attacks.
+				if (i == 0)
+				{
+					tickDiff = curTickDiff;
+					tickDiffValid = true;
+				}
+				else if (curTickDiff != tickDiff)
+				{
+					tickDiffValid = false;
+					break;
+				}
+			}
+
+			if (tickDiffValid)
+			{
+				//bestMatchPairs = logMatches;
+				bestTickDiff = tickDiff;
+				foundValidTickDiff = true;
+			}
+		}
+
+		if (!foundValidTickDiff)
+		{
+			throw new Exception("Could not find matching attacks to merge fights.");
+		}
+
+		// now that we have the best tick diff, we're ready to actually merge the two sets of log entries.
+		// start by adjusting the opponent's logs' ticks so they line up with the main fight.
+		for (FightLogEntry e : opponentFightLogEntries)
+		{
+			e.setTick(e.getTick() - bestTickDiff);
+		}
+
+		// TODO MERGE BY TICKS INTO PAIRS.
 
 		// before looping through logs, set "global"/constant values that won't change depending on dps
 		// calculations: successful magic hits and actual damage dealt.
@@ -129,6 +267,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
 		allFightLogEntries.addAll(opponentFightLogEntries);
 
+		// TODO ACTUALLY INCLUDE LEVELS, PRAY TO DPS
 		for (FightLogEntry logEntry : allFightLogEntries)
 		{
 			if (logEntry.attackerName.equals(cName))

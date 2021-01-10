@@ -71,6 +71,8 @@ public class FightLogFrame extends JFrame
 			return;
 		}
 
+		fightLogEntries.removeIf(e -> !e.isFullEntry());
+
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
 		if (isAlwaysOnTopSupported())

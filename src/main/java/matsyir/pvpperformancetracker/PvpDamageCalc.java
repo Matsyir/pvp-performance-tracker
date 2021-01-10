@@ -1,6 +1,6 @@
 /*
+ * Copyright (c) 2021, Matsyir <https://github.com/matsyir>
  * Copyright (c) 2020, Mazhar <https://twitter.com/maz_rs>
- * Copyright (c) 2020, Matsyir <https://github.com/matsyir>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,10 @@ import net.runelite.http.api.item.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
 
-// calculates numbers
+// Pvp damage calculations
+// call updateDamageStats(...) with required parameters, and retrieve results by using the field getters
+// for averageHit, accuracy, maxHit, and minHit.
+//
 // combat formulas source thread QFC: 317,318,461,66138854
 @Slf4j
 public class PvpDamageCalc
@@ -165,7 +168,7 @@ public class PvpDamageCalc
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
-	// secondary function used to analyze fights from the fight log.
+	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry logEntry)
 	{
 		int[] attackerItems = logEntry.getAttackerGear();

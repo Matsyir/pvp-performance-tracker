@@ -416,49 +416,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 	}
 
-//	@Subscribe
-//	public void onStatChanged(StatChanged statChanged)
-//	{
-//		Skill skill = statChanged.getSkill();
-//
-//		if (!BOOSTABLE_COMBAT_SKILLS.contains(skill))
-//		{
-//			return;
-//		}
-//
-//		int skillIdx = skill.ordinal();
-//		int last = lastSkillLevels[skillIdx];
-//		int cur = client.getBoostedSkillLevel(skill);
-//
-//		if (cur == last - 1)
-//		{
-//			// Stat was restored down (from buff)
-//			lastChangeDown = client.getTickCount();
-//		}
-//
-//		if (cur == last + 1)
-//		{
-//			// Stat was restored up (from debuff)
-//			lastChangeUp = client.getTickCount();
-//		}
-//
-//		lastSkillLevels[skillIdx] = cur;
-//		updateBoostedStats();
-//
-//		int boostThreshold = config.boostThreshold();
-//
-//		if (boostThreshold != 0 && config.notifyOnBoost())
-//		{
-//			int real = client.getRealSkillLevel(skill);
-//			int lastBoost = last - real;
-//			int boost = cur - real;
-//			if (boost <= boostThreshold && boostThreshold < lastBoost)
-//			{
-//				notifier.notify(skill.getName() + " level is getting low!");
-//			}
-//		}
-//	}
-
 	// When the config is reset, also reset the fight history data, as a way to restart
 	// if the current data is causing problems.
 	@Override

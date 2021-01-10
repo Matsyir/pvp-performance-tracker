@@ -179,14 +179,14 @@ public class FightAnalysisFrame extends JFrame
 
 		// now that we know fights are valid, merge them to get more detailed data:
 		// only save attacks sent by the client/"main" fighter, so ones with the competitor's RSN
-		ArrayList<FightLogEntry> mainFightDetailedEntries = new ArrayList<>(mainFight.getAllFightLogEntries());
-		mainFightDetailedEntries.removeIf(e -> !e.attackerName.equals(mainFight.getCompetitor().getName()));
+//		ArrayList<FightLogEntry> mainFightDetailedEntries = new ArrayList<>(mainFight.getAllFightLogEntries());
+//		mainFightDetailedEntries.removeIf(e -> !e.attackerName.equals(mainFight.getCompetitor().getName()));
+//
+//		ArrayList<FightLogEntry> oppFightDetailedEntries = new ArrayList<>(opponentFight.getAllFightLogEntries());
+//		oppFightDetailedEntries.removeIf(e -> !e.attackerName.equals(opponentFight.getCompetitor().getName()));
 
-		ArrayList<FightLogEntry> oppFightDetailedEntries = new ArrayList<>(opponentFight.getAllFightLogEntries());
-		oppFightDetailedEntries.removeIf(e -> !e.attackerName.equals(opponentFight.getCompetitor().getName()));
 
-
-		analyzedFight = new FightPerformance(mainFight, opponentFight, mainFightDetailedEntries, oppFightDetailedEntries);
+		analyzedFight = new FightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
 
 		// now that we've got the merged fight, display results;
 		displayAnalysis();

@@ -32,6 +32,8 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Instant;
 import lombok.Getter;
+import lombok.Setter;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
@@ -57,6 +59,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("t")
 	private long time;
+
+	@Setter
+	@Expose
+	@SerializedName("T")
+	private int tick;
 
 	// this boolean represents if this is a "complete" fight log entry or not.
 	// if a fight log entry is full/complete, then it has all attack data.
@@ -120,6 +127,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// general
 		this.attackerName = attacker.getName();
 		this.time = Instant.now().toEpochMilli();
+		this.tick = PLUGIN.client.getTickCount();
 
 		// attacker data
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
@@ -139,16 +147,20 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	}
 
 	// create incomplete entry to save competitor's defensive stats which are only client side
+	// in this context, the "attacker" is not attacking, only defending.
 	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray)
 	{
 		this.isFullEntry = false;
 
 		this.attackerName = attackerName;
+		this.time = Instant.now().toEpochMilli();
+		this.tick = PLUGIN.client.getTickCount();
+
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
-	// create new fightlogentry based on existing entry but new damage calcs (fight analysis/stat merging)
+	// create new fightlogentry based on existing entry but new damage calcs (for fight analysis/stat merging)
 	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc)
 	{
 		this.isFullEntry = true;
@@ -156,6 +168,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// general
 		this.attackerName = e.attackerName;
 		this.time = e.time;
+		this.tick = e.tick;
 
 		// attacker data
 		this.attackerGear = e.attackerGear;
