@@ -57,6 +57,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlayFourthLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
 	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
 	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
+	private LineComponent overlaySeventhLine; // left: player's hp healed pray stats, right: opponent's hp healed
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -83,6 +84,10 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlaySixthLine.setLeftColor(Color.WHITE); // this is static so set onload
 		overlaySixthLine.setRight("N/A"); // static
 		overlaySixthLine.setRightColor(Color.WHITE); // static
+		overlaySeventhLine = LineComponent.builder().build();
+		overlaySeventhLine.setLeftColor(Color.WHITE); // this is static so set onload
+		overlaySeventhLine.setRight("N/A"); // static
+		overlaySeventhLine.setRightColor(Color.WHITE); // static
 
 		setLines();
 	}
@@ -138,6 +143,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			overlayFifthLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 
 			overlaySixthLine.setLeft(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)));
+
+			overlaySeventhLine.setLeft(String.valueOf(fight.getCompetitor().getHpHealed()));
 		}
 
 		return panelComponent.render(graphics);
@@ -184,6 +191,10 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			if (config.showOverlayOffensivePray())
 			{
 				panelComponent.getChildren().add(overlaySixthLine);
+			}
+			if (config.showOverlayHpHealed())
+			{
+				panelComponent.getChildren().add(overlaySeventhLine);
 			}
 		}
 	}

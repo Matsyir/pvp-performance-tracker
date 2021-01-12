@@ -26,10 +26,13 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,6 +41,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.util.ImageUtil;
@@ -75,14 +79,17 @@ public class FightAnalysisFrame extends JFrame
 		}
 
 		setIconImage(frameIcon);
-		setSize(765, 256);
+		Dimension size = new Dimension(640, 256);
+		setSize(size);
+		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setPreferredSize(getSize());
 		mainPanel.setVisible(true);
-		mainPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+
 		add(mainPanel);
 
 		setVisible(true);
@@ -95,33 +102,40 @@ public class FightAnalysisFrame extends JFrame
 	{
 		mainPanel.removeAll();
 
-		JPanel instructionLabelLine = new JPanel(new BorderLayout(4, 4));
-		JPanel textLabelLine = new JPanel(new BorderLayout(4, 4));
-		JPanel textAreaLine = new JPanel(new BorderLayout(4, 4));
-		JPanel actionLine = new JPanel(new BorderLayout(4, 4));
+		JPanel instructionLabelLine = new JPanel(new BorderLayout());
+		JPanel textLabelLine = new JPanel(new BorderLayout());
+		GridLayout textAreaLayout = new GridLayout(1, 2);
+		textAreaLayout.setHgap(4);
+		textAreaLayout.setVgap(4);
+		JPanel textAreaLine = new JPanel(textAreaLayout);
+		JPanel actionLine = new JPanel(new BorderLayout());
+		actionLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
 
 		JLabel instructionLabel = new JLabel();
-		instructionLabel.setText("This panel is used to merge two opposing fighter's fight data in order to get more accurate stats about the fight.");
+		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to get more accurate stats about the fight, since some data is only available client-side. Both data entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's opponent.</html>");
 		instructionLabel.setForeground(Color.WHITE);
-		instructionLabelLine.add(instructionLabel, BorderLayout.NORTH);
+		instructionLabelLine.add(instructionLabel, BorderLayout.CENTER);
 
 		JLabel firstFightLabel = new JLabel();
-		firstFightLabel.setText("Enter fight data for Fighter 1:");
+		firstFightLabel.setText("<html>Enter fight data for Fighter 1:</html>");
 		firstFightLabel.setForeground(Color.WHITE);
 		textLabelLine.add(firstFightLabel, BorderLayout.WEST);
 
 		JLabel secondFightLabel = new JLabel();
-		secondFightLabel.setText("Enter fight data data for Fighter 2:");
+		secondFightLabel.setText("<html>Enter fight data for Fighter 2:</html>");
 		secondFightLabel.setForeground(Color.WHITE);
 		textLabelLine.add(secondFightLabel, BorderLayout.EAST);
 
 		mainFightJsonInput = new JTextField(32);
-		textAreaLine.add(mainFightJsonInput, BorderLayout.WEST);
-
+		mainFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		textAreaLine.add(mainFightJsonInput);
 		opponentFightJsonInput = new JTextField(32);
-		textAreaLine.add(opponentFightJsonInput, BorderLayout.EAST);
+		opponentFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		textAreaLine.add(opponentFightJsonInput);
 
-		JButton confirmButton = new JButton("Merge & Analyze");
+		JButton confirmButton = new JButton("✔ Merge Fight Data");
+//		confirmButton.setSize(256, 32);
+//		confirmButton.setPreferredSize(new Dimension(256, 32));
 		confirmButton.addActionListener(e -> performAnalysis());
 		actionLine.add(confirmButton, BorderLayout.CENTER);
 
@@ -129,6 +143,7 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.add(textLabelLine);
 		mainPanel.add(textAreaLine);
 		mainPanel.add(actionLine);
+
 		validate();
 	}
 
@@ -186,7 +201,14 @@ public class FightAnalysisFrame extends JFrame
 //		oppFightDetailedEntries.removeIf(e -> !e.attackerName.equals(opponentFight.getCompetitor().getName()));
 
 
-		analyzedFight = new FightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
+		try
+		{
+			analyzedFight = new FightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
+		}
+		catch(Exception e)
+		{
+			PLUGIN.createConfirmationModal("Error", "Error while merging fights. Unable to analyze.");
+		}
 
 		// now that we've got the merged fight, display results;
 		displayAnalysis();

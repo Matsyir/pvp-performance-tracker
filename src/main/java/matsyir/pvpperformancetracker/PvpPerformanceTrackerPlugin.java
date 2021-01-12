@@ -399,6 +399,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
+	// track damage dealt/taken
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
 		HitsplatType hitType = event.getHitsplat().getHitsplatType();
@@ -414,6 +415,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
+	}
+
+	@Subscribe
+	// track hitpoints healed for main competitor
+	public void onStatChanged(StatChanged statChanged)
+	{
+		Skill skill = statChanged.getSkill();
+		if (skill != Skill.HITPOINTS || !hasOpponent()) { return; }
+
+		currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
 	}
 
 	// When the config is reset, also reset the fight history data, as a way to restart

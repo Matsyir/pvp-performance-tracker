@@ -33,7 +33,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
-import net.runelite.client.game.ItemManager;
 
 @Slf4j
 @Getter
@@ -72,6 +71,11 @@ class Fighter
 	@Expose
 	@SerializedName("p")
 	private int offensivePraySuccessCount;
+
+	@Expose
+	@SerializedName("H")
+	private int hpHealed;
+
 	@Expose
 	@SerializedName("x") // x for X_X
 	private boolean dead; // will be true if the fighter died in the fight
@@ -221,6 +225,11 @@ class Fighter
 	void addMagicHitCount(int count)
 	{
 		this.magicHitCount += count;
+	}
+
+	void addHpHealed(int hpHealed)
+	{
+		this.hpHealed += hpHealed;
 	}
 
 	void died()

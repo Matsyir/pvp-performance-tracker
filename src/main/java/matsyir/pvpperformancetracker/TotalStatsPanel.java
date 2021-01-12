@@ -139,13 +139,7 @@ public class TotalStatsPanel extends JPanel
 		// if settings haven't been configured, add a red label to display that they should be.
 		if (!CONFIG.settingsConfigured())
 		{
-			settingsWarningLabel = new JLabel();
-			settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
-			settingsWarningLabel.setToolTipText("Please verify that the plugin is configured according to your needs.");
-			settingsWarningLabel.setForeground(Color.RED);
-			Font f = settingsWarningLabel.getFont();
-			settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
-			settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			initializeSettingsWarningLabel();
 			add(settingsWarningLabel);
 		}
 
@@ -542,12 +536,7 @@ public class TotalStatsPanel extends JPanel
 
 			if (settingsWarningLabel == null)
 			{
-				settingsWarningLabel = new JLabel();
-				settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
-				settingsWarningLabel.setForeground(Color.RED);
-				Font f = settingsWarningLabel.getFont();
-				settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
-				settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
+				initializeSettingsWarningLabel();
 			}
 			add(settingsWarningLabel, 1);
 		}
@@ -562,5 +551,16 @@ public class TotalStatsPanel extends JPanel
 		}
 
 		validate();
+	}
+
+	private void initializeSettingsWarningLabel()
+	{
+		settingsWarningLabel = new JLabel();
+		settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
+		settingsWarningLabel.setToolTipText("Please verify that the plugin is configured according to your needs.");
+		settingsWarningLabel.setForeground(Color.RED);
+		Font f = settingsWarningLabel.getFont();
+		settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
+		settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	}
 }

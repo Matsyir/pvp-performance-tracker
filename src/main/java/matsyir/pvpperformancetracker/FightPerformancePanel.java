@@ -29,17 +29,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -50,14 +45,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import net.runelite.api.HeadIcon;
-import net.runelite.api.SpriteID;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
@@ -110,6 +100,7 @@ class FightPerformancePanel extends JPanel
 	// Line 4: Player damage dealt - opponent damage dealt
 	// Line 5: Player magic hits/deserved magic hits - opponent magic hits/deserved magic hits
 	// Line 6: Player offensive pray stats - N/A (no data)
+	// Line 7: Player hp healed - N/A (no data)
 	// The greater stats will be highlighted green. In this example, the player would have all the green highlights.
 	// example:
 	//
@@ -119,13 +110,15 @@ class FightPerformancePanel extends JPanel
 	//     156 (-28)          184 (+28)
 	//     8/7.62               11/9.21
 	//     27/55 (49%)              N/A
+	//     100                      N/A
 	//
+	// these are the params to use for a normal panel.
 	FightPerformancePanel(FightPerformance fight)
 	{
 		this(fight, true, true, false, null);
 	}
 
-	FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentOffensive, FightPerformance oppFight)
+	FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
 	{
 		this.showBorders = showBorders;
 		if (frameIcon == null || deathIcon == null)
@@ -190,7 +183,7 @@ class FightPerformancePanel extends JPanel
 		// second line LEFT: player's off-pray hit stats
 		JLabel playerOffPrayStats = new JLabel();
 		playerOffPrayStats.setText(competitor.getOffPrayStats());
-		playerOffPrayStats.setToolTipText(competitor.getOffPraySuccessCount() + " successful off-pray attacks/" +
+		playerOffPrayStats.setToolTipText(competitor.getName() + " hit " + competitor.getOffPraySuccessCount() + " successful off-pray attacks out of " +
 			competitor.getAttackCount() + " total attacks (" +
 			nf.format(competitor.calculateOffPraySuccessPercentage()) + "%)");
 		playerOffPrayStats.setForeground(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
@@ -199,7 +192,7 @@ class FightPerformancePanel extends JPanel
 		// second line RIGHT:, opponent's off-pray hit stats
 		JLabel opponentOffPrayStats = new JLabel();
 		opponentOffPrayStats.setText(opponent.getOffPrayStats());
-		opponentOffPrayStats.setToolTipText(opponent.getOffPraySuccessCount() + " successful off-pray attacks/" +
+		opponentOffPrayStats.setToolTipText(opponent.getName() + " hit " + opponent.getOffPraySuccessCount() + " successful off-pray attacks out of " +
 			opponent.getAttackCount() + " total attacks (" +
 			nf.format(opponent.calculateOffPraySuccessPercentage()) + "%)");
 		opponentOffPrayStats.setForeground(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
@@ -245,7 +238,7 @@ class FightPerformancePanel extends JPanel
 
 		// fourth line RIGHT: opponent's damage dealt
 		JLabel opponentDmgDealtStats = new JLabel();
-		opponentDmgDealtStats.setText(String.valueOf(opponent.getDamageDealt()));
+		opponentDmgDealtStats.setText(opponent.getDmgDealtString(competitor));
 		opponentDmgDealtStats.setToolTipText(opponent.getName() + " dealt " + opponent.getDamageDealt() +
 			" damage (" + opponent.getDmgDealtString(competitor, true) + " vs you)");
 		opponentDmgDealtStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
@@ -282,12 +275,12 @@ class FightPerformancePanel extends JPanel
 		// sixth line LEFT: player's offensive pray stats
 		JLabel playerOffensivePrayStats = new JLabel();
 		playerOffensivePrayStats.setText(String.valueOf(competitor.getOffensivePrayStats()));
-		playerOffensivePrayStats.setToolTipText(competitor.getOffensivePrayStats() + " successful offensive prayers/" +
+		playerOffensivePrayStats.setToolTipText(competitor.getName() + " did " + competitor.getOffensivePrayStats() + " successful offensive prayers out of " +
 			competitor.getAttackCount() + " total attacks (" +
 			nf.format(competitor.calculateOffensivePraySuccessPercentage()) + "%)");
 
 		playerOffensivePrayStats.setForeground(
-			(showOpponentOffensive && competitor.calculateOffensivePraySuccessPercentage() >
+			(showOpponentClientStats && competitor.calculateOffensivePraySuccessPercentage() >
 				oppFight.getCompetitor().calculateOffensivePraySuccessPercentage()) ?
 				Color.GREEN : Color.WHITE);
 
@@ -296,12 +289,12 @@ class FightPerformancePanel extends JPanel
 		//
 		// sixth line RIGHT: "N/A", no data.
 		JLabel opponentOffensivePrayStats = new JLabel();
-		if (showOpponentOffensive)
+		if (showOpponentClientStats)
 		{
 			Fighter oppComp = oppFight.getCompetitor();
 
 			opponentOffensivePrayStats.setText(String.valueOf(oppComp.getOffensivePrayStats()));
-			opponentOffensivePrayStats.setToolTipText(oppComp.getOffensivePrayStats() + " successful offensive prayers/" +
+			opponentOffensivePrayStats.setToolTipText(oppComp.getName() + " did " + oppComp.getOffensivePrayStats() + " successful offensive prayers out of " +
 				oppComp.getAttackCount() + " total attacks (" +
 				nf.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
 			opponentOffensivePrayStats.setForeground(
@@ -311,10 +304,46 @@ class FightPerformancePanel extends JPanel
 		else
 		{
 			opponentOffensivePrayStats.setText("N/A");
-			opponentOffensivePrayStats.setToolTipText("No data is available for the opponent's offensive prayers.");
+			opponentOffensivePrayStats.setToolTipText("No data is available for the opponent's offensive prayers");
 			opponentOffensivePrayStats.setForeground(Color.WHITE);
 		}
 		offensivePrayStatsLine.add(opponentOffensivePrayStats, BorderLayout.EAST);
+
+		// SEVENTH LINE: player's HP healed (only player's, no data for opponent)
+		JPanel hpHealedLine = new JPanel();
+		hpHealedLine.setLayout(new BorderLayout());
+		hpHealedLine.setBackground(null);
+
+		// SEVENTH LINE LEFT: player's HP healed
+		JLabel playerHpHealed = new JLabel();
+		playerHpHealed.setText(String.valueOf(competitor.getHpHealed()));
+		playerHpHealed.setToolTipText(competitor.getName() + " recovered " + competitor.getHpHealed() + " hitpoints during the fight");
+
+		playerHpHealed.setForeground(
+			(showOpponentClientStats && competitor.getHpHealed() > oppFight.getCompetitor().getHpHealed()) ?
+				Color.GREEN : Color.WHITE);
+
+		hpHealedLine.add(playerHpHealed, BorderLayout.WEST);
+
+		//
+		// SEVENTH LINE RIGHT: "N/A", no data. unless...
+		JLabel opponentHpHealed = new JLabel();
+		if (showOpponentClientStats)
+		{
+			Fighter oppComp = oppFight.getCompetitor();
+
+			opponentHpHealed.setText(String.valueOf(oppComp.getHpHealed()));
+			opponentHpHealed.setToolTipText(oppComp.getName() + " recovered " + oppComp.getHpHealed() + " hitpoints during the fight");
+			opponentHpHealed.setForeground(oppFight.getCompetitor().getHpHealed() > competitor.getHpHealed() ?
+				Color.GREEN : Color.WHITE);
+		}
+		else
+		{
+			opponentHpHealed.setText("N/A");
+			opponentHpHealed.setToolTipText("No data is available for the opponent's hp healed");
+			opponentHpHealed.setForeground(Color.WHITE);
+		}
+		hpHealedLine.add(opponentHpHealed, BorderLayout.EAST);
 
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
@@ -322,6 +351,7 @@ class FightPerformancePanel extends JPanel
 		fightPanel.add(dmgDealtStatsLine);
 		fightPanel.add(magicHitStatsLine);
 		fightPanel.add(offensivePrayStatsLine);
+		fightPanel.add(hpHealedLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 

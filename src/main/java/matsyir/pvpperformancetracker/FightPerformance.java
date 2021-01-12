@@ -38,8 +38,10 @@ import java.util.stream.Collectors;
 import javafx.util.Pair;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
+import net.runelite.api.Skill;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
 // add to the fight, display stats or check the status of the fight.
@@ -67,6 +69,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@SerializedName("t")
 	private long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 
+	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
+
 	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
 	FightPerformance(Player competitor, Player opponent)
 	{
@@ -76,6 +80,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
+
+		this.competitorPrevHp = PLUGIN.client.getBoostedSkillLevel(Skill.HITPOINTS);
 	}
 
 	// return a random fightPerformance used for testing UI
@@ -318,7 +324,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
 			{
-				int pray = PvpPerformanceTrackerPlugin.PLUGIN.currentlyUsedOffensivePray();
+				int pray = PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
 					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
@@ -336,7 +342,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					competitor.getPlayer(), animationData, 0);
-				competitor.addDefensiveLogs(competitorLevels, PvpPerformanceTrackerPlugin.PLUGIN.currentlyUsedOffensivePray());
+				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
@@ -356,6 +362,16 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			competitor.addDamageDealt(damage);
 		}
+	}
+
+	void updateCompetitorHp(int currentHp)
+	{
+		if (currentHp > competitorPrevHp)
+		{
+			int hpHealed = currentHp - competitorPrevHp;
+			competitor.addHpHealed(hpHealed);
+		}
+		competitorPrevHp = currentHp;
 	}
 
 	// Will return true and stop the fight if the fight should be over.
