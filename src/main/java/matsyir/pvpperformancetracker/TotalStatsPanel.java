@@ -287,9 +287,23 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
 
+		// Create "Fight Analysis (Advanced)" popup menu/context menu item
+		final JMenuItem fightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
+		fightAnalysis.addActionListener(e ->
+		{
+			// destroy current frame if it exists so we only have one at a time (static field)
+			if (fightAnalysisFrame != null)
+			{
+				fightAnalysisFrame.dispose();
+			}
+
+			fightAnalysisFrame = new FightAnalysisFrame(TotalStatsPanel.this.getRootPane());
+		});
+
 		popupMenu.add(resetAllFights);
 		popupMenu.add(exportFightHistory);
 		popupMenu.add(importFightHistory);
+		popupMenu.add(fightAnalysis);
 		setComponentPopupMenu(popupMenu);
 
 		setLabels();
