@@ -67,7 +67,7 @@ public class FightLogFrame extends JFrame
 		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
 		if (fightLogEntries == null || fightLogEntries.size() < 1)
 		{
-			PLUGIN.createConfirmationModal("Error", "There are no fight log entries available for this fight.");
+			PLUGIN.createConfirmationModal(false, "There are no fight log entries available for this fight.");
 			return;
 		}
 

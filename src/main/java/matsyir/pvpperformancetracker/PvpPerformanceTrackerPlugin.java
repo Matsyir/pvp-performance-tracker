@@ -248,7 +248,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				}
 				break;
 			// If a user makes any changes to the overlay configuration, reset the shown lines accordingly
-			case "useSimpleOverlay":
 			case "showOverlayTitle":
 			case "showOverlayNames":
 			case "showOverlayOffPray":
@@ -551,13 +550,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// read saved fights from the data string and import them
 			List<FightPerformance> savedFights = Arrays.asList(gson.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
-			createConfirmationModal("Success", "Fight history data was successfully imported.");
+			createConfirmationModal(true, "Fight history data was successfully imported.");
 		}
 		catch (Exception e)
 		{
 			log.warn("Error while importing user's fight history data: " + e.getMessage());
 			// If an error was detected while deserializing fights, display that as a message dialog.
-			createConfirmationModal("Error", "Fight history data was invalid, and could not be imported.");
+			createConfirmationModal(false, "Fight history data was invalid, and could not be imported.");
 			return;
 		}
 
@@ -649,14 +648,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// create a simple confirmation modal, using a custom dialog so it can be always
 	// on top (if the client is, to prevent being stuck under the client).
-	public void createConfirmationModal(String title, String message)
+	public void createConfirmationModal(boolean success, String message)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
 			JOptionPane optionPane = new JOptionPane();
 			optionPane.setMessage(message);
 			optionPane.setOptionType(JOptionPane.DEFAULT_OPTION);
-			JDialog dialog = optionPane.createDialog(panel, "PvP Tracker: " + title);
+			JDialog dialog = optionPane.createDialog(panel, "PvP Tracker: " + (success ? "Success" : "Error"));
 			if (dialog.isAlwaysOnTopSupported())
 			{
 				dialog.setAlwaysOnTop(runeliteConfig.gameAlwaysOnTop());
@@ -673,7 +672,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		final StringSelection contents = new StringSelection(fightHistoryDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
-		createConfirmationModal("Success", "Fight history data was copied to the clipboard.");
+		createConfirmationModal(true, "Fight history data was copied to the clipboard.");
 	}
 
 	public void exportFight(FightPerformance fight)
@@ -683,24 +682,24 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		final StringSelection contents = new StringSelection(fightDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
-		String titleMsg;
+		boolean success = false;
 		String confirmMessage;
 		if (fight.getCompetitor() != null && fight.getCompetitor().getName() != null &&
 			fight.getOpponent() != null && fight.getOpponent().getName() != null)
 		{
-			titleMsg = "Success";
+			success = true;
 			confirmMessage = "Fight data of " + fight.getCompetitor().getName() + " vs " +
 				fight.getOpponent().getName() + " was copied to the clipboard.";
 		}
 		else
 		{
-			titleMsg = "Error";
 			confirmMessage = "Warning: Fight data was copied to the clipboard, but it's likely corrupted.";
 		}
-		createConfirmationModal(titleMsg, confirmMessage);
+		createConfirmationModal(success, confirmMessage);
 	}
 
-	// retrieve offensive pray as SpriteID since that's all we will directly use it for aside from comparison
+	// retrieve offensive pray as SpriteID since that's all we will directly use it for,
+	// aside from comparison/equality checks, so we save an extra mapping this way
 	public int currentlyUsedOffensivePray()
 	{
 		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :

@@ -35,6 +35,7 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -439,6 +440,16 @@ class FightPerformancePanel extends JPanel
 			fightLogFrame.dispose();
 		}
 
-		fightLogFrame = new FightLogFrame(fight, getRootPane());
+		// show error modal if the fight has no log entries to display.
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
+		fightLogEntries.removeIf(e -> !e.isFullEntry());
+		if (fightLogEntries.size() < 1)
+		{
+			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
+		}
+		else
+		{
+			fightLogFrame = new FightLogFrame(fight, getRootPane());
+		}
 	}
 }

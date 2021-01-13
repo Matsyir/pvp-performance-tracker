@@ -156,7 +156,7 @@ public class FightAnalysisFrame extends JFrame
 			mainFight = PLUGIN.gson.fromJson(mainFightJsonInput.getText().trim(), FightPerformance.class);
 			if (mainFight == null || mainFight.getAllFightLogEntries() == null || mainFight.getAllFightLogEntries().size() < 1)
 			{
-				PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 1's fight data.");
+				PLUGIN.createConfirmationModal(false, "Error parsing Fighter 1's fight data.");
 				mainFight = null;
 
 				return false;
@@ -165,7 +165,7 @@ public class FightAnalysisFrame extends JFrame
 			opponentFight = PLUGIN.gson.fromJson(opponentFightJsonInput.getText().trim(), FightPerformance.class);
 			if (opponentFight == null || opponentFight.getAllFightLogEntries() == null || opponentFight.getAllFightLogEntries().size() < 1)
 			{
-				PLUGIN.createConfirmationModal("Error", "Error parsing Fighter 2's fight data.");
+				PLUGIN.createConfirmationModal(false, "Error parsing Fighter 2's fight data.");
 				opponentFight = null;
 
 				return false;
@@ -177,7 +177,7 @@ public class FightAnalysisFrame extends JFrame
 		}
 		catch(Exception e)
 		{
-			PLUGIN.createConfirmationModal("Error", "Error while parsing fight data.");
+			PLUGIN.createConfirmationModal(false, "Error while parsing fight data.");
 			return false;
 		}
 
@@ -207,7 +207,7 @@ public class FightAnalysisFrame extends JFrame
 		}
 		catch(Exception e)
 		{
-			PLUGIN.createConfirmationModal("Error", "Error while merging fights. Unable to analyze.");
+			PLUGIN.createConfirmationModal(false, "Error while merging fights. Unable to analyze.");
 		}
 
 		// now that we've got the merged fight, display results;

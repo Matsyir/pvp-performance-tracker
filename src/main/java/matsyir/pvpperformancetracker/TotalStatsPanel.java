@@ -266,7 +266,7 @@ public class TotalStatsPanel extends JPanel
 		});
 
 		// Create "Configure Settings" popup menu/context menu item
-		// TODO
+		// TODO? Can't figure out how but would like to in the future. Esp. since there is a warning to setup config.
 		//final JMenuItem configureSettings = new JMenuItem("Configure Settings");
 		//configureSettings.addActionListener(e -> );
 

@@ -105,18 +105,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "useSimpleOverlay",
-		name = "Use Simple Overlay",
-		description = "The overlay will only display off-pray percentage as stats rather than configured stats.",
-		position = 30,
-		section = overlay
-	)
-	default boolean useSimpleOverlay()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = "showOverlayTitle",
 		name = "Overlay: Show Title",
 		description = "The overlay will have a title to display that it is PvP Performance.",
@@ -131,7 +119,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayNames",
 		name = "Overlay: Show Names",
-		description = "The overlay will display names. Does not apply to the simple overlay.",
+		description = "The overlay will display names. (max. 5 lines/stats)",
 		position = 50,
 		section = overlay
 	)
@@ -143,7 +131,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayOffPray",
 		name = "Overlay: Show Off-Pray",
-		description = "The overlay will display off-pray stats as a fraction & percentage. Does not apply to the simple overlay.",
+		description = "The overlay will display off-pray stats as a fraction & percentage. (max. 5 lines/stats)",
 		position = 60,
 		section = overlay
 	)
@@ -155,7 +143,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayDeservedDmg",
 		name = "Overlay: Show Deserved Dmg",
-		description = "The overlay will display deserved damage & difference. Does not apply to the simple overlay.",
+		description = "The overlay will display deserved damage & difference. (max. 5 lines/stats)",
 		position = 70,
 		section = overlay
 	)
@@ -167,31 +155,31 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayDmgDealt",
 		name = "Overlay: Show Dmg Dealt",
-		description = "The overlay will display damage dealt. Does not apply to the simple overlay.",
+		description = "The overlay will display damage dealt. (max. 5 lines/stats)",
 		position = 80,
 		section = overlay
 	)
 	default boolean showOverlayDmgDealt()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
 		keyName = "showOverlayMagicHits",
 		name = "Overlay: Show Magic Hits",
-		description = "The overlay will display successful magic hits & deserved magic hits. Does not apply to the simple overlay.",
+		description = "The overlay will display successful magic hits & deserved magic hits. (max. 5 lines/stats)",
 		position = 90,
 		section = overlay
 	)
 	default boolean showOverlayMagicHits()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
 		keyName = "showOverlayOffensivePray",
 		name = "Overlay: Show Offensive Pray",
-		description = "The overlay will display offensive pray stats. Does not apply to the simple overlay.",
+		description = "The overlay will display offensive pray stats. (max. 5 lines/stats)",
 		position = 100,
 		section = overlay
 	)
@@ -203,7 +191,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayHpHealed",
 		name = "Overlay: Show HP Healed",
-		description = "The overlay will display hitpoints healed. Does not apply to the simple overlay.",
+		description = "The overlay will display hitpoints healed. (max. 5 lines/stats)",
 		position = 105,
 		section = overlay
 	)
