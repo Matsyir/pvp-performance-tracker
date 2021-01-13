@@ -168,56 +168,6 @@ public class PvpDamageCalc
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
-	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
-	public void updateDamageStats(FightLogEntry logEntry)
-	{
-		int[] attackerItems = logEntry.getAttackerGear();
-		int[] defenderItems = logEntry.getDefenderGear();
-		boolean success = logEntry.success();
-		AnimationData animationData = logEntry.getAnimationData();
-		boolean successfulOffensive = logEntry.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(logEntry.getAttackerOffensivePray());
-
-		averageHit = 0;
-		accuracy = 0;
-		minHit = 0;
-		maxHit = 0;
-
-		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
-
-		int[] playerStats = this.calculateBonuses(attackerItems);
-		int[] opponentStats = this.calculateBonuses(defenderItems);
-
-		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
-		boolean isSpecial = animationData.isSpecial;
-
-		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
-		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
-
-		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attackerItems);
-
-		if (attackStyle.isMelee())
-		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
-		}
-		else if (attackStyle == AttackStyle.RANGED)
-		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive);
-		}
-		// this should always be true at this point, but just in case. unknown animation styles won't
-		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
-		else if (attackStyle == AttackStyle.MAGIC)
-		{
-			getMagicMaxHit(attackerItems[KitType.SHIELD.getIndex()], playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive);
-		}
-
-		getAverageHit(success, weapon, isSpecial);
-
-		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
-	}
-
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
 		boolean dbow = weapon == EquipmentData.DARK_BOW;

@@ -178,32 +178,6 @@ class Fighter
 		fightLogEntries.add(fightLogEntry);
 	}
 
-	// add an attack from fight log, without player references, for merging fight logs (fight analysis)
-	void addAttack(FightLogEntry logEntry)
-	{
-		attackCount++;
-		if (logEntry.success())
-		{
-			offPraySuccessCount++;
-		}
-		if (logEntry.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(logEntry.getAttackerOffensivePray()))
-		{
-			offensivePraySuccessCount++;
-		}
-
-		pvpDamageCalc.updateDamageStats(logEntry);
-		deservedDamage += pvpDamageCalc.getAverageHit();
-
-		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-		{
-			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
-			// actual magicHitCount is directly added, as it can no longer
-			// be detected and should have been accurate initially.
-		}
-
-		fightLogEntries.add(new FightLogEntry(logEntry, pvpDamageCalc));
-	}
-
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
 	void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
 	{
@@ -219,12 +193,6 @@ class Fighter
 	void addDamageDealt(int damage)
 	{
 		this.damageDealt += damage;
-	}
-
-	// will be used for merging fight logs (fight analysis)
-	void addMagicHitCount(int count)
-	{
-		this.magicHitCount += count;
 	}
 
 	void addHpHealed(int hpHealed)
