@@ -204,14 +204,15 @@ public class FightAnalysisFrame extends JFrame
 		try
 		{
 			analyzedFight = new FightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
+
+			// now that we've got the merged fight, display results
+			displayAnalysis();
 		}
 		catch(Exception e)
 		{
-			PLUGIN.createConfirmationModal(false, "Error while merging fights. Unable to analyze.");
+			e.printStackTrace();
+			PLUGIN.createConfirmationModal(false, "Error while merging fights. Unable to analyze. debug: " + e.getMessage());
 		}
-
-		// now that we've got the merged fight, display results;
-		displayAnalysis();
 	}
 
 	private void displayAnalysis()

@@ -264,7 +264,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// start by adjusting the opponent's logs' ticks so they line up with the main fight.
 		for (FightLogEntry log : opponentFightLogEntries)
 		{
-			log.setTick(log.getTick() - bestTickDiff);
+			log.setTick(log.getTick() + bestTickDiff);
 		}
 
 		// TODO MERGE BY TICKS INTO PAIRS.
@@ -282,16 +282,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		for (FightLogEntry log : mainFightLogEntries)
 		{
+			if (!log.attackerName.equals(mainFight.competitor.getName())) { continue; }
+
 			// if the log is a full entry, then this is an attacking log coming from the competitor,
 			// so we need to find a matching defensive log from the opponent.
 			if (log.isFullEntry())
 			{
 				opponentFightLogEntries.stream()
 					.filter(l -> !l.isFullEntry())
-					.filter(l -> l.attackerName.equals(mainFight.competitor.getName()))
+					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
 					.filter(l -> l.getTick() == log.getTick())
 					.findFirst()
-					.ifPresent(matchingDefenderLog -> competitor.addAttack(log, matchingDefenderLog));
+					.ifPresent(matchingDefenderLog -> this.competitor.addAttack(log, matchingDefenderLog));
 			}
 			else // if the log is not a full entry, it's a defensive log coming from the competitor,
 			{    // meaning we need to match it to an opponent's attacking log.
@@ -299,7 +301,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
 					.filter(l -> l.getTick() == log.getTick())
 					.findFirst()
-					.ifPresent(matchingAttackerLog -> opponent.addAttack(matchingAttackerLog, log));
+					.ifPresent(matchingAttackerLog -> this.opponent.addAttack(matchingAttackerLog, log));
 			}
 		}
 

@@ -26,7 +26,7 @@ dependencies {
 }
 
 group = 'matsyir.pvpperformancetracker'
-version = '1.3.5'
+version = '1.3.6a'
 sourceCompatibility = '1.8'
 
 tasks.withType(JavaCompile) {
