@@ -26,7 +26,6 @@ package matsyir.pvpperformancetracker;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.sun.media.sound.InvalidFormatException;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
-import javafx.util.Pair;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -125,6 +123,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.opponent = new Fighter(oName);
 		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
 
+		// before looping through logs, set "global"/constant values that won't change depending on dps
+		// calculations: successful magic hits, actual damage dealt, and hp healed.
+		// in case either fighter somehow missed an attack, use the max potential available data
+		// detected, as we could rarely miss an attack but never add an extra one.
+		this.competitor.addDamageDealt(Math.max(mainFight.competitor.getDamageDealt(), opposingFight.opponent.getDamageDealt()));
+		this.competitor.addMagicHitCount(Math.max(mainFight.competitor.getMagicHitCount(), opposingFight.opponent.getMagicHitCount()));
+		this.competitor.addHpHealed(mainFight.competitor.getHpHealed());
+
+		this.opponent.addDamageDealt(Math.max(opposingFight.competitor.getDamageDealt(), mainFight.opponent.getDamageDealt()));
+		this.opponent.addMagicHitCount(Math.max(opposingFight.competitor.getMagicHitCount(), mainFight.opponent.getMagicHitCount()));
+		this.opponent.addHpHealed(opposingFight.competitor.getHpHealed());
+
 		ArrayList<FightLogEntry> mainFightLogEntries = mainFight.getAllFightLogEntries();
 		ArrayList<FightLogEntry> opponentFightLogEntries = opposingFight.getAllFightLogEntries();
 
@@ -137,23 +147,22 @@ public class FightPerformance implements Comparable<FightPerformance>
 		int offsetsToCheck = 4; // total number of mainFight offsets to start from and find matches in the opposing fight.
 		int attacksToCheck = 6; // total number of opposing attacks to check starting from the offset.
 
-		// save matching logs as pairs:
-		// key = main fight log entry match
-		// value = opposing fight log entry match
+		// save matching logs as "pairs", in an array:
+		// [0] = main fight's log entry match
+		// [1] = opposing fight's log entry match
 		// for each different offset start (from mainFight), save an array of the matching logs.
-		ArrayList<ArrayList<Pair<FightLogEntry, FightLogEntry>>> matchingLogs = new ArrayList<>();
+		ArrayList<ArrayList<FightLogEntry[]>> matchingLogs = new ArrayList<>();
 
 
 		// go through up to the first 5 full logs to match with the opponent's first 5 attacks.
 		// do this with a few different offsets and go with the results that had the most matches in 5 attacks.
 		for (int offset = 0; offset < offsetsToCheck; offset++)
 		{
-			ArrayList<Pair<FightLogEntry, FightLogEntry>> currentOffsetMatches = new ArrayList<>();
+			ArrayList<FightLogEntry[]> currentOffsetMatches = new ArrayList<>();
 			int highestMatchIdx = -1;
 			for (int i = offset; i < fullMainFightLogEntries.size() && i < attacksToCheck; i++)
 			{
 				FightLogEntry entry = fullMainFightLogEntries.get(i);
-
 
 				// .skip: do not check for matches on an attack we already got a match for, so skip it.
 				// .limit: similarly, reduce the amount of attacks we check by the amount we skipped.
@@ -188,7 +197,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 					}
 
 					highestMatchIdx = logEntryIdx;
-					currentOffsetMatches.add(new Pair<>(entry, matchingOppLog));
+					currentOffsetMatches.add(new FightLogEntry[]{ entry, matchingOppLog });
 				}
 			}
 
@@ -205,25 +214,25 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 
 		// sort log matches by size, meaning most matches.
-		matchingLogs.sort(Comparator.comparing(ArrayList<Pair<FightLogEntry, FightLogEntry>>::size).reversed());
+		matchingLogs.sort(Comparator.comparing(ArrayList<FightLogEntry[]>::size).reversed());
 		// get the array of log entry matches that has the highest number of matches, as it should be the most accurate.
 		// we'll use the matches in this array to determine the tick offset between the two sets of logs.
-//		ArrayList<Pair<FightLogEntry, FightLogEntry>> bestMatchPairs =
+//		ArrayList<FightLogEntry[]> bestMatchPairs =
 //			matchingLogs.stream().max(Comparator.comparing(ArrayList::size)).get();
 
 
-		//ArrayList<Pair<FightLogEntry, FightLogEntry>> bestMatchPairs = null;
+		//ArrayList<FightLogEntry[]> bestMatchPairs = null;
 		int bestTickDiff = 0;
 		boolean foundValidTickDiff = false;
-		for (ArrayList<Pair<FightLogEntry, FightLogEntry>> logMatches : matchingLogs)
+		for (ArrayList<FightLogEntry[]> logMatches : matchingLogs)
 		{
 			int tickDiff = 0;
 			boolean tickDiffValid = false;
 			for (int i = 0; i < logMatches.size(); i++)
 			{
-				Pair<FightLogEntry, FightLogEntry> match = logMatches.get(i);
+				FightLogEntry[] match = logMatches.get(i);
 
-				int curTickDiff = match.getKey().getTick() - match.getValue().getTick();
+				int curTickDiff = match[0].getTick() - match[1].getTick();
 
 				// ensure we have a consistent tick difference between the first few matching attacks.
 				if (i == 0)
@@ -253,38 +262,63 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		// now that we have the best tick diff, we're ready to actually merge the two sets of log entries.
 		// start by adjusting the opponent's logs' ticks so they line up with the main fight.
-		for (FightLogEntry e : opponentFightLogEntries)
+		for (FightLogEntry log : opponentFightLogEntries)
 		{
-			e.setTick(e.getTick() - bestTickDiff);
+			log.setTick(log.getTick() - bestTickDiff);
 		}
 
 		// TODO MERGE BY TICKS INTO PAIRS.
+		// now that all the ticks should be lined up, find matching tick pairs for offensive : defensive logs.
 
-		// before looping through logs, set "global"/constant values that won't change depending on dps
-		// calculations: successful magic hits and actual damage dealt.
-		// in case either fighter somehow missed an attack, use the max potential available data
-		// detected, as we could rarely miss an attack but never add an extra one.
-		this.competitor.addDamageDealt(Math.max(mainFight.competitor.getDamageDealt(), opposingFight.opponent.getDamageDealt()));
-		this.opponent.addDamageDealt(Math.max(opposingFight.competitor.getDamageDealt(), mainFight.opponent.getDamageDealt()));
 
-		this.competitor.addMagicHitCount(Math.max(mainFight.competitor.getMagicHitCount(), opposingFight.opponent.getMagicHitCount()));
-		this.opponent.addMagicHitCount(Math.max(opposingFight.competitor.getMagicHitCount(), mainFight.opponent.getMagicHitCount()));
+		// the main fight's defensive logs, meaning logs that will go with the opponent's attack logs
+//		ArrayList<FightLogEntry> mainFightDefensiveLogs = mainFightLogEntries.stream()
+//			.filter(l -> !l.isFullEntry() && l.attackerName.equals(mainFight.competitor.getName()))
+//			.collect(Collectors.toCollection(ArrayList::new));
+//		ArrayList<FightLogEntry> opponentFightDefensiveLogs = opponentFightLogEntries.stream()
+//			.filter(l -> !l.isFullEntry() && l.attackerName.equals(mainFight.competitor.getName()))
+//			.collect(Collectors.toCollection(ArrayList::new));
 
-		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
-		allFightLogEntries.addAll(opponentFightLogEntries);
 
-		// TODO ACTUALLY INCLUDE LEVELS, PRAY TO DPS
-		for (FightLogEntry logEntry : allFightLogEntries)
+		for (FightLogEntry log : mainFightLogEntries)
 		{
-			if (logEntry.attackerName.equals(cName))
+			// if the log is a full entry, then this is an attacking log coming from the competitor,
+			// so we need to find a matching defensive log from the opponent.
+			if (log.isFullEntry())
 			{
-				competitor.addAttack(logEntry);
+				opponentFightLogEntries.stream()
+					.filter(l -> !l.isFullEntry())
+					.filter(l -> l.attackerName.equals(mainFight.competitor.getName()))
+					.filter(l -> l.getTick() == log.getTick())
+					.findFirst()
+					.ifPresent(matchingDefenderLog -> competitor.addAttack(log, matchingDefenderLog));
 			}
-			else if (logEntry.attackerName.equals(oName))
-			{
-				opponent.addAttack(logEntry);
+			else // if the log is not a full entry, it's a defensive log coming from the competitor,
+			{    // meaning we need to match it to an opponent's attacking log.
+				fullOpponentFightLogEntries.stream()
+					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
+					.filter(l -> l.getTick() == log.getTick())
+					.findFirst()
+					.ifPresent(matchingAttackerLog -> opponent.addAttack(matchingAttackerLog, log));
 			}
 		}
+
+
+//		ArrayList<FightLogEntry> allFightLogEntries = new ArrayList<>(mainFightLogEntries);
+//		allFightLogEntries.addAll(opponentFightLogEntries);
+
+		// TODO ACTUALLY ADD LEVELS & PRAY TO DPS
+//		for (FightLogEntry logEntry : allFightLogEntries)
+//		{
+//			if (logEntry.attackerName.equals(cName))
+//			{
+//				competitor.addAttack(logEntry, defenderLog);
+//			}
+//			else if (logEntry.attackerName.equals(oName))
+//			{
+//				opponent.addAttack(logEntry, defenderLog);
+//			}
+//		}
 	}
 
 	// Used for testing purposes

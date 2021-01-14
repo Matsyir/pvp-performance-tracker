@@ -74,7 +74,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "restrictToLms",
 		name = "Restrict to LMS",
 		description = "Restricts use within the LMS area. WARNING: can be inaccurate outside LMS, as every attack animation's combat style must be manually mapped.",
-		position = 00
+		position = 0
 	)
 	default boolean restrictToLms()
 	{

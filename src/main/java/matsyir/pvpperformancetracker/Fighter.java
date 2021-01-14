@@ -179,7 +179,7 @@ class Fighter
 	}
 
 	// add an attack from fight log, without player references, for merging fight logs (fight analysis)
-	void addAttack(FightLogEntry logEntry)
+	void addAttack(FightLogEntry logEntry, FightLogEntry defenderLog)
 	{
 		attackCount++;
 		if (logEntry.success())
@@ -191,7 +191,7 @@ class Fighter
 			offensivePraySuccessCount++;
 		}
 
-		pvpDamageCalc.updateDamageStats(logEntry);
+		pvpDamageCalc.updateDamageStats(logEntry, defenderLog);
 		deservedDamage += pvpDamageCalc.getAverageHit();
 
 		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)

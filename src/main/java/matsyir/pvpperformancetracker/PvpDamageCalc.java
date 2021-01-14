@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
 import net.runelite.http.api.item.ItemEquipmentStats;
 import net.runelite.http.api.item.ItemStats;
@@ -65,7 +66,7 @@ public class PvpDamageCalc
 	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
 	private static final double PIETY_DEF_PRAYER_MODIFIER = 1.25;
 	private static final double AUGURY_DEF_PRAYER_MODIFIER = 1.25;
-	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1; // assume we never use augury during defence for now.
+	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1.25; // assume we never use augury during defence for now (unless merging stats).
 	private static final double RIGOUR_DEF_PRAYER_MODIFIER = 1.25;
 
 	private static final double BALLISTA_SPEC_ACCURACY_MODIFIER = 1.25;
@@ -108,9 +109,13 @@ public class PvpDamageCalc
 	private int maxHit = 0;
 	private Player attacker;
 
+	private CombatLevels attackerLevels;
+	private CombatLevels defenderLevels;
+
 	public PvpDamageCalc()
 	{
-
+		this.attackerLevels = CombatLevels.getConfigLevels();
+		this.defenderLevels = CombatLevels.getConfigLevels();
 	}
 
 	// main function used to update stats during an ongoing fight
@@ -156,7 +161,7 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			getMagicMaxHit(attackerItems[KitType.SHIELD.getIndex()], playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -169,13 +174,15 @@ public class PvpDamageCalc
 	}
 
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
-	public void updateDamageStats(FightLogEntry logEntry)
+	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
-		int[] attackerItems = logEntry.getAttackerGear();
-		int[] defenderItems = logEntry.getDefenderGear();
-		boolean success = logEntry.success();
-		AnimationData animationData = logEntry.getAnimationData();
-		boolean successfulOffensive = logEntry.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(logEntry.getAttackerOffensivePray());
+		this.attackerLevels = atkLog.getAttackerLevels();
+		this.defenderLevels = defenderLog.getAttackerLevels();
+		int[] attackerItems = atkLog.getAttackerGear();
+		int[] defenderItems = atkLog.getDefenderGear();
+		boolean success = atkLog.success();
+		AnimationData animationData = atkLog.getAnimationData();
+		boolean successfulOffensive = atkLog.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(atkLog.getAttackerOffensivePray());
 
 		averageHit = 0;
 		accuracy = 0;
@@ -210,7 +217,7 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			getMagicMaxHit(attackerItems[KitType.SHIELD.getIndex()], playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -284,7 +291,7 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
-		int effectiveLevel = (int) Math.floor((CONFIG.strengthLevel() * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
+		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -309,7 +316,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		int effectiveLevel = (int) Math.floor((CONFIG.rangedLevel() * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
+		int effectiveLevel = (int) Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
@@ -377,7 +384,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((CONFIG.attackLevel() * (successfulOffensive ? PIETY_ATK_PRAYER_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((attackerLevels.atk * (successfulOffensive ? PIETY_ATK_PRAYER_MODIFIER : 1)) + STANCE_BONUS) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -402,7 +409,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((CONFIG.defenceLevel() * PIETY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * PIETY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
 		{
@@ -439,7 +446,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((CONFIG.rangedLevel() * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + STANCE_BONUS) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
@@ -465,7 +472,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((CONFIG.defenceLevel() * RIGOUR_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * RIGOUR_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
 		/**
@@ -485,7 +492,7 @@ public class PvpDamageCalc
 		accuracy = diamonds ? (accuracy * .9) + .1 : accuracy;
 	}
 
-	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, boolean successfulOffensive, boolean defensiveAugurySuccess)
 	{
 		double effectiveLevelPlayer;
 
@@ -503,7 +510,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((CONFIG.magicLevel() * (successfulOffensive ? AUGURY_OFFENSIVE_PRAYER_MODIFIER : 1))) + 8);
+		effectiveLevelPlayer = Math.floor(((attackerLevels.mage * (successfulOffensive ? AUGURY_OFFENSIVE_PRAYER_MODIFIER : 1))) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
 		{
@@ -516,8 +523,8 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((CONFIG.defenceLevel() * AUGURY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
-		effectiveMagicLevelTarget = Math.floor((CONFIG.magicLevel() * AUGURY_MAGEDEF_PRAYER_MODIFIER) * 0.70);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * AUGURY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveMagicLevelTarget = Math.floor((defenderLevels.mage * (defensiveAugurySuccess ? AUGURY_MAGEDEF_PRAYER_MODIFIER : 1)) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
 

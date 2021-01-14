@@ -83,4 +83,18 @@ public class CombatLevels
 		this.mage = client.getBoostedSkillLevel(Skill.MAGIC);
 		this.hp = client.getBoostedSkillLevel(Skill.HITPOINTS);
 	}
+
+	public int getSkill(Skill skill)
+	{
+		switch(skill)
+		{
+			case ATTACK:    return atk;
+			case STRENGTH:  return str;
+			case DEFENCE:   return def;
+			case RANGED:    return range;
+			case MAGIC:     return mage;
+			case HITPOINTS: return hp;
+			default:        return 0;
+		}
+	}
 }
