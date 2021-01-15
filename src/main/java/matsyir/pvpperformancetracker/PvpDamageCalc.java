@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import matsyir.pvpperformancetracker.EquipmentData.VoidStyle;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
 import net.runelite.http.api.item.ItemEquipmentStats;
@@ -557,7 +558,7 @@ public class PvpDamageCalc
 	// First, try to get the item stats from the item manager. If stats weren't present in the
 	// itemManager, try get the 'real' item id from the EquipmentData. If it's not defined in EquipmentData, it will return null
 	// and count as 0 stats, but that should be very rare.
-	public int[] getItemStats(int itemId)
+	public static int[] getItemStats(int itemId)
 	{
 		ItemStats itemStats = PLUGIN.itemManager.getItemStats(itemId, false);
 		if (itemStats == null)
@@ -596,7 +597,7 @@ public class PvpDamageCalc
 	}
 
 	// Calculate total equipment bonuses for all given items
-	private int[] calculateBonuses(int[] itemIds)
+	public static int[] calculateBonuses(int[] itemIds)
 	{
 		int[] equipmentBonuses = CONFIG.ringChoice() == RingData.NONE ?
 			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
@@ -628,54 +629,23 @@ public class PvpDamageCalc
 		return equipmentBonuses;
 	}
 
-	enum VoidStyle
+	public static ItemEquipmentStats calculateBonusesToStats(int[] itemIds)
 	{
-		VOID_MELEE(1.1, 1.1),
-		VOID_RANGE(1.1, 1.1),
-		VOID_MAGE(1.45, 1),
-		VOID_ELITE_MELEE(1.1, 1.1),
-		VOID_ELITE_RANGE(1.125, 1.125),
-		VOID_ELITE_MAGE(1.45, 1.025),
-		NONE(1, 1);
-
-		double accuracyModifier;
-		double dmgModifier;
-
-		VoidStyle(double accuracyModifier, double dmgModifier)
-		{
-			this.accuracyModifier = accuracyModifier;
-			this.dmgModifier = dmgModifier;
-		}
-
-		// return a void style for a given PlayerComposition
-		public static VoidStyle getVoidStyleFor(int[] playerComposition)
-		{
-			if (playerComposition == null) { return NONE; }
-
-			EquipmentData gloves = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HANDS.getIndex()]);
-
-			if (gloves != EquipmentData.VOID_GLOVES) { return NONE; }
-
-			EquipmentData helm = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HEAD.getIndex()]);
-			EquipmentData torso = EquipmentData.getEquipmentDataFor(playerComposition[KitType.TORSO.getIndex()]);
-			EquipmentData legs = EquipmentData.getEquipmentDataFor(playerComposition[KitType.LEGS.getIndex()]);
-
-			if (torso == EquipmentData.VOID_BODY && legs == EquipmentData.VOID_LEGS)
-			{
-				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_MAGE
-					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_RANGE
-					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_MELEE
-					: NONE;
-			}
-			else if (torso == EquipmentData.VOID_ELITE_BODY && legs == EquipmentData.VOID_ELITE_LEGS)
-			{
-				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_ELITE_MAGE
-					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_ELITE_RANGE
-					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_ELITE_MELEE
-					: NONE;
-			}
-
-			return NONE;
-		}
+		int[] bonuses = calculateBonuses(itemIds);
+		return ItemEquipmentStats.builder()
+			.astab(bonuses[STAB_ATTACK])	// 0
+			.aslash(bonuses[SLASH_ATTACK])	// 1
+			.acrush(bonuses[CRUSH_ATTACK])	// 2
+			.amagic(bonuses[MAGIC_ATTACK])	// 3
+			.arange(bonuses[RANGE_ATTACK])	// 4
+			.dstab(bonuses[STAB_DEF])		// 5
+			.dslash(bonuses[SLASH_DEF])		// 6
+			.dcrush(bonuses[CRUSH_DEF])		// 7
+			.dmagic(bonuses[MAGIC_DEF])		// 8
+			.drange(bonuses[RANGE_DEF])		// 9
+			.str(bonuses[STRENGTH_BONUS])	// 10
+			.rstr(bonuses[RANGE_STRENGTH]) 	// 11
+			.mdmg(bonuses[MAGIC_DAMAGE])	// 12
+			.build();
 	}
 }

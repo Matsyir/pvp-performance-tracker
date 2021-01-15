@@ -28,6 +28,7 @@ package matsyir.pvpperformancetracker;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -40,6 +41,7 @@ import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+import static matsyir.pvpperformancetracker.FightLogDetailFrame.DEFAULT_WIDTH;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
@@ -58,6 +60,8 @@ public class FightLogFrame extends JFrame
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 	}
+
+	private FightLogDetailFrame fightLogDetailFrame;
 
 	FightLogFrame(FightPerformance fight, JRootPane rootPane)
 	{
@@ -173,6 +177,24 @@ public class FightLogFrame extends JFrame
 		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
 		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer());
 
+		table.getSelectionModel().addListSelectionListener(e -> {
+			int row = table.getSelectedRow();
+
+			if (fightLogDetailFrame != null)
+			{
+				if (fightLogDetailFrame.rowIdx == row) { return; }
+
+				fightLogDetailFrame.dispose();
+				fightLogDetailFrame = null;
+			}
+
+			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
+				new Point( // place the new detail frame along the right side of the fight log window.
+					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
+					this.getLocationOnScreen().y)
+			);
+		});
+
 		mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
 		add(mainPanel);
@@ -190,5 +212,9 @@ public class FightLogFrame extends JFrame
 
 			return this;
 		}
+
+
 	}
+
+
 }

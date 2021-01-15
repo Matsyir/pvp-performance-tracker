@@ -58,6 +58,7 @@ import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.HeadIcon;
 import net.runelite.api.Hitsplat.HitsplatType;
 import net.runelite.api.Player;
 import net.runelite.api.Prayer;
@@ -709,5 +710,33 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
 				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
 				0;
+	}
+
+	// returns SpriteID for a given HeadIcon. returns -1 if not found
+	public int getSpriteForHeadIcon(HeadIcon icon)
+	{
+		switch (icon)
+		{
+			case MELEE: return SpriteID.PRAYER_PROTECT_FROM_MELEE;
+			case RANGED: return SpriteID.PRAYER_PROTECT_FROM_MISSILES;
+			case MAGIC: return SpriteID.PRAYER_PROTECT_FROM_MAGIC;
+			case SMITE: return SpriteID.PRAYER_SMITE;
+			case RETRIBUTION: return SpriteID.PRAYER_RETRIBUTION;
+			case REDEMPTION: return SpriteID.PRAYER_REDEMPTION;
+			default: return -1;
+		}
+
+//		if (log.getAttackerOverhead() == HeadIcon.RANGED)
+//		{
+//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MISSILES;
+//		}
+//		else if (log.getAttackerOverhead() == HeadIcon.MAGIC)
+//		{
+//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MAGIC;
+//		}
+//		else if (log.getAttackerOverhead() == HeadIcon.MELEE)
+//		{
+//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MELEE;
+//		}
 	}
 }

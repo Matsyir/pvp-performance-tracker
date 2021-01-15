@@ -44,6 +44,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
 public class FightAnalysisFrame extends JFrame
@@ -78,6 +79,7 @@ public class FightAnalysisFrame extends JFrame
 			setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
 		}
 
+
 		setIconImage(frameIcon);
 		Dimension size = new Dimension(640, 256);
 		setSize(size);
@@ -89,6 +91,7 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.setPreferredSize(getSize());
 		mainPanel.setVisible(true);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+		//mainPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR); must set all backgrounds to null after for this to work... hmm maybe
 
 		add(mainPanel);
 

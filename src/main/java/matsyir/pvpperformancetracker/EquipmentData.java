@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import net.runelite.api.kit.KitType;
 import org.apache.commons.lang3.ArrayUtils;
 
 // Mostly to help fetch LMS gear stats, since LMS items are copies of real items, so their stats aren't
@@ -176,6 +177,57 @@ public enum EquipmentData
 			{
 				itemData.put(data.getItemId(), data);
 			}
+		}
+	}
+
+	enum VoidStyle
+	{
+		VOID_MELEE(1.1, 1.1),
+		VOID_RANGE(1.1, 1.1),
+		VOID_MAGE(1.45, 1),
+		VOID_ELITE_MELEE(1.1, 1.1),
+		VOID_ELITE_RANGE(1.125, 1.125),
+		VOID_ELITE_MAGE(1.45, 1.025),
+		NONE(1, 1);
+
+		double accuracyModifier;
+		double dmgModifier;
+
+		VoidStyle(double accuracyModifier, double dmgModifier)
+		{
+			this.accuracyModifier = accuracyModifier;
+			this.dmgModifier = dmgModifier;
+		}
+
+		// return a void style for a given PlayerComposition
+		public static VoidStyle getVoidStyleFor(int[] playerComposition)
+		{
+			if (playerComposition == null) { return NONE; }
+
+			EquipmentData gloves = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HANDS.getIndex()]);
+
+			if (gloves != EquipmentData.VOID_GLOVES) { return NONE; }
+
+			EquipmentData helm = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HEAD.getIndex()]);
+			EquipmentData torso = EquipmentData.getEquipmentDataFor(playerComposition[KitType.TORSO.getIndex()]);
+			EquipmentData legs = EquipmentData.getEquipmentDataFor(playerComposition[KitType.LEGS.getIndex()]);
+
+			if (torso == EquipmentData.VOID_BODY && legs == EquipmentData.VOID_LEGS)
+			{
+				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_MAGE
+					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_RANGE
+					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_MELEE
+					: NONE;
+			}
+			else if (torso == EquipmentData.VOID_ELITE_BODY && legs == EquipmentData.VOID_ELITE_LEGS)
+			{
+				return helm == EquipmentData.VOID_MAGE_HELM ? VOID_ELITE_MAGE
+					: helm == EquipmentData.VOID_RANGE_HELM ? VOID_ELITE_RANGE
+					: helm == EquipmentData.VOID_MELEE_HELM ? VOID_ELITE_MELEE
+					: NONE;
+			}
+
+			return NONE;
 		}
 	}
 }

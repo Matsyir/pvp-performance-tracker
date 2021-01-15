@@ -39,7 +39,7 @@ public enum AnimationData
 	MELEE_DAGGER_SLASH(376, AttackStyle.SLASH), // tested w/ dds
 	MELEE_SPEAR_STAB(381, AttackStyle.STAB), // tested w/ zammy hasta
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
-	MELEE_SCIM_SLASH(390, AttackStyle.CRUSH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
+	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
 	MELEE_STAFF_CRUSH(393, AttackStyle.CRUSH), // tested w/ zuriel's staff, d long slash
 	MELEE_BATTLEAXE_SLASH(395, AttackStyle.SLASH), // tested w/ rune baxe
 	MELEE_MACE_STAB(400, AttackStyle.STAB), // tested w/ d mace
@@ -55,7 +55,7 @@ public enum AnimationData
 	MELEE_STAFF_SLASH(440, AttackStyle.SLASH), // tested w/ SOTD/SOL slash, zammy hasta slash, vesta's spear slash, c hally
 	MELEE_SCEPTRE_CRUSH(1058, AttackStyle.CRUSH), // tested w/ thammaron's sceptre, d long spec
 	MELEE_DRAGON_MACE_SPEC(1060, AttackStyle.CRUSH, true),
-	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.SLASH, true),
+	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true),
 	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec
 	MELEE_ABYSSAL_WHIP(1658, AttackStyle.SLASH), // tested w/ whip, tent whip
 	MELEE_GRANITE_MAUL(1665, AttackStyle.CRUSH), // tested w/ normal gmaul, ornate maul
