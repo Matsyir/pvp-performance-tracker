@@ -6,12 +6,16 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 
-public class MergedFightPerformance extends FightPerformance
+public class AnalyzedFightPerformance extends FightPerformance
 {
+	// fight's full fight logs, saved in "pairs", as an array:
+	// [0]: attacker's full log entry
+	// [1]: defender's defensive log entry
+	ArrayList<FightLogEntry[]> analyzedMatchingLogs;
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
 	///////// OLD COMMENT: the fight log entry lists should only include one player in each
-	public MergedFightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
+	public AnalyzedFightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
 	{
 		String cName = mainFight.competitor.getName();
 		String oName = mainFight.opponent.getName();
@@ -168,45 +172,72 @@ public class MergedFightPerformance extends FightPerformance
 			log.setTick(log.getTick() + bestTickDiff);
 		}
 
-		// TODO MERGE BY TICKS INTO PAIRS.
+		// we will be using this going forward so we need to init it. No reason to do it earlier.
+		analyzedMatchingLogs = new ArrayList<>();
+
+
 		// now that all the ticks should be lined up, find matching tick pairs for offensive : defensive logs.
+		// skip the 'main' client's opponent logs, as those are the ones with less data we are trying to improve.
+		// so, only loop through the main competitor's logs.
+		mainFightLogEntries.stream()
+			.filter(log -> log.attackerName.equals(mainFight.competitor.getName()))
+			.forEach(log -> {
+				// if the log is a full entry, then this is an attacking log coming from the competitor,
+				// so we need to find a matching defensive log from the opponent.
+				if (log.isFullEntry())
+				{
+					opponentFightLogEntries.stream()
+						.filter(ol -> !ol.isFullEntry())
+						.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
+						.filter(ol -> ol.getTick() == log.getTick())
+						.findFirst()
+						.ifPresent(matchingDefenderLog -> addCompetitorAttack(log, matchingDefenderLog));
+				}
+				else // if the log is not a full entry, it's a defensive log coming from the competitor,
+				{    // meaning we need to match it to an opponent's attacking log.
+					fullOpponentFightLogEntries.stream()
+						.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
+						.filter(ol -> ol.getTick() == log.getTick())
+						.findFirst()
+						.ifPresent(matchingAttackerLog -> addOpponentAttack(matchingAttackerLog, log));
+				}
+		});
+//		for (FightLogEntry log : mainFightLogEntries)
+//		{
+//			// skip the 'main' client's opponent logs, as those are the ones with less data we are trying to improve.
+//			if (!log.attackerName.equals(mainFight.competitor.getName())) { continue; }
+//
+//			// if the log is a full entry, then this is an attacking log coming from the competitor,
+//			// so we need to find a matching defensive log from the opponent.
+//			if (log.isFullEntry())
+//			{
+//				opponentFightLogEntries.stream()
+//					.filter(l -> !l.isFullEntry())
+//					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
+//					.filter(l -> l.getTick() == log.getTick())
+//					.findFirst()
+//					.ifPresent(matchingDefenderLog -> this.competitor.addAttack(log, matchingDefenderLog));
+//			}
+//			else // if the log is not a full entry, it's a defensive log coming from the competitor,
+//			{    // meaning we need to match it to an opponent's attacking log.
+//				fullOpponentFightLogEntries.stream()
+//					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
+//					.filter(l -> l.getTick() == log.getTick())
+//					.findFirst()
+//					.ifPresent(matchingAttackerLog -> this.opponent.addAttack(matchingAttackerLog, log));
+//			}
+//		}
+	}
 
+	void addCompetitorAttack(FightLogEntry attackerLog, FightLogEntry defenderLog)
+	{
+		this.competitor.addAttack(attackerLog, defenderLog);
+		this.analyzedMatchingLogs.add(new FightLogEntry[]{ attackerLog, defenderLog });
+	}
 
-		// the main fight's defensive logs, meaning logs that will go with the opponent's attack logs
-//		ArrayList<FightLogEntry> mainFightDefensiveLogs = mainFightLogEntries.stream()
-//			.filter(l -> !l.isFullEntry() && l.attackerName.equals(mainFight.competitor.getName()))
-//			.collect(Collectors.toCollection(ArrayList::new));
-//		ArrayList<FightLogEntry> opponentFightDefensiveLogs = opponentFightLogEntries.stream()
-//			.filter(l -> !l.isFullEntry() && l.attackerName.equals(mainFight.competitor.getName()))
-//			.collect(Collectors.toCollection(ArrayList::new));
-
-
-		for (FightLogEntry log : mainFightLogEntries)
-		{
-			if (!log.attackerName.equals(mainFight.competitor.getName()))
-			{
-				continue;
-			}
-
-			// if the log is a full entry, then this is an attacking log coming from the competitor,
-			// so we need to find a matching defensive log from the opponent.
-			if (log.isFullEntry())
-			{
-				opponentFightLogEntries.stream()
-					.filter(l -> !l.isFullEntry())
-					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
-					.filter(l -> l.getTick() == log.getTick())
-					.findFirst()
-					.ifPresent(matchingDefenderLog -> this.competitor.addAttack(log, matchingDefenderLog));
-			}
-			else // if the log is not a full entry, it's a defensive log coming from the competitor,
-			{    // meaning we need to match it to an opponent's attacking log.
-				fullOpponentFightLogEntries.stream()
-					.filter(l -> l.attackerName.equals(mainFight.opponent.getName()))
-					.filter(l -> l.getTick() == log.getTick())
-					.findFirst()
-					.ifPresent(matchingAttackerLog -> this.opponent.addAttack(matchingAttackerLog, log));
-			}
-		}
+	void addOpponentAttack(FightLogEntry attackerLog, FightLogEntry defenderLog)
+	{
+		this.opponent.addAttack(attackerLog, defenderLog);
+		this.analyzedMatchingLogs.add(new FightLogEntry[]{ attackerLog, defenderLog });
 	}
 }

@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -31,8 +31,10 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
 
@@ -254,7 +256,7 @@ class Fighter
 	// Return a simple string to display the current player's success rate.
 	// ex. "42/59 (71%)". The name is not included as it will be in a separate view.
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
-	String getOffPrayStats(boolean shortString)
+	public String getOffPrayStats(boolean shortString)
 	{
 		nf.setMaximumFractionDigits(0);
 		return shortString ?
@@ -315,7 +317,7 @@ class Fighter
 	// Return a simple string to display the current player's offensive prayer success rate.
 	// ex. "42/59 (71%)". The name is not included as it will be in a separate view.
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
-	String getOffensivePrayStats(boolean shortString)
+	public String getOffensivePrayStats(boolean shortString)
 	{
 		nf.setMaximumFractionDigits(0);
 		return shortString ?

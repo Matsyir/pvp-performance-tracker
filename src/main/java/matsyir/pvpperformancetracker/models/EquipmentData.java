@@ -191,8 +191,8 @@ public enum EquipmentData
 		VOID_ELITE_MAGE(1.45, 1.025),
 		NONE(1, 1);
 
-		double accuracyModifier;
-		double dmgModifier;
+		public double accuracyModifier;
+		public double dmgModifier;
 
 		VoidStyle(double accuracyModifier, double dmgModifier)
 		{
