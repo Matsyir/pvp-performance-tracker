@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -33,6 +33,7 @@ import java.text.NumberFormat;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
@@ -229,7 +230,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 			.build();
 	}
 
-	String getHitRange()
+	public String getHitRange()
 	{
 		return minHit + "-" + maxHit;
 	}

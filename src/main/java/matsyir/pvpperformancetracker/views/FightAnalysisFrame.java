@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -31,7 +31,6 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -41,10 +40,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import net.runelite.client.ui.ColorScheme;
+import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import net.runelite.client.util.ImageUtil;
 
 public class FightAnalysisFrame extends JFrame
@@ -115,7 +113,7 @@ public class FightAnalysisFrame extends JFrame
 		actionLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
 
 		JLabel instructionLabel = new JLabel();
-		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to get more accurate stats about the fight, since some data is only available client-side. Both data entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's opponent.</html>");
+		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to get more accurate stats about the fight, since some data is only available client-side. Both data entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's opponent. Right click a fight to copy its data.</html>");
 		instructionLabel.setForeground(Color.WHITE);
 		instructionLabelLine.add(instructionLabel, BorderLayout.CENTER);
 
@@ -195,18 +193,9 @@ public class FightAnalysisFrame extends JFrame
 
 		if (!fightsValid) { return; }
 
-		// now that we know fights are valid, merge them to get more detailed data:
-		// only save attacks sent by the client/"main" fighter, so ones with the competitor's RSN
-//		ArrayList<FightLogEntry> mainFightDetailedEntries = new ArrayList<>(mainFight.getAllFightLogEntries());
-//		mainFightDetailedEntries.removeIf(e -> !e.attackerName.equals(mainFight.getCompetitor().getName()));
-//
-//		ArrayList<FightLogEntry> oppFightDetailedEntries = new ArrayList<>(opponentFight.getAllFightLogEntries());
-//		oppFightDetailedEntries.removeIf(e -> !e.attackerName.equals(opponentFight.getCompetitor().getName()));
-
-
 		try
 		{
-			analyzedFight = new FightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
+			analyzedFight = new AnalyzedFightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
 
 			// now that we've got the merged fight, display results
 			displayAnalysis();

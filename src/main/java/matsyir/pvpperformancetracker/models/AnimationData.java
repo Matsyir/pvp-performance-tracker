@@ -23,15 +23,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.models;
 
 import com.google.common.collect.ImmutableMap;
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public enum AnimationData
 {
@@ -111,9 +114,9 @@ public enum AnimationData
 	private static final Map<Integer, AnimationData> DATA;
 
 	int animationId;
-	boolean isSpecial;
-	AttackStyle attackStyle;
-	int baseSpellDamage;
+	public boolean isSpecial;
+	public AttackStyle attackStyle;
+	public int baseSpellDamage;
 
 	// Simple animation data constructor for all melee and range attacks
 	AnimationData(int animationId, AttackStyle attackStyle)
@@ -184,23 +187,38 @@ public enum AnimationData
 			animationData == MAGIC_STANDARD_SURGE_STAFF);
 	}
 
+	@Override
+	public String toString()
+	{
+		String[] words = super.toString().toLowerCase().split("_");
+		Arrays.stream(words)
+			.map(StringUtils::capitalize).collect(Collectors.toList()).toArray(words);
+
+		return String.join(" ", words);
+	}
+
+
 	// An enum of combat styles (including stab, slash, crush).
 	public enum AttackStyle
 	{
-		STAB(HeadIcon.MELEE),
-		SLASH(HeadIcon.MELEE),
-		CRUSH(HeadIcon.MELEE),
-		RANGED(HeadIcon.RANGED),
-		MAGIC(HeadIcon.MAGIC);
+		STAB(HeadIcon.MELEE, SpriteID.COMBAT_STYLE_SWORD_STAB),
+		SLASH(HeadIcon.MELEE, SpriteID.COMBAT_STYLE_SWORD_SLASH),
+		CRUSH(HeadIcon.MELEE, SpriteID.COMBAT_STYLE_HAMMER_POUND),
+		RANGED(HeadIcon.RANGED, SpriteID.SKILL_RANGED),
+		MAGIC(HeadIcon.MAGIC, SpriteID.SKILL_MAGIC);
 
 		static AttackStyle[] MELEE_STYLES = {STAB, SLASH, CRUSH};
 
 		@Getter
 		private final HeadIcon protection;
 
-		AttackStyle(HeadIcon protection)
+		@Getter
+		private final int styleSpriteId;
+
+		AttackStyle(HeadIcon protection, int styleSpriteId)
 		{
 			this.protection = protection;
+			this.styleSpriteId = styleSpriteId;
 		}
 
 		public boolean isMelee()
@@ -221,6 +239,13 @@ public enum AnimationData
 					(pray == SpriteID.PRAYER_AUGURY ||
 					 pray == SpriteID.PRAYER_MYSTIC_MIGHT)))
 			);
+		}
+
+
+		@Override
+		public String toString()
+		{
+			return StringUtils.capitalize(super.toString().toLowerCase());
 		}
 	}
 }

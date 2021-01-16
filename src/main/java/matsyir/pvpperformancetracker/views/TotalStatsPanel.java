@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -40,6 +40,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
@@ -120,7 +122,7 @@ public class TotalStatsPanel extends JPanel
 	private double deathAvgDmgDealt = 0;
 	private double deathAvgDmgDealtDiff = 0;
 
-	TotalStatsPanel()
+	public TotalStatsPanel()
 	{
 		totalStats = new Fighter("Player");
 

@@ -31,11 +31,14 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.CombatLevels;
 import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
 
 @Slf4j
 @Getter
+public
 class Fighter
 {
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -121,7 +124,7 @@ class Fighter
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
 	// but not actually updated during a fight.
-	Fighter(String name)
+	public Fighter(String name)
 	{
 		player = null;
 		this.name = name;
@@ -205,7 +208,7 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
+	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
@@ -259,12 +262,12 @@ class Fighter
 			nf.format(offPraySuccessCount) + "/" + nf.format(attackCount) + " (" + Math.round(calculateOffPraySuccessPercentage()) + "%)";
 	}
 
-	String getOffPrayStats()
+	public String getOffPrayStats()
 	{
 		return getOffPrayStats(false);
 	}
 
-	String getMagicHitStats()
+	public String getMagicHitStats()
 	{
 		nf.setMaximumFractionDigits(0);
 		String stats = nf.format(magicHitCount);
@@ -273,37 +276,37 @@ class Fighter
 		return stats;
 	}
 
-	String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
+	public String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
 	{
 		nf.setMaximumFractionDigits(precision);
 		double difference = deservedDamage - opponent.deservedDamage;
 		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
 			nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
-	String getDeservedDmgString(Fighter opponent)
+	public String getDeservedDmgString(Fighter opponent)
 	{
 		return getDeservedDmgString(opponent, 0, false);
 	}
 
 
-	String getDmgDealtString(Fighter opponent, boolean onlyDiff)
+	public String getDmgDealtString(Fighter opponent, boolean onlyDiff)
 	{
 		int difference = damageDealt - opponent.damageDealt;
 		return onlyDiff ? (difference > 0 ? "+" : "") + difference:
 			damageDealt + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
-	String getDmgDealtString(Fighter opponent)
+	public String getDmgDealtString(Fighter opponent)
 	{
 		return getDmgDealtString(opponent, false);
 	}
 
-	double calculateOffPraySuccessPercentage()
+	public double calculateOffPraySuccessPercentage()
 	{
 		return attackCount == 0 ? 0 :
 		(double) offPraySuccessCount / attackCount * 100.0;
 	}
 
-	double calculateOffensivePraySuccessPercentage()
+	public double calculateOffensivePraySuccessPercentage()
 	{
 		return attackCount == 0 ? 0 :
 			(double) offensivePraySuccessCount / attackCount * 100.0;
@@ -320,7 +323,7 @@ class Fighter
 			nf.format(offensivePraySuccessCount) + "/" + nf.format(attackCount) + " (" + Math.round(calculateOffensivePraySuccessPercentage()) + "%)";
 	}
 
-	String getOffensivePrayStats()
+	public String getOffensivePrayStats()
 	{
 		return getOffensivePrayStats(false);
 	}

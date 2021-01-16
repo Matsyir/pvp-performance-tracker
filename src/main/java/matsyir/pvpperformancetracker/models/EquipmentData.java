@@ -23,10 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.models;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import net.runelite.api.kit.KitType;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -180,7 +181,7 @@ public enum EquipmentData
 		}
 	}
 
-	enum VoidStyle
+	public enum VoidStyle
 	{
 		VOID_MELEE(1.1, 1.1),
 		VOID_RANGE(1.1, 1.1),

@@ -24,6 +24,8 @@
  */
 package matsyir.pvpperformancetracker;
 
+import matsyir.pvpperformancetracker.models.RangeAmmoData;
+import matsyir.pvpperformancetracker.models.RingData;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;

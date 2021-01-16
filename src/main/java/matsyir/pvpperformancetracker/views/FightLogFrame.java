@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -36,12 +36,17 @@ import java.time.Duration;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import static matsyir.pvpperformancetracker.FightLogDetailFrame.DEFAULT_WIDTH;
+import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
+import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
@@ -62,13 +67,15 @@ public class FightLogFrame extends JFrame
 	}
 
 	private FightLogDetailFrame fightLogDetailFrame;
+	private JTable table;
+	private ArrayList<FightLogEntry> fightLogEntries;
 
 	FightLogFrame(FightPerformance fight, JRootPane rootPane)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
 		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName());
 
-		ArrayList<FightLogEntry> fightLogEntries = fight.getAllFightLogEntries();
+		fightLogEntries = fight.getAllFightLogEntries();
 		if (fightLogEntries == null || fightLogEntries.size() < 1)
 		{
 			PLUGIN.createConfirmationModal(false, "There are no fight log entries available for this fight.");
@@ -99,19 +106,8 @@ public class FightLogFrame extends JFrame
 			{
 				initialTime = fightEntry.getTime();
 			}
-			int styleIcon;
-			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.RANGED)
-			{
-				styleIcon = SpriteID.SKILL_RANGED;
-			}
-			else if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-			{
-				styleIcon = SpriteID.SKILL_MAGIC;
-			}
-			else
-			{
-				styleIcon = SpriteID.SKILL_ATTACK;
-			}
+			int styleIcon = fightEntry.getAnimationData().attackStyle.getStyleSpriteId();
+
 			int prayIcon = 0;
 			boolean noOverhead = false;
 			if (fightEntry.getDefenderOverhead() == HeadIcon.RANGED)
@@ -132,8 +128,10 @@ public class FightLogFrame extends JFrame
 			}
 
 			BufferedImage styleIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(styleIcon, 0);
+			JLabel styleIconLabel = new JLabel(new ImageIcon(styleIconRendered));
+			styleIconLabel.setToolTipText(fightEntry.getAnimationData().attackStyle.toString());
 			stats[i][0] = fightEntry.getAttackerName();
-			stats[i][1] = styleIconRendered;
+			stats[i][1] = styleIconLabel;
 			stats[i][2] = fightEntry.getHitRange();
 			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
 			stats[i][4] = nf.format(fightEntry.getDeservedDamage());
@@ -168,7 +166,7 @@ public class FightLogFrame extends JFrame
 		}
 
 		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time" };
-		JTable table = new JTable(stats, header);
+		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
 
@@ -207,13 +205,49 @@ public class FightLogFrame extends JFrame
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
 		{
 			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			setText("");
-			setIcon(value instanceof BufferedImage ? new ImageIcon((BufferedImage)value) : null);
+			if (value instanceof BufferedImage)
+			{
+				setText("");
+				setIcon(new ImageIcon((BufferedImage)value));
+			}
+			else if (value instanceof JLabel)
+			{
+				JLabel val = (JLabel)value;
+				setIcon(val.getIcon());
+				setText(val.getText());
+				setToolTipText(val.getToolTipText());
+			}
+			else
+			{
+				setText("");
+				setIcon(null);
+			}
 
 			return this;
 		}
+	}
 
+	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
+	{
+		this((FightPerformance)fight, rootPane);
 
+//		table.getSelectionModel().addListSelectionListener(e -> {
+//			int row = table.getSelectedRow();
+//
+//			if (fightLogDetailFrame != null)
+//			{
+//				if (fightLogDetailFrame.rowIdx == row) { return; }
+//
+//				fightLogDetailFrame.dispose();
+//				fightLogDetailFrame = null;
+//			}
+//
+//			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
+//				new Point( // place the new detail frame along the right side of the fight log window.
+//					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
+//					this.getLocationOnScreen().y)
+//			);
+//		});
 	}
 
 

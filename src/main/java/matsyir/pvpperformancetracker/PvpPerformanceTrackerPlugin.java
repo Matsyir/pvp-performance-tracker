@@ -54,6 +54,9 @@ import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.models.CombatLevels;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -544,7 +547,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// import additional/extra fight history data supplied by the user
 	// this only does the direct json deserialization and success response (modals)
 	// more specific FightPerformance processing is done in importFights()
-	void importUserFightHistoryData(String data)
+	public void importUserFightHistoryData(String data)
 	{
 		try
 		{
@@ -565,7 +568,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// set fight log names after importing since they aren't serialized but are on the parent class
-	void initializeImportedFight(FightPerformance f)
+	public void initializeImportedFight(FightPerformance f)
 	{
 		// check for nulls in case the data was corrupted and entries are corrupted.
 		if (f.getCompetitor() == null || f.getOpponent() == null ||
@@ -607,7 +610,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// reset the loaded fight history as well as the saved json data
-	void resetFightHistory()
+	public void resetFightHistory()
 	{
 		fightHistory.clear();
 		updateFightHistoryData();
@@ -615,7 +618,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// remove a fight from the loaded fight history
-	void removeFight(FightPerformance fight)
+	public void removeFight(FightPerformance fight)
 	{
 		fightHistory.remove(fight);
 		panel.rebuild();

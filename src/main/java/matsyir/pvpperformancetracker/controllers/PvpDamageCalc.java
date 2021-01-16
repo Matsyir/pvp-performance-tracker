@@ -23,16 +23,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.controllers;
 
 import lombok.Getter;
-import static matsyir.pvpperformancetracker.AnimationData.AttackStyle;
+import matsyir.pvpperformancetracker.models.AnimationData;
+import static matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import static matsyir.pvpperformancetracker.FightLogEntry.nf;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
+import static matsyir.pvpperformancetracker.models.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import matsyir.pvpperformancetracker.EquipmentData.VoidStyle;
+import matsyir.pvpperformancetracker.models.EquipmentData;
+import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
+import matsyir.pvpperformancetracker.models.CombatLevels;
+import matsyir.pvpperformancetracker.models.RangeAmmoData;
+import matsyir.pvpperformancetracker.models.RingData;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
 import net.runelite.http.api.item.ItemEquipmentStats;

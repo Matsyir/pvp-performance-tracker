@@ -1,21 +1,21 @@
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.awt.Point;
-import java.awt.image.BufferedImage;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
-import javax.swing.SwingConstants;
+import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import net.runelite.api.HeadIcon;
-import net.runelite.api.SpriteID;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.SPRITE_MANAGER;
 import net.runelite.http.api.item.ItemEquipmentStats;
 
 class FightLogDetailFrame extends JFrame
@@ -32,7 +32,6 @@ class FightLogDetailFrame extends JFrame
 		setSize(size);
 		setMinimumSize(size);
 		setLayout(new BorderLayout());
-		//setLayout(new GridLayout(2, 2));
 		setLocation(location);
 
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
@@ -56,13 +55,13 @@ class FightLogDetailFrame extends JFrame
 
 		JPanel namesLine = new JPanel(new BorderLayout());
 		JLabel attackerName = new JLabel();
-		attackerName.setText("<html>Attacker:<br/>" + log.attackerName + "</html>");
-		attackerName.setHorizontalAlignment(SwingConstants.CENTER);
+		attackerName.setText("<html>Attacker:<br/><strong>" + log.attackerName + "</strong></html>");
+		attackerName.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(log.getAnimationData().attackStyle.getStyleSpriteId(), 0)));
+		attackerName.setToolTipText(log.getAnimationData().attackStyle.toString());
 		namesLine.add(attackerName, BorderLayout.WEST);
 
 		JLabel defenderName = new JLabel();
-		defenderName.setText("Defender: " + defender.getName());
-		defenderName.setHorizontalAlignment(SwingConstants.CENTER);
+		defenderName.setText("<html>Defender:<br/><strong>" + defender.getName() + "</strong></html>");
 		namesLine.add(defenderName, BorderLayout.EAST);
 
 
@@ -80,7 +79,7 @@ class FightLogDetailFrame extends JFrame
 		int attackerOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getAttackerOverhead());
 		if (attackerOverheadSpriteId > 0)
 		{
-			ImageIcon icon = new ImageIcon(PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(attackerOverheadSpriteId, 0));
+			ImageIcon icon = new ImageIcon(SPRITE_MANAGER.getSprite(attackerOverheadSpriteId, 0));
 			JLabel prayIconLabel = new JLabel(icon);
 			overheadPrayLine.add(prayIconLabel, BorderLayout.WEST);
 		}
@@ -88,7 +87,7 @@ class FightLogDetailFrame extends JFrame
 		int defenderOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getDefenderOverhead());
 		if (defenderOverheadSpriteId > 0)
 		{
-			ImageIcon icon = new ImageIcon(PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(defenderOverheadSpriteId, 0));
+			ImageIcon icon = new ImageIcon(SPRITE_MANAGER.getSprite(defenderOverheadSpriteId, 0));
 			JLabel prayIconLabel = new JLabel(icon);
 			overheadPrayLine.add(prayIconLabel, BorderLayout.EAST);
 		}
@@ -96,7 +95,7 @@ class FightLogDetailFrame extends JFrame
 		JPanel offensivePrayLine = new JPanel(new BorderLayout());
 		if (log.getAttackerOffensivePray() > 0)
 		{
-			ImageIcon icon = new ImageIcon(PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(log.getAttackerOffensivePray(), 0));
+			ImageIcon icon = new ImageIcon(SPRITE_MANAGER.getSprite(log.getAttackerOffensivePray(), 0));
 			JLabel prayIconLabel = new JLabel(icon);
 			offensivePrayLine.add(prayIconLabel, BorderLayout.WEST);
 		}
@@ -105,8 +104,8 @@ class FightLogDetailFrame extends JFrame
 		JPanel animationDetectedLine = new JPanel(new BorderLayout());
 		JLabel attackerAnimationDetected = new JLabel();
 		attackerAnimationDetected.setText("Animation Detected: " + log.getAnimationData().toString());
-		attackerAnimationDetected.setToolTipText("<html>Note that the animation can seem misleading, as many animations are re-used, but this is normal.<br/>For example, Zammy Hasta and Staff of Fire use the same crush animation.</html>");
-		attackerAnimationDetected.setHorizontalAlignment(SwingConstants.CENTER);
+		attackerAnimationDetected.setToolTipText("<html>Note that the animation can be misleading, as many animations are re-used, but this is normal.<br/>For example, Zammy Hasta and Staff of Fire use the same crush animation.</html>");
+		//attackerAnimationDetected.setHorizontalAlignment(SwingConstants.CENTER);
 		animationDetectedLine.add(attackerAnimationDetected, BorderLayout.CENTER);
 
 
@@ -115,10 +114,17 @@ class FightLogDetailFrame extends JFrame
 		mainPanel.add(overheadPrayLine);
 		mainPanel.add(offensivePrayLine);
 
-		mainPanel.add(attackerAnimationDetected);
+		mainPanel.add(animationDetectedLine);
 
 		this.add(mainPanel, BorderLayout.CENTER);
 		this.setVisible(true);
+	}
+
+	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry log, int rowIdx, Point location)
+	{
+		this((FightPerformance)fight, log, rowIdx, location);
+
+
 	}
 
 	String getItemEquipmentStatsString(ItemEquipmentStats stats)
@@ -139,7 +145,7 @@ class FightLogDetailFrame extends JFrame
 			"<br/><strong>Other bonuses</strong>" + sep +
 			"Melee strength: " + prependPlusIfPositive(stats.getStr()) + sep +
 			"Ranged strength: " + prependPlusIfPositive(stats.getRstr()) + sep +
-			"Magic damage: " + prependPlusIfPositive(stats.getMdmg()) + sep +
+			"Magic damage: " + prependPlusIfPositive(stats.getMdmg()) + "%" + sep +
 			"</html>";
 	}
 

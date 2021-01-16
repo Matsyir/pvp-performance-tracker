@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -48,6 +48,9 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
@@ -56,7 +59,7 @@ import net.runelite.client.util.ImageUtil;
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
 // stats are fixed to the right.
 
-class FightPerformancePanel extends JPanel
+public class FightPerformancePanel extends JPanel
 {
 	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
 	private static Image frameIcon;
@@ -114,12 +117,12 @@ class FightPerformancePanel extends JPanel
 	//     100                      N/A
 	//
 	// these are the params to use for a normal panel.
-	FightPerformancePanel(FightPerformance fight)
+	public FightPerformancePanel(FightPerformance fight)
 	{
 		this(fight, true, true, false, null);
 	}
 
-	FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
+	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
 	{
 		this.showBorders = showBorders;
 		if (frameIcon == null || deathIcon == null)

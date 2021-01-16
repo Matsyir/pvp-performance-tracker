@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -47,22 +47,22 @@ public class CombatLevels
 
 	@Expose
 	@SerializedName("a")
-	int atk;
+	public int atk;
 	@Expose
 	@SerializedName("s")
-	int str;
+	public int str;
 	@Expose
 	@SerializedName("d")
-	int def;
+	public int def;
 	@Expose
 	@SerializedName("r")
-	int range;
+	public int range;
 	@Expose
 	@SerializedName("m")
-	int mage;
+	public int mage;
 	@Expose
 	@SerializedName("h")
-	int hp; // not currently used but potential dh support in future?
+	public int hp; // not currently used but potential dh support in future?
 
 	public CombatLevels(int atk, int str, int def, int range, int mage, int hp)
 	{

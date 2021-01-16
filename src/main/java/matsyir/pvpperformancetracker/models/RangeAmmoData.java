@@ -22,9 +22,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.models;
 
 import lombok.Getter;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 
 public interface RangeAmmoData
 {

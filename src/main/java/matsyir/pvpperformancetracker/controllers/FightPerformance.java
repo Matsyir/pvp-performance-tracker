@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package matsyir.pvpperformancetracker;
+package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.CombatLevels;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
@@ -70,7 +73,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
-	FightPerformance(Player competitor, Player opponent)
+	public FightPerformance(Player competitor, Player opponent)
 	{
 		this.competitor = new Fighter(competitor);
 		this.opponent = new Fighter(opponent);
@@ -115,7 +118,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
 	///////// OLD COMMENT: the fight log entry lists should only include one player in each
-	FightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
+	public FightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
 	{
 		String cName = mainFight.competitor.getName();
 		String oName = mainFight.opponent.getName();
@@ -347,7 +350,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// If the given playerName is in this fight, check the Fighter's current animation,
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
-	void checkForAttackAnimations(String playerName, CombatLevels competitorLevels)
+	public void checkForAttackAnimations(String playerName, CombatLevels competitorLevels)
 	{
 		if (playerName == null)
 		{
@@ -386,7 +389,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	// add damage dealt to the opposite player.
 	// the player name being passed in is the one who has the hitsplat on them.
-	void addDamageDealt(String playerName, int damage)
+	public void addDamageDealt(String playerName, int damage)
 	{
 		if (playerName == null) { return; }
 
@@ -400,7 +403,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 	}
 
-	void updateCompetitorHp(int currentHp)
+	public void updateCompetitorHp(int currentHp)
 	{
 		if (currentHp > competitorPrevHp)
 		{
@@ -413,7 +416,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Will return true and stop the fight if the fight should be over.
 	// if either competitor hasn't fought in NEW_FIGHT_DELAY, or either competitor died.
 	// Will also add the currentFight to fightHistory if the fight ended.
-	boolean isFightOver()
+	public boolean isFightOver()
 	{
 		boolean isOver = false;
 		// if either competitor died, end the fight.
@@ -441,7 +444,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return isOver;
 	}
 
-	ArrayList<FightLogEntry> getAllFightLogEntries()
+	public ArrayList<FightLogEntry> getAllFightLogEntries()
 	{
 		if (competitor.getFightLogEntries() == null || opponent.getFightLogEntries() == null)
 		{
@@ -457,34 +460,34 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	// only count the fight as started if the competitor attacked, not the enemy because
 	// the person the competitor clicked on might be attacking someone else
-	boolean fightStarted()
+	public boolean fightStarted()
 	{
 		return competitor.getAttackCount() > 0;
 	}
 
 	// returns true if competitor off-pray hit success rate > opponent success rate.
 	// the following functions have similar behaviour.
-	boolean competitorOffPraySuccessIsGreater()
+	public boolean competitorOffPraySuccessIsGreater()
 	{
 		return competitor.calculateOffPraySuccessPercentage() > opponent.calculateOffPraySuccessPercentage();
 	}
 
-	boolean opponentOffPraySuccessIsGreater()
+	public boolean opponentOffPraySuccessIsGreater()
 	{
 		return opponent.calculateOffPraySuccessPercentage() > competitor.calculateOffPraySuccessPercentage();
 	}
 
-	boolean competitorDeservedDmgIsGreater()
+	public boolean competitorDeservedDmgIsGreater()
 	{
 		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
 	}
 
-	boolean opponentDeservedDmgIsGreater()
+	public boolean opponentDeservedDmgIsGreater()
 	{
 		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
 	}
 
-	boolean competitorDmgDealtIsGreater()
+	public boolean competitorDmgDealtIsGreater()
 	{
 		return competitor.getDamageDealt() > opponent.getDamageDealt();
 	}
@@ -494,7 +497,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return opponent.getDamageDealt() > competitor.getDamageDealt();
 	}
 
-	boolean competitorMagicHitsLuckier()
+	public boolean competitorMagicHitsLuckier()
 	{
 		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
 			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
@@ -504,7 +507,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return competitorRate > opponentRate;
 	}
 
-	boolean opponentMagicHitsLuckier()
+	public boolean opponentMagicHitsLuckier()
 	{
 		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
 			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
