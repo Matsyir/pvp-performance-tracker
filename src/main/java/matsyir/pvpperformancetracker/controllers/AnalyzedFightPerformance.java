@@ -21,7 +21,6 @@ public class AnalyzedFightPerformance extends FightPerformance
 	FightPerformance opposingFight;
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
-	///////// OLD COMMENT: the fight log entry lists should only include one player in each
 	public AnalyzedFightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
 	{
 		this.mainFight = mainFight;

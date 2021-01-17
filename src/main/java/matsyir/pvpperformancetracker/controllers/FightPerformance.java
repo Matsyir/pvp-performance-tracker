@@ -73,7 +73,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
-	// shouldn't be used, just here so we can make a parent class
+	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
 	{
 

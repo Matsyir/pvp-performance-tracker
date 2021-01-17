@@ -229,10 +229,14 @@ class FightLogDetailFrame extends JFrame
 		equipmentRenderLine.add(attackerEquipmentRender, BorderLayout.WEST);
 		equipmentRenderLine.add(defenderEquipmentRender, BorderLayout.EAST);
 
+		JPanel generalAttackerStatsLine = new JPanel(new BorderLayout());
+		JLabel generalAttackerStats = new JLabel();
+		generalAttackerStats.setText("<html></html>");
+
 		// Animation detected line
 		JPanel animationDetectedLine = new JPanel(new BorderLayout());
 		JLabel attackerAnimationDetected = new JLabel();
-		attackerAnimationDetected.setText("Animation Detected: " + log.getAnimationData().toString());
+		attackerAnimationDetected.setText("<html><strong>Animation Detected:</strong> " + log.getAnimationData().toString() + "</html>");
 		attackerAnimationDetected.setToolTipText("<html>Note that the animation can be misleading, as many animations are re-used, but this is normal.<br/>" +
 			"For example, Zammy Hasta and Staff of Fire use the same crush animation.<br/>" +
 			"These were not intended to be public, but why not include them here.</html>");
@@ -250,7 +254,7 @@ class FightLogDetailFrame extends JFrame
 		this.setVisible(true);
 	}
 
-	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, int rowIdx, Point location)
+	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, FightLogEntry dpsLog, int rowIdx, Point location)
 	{
 		this(fight, attackerLog, rowIdx, location);
 
@@ -362,6 +366,11 @@ class FightLogDetailFrame extends JFrame
 		{
 			ITEM_MANAGER.getImage(itemId - 512).addTo(label);
 			label.setToolTipText(ITEM_MANAGER.getItemComposition(itemId - 512).getName());
+		}
+		else
+		{
+			label.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(SpriteID.SQUARE_CHECK_BOX_CROSSED, 0)));
+			label.setToolTipText("Empty Slot");
 		}
 	}
 

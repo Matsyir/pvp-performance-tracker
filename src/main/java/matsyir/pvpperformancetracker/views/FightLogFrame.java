@@ -42,7 +42,6 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
@@ -192,9 +191,9 @@ public class FightLogFrame extends JFrame
 			}
 
 			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
-				new Point( // place the new detail frame along the right side of the fight log window.
-					FightLogFrame.this.getLocationOnScreen().x + (FightLogFrame.this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
-					FightLogFrame.this.getLocationOnScreen().y)
+				new Point( // place the new detail frame roughly to the right of the fight log window.
+					this.getLocation().x + this.getSize().width,
+					this.getLocation().y)
 				);
 		};
 
@@ -234,12 +233,18 @@ public class FightLogFrame extends JFrame
 		}
 	}
 
+	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
+	// to the detailed frame.
 	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
 	{
-		this((FightPerformance)fight,
-			new ArrayList(fight.getAnalyzedMatchingLogs().stream()
-				.map(logMatch -> logMatch[0])
+		this(fight,
+//			new ArrayList(fight.getAnalyzedMatchingLogs().stream()
+//				.map(logMatch -> logMatch[0]) // send only attacker logs
+//				.collect(Collectors.toList())),
+			new ArrayList(fight.getAllFightLogEntries().stream()
+				.filter(FightLogEntry::isFullEntry) // send only attacker logs
 				.collect(Collectors.toList())),
+			//.collect(Collectors.toList())
 			rootPane);
 
 
@@ -255,9 +260,9 @@ public class FightLogFrame extends JFrame
 				fightLogDetailFrame = null;
 			}
 
-			fightLogDetailFrame = new FightLogDetailFrame(fight, fight.getAnalyzedMatchingLogs().get(row)[0], fight.getAnalyzedMatchingLogs().get(row)[1], row,
-				new Point( // place the new detail frame along the right side of the fight log window.
-					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
+			fightLogDetailFrame = new FightLogDetailFrame(fight, fight.getAnalyzedMatchingLogs().get(row)[0], fight.getAnalyzedMatchingLogs().get(row)[1], fightLogEntries.get(row), row,
+				new Point( // place the new detail frame roughly to the right of the fight log window.
+					this.getLocationOnScreen().x + (this.getSize().width),
 					this.getLocationOnScreen().y)
 			);
 		};
