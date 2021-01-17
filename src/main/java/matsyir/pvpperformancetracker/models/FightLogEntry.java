@@ -180,6 +180,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = e.splash;
+		this.attackerLevels = e.attackerLevels;
 
 		// defender data
 		this.defenderGear = e.defenderGear;

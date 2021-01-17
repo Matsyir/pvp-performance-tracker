@@ -34,7 +34,9 @@ import org.apache.commons.lang3.ArrayUtils;
 // Mostly to help fetch LMS gear stats, since LMS items are copies of real items, so their stats aren't
 // cached like most items. Each LMS item will have the 'real' itemId so the stats can be looked up.
 // A few non-LMS range weapons will be saved in order to help estimate ammo type/range strength based
-// on current weapon itemId.
+// on current weapon itemId, or to determine special attacks used.
+// TODO, allow multiple "real" itemIds linked with each item, but only use the first as a stat lookup for lms items.
+// ^^ should help clean up the code a bit
 public enum EquipmentData
 {
 	// Non-LMS items:
@@ -43,6 +45,7 @@ public enum EquipmentData
 	DRAGON_DAGGER_PPP(5698), // dragon dagger (p++)
 	DRAGON_CROSSBOW(21902),
 	DRAGON_HUNTER_CROSSBOW(21012),
+	ARMADYL_GODSWORD_OR(20368),
 	LIGHT_BALLISTA(19478),
 	MAGIC_SHORTBOW(861),
 	MAGIC_SHORTBOW_I(12788),

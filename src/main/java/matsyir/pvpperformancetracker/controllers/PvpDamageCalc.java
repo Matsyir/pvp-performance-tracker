@@ -51,6 +51,7 @@ import net.runelite.api.Player;
 // for averageHit, accuracy, maxHit, and minHit.
 //
 // combat formulas source thread QFC: 317,318,461,66138854
+// osrs wiki was also used a lot
 @Slf4j
 public class PvpDamageCalc
 {
@@ -235,7 +236,7 @@ public class PvpDamageCalc
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
@@ -293,7 +294,7 @@ public class PvpDamageCalc
 
 	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
 		boolean dds = ArrayUtils.contains(EquipmentData.DRAGON_DAGGERS, weapon);
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
@@ -368,7 +369,7 @@ public class PvpDamageCalc
 	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 
 		double stabBonusPlayer = playerStats[STAB_ATTACK];

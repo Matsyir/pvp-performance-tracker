@@ -336,7 +336,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Fight History Limit",
-		description = "Maximum number of previous fights to save and display in the panel. 0 means unlimited. Can cause lag spikes at very high numbers",
+		description = "Maximum number of previous fights to save and display in the panel. 0 means unlimited. Can cause lag spikes at extreme numbers",
 		position = 210
 	)
 	default int fightHistoryLimit()

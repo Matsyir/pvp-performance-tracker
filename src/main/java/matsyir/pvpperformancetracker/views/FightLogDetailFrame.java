@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.ITEM_MANAGER;
@@ -26,11 +27,21 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.SPRITE_M
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
+import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.http.api.item.ItemEquipmentStats;
 
+@Slf4j
 class FightLogDetailFrame extends JFrame
 {
+	// save bank filler image to display a generic None or N/A state.
+	public static final AsyncBufferedImage DEFAULT_NONE_SYMBOL;
 	public static final int DEFAULT_WIDTH = 400;
+
+	static
+	{
+		DEFAULT_NONE_SYMBOL = ITEM_MANAGER.getImage(20594);
+	}
+
 	public int rowIdx;
 
 	private boolean isCompetitorLog;
@@ -118,9 +129,15 @@ class FightLogDetailFrame extends JFrame
 		JPanel attackerPrays = new JPanel(attackerPrayLayout);
 		// attacker overhead
 		int attackerOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getAttackerOverhead());
-		JLabel attackerOverheadLabel = new JLabel(
-			new ImageIcon(SPRITE_MANAGER.getSprite(attackerOverheadSpriteId > 0 ? attackerOverheadSpriteId : SpriteID.WINDOW_CLOSE_BUTTON_RED_X, 0))
-		);
+		JLabel attackerOverheadLabel = new JLabel();
+		if (attackerOverheadSpriteId > 0)
+		{
+			attackerOverheadLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(attackerOverheadSpriteId, 0)));
+		}
+		else
+		{
+			DEFAULT_NONE_SYMBOL.addTo(attackerOverheadLabel);
+		}
 		attackerOverheadLabel.setToolTipText("Overhead Prayer");
 		attackerPrays.add(attackerOverheadLabel);
 		// attacker offensive
@@ -132,7 +149,7 @@ class FightLogDetailFrame extends JFrame
 		}
 		else if (isCompetitorLog) // if it's a competitor log, but no valid offensive pray, display X to show there was none.
 		{
-			attackerOffensiveLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(SpriteID.WINDOW_CLOSE_BUTTON_RED_X, 0)));
+			DEFAULT_NONE_SYMBOL.addTo(attackerOffensiveLabel);
 		}
 		else // if it wasn't a competitor log, then this is N/A in most cases.
 		{
@@ -147,9 +164,15 @@ class FightLogDetailFrame extends JFrame
 		JPanel defenderPrays = new JPanel(defenderPrayLayout);
 		// defender overhead
 		int defenderOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getDefenderOverhead());
-		JLabel defenderOverheadLabel = new JLabel(
-			new ImageIcon(SPRITE_MANAGER.getSprite(defenderOverheadSpriteId > 0 ? defenderOverheadSpriteId : SpriteID.WINDOW_CLOSE_BUTTON_RED_X, 0))
-		);
+		JLabel defenderOverheadLabel = new JLabel();
+		if (defenderOverheadSpriteId > 0)
+		{
+			defenderOverheadLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(defenderOverheadSpriteId, 0)));
+		}
+		else
+		{
+			DEFAULT_NONE_SYMBOL.addTo(defenderOverheadLabel);
+		}
 		defenderOverheadLabel.setToolTipText("Overhead Prayer");
 		defenderPrays.add(defenderOverheadLabel);
 
@@ -254,12 +277,17 @@ class FightLogDetailFrame extends JFrame
 		this.setVisible(true);
 	}
 
-	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, FightLogEntry dpsLog, int rowIdx, Point location)
+	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, int rowIdx, Point location)
 	{
 		this(fight, attackerLog, rowIdx, location);
 
 		// attacker lvls
 		CombatLevels aLvls = attackerLog.getAttackerLevels();
+		if (aLvls == null)
+		{
+			log.info("aLvls null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			aLvls = CombatLevels.getConfigLevels();
+		}
 		attackerAtkLvl.setText(String.valueOf(aLvls.atk));
 		attackerStrLvl.setText(String.valueOf(aLvls.str));
 		attackerDefLvl.setText(String.valueOf(aLvls.def));
@@ -268,6 +296,11 @@ class FightLogDetailFrame extends JFrame
 
 		// defender lvls
 		CombatLevels dLvls = defenderLog.getAttackerLevels();
+		if (dLvls == null)
+		{
+			log.info("dLvls null@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			dLvls = CombatLevels.getConfigLevels();
+		}
 		defenderAtkLvl.setText(String.valueOf(dLvls.atk));
 		defenderStrLvl.setText(String.valueOf(dLvls.str));
 		defenderDefLvl.setText(String.valueOf(dLvls.def));
@@ -279,8 +312,14 @@ class FightLogDetailFrame extends JFrame
 			defenderOffensiveLabel.setText("");
 			int defOffensivePray = defenderLog.getAttackerOffensivePray();
 
-			defenderOffensiveLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(defOffensivePray > 0 ?
-				defOffensivePray : SpriteID.WINDOW_CLOSE_BUTTON_RED_X , 0)));
+			if (defOffensivePray > 0)
+			{
+				defenderOffensiveLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(defOffensivePray, 0)));
+			}
+			else
+			{
+				DEFAULT_NONE_SYMBOL.addTo(defenderOffensiveLabel);
+			}
 			defenderOffensiveLabel.validate();
 //		}
 //		else
@@ -288,8 +327,14 @@ class FightLogDetailFrame extends JFrame
 			attackerOffensiveLabel.setText("");
 			int atkOffensivePray = attackerLog.getAttackerOffensivePray();
 
-			attackerOffensiveLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(atkOffensivePray > 0 ?
-				atkOffensivePray : SpriteID.WINDOW_CLOSE_BUTTON_RED_X , 0)));
+			if (atkOffensivePray > 0)
+			{
+				attackerOffensiveLabel.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(atkOffensivePray, 0)));
+			}
+			else
+			{
+				DEFAULT_NONE_SYMBOL.addTo(attackerOffensiveLabel);
+			}
 			attackerOffensiveLabel.validate();
 		//}
 
@@ -369,7 +414,9 @@ class FightLogDetailFrame extends JFrame
 		}
 		else
 		{
-			label.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(SpriteID.SQUARE_CHECK_BOX_CROSSED, 0)));
+			DEFAULT_NONE_SYMBOL.addTo(label);
+			//label.setOp
+			//label.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(SpriteID.NO, 0)));
 			label.setToolTipText("Empty Slot");
 		}
 	}

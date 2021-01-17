@@ -43,7 +43,7 @@ public enum AnimationData
 	MELEE_SPEAR_STAB(381, AttackStyle.STAB), // tested w/ zammy hasta
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
 	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
-	MELEE_STAFF_CRUSH(393, AttackStyle.CRUSH), // tested w/ zuriel's staff, d long slash
+	MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
 	MELEE_BATTLEAXE_SLASH(395, AttackStyle.SLASH), // tested w/ rune baxe
 	MELEE_MACE_STAB(400, AttackStyle.STAB), // tested w/ d mace
 	MELEE_BATTLEAXE_CRUSH(401, AttackStyle.CRUSH), // tested w/ rune baxe, dwh & statius warhammer animation, d mace
@@ -72,15 +72,19 @@ public enum AnimationData
 	MELEE_LEAF_BLADED_BATTLEAXE_CRUSH(3852, AttackStyle.CRUSH),
 	MELEE_BARRELCHEST_ANCHOR_CRUSH(5865, AttackStyle.CRUSH),
 	MELEE_LEAF_BLADED_BATTLEAXE_SLASH(7004, AttackStyle.SLASH),
-	MELEE_GODSWORD_SLASH(7045, AttackStyle.SLASH), // tested w/ AGS, BGS, ZGS, SGS, sara sword
+	MELEE_GODSWORD_SLASH(7045, AttackStyle.SLASH), // tested w/ AGS, BGS, ZGS, SGS, AGS(or) sara sword
 	MELEE_GODSWORD_CRUSH(7054, AttackStyle.CRUSH), // tested w/ AGS, BGS, ZGS, SGS, sara sword
 	MELEE_DRAGON_CLAWS_SPEC(7514, AttackStyle.SLASH, true),
 	MELEE_DRAGON_SWORD_SPEC(7515, AttackStyle.STAB, true), // also VLS spec
 	MELEE_ELDER_MAUL(7516, AttackStyle.CRUSH),
-	MELEE_ZAMORAK_GODSWORD_SPEC(7638, AttackStyle.SLASH, true),
-	MELEE_SARADOMIN_GODSWORD_SPEC(7640, AttackStyle.SLASH, true),
-	MELEE_BANDOS_GODSWORD_SPEC(7642, AttackStyle.SLASH, true),
-	MELEE_ARMADYL_GODSWORD_SPEC(7644, AttackStyle.SLASH, true),
+	MELEE_ZAMORAK_GODSWORD_SPEC(7638, AttackStyle.SLASH, true), // tested zgs spec
+	MELEE_ZAMORAK_GODSWORD_OR_SPEC(7639, AttackStyle.SLASH, true), // UNTESTED, assumed due to ags(or)
+	MELEE_SARADOMIN_GODSWORD_SPEC(7640, AttackStyle.SLASH, true), // tested sgs spec
+	MELEE_SARADOMIN_GODSWORD_OR_SPEC(7641, AttackStyle.SLASH, true), // UNTESTED, assumed due to ags(or)
+	MELEE_BANDOS_GODSWORD_SPEC(7642, AttackStyle.SLASH, true), // tested bgs spec
+	MELEE_BANDOS_GODSWORD_OR_SPEC(7643, AttackStyle.SLASH, true), // UNTESTED, assumed due to ags(or)
+	MELEE_ARMADYL_GODSWORD_SPEC(7644, AttackStyle.SLASH, true), // tested ags spec
+	MELEE_ARMADYL_GODSWORD_OR_SPEC(7645, AttackStyle.SLASH, true), // tested ags(or) spec
 	MELEE_SCYTHE(8056, AttackStyle.SLASH), // tested w/ all scythe styles (so could be crush, but unlikely)
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 

@@ -44,6 +44,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
@@ -54,6 +55,7 @@ import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
 import net.runelite.client.util.ImageUtil;
 
+@Slf4j
 public class FightLogFrame extends JFrame
 {
 	public static Image frameIcon;
@@ -242,11 +244,18 @@ public class FightLogFrame extends JFrame
 //				.map(logMatch -> logMatch[0]) // send only attacker logs
 //				.collect(Collectors.toList())),
 			new ArrayList(fight.getAllFightLogEntries().stream()
-				.filter(FightLogEntry::isFullEntry) // send only attacker logs
-				.collect(Collectors.toList())),
+				.filter(FightLogEntry::isFullEntry) // send only attacker logs, and don't use the matching logs since
+				.collect(Collectors.toList())),	// those have old 'dps' values, they're only used for defender lvls/pray/etc client data
 			//.collect(Collectors.toList())
 			rootPane);
 
+		// test
+		if (new ArrayList(fight.getAllFightLogEntries().stream()
+			.filter(FightLogEntry::isFullEntry) // send only attacker logs
+			.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size())
+		{
+			 log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs?");
+		}
 
 		table.getSelectionModel().removeListSelectionListener(onRowSelected);
 		onRowSelected = e -> {
@@ -260,7 +269,7 @@ public class FightLogFrame extends JFrame
 				fightLogDetailFrame = null;
 			}
 
-			fightLogDetailFrame = new FightLogDetailFrame(fight, fight.getAnalyzedMatchingLogs().get(row)[0], fight.getAnalyzedMatchingLogs().get(row)[1], fightLogEntries.get(row), row,
+			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), fight.getAnalyzedMatchingLogs().get(row)[1], row,
 				new Point( // place the new detail frame roughly to the right of the fight log window.
 					this.getLocationOnScreen().x + (this.getSize().width),
 					this.getLocationOnScreen().y)
