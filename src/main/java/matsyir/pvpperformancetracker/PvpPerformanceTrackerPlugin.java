@@ -194,6 +194,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 		SPRITE_MANAGER = spriteManager;
+		ITEM_MANAGER = itemManager;
 		fightHistory = new ArrayList<>();
 
 		gson = new GsonBuilder()
@@ -718,6 +719,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// returns SpriteID for a given HeadIcon. returns -1 if not found
 	public int getSpriteForHeadIcon(HeadIcon icon)
 	{
+		if (icon == null) { return -1; }
 		switch (icon)
 		{
 			case MELEE: return SpriteID.PRAYER_PROTECT_FROM_MELEE;
@@ -728,18 +730,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case REDEMPTION: return SpriteID.PRAYER_REDEMPTION;
 			default: return -1;
 		}
+	}
 
-//		if (log.getAttackerOverhead() == HeadIcon.RANGED)
-//		{
-//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MISSILES;
-//		}
-//		else if (log.getAttackerOverhead() == HeadIcon.MAGIC)
-//		{
-//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MAGIC;
-//		}
-//		else if (log.getAttackerOverhead() == HeadIcon.MELEE)
-//		{
-//			prayIcon = SpriteID.PRAYER_PROTECT_FROM_MELEE;
-//		}
+	public int getSpriteForSkill(Skill skill)
+	{
+		switch (skill)
+		{
+			case ATTACK: return SpriteID.SKILL_ATTACK;
+			case STRENGTH: return SpriteID.SKILL_STRENGTH;
+			case DEFENCE: return SpriteID.SKILL_DEFENCE;
+			case RANGED: return SpriteID.SKILL_RANGED;
+			case MAGIC: return SpriteID.SKILL_MAGIC;
+			default: return -1;
+		}
 	}
 }

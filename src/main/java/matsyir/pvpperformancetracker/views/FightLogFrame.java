@@ -34,6 +34,7 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -41,6 +42,8 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -54,7 +57,7 @@ import net.runelite.client.util.ImageUtil;
 
 public class FightLogFrame extends JFrame
 {
-	static Image frameIcon;
+	public static Image frameIcon;
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
 	static
@@ -68,21 +71,23 @@ public class FightLogFrame extends JFrame
 
 	private FightLogDetailFrame fightLogDetailFrame;
 	private JTable table;
+	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
-	FightLogFrame(FightPerformance fight, JRootPane rootPane)
+	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
+	FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
 		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName());
 
-		fightLogEntries = fight.getAllFightLogEntries();
+		fightLogEntries = logEntries;
 		if (fightLogEntries == null || fightLogEntries.size() < 1)
 		{
 			PLUGIN.createConfirmationModal(false, "There are no fight log entries available for this fight.");
 			return;
 		}
 
-		fightLogEntries.removeIf(e -> !e.isFullEntry());
+		//fightLogEntries.removeIf(e -> !e.isFullEntry());
 
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
@@ -175,7 +180,7 @@ public class FightLogFrame extends JFrame
 		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
 		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer());
 
-		table.getSelectionModel().addListSelectionListener(e -> {
+		onRowSelected = e -> {
 			int row = table.getSelectedRow();
 
 			if (fightLogDetailFrame != null)
@@ -188,10 +193,12 @@ public class FightLogFrame extends JFrame
 
 			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
 				new Point( // place the new detail frame along the right side of the fight log window.
-					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
-					this.getLocationOnScreen().y)
-			);
-		});
+					FightLogFrame.this.getLocationOnScreen().x + (FightLogFrame.this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
+					FightLogFrame.this.getLocationOnScreen().y)
+				);
+		};
+
+		table.getSelectionModel().addListSelectionListener(onRowSelected);
 
 		mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -229,26 +236,32 @@ public class FightLogFrame extends JFrame
 
 	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
 	{
-		this((FightPerformance)fight, rootPane);
+		this((FightPerformance)fight,
+			new ArrayList(fight.getAnalyzedMatchingLogs().stream()
+				.map(logMatch -> logMatch[0])
+				.collect(Collectors.toList())),
+			rootPane);
 
-//		table.getSelectionModel().addListSelectionListener(e -> {
-//			int row = table.getSelectedRow();
-//
-//			if (fightLogDetailFrame != null)
-//			{
-//				if (fightLogDetailFrame.rowIdx == row) { return; }
-//
-//				fightLogDetailFrame.dispose();
-//				fightLogDetailFrame = null;
-//			}
-//
-//			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
-//				new Point( // place the new detail frame along the right side of the fight log window.
-//					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
-//					this.getLocationOnScreen().y)
-//			);
-//		});
+
+		table.getSelectionModel().removeListSelectionListener(onRowSelected);
+		onRowSelected = e -> {
+			int row = table.getSelectedRow();
+
+			if (fightLogDetailFrame != null)
+			{
+				if (fightLogDetailFrame.rowIdx == row) { return; }
+
+				fightLogDetailFrame.dispose();
+				fightLogDetailFrame = null;
+			}
+
+			fightLogDetailFrame = new FightLogDetailFrame(fight, fight.getAnalyzedMatchingLogs().get(row)[0], fight.getAnalyzedMatchingLogs().get(row)[1], row,
+				new Point( // place the new detail frame along the right side of the fight log window.
+					this.getLocationOnScreen().x + (this.getSize().width - FightLogDetailFrame.DEFAULT_WIDTH),
+					this.getLocationOnScreen().y)
+			);
+		};
+
+		table.getSelectionModel().addListSelectionListener(onRowSelected);
 	}
-
-
 }

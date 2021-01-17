@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -48,6 +49,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
@@ -93,6 +95,7 @@ public class FightPerformancePanel extends JPanel
 	}
 
 	private FightPerformance fight;
+	private AnalyzedFightPerformance analyzedFight;
 	private boolean showBorders;
 
 	// Panel to display previous fight performance data.
@@ -418,6 +421,13 @@ public class FightPerformancePanel extends JPanel
 		setComponentPopupMenu(popupMenu);
 	}
 
+	public FightPerformancePanel(AnalyzedFightPerformance aFight)
+	{
+		this(aFight, false, false, true, aFight.getOpposingFight());
+
+		this.analyzedFight = aFight;
+	}
+
 	private void setFullBackgroundColor(Color color)
 	{
 		this.setBackground(color);
@@ -450,9 +460,16 @@ public class FightPerformancePanel extends JPanel
 		{
 			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
 		}
+		else if (analyzedFight != null) // if analyzed fight is set, then show an analyzed fight's fightLogFrame.
+		{
+			fightLogFrame = new FightLogFrame(analyzedFight, getRootPane());
+
+		}
 		else
 		{
-			fightLogFrame = new FightLogFrame(fight, getRootPane());
+			fightLogFrame = new FightLogFrame(fight,
+				new ArrayList<>(fight.getAllFightLogEntries().stream().filter(FightLogEntry::isFullEntry).collect(Collectors.toList())),
+				getRootPane());
 		}
 	}
 }

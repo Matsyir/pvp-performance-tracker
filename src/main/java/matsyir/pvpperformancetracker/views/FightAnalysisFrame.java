@@ -56,7 +56,7 @@ public class FightAnalysisFrame extends JFrame
 
 	private FightPerformance mainFight;
 	private FightPerformance opponentFight;
-	private FightPerformance analyzedFight;
+	private AnalyzedFightPerformance analyzedFight;
 
 	static
 	{
@@ -219,7 +219,7 @@ public class FightAnalysisFrame extends JFrame
 		JPanel fightPanelLine = new JPanel(new BorderLayout(12, 12));
 		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, false, false, null);
 		FightPerformancePanel opponentFightPanel = new FightPerformancePanel(opponentFight, false, false, false, null);
-		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight, false, false, true, opponentFight);
+		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight);
 
 		fightPanelLine.add(mainFightPanel, BorderLayout.WEST);
 		fightPanelLine.add(opponentFightPanel, BorderLayout.EAST);
