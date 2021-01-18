@@ -34,6 +34,7 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -45,6 +46,7 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.SPRITE_MANAGER;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
@@ -82,13 +84,13 @@ public class FightLogFrame extends JFrame
 		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName());
 
 		fightLogEntries = logEntries;
-		if (fightLogEntries == null || fightLogEntries.size() < 1)
-		{
-			PLUGIN.createConfirmationModal(false, "There are no fight log entries available for this fight.");
-			return;
-		}
+//		if (fightLogEntries == null || fightLogEntries.size() < 1)
+//		{
+//			PLUGIN.createConfirmationModal(false, "There are no fight log entries available for this fight.");
+//			return;
+//		}
 
-		//fightLogEntries.removeIf(e -> !e.isFullEntry());
+		fightLogEntries.removeIf(e -> !e.isFullEntry());
 
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
@@ -133,7 +135,7 @@ public class FightLogFrame extends JFrame
 				noOverhead = true;
 			}
 
-			BufferedImage styleIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(styleIcon, 0);
+			BufferedImage styleIconRendered = Objects.requireNonNull(SPRITE_MANAGER.getSprite(styleIcon, 0));
 			JLabel styleIconLabel = new JLabel(new ImageIcon(styleIconRendered));
 			styleIconLabel.setToolTipText(fightEntry.getAnimationData().attackStyle.toString());
 			stats[i][0] = fightEntry.getAttackerName();
@@ -143,12 +145,12 @@ public class FightLogFrame extends JFrame
 			stats[i][4] = nf.format(fightEntry.getDeservedDamage());
 			stats[i][5] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
 			stats[i][6] = fightEntry.success() ? "✔" : "";
-			stats[i][7] = noOverhead ? "" : PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(prayIcon, 0);
+			stats[i][7] = noOverhead ? "" : SPRITE_MANAGER.getSprite(prayIcon, 0);
 
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 			{
 				int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
-				BufferedImage freezeIconRendered = PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(freezeIcon, 0);
+				BufferedImage freezeIconRendered = SPRITE_MANAGER.getSprite(freezeIcon, 0);
 				stats[i][8] = freezeIconRendered;
 			}
 			else
@@ -158,7 +160,7 @@ public class FightLogFrame extends JFrame
 
 			// offensive pray shown as icon or blank if none(0)
 			stats[i][9] = fightEntry.getAttackerOffensivePray() <= 0 ? "" :
-				PvpPerformanceTrackerPlugin.SPRITE_MANAGER.getSprite(fightEntry.getAttackerOffensivePray(), 0);
+				SPRITE_MANAGER.getSprite(fightEntry.getAttackerOffensivePray(), 0);
 
 			long durationLong = fightEntry.getTime() - initialTime;
 			Duration duration = Duration.ofMillis(durationLong);

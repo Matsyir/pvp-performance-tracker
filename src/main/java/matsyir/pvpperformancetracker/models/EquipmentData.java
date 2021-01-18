@@ -50,6 +50,7 @@ public enum EquipmentData
 	MAGIC_SHORTBOW(861),
 	MAGIC_SHORTBOW_I(12788),
 	TOXIC_BLOWPIPE(12926),
+	VOLATILE_NIGHTMARE_STAFF(24424),
 	//CRAWS_BOW(22550), // ammo bonus is built into weapon so we don't need to include it
 	BLIGHTED_VESTAS_LONGSWORD(24617),
 	SMOKE_BATTLESTAFF(11998),

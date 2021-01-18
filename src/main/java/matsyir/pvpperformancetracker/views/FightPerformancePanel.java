@@ -37,7 +37,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -170,7 +169,6 @@ public class FightPerformancePanel extends JPanel
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
-
 
 		// first line RIGHT: opponent name
 		JLabel opponentStatsName = new JLabel();
@@ -468,7 +466,8 @@ public class FightPerformancePanel extends JPanel
 		else
 		{
 			fightLogFrame = new FightLogFrame(fight,
-				new ArrayList<>(fight.getAllFightLogEntries().stream().filter(FightLogEntry::isFullEntry).collect(Collectors.toList())),
+				fightLogEntries,
+				//new ArrayList<>(fight.getAllFightLogEntries().stream().filter(FightLogEntry::isFullEntry).collect(Collectors.toList())),
 				getRootPane());
 		}
 	}

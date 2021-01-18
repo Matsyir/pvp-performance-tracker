@@ -40,9 +40,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
 public class FightAnalysisFrame extends JFrame
@@ -69,7 +71,7 @@ public class FightAnalysisFrame extends JFrame
 
 	FightAnalysisFrame(JRootPane rootPane)
 	{
-		super("Fight Analysis (Advanced)");
+		super("Fight Analysis");
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
 		if (isAlwaysOnTopSupported())
@@ -79,17 +81,18 @@ public class FightAnalysisFrame extends JFrame
 
 
 		setIconImage(frameIcon);
-		Dimension size = new Dimension(640, 256);
+		Dimension size = new Dimension(700, 304);
 		setSize(size);
 		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
+		setBackground(ColorScheme.DARK_GRAY_COLOR);
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setPreferredSize(getSize());
-		mainPanel.setVisible(true);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-		//mainPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR); must set all backgrounds to null after for this to work... hmm maybe
+		mainPanel.setBackground(ColorScheme.DARK_GRAY_COLOR); //must set all backgrounds to null after for this to work... hmm maybe
+		mainPanel.setVisible(true);
 
 		add(mainPanel);
 
@@ -104,16 +107,27 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.removeAll();
 
 		JPanel instructionLabelLine = new JPanel(new BorderLayout());
+		instructionLabelLine.setBackground(null);
 		JPanel textLabelLine = new JPanel(new BorderLayout());
+		textLabelLine.setBackground(null);
 		GridLayout textAreaLayout = new GridLayout(1, 2);
 		textAreaLayout.setHgap(4);
 		textAreaLayout.setVgap(4);
 		JPanel textAreaLine = new JPanel(textAreaLayout);
+		textAreaLine.setBackground(null);
 		JPanel actionLine = new JPanel(new BorderLayout());
+		actionLine.setBackground(null);
 		actionLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
 
 		JLabel instructionLabel = new JLabel();
-		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to get more accurate stats about the fight, since some data is only available client-side. Both data entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's opponent. Right click a fight to copy its data.</html>");
+		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to " +
+			"get more accurate stats about the fight, since some data is only available client-side. Both data " +
+			"entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's " +
+			"opponent. Right click a fight in order to copy its data.<br/><br/>" +
+			"When using this, the following stats are applied to deserved damage & deserved magic hits:<br/>" +
+			"&nbsp;&nbsp;&mdash; Offensive prayers, instead of always being correct<br/>" +
+			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g brewing down), instead of using config stats<br/>" +
+			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury</html>");
 		instructionLabel.setForeground(Color.WHITE);
 		instructionLabelLine.add(instructionLabel, BorderLayout.CENTER);
 
@@ -211,19 +225,33 @@ public class FightAnalysisFrame extends JFrame
 	{
 		mainPanel.removeAll();
 
-		JPanel backButtonLine = new JPanel(new BorderLayout(4, 4));
+		JPanel backButtonLine = new JPanel(new BorderLayout());
+		backButtonLine.setBackground(null);
+		backButtonLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
 		JButton backButton = new JButton("Return to setup");
 		backButton.addActionListener(e -> initializeFrame());
-		backButtonLine.add(backButton);
+		backButtonLine.add(backButton, BorderLayout.CENTER);
 
-		JPanel fightPanelLine = new JPanel(new BorderLayout(12, 12));
+		GridLayout layout = new GridLayout(1, 3);
+		layout.setHgap(8);
+		JPanel fightPanelLine = new JPanel(layout);
+		fightPanelLine.setBackground(null);
+
+		// fight (index) containers
+		JPanel f1Cont = new JPanel(new BorderLayout(4, 4));
+		JPanel f2Cont = new JPanel(new BorderLayout(4, 4));
+		JPanel f3Cont = new JPanel(new BorderLayout(4, 4));
 		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, false, false, null);
+		f1Cont.add(mainFightPanel, BorderLayout.CENTER);
 		FightPerformancePanel opponentFightPanel = new FightPerformancePanel(opponentFight, false, false, false, null);
+		f2Cont.add(opponentFightPanel, BorderLayout.CENTER);
 		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight);
+		f3Cont.add(analyzedFightPanel, BorderLayout.CENTER);
 
-		fightPanelLine.add(mainFightPanel, BorderLayout.WEST);
-		fightPanelLine.add(opponentFightPanel, BorderLayout.EAST);
-		fightPanelLine.add(analyzedFightPanel, BorderLayout.CENTER);
+
+		fightPanelLine.add(f1Cont);
+		fightPanelLine.add(f3Cont);
+		fightPanelLine.add(f2Cont);
 
 		mainPanel.add(backButtonLine);
 		mainPanel.add(fightPanelLine);

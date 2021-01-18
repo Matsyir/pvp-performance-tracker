@@ -273,8 +273,9 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(0);
 		String stats = nf.format(magicHitCount);
+		stats += "/" + nf.format(fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count());
 		nf.setMaximumFractionDigits(2);
-		stats += "/" + nf.format(magicHitCountDeserved);
+		stats += " (" + nf.format(magicHitCountDeserved) + ")";
 		return stats;
 	}
 

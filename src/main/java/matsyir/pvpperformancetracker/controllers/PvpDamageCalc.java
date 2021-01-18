@@ -30,6 +30,7 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import static matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import static matsyir.pvpperformancetracker.models.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -105,6 +106,7 @@ public class PvpDamageCalc
 	public static final double BRIMSTONE_RING_OPPONENT_DEF_MODIFIER = 0.975;
 	public static final double SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER = 1.1; // both dmg & accuracy modifier
 	public static final double TOME_OF_FIRE_DMG_MODIFIER = 1.5;
+	public static final double VOLATILE_NIGHTMARE_STAFF_ACC_MODIFIER = 0.5;
 
 
 	@Getter
@@ -554,10 +556,15 @@ public class PvpDamageCalc
 		}
 
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
-		// provide accuracy buff from smoke battlestaff if applicable
+		boolean volatileStaff = weapon == EquipmentData.VOLATILE_NIGHTMARE_STAFF;
+		// provide accuracy buff from smoke battlestaff or volatile staff spec if applicable
 		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
 		{
 			accuracy *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
+		}
+		else if (volatileStaff && animationData == MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC)
+		{
+			accuracy *= VOLATILE_NIGHTMARE_STAFF_ACC_MODIFIER;
 		}
 	}
 

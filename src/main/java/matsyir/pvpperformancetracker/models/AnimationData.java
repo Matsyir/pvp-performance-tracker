@@ -43,7 +43,8 @@ public enum AnimationData
 	MELEE_SPEAR_STAB(381, AttackStyle.STAB), // tested w/ zammy hasta
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
 	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
-	MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
+	//MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
+	MELEE_STAFF_CRUSH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash - need to keep name while testing
 	MELEE_BATTLEAXE_SLASH(395, AttackStyle.SLASH), // tested w/ rune baxe
 	MELEE_MACE_STAB(400, AttackStyle.STAB), // tested w/ d mace
 	MELEE_BATTLEAXE_CRUSH(401, AttackStyle.CRUSH), // tested w/ rune baxe, dwh & statius warhammer animation, d mace
@@ -113,7 +114,8 @@ public enum AnimationData
 	MAGIC_STANDARD_WAVE_STAFF(1167, AttackStyle.MAGIC, 20), // tested many staves
 	MAGIC_STANDARD_SURGE_STAFF(7855, AttackStyle.MAGIC, 24), // tested many staves
 	MAGIC_ANCIENT_SINGLE_TARGET(1978, AttackStyle.MAGIC, 26), // Rush & Blitz animations (tested all 8, different weapons)
-	MAGIC_ANCIENT_MULTI_TARGET(1979, AttackStyle.MAGIC, 30); // Burst & Barrage animations (tested all 8, different weapons)
+	MAGIC_ANCIENT_MULTI_TARGET(1979, AttackStyle.MAGIC, 30), // Burst & Barrage animations (tested all 8, different weapons)
+	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, AttackStyle.MAGIC, 66); // assume 99 mage's base damage (does not rise when boosted).
 
 	private static final Map<Integer, AnimationData> DATA;
 

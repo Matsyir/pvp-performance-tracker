@@ -72,8 +72,6 @@ public class TotalStatsPanel extends JPanel
 		nf2.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
-	private static JFrame fightAnalysisFrame;
-
 	// labels to be updated
 	private JLabel killsLabel;
 	private JLabel deathsLabel;
@@ -293,13 +291,8 @@ public class TotalStatsPanel extends JPanel
 		final JMenuItem fightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
 		fightAnalysis.addActionListener(e ->
 		{
-			// destroy current frame if it exists so we only have one at a time (static field)
-			if (fightAnalysisFrame != null)
-			{
-				fightAnalysisFrame.dispose();
-			}
 
-			fightAnalysisFrame = new FightAnalysisFrame(TotalStatsPanel.this.getRootPane());
+			JFrame fightAnalysisFrame = new FightAnalysisFrame(TotalStatsPanel.this.getRootPane());
 		});
 
 		popupMenu.add(resetAllFights);

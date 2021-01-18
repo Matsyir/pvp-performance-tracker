@@ -35,6 +35,7 @@ public interface RangeAmmoData
 		StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E
 	};
 
+	int getItemId();
 	int getRangeStr();
 	double getBonusMaxHit(); // damage bonus from bolt specs.
 	double getDmgModifier(); // damage modifier from bolt specs.
@@ -47,30 +48,33 @@ public interface RangeAmmoData
 	@Getter
 	enum BoltAmmo implements RangeAmmoConfigData
 	{
-		RUNITE_BOLTS("Runite Bolts", 115, 1),
 		//DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * .2)) * 0.06, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, .2, 0.06, 1),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 1.015);
+		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, .2, 0.06, 1),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.RUNE_CROSSBOW };
 
 		private String name;
+		private int itemId;
 		private int rangeStr;
 		private double specRangeLevelModifier;
 		private double specChance;
 		private double dmgModifier;
 
-		BoltAmmo(String name, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
+		BoltAmmo(String name, int itemId, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
 		{
 			this.name = name;
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.specRangeLevelModifier = specRangeLevelModifier;
 			this.specChance = specChance;
 			this.dmgModifier = dmgModifier;
 		}
-		BoltAmmo(String name, int rangeStr, double dmgModifier)
+		BoltAmmo(String name, int itemId, int rangeStr, double dmgModifier)
 		{
 			this.name = name;
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.specRangeLevelModifier = 0;
 			this.specChance = 0;
@@ -92,12 +96,12 @@ public interface RangeAmmoData
 	@Getter
 	enum StrongBoltAmmo implements RangeAmmoConfigData
 	{
-		RUNITE_BOLTS("Runite Bolts", 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, .2, .06, 1),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 105, 1.015),
-		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 122, .2, .06, 1),
-		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 122, .1, .05, 1),
-		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 122, 1.015);
+		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, .2, 0.06, 1),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015),
+		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 1668, 122, .2, .06, 1),
+		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 8729, 122, .1, .05, 1),
+		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 1690, 122, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = {
 			EquipmentData.ARMADYL_CROSSBOW,
@@ -107,21 +111,24 @@ public interface RangeAmmoData
 
 		private String name;
 		private int rangeStr;
+		private int itemId;
 		private double specRangeLevelModifier;
 		private double specChance;
 		private double dmgModifier;
 
-		StrongBoltAmmo(String name, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
+		StrongBoltAmmo(String name, int itemId, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
 		{
 			this.name = name;
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.specRangeLevelModifier = specRangeLevelModifier;
 			this.specChance = specChance;
 			this.dmgModifier = dmgModifier;
 		}
-		StrongBoltAmmo(String name, int rangeStr, double dmgModifier)
+		StrongBoltAmmo(String name, int itemId, int rangeStr, double dmgModifier)
 		{
 			this.name = name;
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.specRangeLevelModifier = 0;
 			this.specChance = 0;
@@ -144,20 +151,22 @@ public interface RangeAmmoData
 	@Getter
 	public enum DartAmmo implements RangeAmmoConfigData
 	{
-		ADAMANT_DARTS("Adamant Darts", 10),
-		RUNE_DARTS("Rune Darts", 14),
-		DRAGON_DARTS("Dragon Darts", 20);
+		ADAMANT_DARTS("Adamant Darts", 810, 10),
+		RUNE_DARTS("Rune Darts", 811, 14),
+		DRAGON_DARTS("Dragon Darts", 11230, 20);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.TOXIC_BLOWPIPE };
 
 		private String name;
+		private int itemId;
 		private int rangeStr;
 		private double bonusMaxHit;
 		private double dmgModifier;
 
-		DartAmmo(String name, int rangeStr)
+		DartAmmo(String name, int itemId, int rangeStr)
 		{
 			this.name = name;
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = 0;
 			this.dmgModifier = 1;
@@ -173,16 +182,18 @@ public interface RangeAmmoData
 	@Getter
 	public enum OtherAmmo implements RangeAmmoData
 	{
-		AMETHYST_ARROWS(55),
-		DRAGON_ARROW(60),
-		DRAGON_JAVELIN(150);
+		AMETHYST_ARROWS(4770, 55),
+		DRAGON_ARROW(11216, 60),
+		DRAGON_JAVELIN(19484, 150);
 
 		private int rangeStr;
+		private int itemId;
 		private double bonusMaxHit;
 		private double dmgModifier;
 
-		OtherAmmo(int rangeStr)
+		OtherAmmo(int itemId, int rangeStr)
 		{
+			this.itemId = itemId;
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = 0;
 			this.dmgModifier = 1;

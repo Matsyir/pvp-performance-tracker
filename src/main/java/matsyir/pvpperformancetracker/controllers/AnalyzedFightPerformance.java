@@ -29,6 +29,14 @@ public class AnalyzedFightPerformance extends FightPerformance
 		String oName = mainFight.opponent.getName();
 		this.competitor = new Fighter(cName);
 		this.opponent = new Fighter(oName);
+		if (mainFight.competitor.isDead())
+		{
+			this.competitor.died();
+		}
+		if (mainFight.opponent.isDead())
+		{
+			this.opponent.died();
+		}
 		this.lastFightTime = Math.max(mainFight.lastFightTime, opposingFight.lastFightTime);
 
 		// before looping through logs, set "global"/constant values that won't change depending on dps
