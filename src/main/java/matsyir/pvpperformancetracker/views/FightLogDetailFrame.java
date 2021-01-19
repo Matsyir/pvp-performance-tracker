@@ -13,7 +13,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import lombok.extern.slf4j.Slf4j;
-import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.ITEM_MANAGER;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
@@ -265,7 +264,7 @@ class FightLogDetailFrame extends JFrame
 		attackerAnimationDetected.setText("<html><strong>Animation Detected:</strong> " + log.getAnimationData().toString() + "</html>");
 		attackerAnimationDetected.setToolTipText("<html>Note that the animation can be misleading, as many animations are re-used, but this is normal.<br/>" +
 			"For example, Zammy Hasta and Staff of Fire use the same crush animation.<br/>" +
-			"These were not intended to be public, but why not include them here.</html>");
+			"These were not intended to ever be displayed, but why not include them here.</html>");
 		animationDetectedLine.add(attackerAnimationDetected, BorderLayout.CENTER);
 
 

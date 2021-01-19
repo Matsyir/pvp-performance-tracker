@@ -257,18 +257,18 @@ public class FightPerformancePanel extends JPanel
 		// fifth line LEFT: player's magic hit stats
 		JLabel playerMagicHitStats = new JLabel();
 		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
-		playerMagicHitStats.setToolTipText(competitor.getName() + " hit " +
-			competitor.getMagicHitCount() + " magic attacks, but deserved to hit " +
-			nf.format(competitor.getMagicHitCountDeserved()));
+		playerMagicHitStats.setToolTipText(competitor.getName() + " successfully hit " +
+			competitor.getMagicHitCount() + " of " + competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
+			nf.format(competitor.getMagicHitCountDeserved()) + ". Luck percentage: 0% = expected hits, >0% = lucky, <0% = unlucky");
 		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
 
 		// fifth line RIGHT: opponent's magic hit stats
 		JLabel opponentMagicHitStats = new JLabel();
 		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
-		opponentMagicHitStats.setToolTipText(opponent.getName() + " hit " +
-			opponent.getMagicHitCount() + " magic attacks, but deserved to hit " +
-			nf.format(opponent.getMagicHitCountDeserved()));
+		opponentMagicHitStats.setToolTipText(opponent.getName() + " successfully hit " +
+			opponent.getMagicHitCount() + " of " + opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
+			nf.format(opponent.getMagicHitCountDeserved()) + ". Luck percentage: 0% = expected hits, >0% = lucky, <0% = unlucky");
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
@@ -410,18 +410,27 @@ public class FightPerformancePanel extends JPanel
 			}
 		});
 
-		// Create "Export/Copy Fight Data" popup menu/context menu
+		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem exportFight = new JMenuItem("Copy Fight Data");
 		exportFight.addActionListener(e -> PLUGIN.exportFight(fight));
 
+		// Create "Copy as discord message" context menu
+		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
+		copyDiscordMsg.addActionListener(e -> PLUGIN.copyFightAsDiscordMsg(fight));
+
+		final JMenuItem openFightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
+		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
+
 		popupMenu.add(removeFight);
 		popupMenu.add(exportFight);
+		popupMenu.add(copyDiscordMsg);
+		popupMenu.add(openFightAnalysis);
 		setComponentPopupMenu(popupMenu);
 	}
 
 	public FightPerformancePanel(AnalyzedFightPerformance aFight)
 	{
-		this(aFight, false, false, true, aFight.getOpposingFight());
+		this(aFight, false, true, true, aFight.getOpposingFight());
 
 		this.analyzedFight = aFight;
 	}
@@ -467,7 +476,6 @@ public class FightPerformancePanel extends JPanel
 		{
 			fightLogFrame = new FightLogFrame(fight,
 				fightLogEntries,
-				//new ArrayList<>(fight.getAllFightLogEntries().stream().filter(FightLogEntry::isFullEntry).collect(Collectors.toList())),
 				getRootPane());
 		}
 	}

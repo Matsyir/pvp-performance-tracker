@@ -97,13 +97,6 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
-	// Thanks boost plugin
-	private static final Set<Skill> BOOSTABLE_COMBAT_SKILLS = ImmutableSet.of(
-		Skill.ATTACK,
-		Skill.STRENGTH,
-		Skill.DEFENCE,
-		Skill.RANGED,
-		Skill.MAGIC);
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -701,6 +694,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			confirmMessage = "Warning: Fight data was copied to the clipboard, but it's likely corrupted.";
 		}
 		createConfirmationModal(success, confirmMessage);
+	}
+
+	public void copyFightAsDiscordMsg(FightPerformance fight)
+	{
+		if (fight == null) { return; }
+
+		String fightMsg = fight.getAsDiscordMessage();
+
+		final StringSelection contents = new StringSelection(fightMsg);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
+
+		createConfirmationModal(true, "Discord message of fight data was copied to the clipboard.");
 	}
 
 	// retrieve offensive pray as SpriteID since that's all we will directly use it for,

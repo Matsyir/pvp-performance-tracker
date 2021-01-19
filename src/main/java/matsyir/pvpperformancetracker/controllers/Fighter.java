@@ -273,9 +273,13 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(0);
 		String stats = nf.format(magicHitCount);
-		stats += "/" + nf.format(fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count());
+		long magicAttackCount = getMagicAttackCount();
+		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(2);
-		stats += " (" + nf.format(magicHitCountDeserved) + ")";
+		String luckPercentage = magicHitCountDeserved != 0 ?
+			nf.format((((double)magicHitCount / magicHitCountDeserved) - 1) * 100) :
+			"0";
+		stats += " (" + luckPercentage + "%)";
 		return stats;
 	}
 
@@ -313,6 +317,11 @@ class Fighter
 	{
 		return attackCount == 0 ? 0 :
 			(double) offensivePraySuccessCount / attackCount * 100.0;
+	}
+
+	public long getMagicAttackCount()
+	{
+		return fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count();
 	}
 
 	// Return a simple string to display the current player's offensive prayer success rate.

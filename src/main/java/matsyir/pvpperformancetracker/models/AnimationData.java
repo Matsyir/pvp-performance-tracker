@@ -43,8 +43,10 @@ public enum AnimationData
 	MELEE_SPEAR_STAB(381, AttackStyle.STAB), // tested w/ zammy hasta
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
 	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
-	//MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
-	MELEE_STAFF_CRUSH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash - need to keep name while testing
+
+	MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
+	MELEE_STAFF_CRUSH(-999, AttackStyle.SLASH), // 393 previously, save name to support old fights but no longer track
+
 	MELEE_BATTLEAXE_SLASH(395, AttackStyle.SLASH), // tested w/ rune baxe
 	MELEE_MACE_STAB(400, AttackStyle.STAB), // tested w/ d mace
 	MELEE_BATTLEAXE_CRUSH(401, AttackStyle.CRUSH), // tested w/ rune baxe, dwh & statius warhammer animation, d mace

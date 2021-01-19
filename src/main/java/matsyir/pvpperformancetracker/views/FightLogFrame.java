@@ -256,7 +256,7 @@ public class FightLogFrame extends JFrame
 			.filter(FightLogEntry::isFullEntry) // send only attacker logs
 			.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size())
 		{
-			 log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs?");
+			 log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
 		}
 
 		table.getSelectionModel().removeListSelectionListener(onRowSelected);

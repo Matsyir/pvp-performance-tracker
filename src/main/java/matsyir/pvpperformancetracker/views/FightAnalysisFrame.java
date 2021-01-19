@@ -26,29 +26,38 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ItemEvent;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.LinkBrowser;
+import org.pushingpixels.substance.internal.SubstanceSynapse;
 
+@Slf4j
 public class FightAnalysisFrame extends JFrame
 {
+	public static String WIKI_HELP_LINK = "https://github.com/Matsyir/pvp-performance-tracker/wiki#fight-analysisfight-merge";
 	static Image frameIcon;
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
@@ -69,6 +78,14 @@ public class FightAnalysisFrame extends JFrame
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
+	FightAnalysisFrame(FightPerformance fight, JRootPane rootPane)
+	{
+		this(rootPane);
+		mainFightJsonInput.setText(PLUGIN.gson.toJson(fight, FightPerformance.class));
+		validate();
+		repaint();
+	}
+
 	FightAnalysisFrame(JRootPane rootPane)
 	{
 		super("Fight Analysis");
@@ -81,11 +98,12 @@ public class FightAnalysisFrame extends JFrame
 
 
 		setIconImage(frameIcon);
-		Dimension size = new Dimension(700, 304);
+		Dimension size = new Dimension(700, 336);
 		setSize(size);
 		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
+		getRootPane().putClientProperty(SubstanceSynapse.COLORIZATION_FACTOR, 1.0);
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -106,8 +124,7 @@ public class FightAnalysisFrame extends JFrame
 	{
 		mainPanel.removeAll();
 
-		JPanel instructionLabelLine = new JPanel(new BorderLayout());
-		instructionLabelLine.setBackground(null);
+		// init containers
 		JPanel textLabelLine = new JPanel(new BorderLayout());
 		textLabelLine.setBackground(null);
 		GridLayout textAreaLayout = new GridLayout(1, 2);
@@ -115,10 +132,17 @@ public class FightAnalysisFrame extends JFrame
 		textAreaLayout.setVgap(4);
 		JPanel textAreaLine = new JPanel(textAreaLayout);
 		textAreaLine.setBackground(null);
-		JPanel actionLine = new JPanel(new BorderLayout());
-		actionLine.setBackground(null);
-		actionLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
 
+		// wiki link label
+		JButton wikiLinkLabel = new JButton("<html><strong>Wiki/Example</strong></html>");
+		wikiLinkLabel.setToolTipText("Open URL to Github wiki with an example & more details");
+		wikiLinkLabel.setSize(256, 32);
+		wikiLinkLabel.setMaximumSize(new Dimension(256, 32));
+		wikiLinkLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		wikiLinkLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		wikiLinkLabel.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_LINK));
+
+		// instruction label
 		JLabel instructionLabel = new JLabel();
 		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to " +
 			"get more accurate stats about the fight, since some data is only available client-side. Both data " +
@@ -126,11 +150,14 @@ public class FightAnalysisFrame extends JFrame
 			"opponent. Right click a fight in order to copy its data.<br/><br/>" +
 			"When using this, the following stats are applied to deserved damage & deserved magic hits:<br/>" +
 			"&nbsp;&nbsp;&mdash; Offensive prayers, instead of always being correct<br/>" +
-			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g brewing down), instead of using config stats<br/>" +
-			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury</html>");
+			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g from brewing down), instead of using config stats<br/>" +
+			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury, instead of assuming Piety/Rigour while getting maged</html>");
 		instructionLabel.setForeground(Color.WHITE);
-		instructionLabelLine.add(instructionLabel, BorderLayout.CENTER);
+		instructionLabel.setSize(mainPanel.getWidth(), instructionLabel.getHeight());
+		instructionLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+		// fight data input labels
 		JLabel firstFightLabel = new JLabel();
 		firstFightLabel.setText("<html>Enter fight data for Fighter 1:</html>");
 		firstFightLabel.setForeground(Color.WHITE);
@@ -140,26 +167,41 @@ public class FightAnalysisFrame extends JFrame
 		secondFightLabel.setText("<html>Enter fight data for Fighter 2:</html>");
 		secondFightLabel.setForeground(Color.WHITE);
 		textLabelLine.add(secondFightLabel, BorderLayout.EAST);
+		textLabelLine.setSize(mainPanel.getWidth(), firstFightLabel.getHeight() + 16);
+		textLabelLine.setMaximumSize(new Dimension(mainPanel.getWidth(), firstFightLabel.getHeight() + 16));
 
+		// fight data input fields
 		mainFightJsonInput = new JTextField(32);
+		mainFightJsonInput.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 		mainFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		textAreaLine.add(mainFightJsonInput);
 		opponentFightJsonInput = new JTextField(32);
+		opponentFightJsonInput.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 		opponentFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		textAreaLine.add(opponentFightJsonInput);
+		textAreaLine.setSize(mainPanel.getWidth(), 24);
+		textAreaLine.setMaximumSize(new Dimension(mainPanel.getWidth(), 24));
 
-		JButton confirmButton = new JButton("✔ Merge Fight Data");
-//		confirmButton.setSize(256, 32);
-//		confirmButton.setPreferredSize(new Dimension(256, 32));
+		// confirm button
+		JButton confirmButton = new JButton("<html><strong>Merge Fight Data</strong></html>");
+		confirmButton.setSize(256, 32);
+		confirmButton.setMaximumSize(new Dimension(256, 32));
 		confirmButton.addActionListener(e -> performAnalysis());
-		actionLine.add(confirmButton, BorderLayout.CENTER);
+		confirmButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		mainPanel.add(instructionLabelLine);
+		// add all components
+		mainPanel.add(wikiLinkLabel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+		mainPanel.add(instructionLabel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 16)));
 		mainPanel.add(textLabelLine);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 		mainPanel.add(textAreaLine);
-		mainPanel.add(actionLine);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 16)));
+		mainPanel.add(confirmButton);
 
 		validate();
+		repaint();
 	}
 
 	// parse fights into mainFight / opponentFight. Returns false if either are invalid.
@@ -216,8 +258,8 @@ public class FightAnalysisFrame extends JFrame
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
-			PLUGIN.createConfirmationModal(false, "Error while merging fights. Unable to analyze. debug: " + e.getMessage());
+			log.info("Error during fight analysis - could not merge fights. Exception tack trace: ", e);
+			PLUGIN.createConfirmationModal(false, "<html>Error while merging fights. Unable to analyze.<br/>If you think this should have been valid, feel free to submit<br/>an issue on the github repo, and include client logs.</html>");
 		}
 	}
 
@@ -225,36 +267,75 @@ public class FightAnalysisFrame extends JFrame
 	{
 		mainPanel.removeAll();
 
-		JPanel backButtonLine = new JPanel(new BorderLayout());
-		backButtonLine.setBackground(null);
-		backButtonLine.setBorder(BorderFactory.createEmptyBorder(8, 64, 0, 64));
-		JButton backButton = new JButton("Return to setup");
-		backButton.addActionListener(e -> initializeFrame());
-		backButtonLine.add(backButton, BorderLayout.CENTER);
+		// intro label
+		JLabel mergedFightLabel = new JLabel("<html><strong>Merged Fight &mdash; Click the panel for more details.</strong></html>");
+		mergedFightLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		mergedFightLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-		GridLayout layout = new GridLayout(1, 3);
-		layout.setHgap(8);
-		JPanel fightPanelLine = new JPanel(layout);
-		fightPanelLine.setBackground(null);
-
-		// fight (index) containers
-		JPanel f1Cont = new JPanel(new BorderLayout(4, 4));
-		JPanel f2Cont = new JPanel(new BorderLayout(4, 4));
-		JPanel f3Cont = new JPanel(new BorderLayout(4, 4));
-		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, false, false, null);
-		f1Cont.add(mainFightPanel, BorderLayout.CENTER);
-		FightPerformancePanel opponentFightPanel = new FightPerformancePanel(opponentFight, false, false, false, null);
-		f2Cont.add(opponentFightPanel, BorderLayout.CENTER);
+		// analyzed fight
 		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight);
-		f3Cont.add(analyzedFightPanel, BorderLayout.CENTER);
+		analyzedFightPanel.setSize(220, 120);
+		analyzedFightPanel.setMaximumSize(new Dimension(220, 128));
+		analyzedFightPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		// back to setup/config button
+		JButton backButton = new JButton("<html><strong>Back</strong></html>");
+		backButton.setSize(256, 32);
+		backButton.setMaximumSize(new Dimension(256, 32));
+		backButton.addActionListener(e -> initializeFrame());
+		backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 
-		fightPanelLine.add(f1Cont);
-		fightPanelLine.add(f3Cont);
-		fightPanelLine.add(f2Cont);
+		// checkbox to show initial fights
+		JCheckBox initialFightCheckbox = new JCheckBox();
+		initialFightCheckbox.setText("Show initial fights");
+		initialFightCheckbox.setSelected(false);
+		initialFightCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-		mainPanel.add(backButtonLine);
-		mainPanel.add(fightPanelLine);
+		JPanel initialFightsPanel = new JPanel();
+		initialFightsPanel.setLayout(new BoxLayout(initialFightsPanel, BoxLayout.X_AXIS));
+		initialFightsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		// initial fights
+		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, true, false, null);
+		mainFightPanel.setSize(220, 120);
+		mainFightPanel.setMaximumSize(new Dimension(220, 128));
+		initialFightsPanel.add(mainFightPanel);
+		initialFightsPanel.add(Box.createRigidArea(new Dimension(8, 0)));
+
+		FightPerformancePanel oppFightPanel = new FightPerformancePanel(opponentFight, false, true, false, null);
+		oppFightPanel.setSize(220, 120);
+		oppFightPanel.setMaximumSize(new Dimension(220, 128));
+		initialFightsPanel.add(oppFightPanel);
+		initialFightsPanel.setVisible(false);
+
+
+		initialFightCheckbox.addItemListener(e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED)
+			{
+				initialFightsPanel.setVisible(true);
+				validate();
+				repaint();
+			}
+			else
+			{
+				initialFightsPanel.setVisible(false);
+				validate();
+				repaint();
+			}
+		});
+
+		// add all components
+		mainPanel.add(mergedFightLabel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+		mainPanel.add(analyzedFightPanel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+		mainPanel.add(backButton);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+		mainPanel.add(initialFightCheckbox);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+		mainPanel.add(initialFightsPanel);
+
 		validate();
+		repaint();
 	}
 }

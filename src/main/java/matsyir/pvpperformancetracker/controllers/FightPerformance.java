@@ -28,11 +28,13 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +42,11 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
+import org.apache.commons.lang3.StringUtils;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
 // add to the fight, display stats or check the status of the fight.
@@ -321,6 +325,79 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public double getCompetitorDmgDealtDiff()
 	{
 		return competitor.getDamageDealt() - opponent.getDamageDealt();
+	}
+
+	// get nicely formatted stats for a discord message
+	// uses ``` for monospaced fonts, and bash syntax highlighting for basic "success" highlighting.
+	// "success entries" must be in double quotes.
+	// pad non-success entries with a string, since they aren't in double quotes.
+	public String getAsDiscordMessage()
+	{
+		String msg = "```bash\n";
+		final int minLineLength = 36;
+		final int lineLength = Math.max(minLineLength, this.competitor.getName().length() + this.opponent.getName().length() + 8);
+
+		// name line
+		String competitorName = competitor.getName() + (competitor.isDead() ? "(died)" : "");
+		String opponentName = opponent.getName() + (opponent.isDead() ? "(died)" : "");
+		msg += StringUtils.rightPad(competitorName, lineLength - opponentName.length(), ' ') + opponentName + "\n";
+
+		// off-pray line
+		String offPrayLeft = competitor.getOffPrayStats();
+		offPrayLeft = surroundStrIfTrue(offPrayLeft, competitorOffPraySuccessIsGreater());
+
+		String offPrayRight = opponent.getOffPrayStats();
+		offPrayRight = surroundStrIfTrue(offPrayRight, opponentOffPraySuccessIsGreater());
+		msg += StringUtils.rightPad(offPrayLeft, lineLength - offPrayRight.length(), ' ') + offPrayRight + "\n";
+
+		// deserved dmg line
+		String deservedDmgLeft = competitor.getDeservedDmgString(opponent);
+		deservedDmgLeft = surroundStrIfTrue(deservedDmgLeft, competitorDeservedDmgIsGreater());
+
+		String deservedDmgRight = opponent.getDeservedDmgString(competitor);
+		deservedDmgRight = surroundStrIfTrue(deservedDmgRight, opponentDeservedDmgIsGreater());
+		msg += StringUtils.rightPad(deservedDmgLeft, lineLength - deservedDmgRight.length(), ' ') + deservedDmgRight + "\n";
+
+		// dmg dealt line
+		String dmgDealtLeft = competitor.getDmgDealtString(opponent);
+		dmgDealtLeft = surroundStrIfTrue(dmgDealtLeft, competitorDmgDealtIsGreater());
+
+		String dmgDealtRight = opponent.getDmgDealtString(competitor);
+		dmgDealtRight = surroundStrIfTrue(dmgDealtRight, opponentDmgDealtIsGreater());
+		msg += StringUtils.rightPad(dmgDealtLeft, lineLength - dmgDealtRight.length(), ' ') + dmgDealtRight + "\n";
+
+		// magic hit stats line
+		String magicHitStatsLeft = competitor.getMagicHitStats();
+		magicHitStatsLeft = surroundStrIfTrue(magicHitStatsLeft, competitorMagicHitsLuckier());
+
+		String magicHitStatsRight = opponent.getMagicHitStats();
+		magicHitStatsRight = surroundStrIfTrue(magicHitStatsRight, opponentMagicHitsLuckier());
+		msg += StringUtils.rightPad(magicHitStatsLeft, lineLength - magicHitStatsRight.length(), ' ') + magicHitStatsRight + "\n";
+
+		// offensive pray line
+		String offensivePrayLeft = surroundStrIfTrue(competitor.getOffensivePrayStats(), false);
+		String offensivePrayRight = "N/A ";
+		msg += StringUtils.rightPad(offensivePrayLeft, lineLength - offensivePrayRight.length(), ' ') + offensivePrayRight + "\n";
+
+		// hp healed line
+		String hpHealedLeft = surroundStrIfTrue(String.valueOf(competitor.getHpHealed()), false);
+		String hpHealedRight = "N/A ";
+		msg += StringUtils.rightPad(hpHealedLeft, lineLength - hpHealedRight.length(), ' ') + hpHealedRight + "\n";
+
+		msg += "Ended at " + new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd")
+			.format(Date.from(Instant.ofEpochMilli(lastFightTime))) + "\n";
+		return msg + "```";
+	}
+
+	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare)
+	{
+		return surroundStrIfTrue(strToSurround, boolToCompare, "'", " ");
+	}
+	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare, String trueSurround, String falseSurround)
+	{
+		return boolToCompare ?
+			trueSurround + strToSurround + trueSurround :
+			falseSurround  + strToSurround + falseSurround;
 	}
 
 	// use to sort by last fight time, to sort fights by date/time.
