@@ -31,7 +31,6 @@ import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -45,10 +44,12 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
 {
+	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker";
 	// number format for 0 decimal digit (mostly for commas in large numbers)
 	private static final NumberFormat nf = NumberFormat.getInstance();
 	static // initialize number format
@@ -253,6 +254,9 @@ public class TotalStatsPanel extends JPanel
 		add(offensivePrayStatsPanel);
 
 		JPopupMenu popupMenu = new JPopupMenu();
+		// Create "View Wiki" popup menu/context menu item
+		final JMenuItem viewWiki = new JMenuItem("View Wiki");
+		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
 
 		// Create "Reset All" popup menu/context menu item
 		final JMenuItem resetAllFights = new JMenuItem("Reset All");
@@ -289,12 +293,9 @@ public class TotalStatsPanel extends JPanel
 
 		// Create "Fight Analysis (Advanced)" popup menu/context menu item
 		final JMenuItem fightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
-		fightAnalysis.addActionListener(e ->
-		{
+		fightAnalysis.addActionListener(e -> new FightAnalysisFrame(TotalStatsPanel.this.getRootPane()));
 
-			JFrame fightAnalysisFrame = new FightAnalysisFrame(TotalStatsPanel.this.getRootPane());
-		});
-
+		popupMenu.add(viewWiki);
 		popupMenu.add(resetAllFights);
 		popupMenu.add(exportFightHistory);
 		popupMenu.add(importFightHistory);

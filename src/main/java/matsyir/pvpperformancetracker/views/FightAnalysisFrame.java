@@ -57,7 +57,7 @@ import org.pushingpixels.substance.internal.SubstanceSynapse;
 @Slf4j
 public class FightAnalysisFrame extends JFrame
 {
-	public static String WIKI_HELP_LINK = "https://github.com/Matsyir/pvp-performance-tracker/wiki#fight-analysisfight-merge";
+	public static String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#fight-analysisfight-merge";
 	static Image frameIcon;
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
@@ -140,7 +140,7 @@ public class FightAnalysisFrame extends JFrame
 		wikiLinkLabel.setMaximumSize(new Dimension(256, 32));
 		wikiLinkLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		wikiLinkLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-		wikiLinkLabel.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_LINK));
+		wikiLinkLabel.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
 
 		// instruction label
 		JLabel instructionLabel = new JLabel();

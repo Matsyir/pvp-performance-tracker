@@ -320,7 +320,6 @@ class FightLogDetailFrame extends JFrame
 		{
 			DEFAULT_NONE_SYMBOL.addTo(defenderOffensiveLabel);
 		}
-		defenderOffensiveLabel.validate();
 
 		attackerOffensiveLabel.setText("");
 		int atkOffensivePray = attackerLog.getAttackerOffensivePray();
@@ -333,9 +332,9 @@ class FightLogDetailFrame extends JFrame
 		{
 			DEFAULT_NONE_SYMBOL.addTo(attackerOffensiveLabel);
 		}
-		attackerOffensiveLabel.validate();
 
 		validate();
+		repaint();
 	}
 
 	private static JPanel getEquipmentRender(int[] itemIds)
