@@ -116,7 +116,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 
 					if (logEntryIdx < highestMatchIdx) // this should never happen.
 					{
-						throw new Exception("I fucked up");
+						throw new Exception("Invalid state during fight merge: logEntryIdx was under highestMatchIdx");
 					}
 
 					highestMatchIdx = logEntryIdx;
