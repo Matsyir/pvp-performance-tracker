@@ -45,7 +45,7 @@ public enum AnimationData
 	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
 
 	MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
-	MELEE_STAFF_CRUSH(-999, AttackStyle.SLASH), // 393 previously, save name to support old fights but no longer track
+	MELEE_STAFF_CRUSH(0, AttackStyle.SLASH), // 393 previously, save name to support old fights but no longer track
 
 	MELEE_BATTLEAXE_SLASH(395, AttackStyle.SLASH), // tested w/ rune baxe
 	MELEE_MACE_STAB(400, AttackStyle.STAB), // tested w/ d mace
@@ -169,6 +169,8 @@ public enum AnimationData
 
 		for (AnimationData data : values())
 		{
+			// allow to skip animation detection by using 0 or less as the animation id.
+			if (data.animationId <= 0) { continue; }
 			builder.put(data.animationId, data);
 		}
 

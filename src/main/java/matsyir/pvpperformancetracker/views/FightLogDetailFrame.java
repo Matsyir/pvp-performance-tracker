@@ -14,7 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.ITEM_MANAGER;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -23,26 +24,16 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.SPRITE_MANAGER;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
-import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.http.api.item.ItemEquipmentStats;
 
 @Slf4j
 class FightLogDetailFrame extends JFrame
 {
-	// save bank filler image to display a generic None or N/A state.
-	public static final AsyncBufferedImage DEFAULT_NONE_SYMBOL;
 	public static final int DEFAULT_WIDTH = 400;
-
-	static
-	{
-		DEFAULT_NONE_SYMBOL = ITEM_MANAGER.getImage(20594);
-	}
 
 	public int rowIdx;
 
@@ -77,7 +68,7 @@ class FightLogDetailFrame extends JFrame
 		setMinimumSize(new Dimension(DEFAULT_WIDTH, 200));
 		setLayout(new BorderLayout());
 		setLocation(location);
-		setIconImage(FightLogFrame.frameIcon);
+		setIconImage(PLUGIN_ICON);
 
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
@@ -91,9 +82,6 @@ class FightLogDetailFrame extends JFrame
 		mainPanel.setVisible(true);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
 
-//		ItemEquipmentStats attackerStats = PvpDamageCalc.calculateBonusesToStats(log.getAttackerGear());
-//		ItemEquipmentStats defenderStats = PvpDamageCalc.calculateBonusesToStats(log.getDefenderGear());
-
 		isCompetitorLog = log.attackerName.equals(fight.getCompetitor().getName());
 		attacker = isCompetitorLog ? fight.getCompetitor() : fight.getOpponent();
 		defender = isCompetitorLog ? fight.getOpponent() : fight.getCompetitor();
@@ -104,7 +92,7 @@ class FightLogDetailFrame extends JFrame
 		JPanel attackerNameContainer = new JPanel(attackerNameContainerLayout);
 		JLabel attackerName = new JLabel();
 		attackerName.setText("<html>Attacker:<br/><strong>" + log.attackerName + "</strong></html>");
-		attackerName.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(log.getAnimationData().attackStyle.getStyleSpriteId(), 0))));
+		PLUGIN.addSpriteToLabelIfValid(attackerName, log.getAnimationData().attackStyle.getStyleSpriteId());
 		attackerName.setToolTipText(log.getAnimationData().attackStyle.toString());
 		attackerNameContainer.add(attackerName);
 
@@ -112,7 +100,8 @@ class FightLogDetailFrame extends JFrame
 		if (log.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			int splashIcon = log.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
-			JLabel splashIconLabel = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(splashIcon, 0))));
+			JLabel splashIconLabel = new JLabel();
+			PLUGIN.addSpriteToLabelIfValid(splashIconLabel, splashIcon);
 			splashIconLabel.setText("<html> <br/> </html>"); // set text to be 2 lines so the icon lines up with the style icon
 			splashIconLabel.setToolTipText("Splashed: " + (log.isSplash() ? "Yes" : "No"));
 			splashIconLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -132,30 +121,20 @@ class FightLogDetailFrame extends JFrame
 		// attacker overhead
 		int attackerOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getAttackerOverhead());
 		JLabel attackerOverheadLabel = new JLabel();
-		if (attackerOverheadSpriteId > 0)
-		{
-			attackerOverheadLabel.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(attackerOverheadSpriteId, 0))));
-		}
-		else
-		{
-			DEFAULT_NONE_SYMBOL.addTo(attackerOverheadLabel);
-		}
+		PLUGIN.addSpriteToLabelIfValid(attackerOverheadLabel, attackerOverheadSpriteId);
 		attackerOverheadLabel.setToolTipText("Overhead Prayer");
 		attackerPrays.add(attackerOverheadLabel);
 		// attacker offensive
 		attackerOffensiveLabel = new JLabel();
 		attackerOffensiveLabel.setToolTipText("Offensive Prayer");
-		if (log.getAttackerOffensivePray() > 0) // if there's a valid offensive pray, display it.
-		{
-			attackerOffensiveLabel.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(log.getAttackerOffensivePray(), 0))));
-		}
-		else if (isCompetitorLog) // if it's a competitor log, but no valid offensive pray, display X to show there was none.
-		{
-			DEFAULT_NONE_SYMBOL.addTo(attackerOffensiveLabel);
-		}
-		else // if it wasn't a competitor log, then this is N/A in most cases.
-		{
+
+		// if there's a valid offensive pray, display it.
+		PLUGIN.addSpriteToLabelIfValid(attackerOffensiveLabel, log.getAttackerOffensivePray());
+
+		if (!isCompetitorLog) // if it wasn't a competitor log, then this is N/A in most cases, and
+		{ // do NOT put a bank filler, to indicate that this is fully N/A, and not "None"
 			attackerOffensiveLabel.setText("N/A");
+			attackerOffensiveLabel.setIcon(null);
 		}
 
 		attackerPrays.add(attackerOffensiveLabel);
@@ -167,14 +146,7 @@ class FightLogDetailFrame extends JFrame
 		// defender overhead
 		int defenderOverheadSpriteId = PLUGIN.getSpriteForHeadIcon(log.getDefenderOverhead());
 		JLabel defenderOverheadLabel = new JLabel();
-		if (defenderOverheadSpriteId > 0)
-		{
-			defenderOverheadLabel.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(defenderOverheadSpriteId, 0))));
-		}
-		else
-		{
-			DEFAULT_NONE_SYMBOL.addTo(defenderOverheadLabel);
-		}
+		PLUGIN.addSpriteToLabelIfValid(defenderOverheadLabel, defenderOverheadSpriteId);
 		defenderOverheadLabel.setToolTipText("Overhead Prayer");
 		defenderPrays.add(defenderOverheadLabel);
 
@@ -190,19 +162,24 @@ class FightLogDetailFrame extends JFrame
 		CombatLevels levels = CombatLevels.getConfigLevels();
 		combatLevelsLine = new JPanel(new BorderLayout());
 		JPanel attackerCombatLevels = new JPanel(new GridLayout(2, 3));
-		attackerAtkLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.ATTACK), 0))));
+		attackerAtkLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerAtkLvl, PLUGIN.getSpriteForSkill(Skill.ATTACK));
 		attackerAtkLvl.setText(String.valueOf(levels.atk));
 		attackerAtkLvl.setToolTipText("Attack Level");
-		attackerStrLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.STRENGTH), 0))));
+		attackerStrLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerStrLvl, PLUGIN.getSpriteForSkill(Skill.STRENGTH));
 		attackerStrLvl.setText(String.valueOf(levels.str));
 		attackerStrLvl.setToolTipText("Strength Level");
-		attackerDefLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.DEFENCE), 0))));
+		attackerDefLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerDefLvl, PLUGIN.getSpriteForSkill(Skill.DEFENCE));
 		attackerDefLvl.setText(String.valueOf(levels.def));
 		attackerDefLvl.setToolTipText("Defence Level");
-		attackerRangeLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.RANGED), 0))));
+		attackerRangeLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerRangeLvl, PLUGIN.getSpriteForSkill(Skill.RANGED));
 		attackerRangeLvl.setText(String.valueOf(levels.range));
 		attackerRangeLvl.setToolTipText("Ranged Level");
-		attackerMageLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.MAGIC), 0))));
+		attackerMageLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerMageLvl, PLUGIN.getSpriteForSkill(Skill.MAGIC));
 		attackerMageLvl.setText(String.valueOf(levels.mage));
 		attackerMageLvl.setToolTipText("Magic Level");
 
@@ -214,19 +191,24 @@ class FightLogDetailFrame extends JFrame
 		combatLevelsLine.add(attackerCombatLevels, BorderLayout.WEST);
 
 		JPanel defenderCombatLevels = new JPanel(new GridLayout(2, 3));
-		defenderAtkLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.ATTACK), 0))));
+		defenderAtkLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderAtkLvl, PLUGIN.getSpriteForSkill(Skill.ATTACK));
 		defenderAtkLvl.setText(String.valueOf(levels.atk));
 		defenderAtkLvl.setToolTipText("Attack Level");
-		defenderStrLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.STRENGTH), 0))));
+		defenderStrLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderStrLvl, PLUGIN.getSpriteForSkill(Skill.STRENGTH));
 		defenderStrLvl.setText(String.valueOf(levels.str));
 		defenderStrLvl.setToolTipText("Strength Level");
-		defenderDefLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.DEFENCE), 0))));
+		defenderDefLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderDefLvl, PLUGIN.getSpriteForSkill(Skill.DEFENCE));
 		defenderDefLvl.setText(String.valueOf(levels.def));
 		defenderDefLvl.setToolTipText("Defence Level");
-		defenderRangeLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.RANGED), 0))));
+		defenderRangeLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderRangeLvl, PLUGIN.getSpriteForSkill(Skill.RANGED));
 		defenderRangeLvl.setText(String.valueOf(levels.range));
 		defenderRangeLvl.setToolTipText("Ranged Level");
-		defenderMageLvl = new JLabel(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(PLUGIN.getSpriteForSkill(Skill.MAGIC), 0))));
+		defenderMageLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderMageLvl, PLUGIN.getSpriteForSkill(Skill.MAGIC));
 		defenderMageLvl.setText(String.valueOf(levels.mage));
 		defenderMageLvl.setToolTipText("Magic Level");
 
@@ -241,11 +223,13 @@ class FightLogDetailFrame extends JFrame
 		// equipment stats line (stab attack, slash attack, etc)
 		JPanel equipmentStatsLine = new JPanel(new BorderLayout());
 		JLabel attackerStatsLabel = new JLabel();
-		attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear()));
+		PLUGIN.getClientThread().invokeLater(() ->
+			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear())));
 		equipmentStatsLine.add(attackerStatsLabel, BorderLayout.WEST);
 
 		JLabel defenderStatsLabel = new JLabel();
-		defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear()));
+		PLUGIN.getClientThread().invokeLater(() ->
+			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear())));
 		equipmentStatsLine.add(defenderStatsLabel, BorderLayout.EAST);
 
 		JPanel equipmentRenderLine = new JPanel(new BorderLayout());
@@ -253,10 +237,6 @@ class FightLogDetailFrame extends JFrame
 		JPanel defenderEquipmentRender = getEquipmentRender(log.getDefenderGear());
 		equipmentRenderLine.add(attackerEquipmentRender, BorderLayout.WEST);
 		equipmentRenderLine.add(defenderEquipmentRender, BorderLayout.EAST);
-
-//		JPanel generalAttackerStatsLine = new JPanel(new BorderLayout());
-//		JLabel generalAttackerStats = new JLabel();
-//		generalAttackerStats.setText("<html></html>");
 
 		// Animation detected line
 		JPanel animationDetectedLine = new JPanel(new BorderLayout());
@@ -310,34 +290,16 @@ class FightLogDetailFrame extends JFrame
 		defenderMageLvl.setText(String.valueOf(dLvls.mage));
 
 		defenderOffensiveLabel.setText("");
-		int defOffensivePray = defenderLog.getAttackerOffensivePray();
-
-		if (defOffensivePray > 0)
-		{
-			defenderOffensiveLabel.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(defOffensivePray, 0))));
-		}
-		else
-		{
-			DEFAULT_NONE_SYMBOL.addTo(defenderOffensiveLabel);
-		}
+		PLUGIN.addSpriteToLabelIfValid(defenderOffensiveLabel, defenderLog.getAttackerOffensivePray());
 
 		attackerOffensiveLabel.setText("");
-		int atkOffensivePray = attackerLog.getAttackerOffensivePray();
-
-		if (atkOffensivePray > 0)
-		{
-			attackerOffensiveLabel.setIcon(new ImageIcon(Objects.requireNonNull(SPRITE_MANAGER.getSprite(atkOffensivePray, 0))));
-		}
-		else
-		{
-			DEFAULT_NONE_SYMBOL.addTo(attackerOffensiveLabel);
-		}
-
-		validate();
-		repaint();
+		PLUGIN.addSpriteToLabelIfValid(attackerOffensiveLabel, attackerLog.getAttackerOffensivePray(), () -> {
+			validate();
+			repaint();
+		});
 	}
 
-	private static JPanel getEquipmentRender(int[] itemIds)
+	private JPanel getEquipmentRender(int[] itemIds)
 	{
 		JPanel equipmentRender = new JPanel();
 		equipmentRender.setLayout(new BoxLayout(equipmentRender, BoxLayout.Y_AXIS));
@@ -350,13 +312,13 @@ class FightLogDetailFrame extends JFrame
 
 		JLabel helm = new JLabel();
 		helm.setHorizontalAlignment(SwingConstants.CENTER);
-		addItemToLabelIfValid(helm, itemIds[KitType.HEAD.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(helm, itemIds[KitType.HEAD.getIndex()]);
 		helmLine.add(helm, BorderLayout.CENTER);
 
 		JLabel cape = new JLabel();
-		addItemToLabelIfValid(cape, itemIds[KitType.CAPE.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(cape, itemIds[KitType.CAPE.getIndex()]);
 		JLabel amulet = new JLabel();
-		addItemToLabelIfValid(amulet, itemIds[KitType.AMULET.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(amulet, itemIds[KitType.AMULET.getIndex()]);
 		capeLine.add(cape, BorderLayout.WEST);
 		capeLine.add(amulet, BorderLayout.CENTER);
 
@@ -367,31 +329,34 @@ class FightLogDetailFrame extends JFrame
 		if (weaponAmmo != null)
 		{
 			JLabel ammo = new JLabel();
-			ITEM_MANAGER.getImage(weaponAmmo.getItemId()).addTo(ammo);
+			PLUGIN.addItemToLabelIfValid(ammo, weaponAmmo.getItemId(), false, null);
 			capeLine.add(ammo, BorderLayout.EAST);
 		}
 
 		JLabel wep = new JLabel();
-		addItemToLabelIfValid(wep, itemIds[KitType.WEAPON.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(wep, itemIds[KitType.WEAPON.getIndex()]);
 		JLabel torso = new JLabel();
-		addItemToLabelIfValid(torso, itemIds[KitType.TORSO.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(torso, itemIds[KitType.TORSO.getIndex()]);
 		JLabel shield = new JLabel();
-		addItemToLabelIfValid(shield, itemIds[KitType.SHIELD.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(shield, itemIds[KitType.SHIELD.getIndex()]);
 		weaponLine.add(wep, BorderLayout.WEST);
 		weaponLine.add(torso, BorderLayout.CENTER);
 		weaponLine.add(shield, BorderLayout.EAST);
 
 		JLabel legs = new JLabel();
 		legs.setHorizontalAlignment(SwingConstants.CENTER);
-		addItemToLabelIfValid(legs, itemIds[KitType.LEGS.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(legs, itemIds[KitType.LEGS.getIndex()]);
 		legsLine.add(legs, BorderLayout.CENTER);
 
 		JLabel gloves = new JLabel();
-		addItemToLabelIfValid(gloves, itemIds[KitType.HANDS.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(gloves, itemIds[KitType.HANDS.getIndex()]);
 		JLabel boots = new JLabel();
-		addItemToLabelIfValid(boots, itemIds[KitType.BOOTS.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(boots, itemIds[KitType.BOOTS.getIndex()]);
 		JLabel ring = new JLabel();
-		ITEM_MANAGER.getImage(CONFIG.ringChoice().getItemId()).addTo(ring);
+		PLUGIN.addItemToLabelIfValid(ring, CONFIG.ringChoice().getItemId(), false, () -> {
+			validate();
+			repaint();
+		});
 		glovesLine.add(gloves, BorderLayout.WEST);
 		glovesLine.add(boots, BorderLayout.CENTER);
 		glovesLine.add(ring, BorderLayout.EAST);
@@ -403,23 +368,6 @@ class FightLogDetailFrame extends JFrame
 		equipmentRender.add(glovesLine);
 
 		return equipmentRender;
-	}
-
-	// takes in itemId directly from PlayerComposition, so need to -512 for actual itemid
-	private static void addItemToLabelIfValid(JLabel label, int itemId)
-	{
-		if (itemId > 512)
-		{
-			ITEM_MANAGER.getImage(itemId - 512).addTo(label);
-			label.setToolTipText(ITEM_MANAGER.getItemComposition(itemId - 512).getName());
-		}
-		else
-		{
-			DEFAULT_NONE_SYMBOL.addTo(label);
-			//label.setOp
-			//label.setIcon(new ImageIcon(SPRITE_MANAGER.getSprite(SpriteID.NO, 0)));
-			label.setToolTipText("Empty Slot");
-		}
 	}
 
 	//

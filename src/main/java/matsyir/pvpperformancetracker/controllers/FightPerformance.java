@@ -93,7 +93,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 
-		this.competitorPrevHp = PLUGIN.client.getBoostedSkillLevel(Skill.HITPOINTS);
+		this.competitorPrevHp = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
 	}
 
 	// return a random fightPerformance used for testing UI

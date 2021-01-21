@@ -283,6 +283,14 @@ class Fighter
 		return stats;
 	}
 
+	public String getShortMagicHitStats()
+	{
+		nf.setMaximumFractionDigits(2);
+		return magicHitCountDeserved != 0 ?
+			nf.format((((double)magicHitCount / magicHitCountDeserved) - 1) * 100) + "%" :
+			"0%";
+	}
+
 	public String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
 	{
 		nf.setMaximumFractionDigits(precision);

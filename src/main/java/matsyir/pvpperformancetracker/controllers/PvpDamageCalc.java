@@ -574,14 +574,14 @@ public class PvpDamageCalc
 	// and count as 0 stats, but that should be very rare.
 	public static int[] getItemStats(int itemId)
 	{
-		ItemStats itemStats = PLUGIN.itemManager.getItemStats(itemId, false);
+		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
 		if (itemStats == null)
 		{
 			EquipmentData itemData = EquipmentData.getEquipmentDataFor(itemId);
 			if (itemData != null)
 			{
 				itemId = itemData.getItemId();
-				itemStats = PLUGIN.itemManager.getItemStats(itemId, false);
+				itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
 			}
 		}
 

@@ -128,7 +128,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// general
 		this.attackerName = attacker.getName();
 		this.time = Instant.now().toEpochMilli();
-		this.tick = PLUGIN.client.getTickCount();
+		this.tick = PLUGIN.getClient().getTickCount();
 
 		// attacker data
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
@@ -155,7 +155,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 		this.attackerName = attackerName;
 		this.time = Instant.now().toEpochMilli();
-		this.tick = PLUGIN.client.getTickCount();
+		this.tick = PLUGIN.getClient().getTickCount();
 
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;

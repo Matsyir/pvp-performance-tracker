@@ -121,10 +121,10 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayFourthLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
 
 		// Fifth line: magic hit stats/luck
-		overlayFifthLine.setLeft(String.valueOf(fight.getCompetitor().getMagicHitStats()));
+		overlayFifthLine.setLeft(String.valueOf(fight.getCompetitor().getShortMagicHitStats()));
 		overlayFifthLine.setLeftColor(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 
-		overlayFifthLine.setRight(String.valueOf(fight.getOpponent().getMagicHitStats()));
+		overlayFifthLine.setRight(String.valueOf(fight.getOpponent().getShortMagicHitStats()));
 		overlayFifthLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 
 		overlaySixthLine.setLeft(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)));

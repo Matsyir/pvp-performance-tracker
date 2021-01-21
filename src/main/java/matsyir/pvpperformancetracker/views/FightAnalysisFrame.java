@@ -45,7 +45,9 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
@@ -58,7 +60,6 @@ import org.pushingpixels.substance.internal.SubstanceSynapse;
 public class FightAnalysisFrame extends JFrame
 {
 	public static String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#fight-analysisfight-merge";
-	static Image frameIcon;
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
 	private JPanel mainPanel;
@@ -71,8 +72,6 @@ public class FightAnalysisFrame extends JFrame
 
 	static
 	{
-		frameIcon = new ImageIcon(ImageUtil.getResourceStreamFromClass(FightLogFrame.class, "/skull_red.png")).getImage();
-
 		// initialize number format
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
@@ -81,7 +80,7 @@ public class FightAnalysisFrame extends JFrame
 	FightAnalysisFrame(FightPerformance fight, JRootPane rootPane)
 	{
 		this(rootPane);
-		mainFightJsonInput.setText(PLUGIN.gson.toJson(fight, FightPerformance.class));
+		mainFightJsonInput.setText(PLUGIN.GSON.toJson(fight, FightPerformance.class));
 		validate();
 		repaint();
 	}
@@ -97,7 +96,7 @@ public class FightAnalysisFrame extends JFrame
 		}
 
 
-		setIconImage(frameIcon);
+		setIconImage(PLUGIN_ICON);
 		Dimension size = new Dimension(700, 336);
 		setSize(size);
 		setMinimumSize(size);
@@ -210,7 +209,7 @@ public class FightAnalysisFrame extends JFrame
 		try
 		{
 			// if either fight or their log entries are null, error
-			mainFight = PLUGIN.gson.fromJson(mainFightJsonInput.getText().trim(), FightPerformance.class);
+			mainFight = PLUGIN.GSON.fromJson(mainFightJsonInput.getText().trim(), FightPerformance.class);
 			if (mainFight == null || mainFight.getAllFightLogEntries() == null || mainFight.getAllFightLogEntries().size() < 1)
 			{
 				PLUGIN.createConfirmationModal(false, "Error parsing Fighter 1's fight data.");
@@ -219,7 +218,7 @@ public class FightAnalysisFrame extends JFrame
 				return false;
 			}
 
-			opponentFight = PLUGIN.gson.fromJson(opponentFightJsonInput.getText().trim(), FightPerformance.class);
+			opponentFight = PLUGIN.GSON.fromJson(opponentFightJsonInput.getText().trim(), FightPerformance.class);
 			if (opponentFight == null || opponentFight.getAllFightLogEntries() == null || opponentFight.getAllFightLogEntries().size() < 1)
 			{
 				PLUGIN.createConfirmationModal(false, "Error parsing Fighter 2's fight data.");
@@ -251,10 +250,10 @@ public class FightAnalysisFrame extends JFrame
 
 		try
 		{
-			analyzedFight = new AnalyzedFightPerformance(mainFight, opponentFight/*, mainFightDetailedEntries, oppFightDetailedEntries*/);
+
+			analyzedFight = new AnalyzedFightPerformance(mainFight, opponentFight, this::displayAnalysis);
 
 			// now that we've got the merged fight, display results
-			displayAnalysis();
 		}
 		catch(Exception e)
 		{

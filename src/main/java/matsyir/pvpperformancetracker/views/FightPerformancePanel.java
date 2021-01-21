@@ -48,6 +48,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -63,7 +64,6 @@ import net.runelite.client.util.ImageUtil;
 public class FightPerformancePanel extends JPanel
 {
 	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
-	private static Image frameIcon;
 	private static ImageIcon deathIcon;
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -127,11 +127,10 @@ public class FightPerformancePanel extends JPanel
 	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
 	{
 		this.showBorders = showBorders;
-		if (frameIcon == null || deathIcon == null)
+		if (deathIcon == null)
 		{
 			// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
-			frameIcon = new ImageIcon(ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png")).getImage();
-			deathIcon = new ImageIcon(frameIcon.getScaledInstance(12, 12,  Image.SCALE_DEFAULT));
+			deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12,  Image.SCALE_DEFAULT));
 		}
 
 		this.fight = fight;

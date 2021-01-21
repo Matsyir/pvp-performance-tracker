@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 
 @Slf4j
@@ -23,7 +25,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 	FightPerformance opposingFight;
 	// create a more detailed fight performance by merging data from two opposing fight logs
 	// also include the fights for easier access to general info
-	public AnalyzedFightPerformance(FightPerformance mainFight, FightPerformance opposingFight) throws Exception
+	public AnalyzedFightPerformance(FightPerformance mainFight, FightPerformance opposingFight, Runnable swingCallback) throws Exception
 	{
 		this.mainFight = mainFight;
 		this.opposingFight = opposingFight;
@@ -194,40 +196,49 @@ public class AnalyzedFightPerformance extends FightPerformance
 		// now that all the ticks should be lined up on the opponent fight log entries, find matching tick pairs for offensive : defensive logs.
 		// skip the 'main' client's opponent logs, as those are the ones with less data we are trying to improve by using the opponent's data.
 		// so, only loop through the main competitor's logs. We will add opponent attacks when we detect a defensive log.
-		mainFightLogEntries.stream()
-			.filter(log -> log.attackerName.equals(mainFight.competitor.getName()))
-			.forEach(log -> {
-				// if the log is a full entry, then this is an attacking log coming from the competitor,
-				// so we need to find a matching defensive log from the opponent.
-				if (log.isFullEntry())
-				{
-					opponentFightLogEntries.stream()
-						.filter(ol -> ol.getTick() == log.getTick())
-						.filter(ol -> !ol.isFullEntry())
-						.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
-						.findFirst() // when a match is finally found, add the attack.
-						.ifPresent(matchingDefenderLog -> addCompetitorAttack(log, matchingDefenderLog));
-				}
-				else // if the log is not a full entry, it's a defensive log coming from the competitor,
-				{    // meaning we need to match it to an opponent's attacking log.
-					fullOpponentFightLogEntries.stream()
-						.filter(ol -> ol.getTick() == log.getTick())
-						.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
-						.findFirst() // when a match is finally found, add the attack.
-						.ifPresent(matchingAttackerLog -> addOpponentAttack(matchingAttackerLog, log));
-				}
+		PLUGIN.getClientThread().invokeLater(() ->
+		{
+			mainFightLogEntries.stream()
+				.filter(log -> log.attackerName.equals(mainFight.competitor.getName()))
+				.forEach(log -> {
+					// if the log is a full entry, then this is an attacking log coming from the competitor,
+					// so we need to find a matching defensive log from the opponent.
+					if (log.isFullEntry())
+					{
+						opponentFightLogEntries.stream()
+							.filter(ol -> ol.getTick() == log.getTick())
+							.filter(ol -> !ol.isFullEntry())
+							.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
+							.findFirst() // when a match is finally found, add the attack.
+							.ifPresent(matchingDefenderLog -> addCompetitorAttack(log, matchingDefenderLog));
+					}
+					else // if the log is not a full entry, it's a defensive log coming from the competitor,
+					{    // meaning we need to match it to an opponent's attacking log.
+						fullOpponentFightLogEntries.stream()
+							.filter(ol -> ol.getTick() == log.getTick())
+							.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
+							.findFirst() // when a match is finally found, add the attack.
+							.ifPresent(matchingAttackerLog -> addOpponentAttack(matchingAttackerLog, log));
+					}
+				});
+
+
+			SwingUtilities.invokeLater(swingCallback);
 		});
 	}
 
 	void addCompetitorAttack(FightLogEntry attackerLog, FightLogEntry defenderLog)
 	{
-		this.competitor.addAttack(attackerLog, defenderLog);
-		this.analyzedMatchingLogs.add(new FightLogEntry[]{ attackerLog, defenderLog });
+			this.competitor.addAttack(attackerLog, defenderLog);
+			this.analyzedMatchingLogs.add(new FightLogEntry[]{ attackerLog, defenderLog });
 	}
 
 	void addOpponentAttack(FightLogEntry attackerLog, FightLogEntry defenderLog)
 	{
-		this.opponent.addAttack(attackerLog, defenderLog);
-		this.analyzedMatchingLogs.add(new FightLogEntry[]{ attackerLog, defenderLog });
+//		PLUGIN.getClientThread().invokeLater(() ->
+//		{
+			this.opponent.addAttack(attackerLog, defenderLog);
+			this.analyzedMatchingLogs.add(new FightLogEntry[]{attackerLog, defenderLog});
+//		});
 	}
 }

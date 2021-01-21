@@ -42,13 +42,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
@@ -88,6 +91,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -97,18 +101,19 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
+	// static fields
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
-	public static Image ICON;
-	public static SpriteManager SPRITE_MANAGER;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
-	public static ItemManager ITEM_MANAGER;
-	public static Gson gson;
+	public static Image PLUGIN_ICON;
+	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A state.
+	public static Gson GSON;
+
 	// Last man standing map regions, including lobby
-	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13617, 13658, 13659, 13660, 13914, 13915, 13916);
+	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12600, 13658, 13659, 13660, 13914, 13915, 13916);
 
 	static
 	{
@@ -116,8 +121,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		FIGHT_HISTORY_DATA_DIR.mkdirs();
 	}
 
-	public ArrayList<FightPerformance> fightHistory;
-
+	// "native"/core RL fields/injected fields
 	@Getter(AccessLevel.PACKAGE)
 	private NavigationButton navButton;
 	private boolean navButtonShown = false;
@@ -134,9 +138,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private ChatMessageManager chatMessageManager;
 
+	@Getter
 	@Inject
-	public Client client;
+	private Client client;
 
+	@Getter
 	@Inject
 	private ClientThread clientThread;
 
@@ -156,14 +162,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private PvpPerformanceTrackerOverlay overlay;
 
+	@Getter
 	@Inject
-	public ItemManager itemManager;
+	private ItemManager itemManager;
 
 	@Inject
 	private ScheduledExecutorService executor;
 
+	// custom fields/props
+	public ArrayList<FightPerformance> fightHistory;
 	@Getter
 	private FightPerformance currentFight;
+	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
+	// do not cache items in the same way since we could potentially cache a very large amount of them.
 
 	@Provides
 	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
@@ -175,22 +186,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
-		PLUGIN = this;   // other contexts without passing them all the way down
+		PLUGIN = this;   // other contexts without passing them all the way down or injecting
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
-		ICON = new ImageIcon(icon).getImage();
+		PLUGIN_ICON = new ImageIcon(icon).getImage();
 		navButton = NavigationButton.builder()
 			.tooltip("PvP Fight History")
 			.icon(icon)
 			.priority(6)
 			.panel(panel)
 			.build();
-		SPRITE_MANAGER = spriteManager;
-		ITEM_MANAGER = itemManager;
 		fightHistory = new ArrayList<>();
 
-		gson = new GsonBuilder()
+		GSON = new GsonBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
 				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
@@ -211,6 +220,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		overlayManager.add(overlay);
+
+		spriteCache = new HashMap<>(); // prepare sprite cache
+
+		// prepare default N/A or None symbol for eventual use.
+		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
 	}
 
 	@Override
@@ -253,6 +267,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayDmgDealt":
 			case "showOverlayMagicHits":
 			case "showOverlayOffensivePray":
+			case "showOverlayHpHealed":
 				overlay.setLines();
 				break;
 			// If the user updates the fight history limit, remove fights as necessary
@@ -468,7 +483,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 			Writer writer = new FileWriter(fightHistoryData);
-			gson.toJson(fightHistory, writer);
+			GSON.toJson(fightHistory, writer);
 			writer.flush();
 			writer.close();
 		}
@@ -523,7 +538,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			// read the saved fights from the file
 			List<FightPerformance> savedFights = Arrays.asList(
-				gson.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
+				GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
 
 			fightHistory.clear();
 			importFights(savedFights);
@@ -546,7 +561,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		try
 		{
 			// read saved fights from the data string and import them
-			List<FightPerformance> savedFights = Arrays.asList(gson.fromJson(data, FightPerformance[].class));
+			List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
 			createConfirmationModal(true, "Fight history data was successfully imported.");
 		}
@@ -658,7 +673,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 				dialog.setAlwaysOnTop(runeliteConfig.gameAlwaysOnTop());
 			}
-			dialog.setIconImage(ICON);
+			dialog.setIconImage(PLUGIN_ICON);
 			dialog.setVisible(true);
 		});
 	}
@@ -666,7 +681,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// save the complete fight history data to the clipboard.
 	public void exportFightHistory()
 	{
-		String fightHistoryDataJson = gson.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
+		String fightHistoryDataJson = GSON.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
 		final StringSelection contents = new StringSelection(fightHistoryDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
@@ -676,7 +691,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void exportFight(FightPerformance fight)
 	{
 		if (fight == null) { return; }
-		String fightDataJson = gson.toJson(fight, FightPerformance.class);
+		String fightDataJson = GSON.toJson(fight, FightPerformance.class);
 		final StringSelection contents = new StringSelection(fightDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
@@ -748,5 +763,90 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case MAGIC: return SpriteID.SKILL_MAGIC;
 			default: return -1;
 		}
+	}
+
+	public void addSpriteToLabelIfValid(JLabel label, int spriteId, Runnable swingCallback)
+	{
+		// Invalid sprite: set icon to bank filler and tooltip to N/A
+		if (spriteId <= 0)
+		{
+			DEFAULT_NONE_SYMBOL.addTo(label);
+			label.setToolTipText("N/A");
+
+			if (swingCallback != null)
+			{
+				SwingUtilities.invokeLater(swingCallback);
+			}
+			return;
+		}
+
+		// if sprite id found in sprite cache: use it.
+		if (spriteCache.containsKey(spriteId))
+		{
+			label.setIcon(spriteCache.get(spriteId));
+			if (swingCallback != null)
+			{
+				SwingUtilities.invokeLater(swingCallback);
+			}
+			return;
+		}
+
+		// if sprite id wasn't in sprite cache: get it, use it and add it to the cache
+		clientThread.invokeLater(() ->
+		{
+			BufferedImage sprite = spriteManager.getSprite(spriteId, 0);
+			if (sprite != null)
+			{
+				ImageIcon icon = new ImageIcon(sprite);
+				spriteCache.put(spriteId, icon);
+				label.setIcon(icon);
+			}
+			else
+			{
+				DEFAULT_NONE_SYMBOL.addTo(label);
+				label.setToolTipText("N/A");
+			}
+
+			if (swingCallback != null)
+			{
+				SwingUtilities.invokeLater(swingCallback);
+			}
+		});
+	}
+
+	public void addSpriteToLabelIfValid(JLabel label, int spriteId)
+	{
+		addSpriteToLabelIfValid(label, spriteId, null);
+	}
+
+	// if verifyId is true, takes in itemId directly from PlayerComposition, so need to -512 for actual itemid
+	// otherwise, assume valid itemId
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
+	{
+		if (itemId > 512 || !verifyId)
+		{
+			final int finalItemId = itemId - (verifyId ? 512 : 0);
+			PLUGIN.clientThread.invokeLater(() -> {
+				itemManager.getImage(finalItemId).addTo(label);
+				label.setToolTipText(itemManager.getItemComposition(finalItemId).getName());
+				if (swingCallback != null)
+				{
+					SwingUtilities.invokeLater(swingCallback);
+				}
+			});
+		}
+		else
+		{
+			DEFAULT_NONE_SYMBOL.addTo(label);
+			label.setToolTipText("N/A: empty slot or invalid item");
+			if (swingCallback != null)
+			{
+				SwingUtilities.invokeLater(swingCallback);
+			}
+		}
+	}
+	public void addItemToLabelIfValid(JLabel label, int itemId)
+	{
+		addItemToLabelIfValid(label, itemId, true, null);
 	}
 }
