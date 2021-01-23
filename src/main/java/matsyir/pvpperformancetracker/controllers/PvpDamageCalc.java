@@ -117,15 +117,29 @@ public class PvpDamageCalc
 	private int minHit = 0;
 	@Getter
 	private int maxHit = 0;
-	private Player attacker;
 
 	private CombatLevels attackerLevels;
 	private CombatLevels defenderLevels;
 
+	private RingData ringUsed;
+	boolean isLmsFight;
+
 	public PvpDamageCalc()
 	{
-		this.attackerLevels = CombatLevels.getConfigLevels();
-		this.defenderLevels = CombatLevels.getConfigLevels();
+		if (PLUGIN.isAtLMS()) // use LMS levels if the user is at LMS.
+		{
+			this.attackerLevels = CombatLevels.getLmsLevels();
+			this.defenderLevels = CombatLevels.getLmsLevels();
+			this.ringUsed = RingData.BERSERKER_RING;
+			this.isLmsFight = true;
+		}
+		else
+		{
+			this.attackerLevels = CombatLevels.getConfigLevels();
+			this.defenderLevels = CombatLevels.getConfigLevels();
+			this.ringUsed = CONFIG.ringChoice();
+			this.isLmsFight = false;
+		}
 	}
 
 	// main function used to update stats during an ongoing fight
@@ -139,14 +153,12 @@ public class PvpDamageCalc
 		minHit = 0;
 		maxHit = 0;
 
-		this.attacker = attacker;
-
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
-		int[] playerStats = this.calculateBonuses(attackerItems);
-		int[] opponentStats = this.calculateBonuses(defenderItems);
+		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
+		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		boolean isSpecial = animationData.isSpecial;
@@ -319,6 +331,14 @@ public class PvpDamageCalc
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+
+		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
+		if (this.isLmsFight && weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
+			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo)
+		{
+			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
+		}
+
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 
@@ -340,7 +360,7 @@ public class PvpDamageCalc
 		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
 		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
-			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit());
+			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
 	}
 
 	private void getMagicMaxHit(int shieldItemId, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
@@ -539,7 +559,7 @@ public class PvpDamageCalc
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
 
 		// 0.975x is a simplified brimstone accuracy formula, where x = mage def
-		defenderChance = CONFIG.ringChoice() == RingData.BRIMSTONE_RING ?
+		defenderChance = ringUsed == RingData.BRIMSTONE_RING ?
 			Math.floor(effectiveMagicDefenceTarget * ((BRIMSTONE_RING_OPPONENT_DEF_MODIFIER * opponentMageDef) + 64)) :
 			Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
@@ -610,12 +630,23 @@ public class PvpDamageCalc
 		return null;
 	}
 
-	// Calculate total equipment bonuses for all given items
+	// this is used to calculate bonuses including the currently used ring, in case we're in LMS but the config ring
+	// is different.
+	private int[] calculateBonusesWithRing(int[] itemIds)
+	{
+		return calculateBonuses(itemIds, this.ringUsed);
+	}
+
 	public static int[] calculateBonuses(int[] itemIds)
 	{
-		int[] equipmentBonuses = CONFIG.ringChoice() == RingData.NONE ?
+		return calculateBonuses(itemIds, CONFIG.ringChoice());
+	}
+	// Calculate total equipment bonuses for all given items
+	public static int[] calculateBonuses(int[] itemIds, RingData ringUsed)
+	{
+		int[] equipmentBonuses = ringUsed == null || ringUsed == RingData.NONE ?
 			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
-			getItemStats(CONFIG.ringChoice().getItemId());
+			getItemStats(ringUsed.getItemId());
 
 		if (equipmentBonuses == null) // shouldn't happen, but as a failsafe if the ring lookup fails
 		{

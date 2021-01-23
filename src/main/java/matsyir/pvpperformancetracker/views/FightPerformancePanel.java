@@ -55,7 +55,6 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.util.ImageUtil;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
@@ -258,7 +257,7 @@ public class FightPerformancePanel extends JPanel
 		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
 		playerMagicHitStats.setToolTipText(competitor.getName() + " successfully hit " +
 			competitor.getMagicHitCount() + " of " + competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(competitor.getMagicHitCountDeserved()) + ". Luck percentage: 0% = expected hits, >0% = lucky, <0% = unlucky");
+			nf.format(competitor.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
 		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
 
@@ -267,7 +266,7 @@ public class FightPerformancePanel extends JPanel
 		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
 		opponentMagicHitStats.setToolTipText(opponent.getName() + " successfully hit " +
 			opponent.getMagicHitCount() + " of " + opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(opponent.getMagicHitCountDeserved()) + ". Luck percentage: 0% = expected hits, >0% = lucky, <0% = unlucky");
+			nf.format(opponent.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
@@ -279,7 +278,7 @@ public class FightPerformancePanel extends JPanel
 		// sixth line LEFT: player's offensive pray stats
 		JLabel playerOffensivePrayStats = new JLabel();
 		playerOffensivePrayStats.setText(String.valueOf(competitor.getOffensivePrayStats()));
-		playerOffensivePrayStats.setToolTipText(competitor.getName() + " did " + competitor.getOffensivePrayStats() + " successful offensive prayers out of " +
+		playerOffensivePrayStats.setToolTipText(competitor.getName() + " did " + competitor.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
 			competitor.getAttackCount() + " total attacks (" +
 			nf.format(competitor.calculateOffensivePraySuccessPercentage()) + "%)");
 
@@ -298,7 +297,7 @@ public class FightPerformancePanel extends JPanel
 			Fighter oppComp = oppFight.getCompetitor();
 
 			opponentOffensivePrayStats.setText(String.valueOf(oppComp.getOffensivePrayStats()));
-			opponentOffensivePrayStats.setToolTipText(oppComp.getName() + " did " + oppComp.getOffensivePrayStats() + " successful offensive prayers out of " +
+			opponentOffensivePrayStats.setToolTipText(oppComp.getName() + " did " + oppComp.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
 				oppComp.getAttackCount() + " total attacks (" +
 				nf.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
 			opponentOffensivePrayStats.setForeground(
@@ -409,20 +408,22 @@ public class FightPerformancePanel extends JPanel
 			}
 		});
 
-		// Create "Copy Fight Data" popup menu/context menu
-		final JMenuItem exportFight = new JMenuItem("Copy Fight Data");
-		exportFight.addActionListener(e -> PLUGIN.exportFight(fight));
-
 		// Create "Copy as discord message" context menu
 		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
 		copyDiscordMsg.addActionListener(e -> PLUGIN.copyFightAsDiscordMsg(fight));
 
+		// Create "Copy Fight Data" popup menu/context menu
+		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
+		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
+		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
+
 		final JMenuItem openFightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
 		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
+		openFightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
 
 		popupMenu.add(removeFight);
-		popupMenu.add(exportFight);
 		popupMenu.add(copyDiscordMsg);
+		popupMenu.add(copyFight);
 		popupMenu.add(openFightAnalysis);
 		setComponentPopupMenu(popupMenu);
 	}

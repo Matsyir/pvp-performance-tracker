@@ -30,6 +30,7 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -50,6 +51,7 @@ class Fighter
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
+	@Setter
 	private Player player;
 	@Expose
 	@SerializedName("n") // use 1 letter serialized variable names for more compact storage
@@ -277,7 +279,7 @@ class Fighter
 		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(2);
 		String luckPercentage = magicHitCountDeserved != 0 ?
-			nf.format((((double)magicHitCount / magicHitCountDeserved) - 1) * 100) :
+			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) :
 			"0";
 		stats += " (" + luckPercentage + "%)";
 		return stats;
@@ -287,7 +289,7 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(2);
 		return magicHitCountDeserved != 0 ?
-			nf.format((((double)magicHitCount / magicHitCountDeserved) - 1) * 100) + "%" :
+			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) + "%" :
 			"0%";
 	}
 

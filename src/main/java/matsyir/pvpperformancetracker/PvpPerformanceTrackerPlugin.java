@@ -112,8 +112,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A state.
 	public static Gson GSON;
 
-	// Last man standing map regions, including lobby
-	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12600, 13658, 13659, 13660, 13914, 13915, 13916);
+	// Last man standing map regions, excluding lobby
+	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13658, 13659, 13660, 13914, 13915, 13916);
 
 	static
 	{
@@ -343,11 +343,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		Actor opponent;
 
 		// If the event source is the player, then it is the player interacting with their potential opponent.
-		if (event.getSource() == client.getLocalPlayer())
+		if (event.getSource().equals(client.getLocalPlayer()))
 		{
 			opponent = event.getTarget();
 		}
-		else if (event.getTarget() == client.getLocalPlayer())
+		else if (event.getTarget().equals(client.getLocalPlayer()))
 		{
 			opponent = event.getSource();
 		}
@@ -405,7 +405,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
 			{
-				currentFight.checkForAttackAnimations(event.getActor().getName(), new CombatLevels(client));
+				currentFight.checkForAttackAnimations((Player)event.getActor(), new CombatLevels(client));
 			}
 		});
 	}
@@ -633,7 +633,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		panel.rebuild();
 	}
 
-	boolean isAtLMS()
+	public boolean isAtLMS()
 	{
 		final int[] mapRegions = client.getMapRegions();
 

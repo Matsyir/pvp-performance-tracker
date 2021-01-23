@@ -179,9 +179,7 @@ class FightLogDetailFrame extends JFrame
 
 		praysUsedLine.add(defenderPrays, BorderLayout.EAST);
 
-
-		// level display line
-		CombatLevels levels = CombatLevels.getConfigLevels();
+		CombatLevels levels = fight.isLmsFight ? CombatLevels.getLmsLevels() : CombatLevels.getConfigLevels();
 		combatLevelsLine = new JPanel(new BorderLayout());
 		JPanel attackerCombatLevels = new JPanel(new GridLayout(2, 3));
 		attackerAtkLvl = new JLabel();
@@ -281,6 +279,7 @@ class FightLogDetailFrame extends JFrame
 		this.setVisible(true);
 	}
 
+	// extra-detailed frame for a merged fight, which has both an attacker and defender log for each attack
 	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, int rowIdx, Point location)
 	{
 		this(fight, attackerLog, rowIdx, location);
@@ -290,7 +289,7 @@ class FightLogDetailFrame extends JFrame
 		if (aLvls == null)
 		{
 			log.info("Fight Analysis: attackerLvls are null! This shouldn't happen.");
-			aLvls = CombatLevels.getConfigLevels();
+			aLvls = fight.isLmsFight ? CombatLevels.getLmsLevels() : CombatLevels.getConfigLevels();
 		}
 		attackerAtkLvl.setText(String.valueOf(aLvls.atk));
 		attackerStrLvl.setText(String.valueOf(aLvls.str));
@@ -303,7 +302,7 @@ class FightLogDetailFrame extends JFrame
 		if (dLvls == null)
 		{
 			log.info("Fight Analysis: defenderLvls are null! This shouldn't happen.");
-			dLvls = CombatLevels.getConfigLevels();
+			dLvls = fight.isLmsFight ? CombatLevels.getLmsLevels() : CombatLevels.getConfigLevels();
 		}
 		defenderAtkLvl.setText(String.valueOf(dLvls.atk));
 		defenderStrLvl.setText(String.valueOf(dLvls.str));

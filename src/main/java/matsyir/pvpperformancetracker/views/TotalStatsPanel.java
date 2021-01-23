@@ -254,13 +254,14 @@ public class TotalStatsPanel extends JPanel
 		add(offensivePrayStatsPanel);
 
 		JPopupMenu popupMenu = new JPopupMenu();
-		// Create "View Wiki" popup menu/context menu item
-		final JMenuItem viewWiki = new JMenuItem("View Wiki");
+		// Create "View Wiki" URL popup menu/context menu item
+		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
 		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
+		viewWiki.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
 
 		// Create "Reset All" popup menu/context menu item
-		final JMenuItem resetAllFights = new JMenuItem("Reset All");
-		resetAllFights.addActionListener(e ->
+		final JMenuItem removeAllFights = new JMenuItem("Remove All Fights");
+		removeAllFights.addActionListener(e ->
 		{
 			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
@@ -294,9 +295,10 @@ public class TotalStatsPanel extends JPanel
 		// Create "Fight Analysis (Advanced)" popup menu/context menu item
 		final JMenuItem fightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
 		fightAnalysis.addActionListener(e -> new FightAnalysisFrame(TotalStatsPanel.this.getRootPane()));
+		fightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
 
 		popupMenu.add(viewWiki);
-		popupMenu.add(resetAllFights);
+		popupMenu.add(removeAllFights);
 		popupMenu.add(exportFightHistory);
 		popupMenu.add(importFightHistory);
 		popupMenu.add(fightAnalysis);

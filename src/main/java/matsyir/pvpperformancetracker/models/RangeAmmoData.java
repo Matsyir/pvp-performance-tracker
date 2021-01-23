@@ -37,7 +37,7 @@ public interface RangeAmmoData
 
 	int getItemId();
 	int getRangeStr();
-	double getBonusMaxHit(); // damage bonus from bolt specs.
+	double getBonusMaxHit(int rangeLevel); // damage bonus from bolt specs.
 	double getDmgModifier(); // damage modifier from bolt specs.
 
 	interface RangeAmmoConfigData extends RangeAmmoData
@@ -48,7 +48,6 @@ public interface RangeAmmoData
 	@Getter
 	enum BoltAmmo implements RangeAmmoConfigData
 	{
-		//DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 117, ((int)(RANGE_LEVEL * .2)) * 0.06, 1),
 		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
 		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, .2, 0.06, 1),
 		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015);
@@ -81,9 +80,9 @@ public interface RangeAmmoData
 			this.dmgModifier = dmgModifier;
 		}
 
-		public double getBonusMaxHit()
+		public double getBonusMaxHit(int rangeLevel)
 		{
-			return ((int)(PvpPerformanceTrackerPlugin.CONFIG.rangedLevel() * specRangeLevelModifier)) * specChance;
+			return rangeLevel * specRangeLevelModifier * specChance;
 		}
 
 		@Override
@@ -135,9 +134,9 @@ public interface RangeAmmoData
 			this.dmgModifier = dmgModifier;
 		}
 
-		public double getBonusMaxHit()
+		public double getBonusMaxHit(int rangeLevel)
 		{
-			return ((int)(PvpPerformanceTrackerPlugin.CONFIG.rangedLevel() * specRangeLevelModifier)) * specChance;
+			return rangeLevel * specRangeLevelModifier * specChance;
 		}
 
 
@@ -172,6 +171,11 @@ public interface RangeAmmoData
 			this.dmgModifier = 1;
 		}
 
+		public double getBonusMaxHit(int rangeLevel)
+		{
+			return 0;
+		}
+
 		@Override
 		public String toString()
 		{
@@ -197,6 +201,11 @@ public interface RangeAmmoData
 			this.rangeStr = rangeStr;
 			this.bonusMaxHit = 0;
 			this.dmgModifier = 1;
+		}
+
+		public double getBonusMaxHit(int rangeLevel)
+		{
+			return 0;
 		}
 	}
 }

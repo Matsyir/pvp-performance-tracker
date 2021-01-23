@@ -32,17 +32,14 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
-import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
@@ -74,6 +71,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	@SerializedName("t")
 	public long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
+	@Expose
+	@SerializedName("l")
+	public boolean isLmsFight; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -88,6 +88,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	{
 		this.competitor = new Fighter(competitor);
 		this.opponent = new Fighter(opponent);
+		this.isLmsFight = PLUGIN.isAtLMS();
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
@@ -150,16 +151,20 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// If the given playerName is in this fight, check the Fighter's current animation,
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
-	public void checkForAttackAnimations(String playerName, CombatLevels competitorLevels)
+	public void checkForAttackAnimations(Player eventSource, CombatLevels competitorLevels)
 	{
-		if (playerName == null)
+		if (eventSource == null || eventSource.getName() == null || eventSource.getInteracting() == null || eventSource.getInteracting().getName() == null)
 		{
 			return;
 		}
 
+		String eName = eventSource.getName(); // event source name
+		String interactingName = eventSource.getInteracting().getName();
+
 		// verify that the player is interacting with their tracked opponent before adding attacks
-		if (playerName.equals(competitor.getName()) && opponent.getPlayer().equals(competitor.getPlayer().getInteracting()))
+		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
 		{
+			competitor.setPlayer(eventSource);
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
 			{
@@ -173,14 +178,17 @@ public class FightPerformance implements Comparable<FightPerformance>
 				lastFightTime = Instant.now().toEpochMilli();
 			}
 		}
-		else if (playerName.equals(opponent.getName()) && competitor.getPlayer().equals(opponent.getPlayer().getInteracting()))
+		else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName()))
 		{
+			opponent.setPlayer(eventSource);
 			AnimationData animationData = opponent.getAnimationData();
 			if (animationData != null)
 			{
 				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					competitor.getPlayer(), animationData, 0);
+
+				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}

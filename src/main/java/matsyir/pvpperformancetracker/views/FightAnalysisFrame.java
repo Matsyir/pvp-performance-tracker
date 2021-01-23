@@ -29,14 +29,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.event.ItemEvent;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -45,14 +43,12 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 import org.pushingpixels.substance.internal.SubstanceSynapse;
 
@@ -133,12 +129,14 @@ public class FightAnalysisFrame extends JFrame
 		textAreaLine.setBackground(null);
 
 		// wiki link label
-		JButton wikiLinkLabel = new JButton("<html><strong>Wiki/Example</strong></html>");
+
+		JButton wikiLinkLabel = new JButton("<html><u>Wiki/Example</u>&nbsp;&#8599;</html>");
 		wikiLinkLabel.setToolTipText("Open URL to Github wiki with an example & more details");
 		wikiLinkLabel.setSize(256, 32);
 		wikiLinkLabel.setMaximumSize(new Dimension(256, 32));
 		wikiLinkLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		wikiLinkLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		wikiLinkLabel.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
 		wikiLinkLabel.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
 
 		// instruction label
