@@ -466,6 +466,13 @@ public class PvpDamageCalc
 	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
+		if (this.isLmsFight && weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
+			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo)
+		{
+			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
+		}
+
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;
