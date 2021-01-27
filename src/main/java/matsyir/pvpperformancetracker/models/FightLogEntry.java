@@ -236,16 +236,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		return minHit + "-" + maxHit;
 	}
 
-	public boolean isSameGameTickAs(FightLogEntry entry)
-	{
-		return Math.abs(time - entry.time) < 500;
-	}
-
 	// use to sort by last fight time, to sort fights by date/time.
 	@Override
 	public int compareTo(FightLogEntry o)
 	{
-		long diff = time - o.time;
+		long diff = tick - o.tick;
 
 		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.

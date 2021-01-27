@@ -84,12 +84,13 @@ public class AnalyzedFightPerformance extends FightPerformance
 
 		// save only full entries into separate arrays, as we'll loop through those a lot.
 		ArrayList<FightLogEntry> fullMainFightLogEntries = mainFightLogEntries.stream()
-			.filter(FightLogEntry::isFullEntry).collect(Collectors.toCollection(ArrayList::new));
+			.filter(FightLogEntry::isFullEntry).sorted().collect(Collectors.toCollection(ArrayList::new));
 		ArrayList<FightLogEntry> fullOpponentFightLogEntries = opponentFightLogEntries.stream()
-			.filter(FightLogEntry::isFullEntry).collect(Collectors.toCollection(ArrayList::new));
+			.filter(FightLogEntry::isFullEntry).sorted().collect(Collectors.toCollection(ArrayList::new));
 
-		int offsetsToCheck = 4; // total number of mainFight offsets to start from and find matches in the opposing fight.
-		int attacksToCheck = 6; // total number of opposing attacks to check starting from the offset.
+		int offsetsToCheck = 3; // total number of fight log offsets to start from and find matches in the opposing fight.
+		int attacksToCheck = 8; // total number of opposing logs to check starting from the offset.
+		// TODO THIS SHOULDNT BREAK IF ATTACKS TO CHECK IS 300+
 
 		// save matching logs as "pairs", in an array:
 		// [0] = main fight's log entry match
@@ -98,61 +99,65 @@ public class AnalyzedFightPerformance extends FightPerformance
 		ArrayList<ArrayList<FightLogEntry[]>> matchingLogs = new ArrayList<>();
 
 
-		// go through up to the first 5 full logs to match with the opponent's first 5 attacks.
-		// do this with a few different offsets and go with the results that had the most matches in 5 attacks.
+		// go through up to the first 5 full logs to match with the opponent's first 6 attacks.
+		// do this with a few different offsets and go with the results that had the most matches in 6 attacks.
 		//
 		// Why multiple offsets rather than one pass, or setting starting tick to 0?
 		// It's possible one of the clients misses the first attack, and that people use the same gear
 		// for many attacks, which may cause logs to match each-other while being offset, causing future
 		// attacks to often be missed, and always be misleading. This way, if initial attacks are missed
-		for (int offset = 0; offset < offsetsToCheck; offset++)
+		for (int mainOffset = 0; mainOffset < offsetsToCheck; mainOffset++)
 		{
-			ArrayList<FightLogEntry[]> currentOffsetMatches = new ArrayList<>();
-			int highestMatchIdx = -1;
-			for (int i = offset; i < fullMainFightLogEntries.size() && i < attacksToCheck; i++)
+			for (int oppOffset = 0; oppOffset < offsetsToCheck; oppOffset++)
 			{
-				FightLogEntry entry = fullMainFightLogEntries.get(i);
-
-				// .skip: do not check for matches on an attack we already got a match for, so skip it.
-				// .limit: similarly, reduce the amount of attacks we check by the amount we skipped.
-				// .filter: find matching fight log entries from the opposing fight.
-				// do not use dps calc values for comparison as they can be different depending on each player's
-				// config. could potentially fix this by recalculating fights first, but comparing all of these
-				// should be ok enough. if gear and pray is the same, then so would dps anyways (before we do
-				// the proper brew/level merge we are currently doing)
-				FightLogEntry matchingOppLog = fullOpponentFightLogEntries.stream()
-					.skip(highestMatchIdx + 1)
-					.limit(attacksToCheck - (highestMatchIdx + 1))
-					.filter(oppEntry -> entry.attackerName.equals(oppEntry.attackerName) &&
-						entry.getAnimationData() == oppEntry.getAnimationData() &&
-						Arrays.equals(entry.getAttackerGear(), oppEntry.getAttackerGear()) &&
-						Arrays.equals(entry.getDefenderGear(), oppEntry.getDefenderGear()) &&
-						entry.getAttackerOverhead() == oppEntry.getAttackerOverhead() &&
-						entry.getDefenderOverhead() == oppEntry.getDefenderOverhead() &&
-						entry.success() == oppEntry.success() &&
-						entry.isSplash() == oppEntry.isSplash())
-					//.forEach(matchingOppLog -> currentOffsetMatches.add(new Pair<>(entry, matchingOppLog)));
-					.findFirst()
-					.orElse(null);
-
-				// if a match was found, save the index of the match, and add both entries to the current offset matches.
-				if (matchingOppLog != null)
+				ArrayList<FightLogEntry[]> currentOffsetMatches = new ArrayList<>();
+				int highestMatchIdx = -1;
+				for (int i = mainOffset; i < fullMainFightLogEntries.size() && i < attacksToCheck; i++)
 				{
-					int logEntryIdx = fullOpponentFightLogEntries.indexOf(matchingOppLog);
+					FightLogEntry entry = fullMainFightLogEntries.get(i);
 
-					if (logEntryIdx < highestMatchIdx) // this should never happen.
+					// .skip: do not check for matches on an attack we already got a match for, so skip it.
+					//     if the highestMatchIdx is still <0, no matches were found yet so keep checking with oppOffset.
+					// .limit: similarly to .skip, reduce the amount of attacks we check by the amount we skipped.
+					// .filter: find matching fight log entries from the opposing fight.
+					// do not use dps calc values for comparison as they can be different depending on each player's
+					// config. could potentially fix this by recalculating fights first, but comparing all of these
+					// should be ok enough. if gear and pray is the same, then so would dps anyways (before we do
+					// the proper brew/level merge we are currently doing)
+					FightLogEntry matchingOppLog = fullOpponentFightLogEntries.stream()
+						.skip(highestMatchIdx < 0 ? oppOffset : highestMatchIdx + 1)
+						.limit(attacksToCheck - (highestMatchIdx + 1))
+						.filter(oppEntry -> entry.attackerName.equals(oppEntry.attackerName) &&
+							entry.getAnimationData() == oppEntry.getAnimationData() &&
+							Arrays.equals(entry.getAttackerGear(), oppEntry.getAttackerGear()) &&
+							Arrays.equals(entry.getDefenderGear(), oppEntry.getDefenderGear()) &&
+							entry.getAttackerOverhead() == oppEntry.getAttackerOverhead() &&
+							entry.getDefenderOverhead() == oppEntry.getDefenderOverhead() &&
+							entry.success() == oppEntry.success() &&
+							entry.isSplash() == oppEntry.isSplash())
+						//.forEach(matchingOppLog -> currentOffsetMatches.add(new Pair<>(entry, matchingOppLog)));
+						.findFirst()
+						.orElse(null);
+
+					// if a match was found, save the index of the match, and add both entries to the current offset matches.
+					if (matchingOppLog != null)
 					{
-						throw new Exception("Invalid state during fight merge: logEntryIdx was under highestMatchIdx");
+						int logEntryIdx = fullOpponentFightLogEntries.indexOf(matchingOppLog);
+
+						if (logEntryIdx < highestMatchIdx) // this should never happen.
+						{
+							throw new Exception("Invalid state during fight merge: logEntryIdx was under highestMatchIdx");
+						}
+
+						highestMatchIdx = logEntryIdx;
+						currentOffsetMatches.add(new FightLogEntry[]{entry, matchingOppLog});
 					}
-
-					highestMatchIdx = logEntryIdx;
-					currentOffsetMatches.add(new FightLogEntry[]{entry, matchingOppLog});
 				}
-			}
 
-			if (currentOffsetMatches.size() > 0)
-			{
-				matchingLogs.add(currentOffsetMatches);
+				if (currentOffsetMatches.size() >= 2)
+				{
+					matchingLogs.add(currentOffsetMatches);
+				}
 			}
 		}
 
@@ -187,8 +192,10 @@ public class AnalyzedFightPerformance extends FightPerformance
 				{
 					tickDiff = curTickDiff;
 					tickDiffValid = true;
+					continue;
 				}
-				else if (curTickDiff != tickDiff)
+
+				if (curTickDiff != tickDiff)
 				{
 					tickDiffValid = false;
 					break;
@@ -224,7 +231,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 		{
 			mainFightLogEntries.stream()
 				.filter(log -> log.attackerName.equals(mainFight.competitor.getName()))
-				.forEach(log -> {
+				.forEachOrdered(log -> {
 					// if the log is a full entry, then this is an attacking log coming from the competitor,
 					// so we need to find a matching defensive log from the opponent.
 					if (log.isFullEntry())
@@ -238,14 +245,14 @@ public class AnalyzedFightPerformance extends FightPerformance
 					}
 					else // if the log is not a full entry, it's a defensive log coming from the competitor,
 					{    // meaning we need to match it to an opponent's attacking log.
-						fullOpponentFightLogEntries.stream()
+						opponentFightLogEntries.stream()
 							.filter(ol -> ol.getTick() == log.getTick())
+							.filter(FightLogEntry::isFullEntry)
 							.filter(ol -> ol.attackerName.equals(mainFight.opponent.getName()))
 							.findFirst() // when a match is finally found, add the attack.
 							.ifPresent(matchingAttackerLog -> addOpponentAttack(matchingAttackerLog, log));
 					}
 				});
-
 
 			SwingUtilities.invokeLater(swingCallback);
 		});
@@ -259,10 +266,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 
 	void addOpponentAttack(FightLogEntry attackerLog, FightLogEntry defenderLog)
 	{
-//		PLUGIN.getClientThread().invokeLater(() ->
-//		{
 			this.opponent.addAttack(attackerLog, defenderLog);
 			this.analyzedMatchingLogs.add(new FightLogEntry[]{attackerLog, defenderLog});
-//		});
 	}
 }

@@ -426,8 +426,8 @@ public class TotalStatsPanel extends JPanel
 
 		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-			fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved(),
-			fight.getCompetitor().getOffensivePraySuccessCount());
+			fight.getCompetitor().getTotalMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount());
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -465,8 +465,8 @@ public class TotalStatsPanel extends JPanel
 			}
 			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-				fight.getCompetitor().getMagicHitCount(), fight.getCompetitor().getMagicHitCountDeserved(),
-				fight.getCompetitor().getOffensivePraySuccessCount());
+				fight.getCompetitor().getTotalMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount());
 		}
 
 		avgDeservedDmg = totalDeservedDmg / numFights;

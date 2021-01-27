@@ -69,6 +69,10 @@ class Fighter
 	@Expose
 	@SerializedName("h") // h for "hitsplats", real hits
 	private int damageDealt; // actual damage dealt based on opponent's hitsplats
+
+	@Expose
+	@SerializedName("z") // z because idk and want to keep 1 character for most compact storage
+	private int totalMagicAttackCount; // total count of magic attacks
 	@Expose
 	@SerializedName("m")
 	private int magicHitCount; // count of 'successful' magic hits (where you don't splash)
@@ -102,6 +106,7 @@ class Fighter
 		offPraySuccessCount = 0;
 		deservedDamage = 0;
 		damageDealt = 0;
+		totalMagicAttackCount = 0;
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		offensivePraySuccessCount = 0;
@@ -119,6 +124,7 @@ class Fighter
 		offPraySuccessCount = 0;
 		deservedDamage = 0;
 		damageDealt = 0;
+		totalMagicAttackCount = 0;
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
@@ -136,6 +142,7 @@ class Fighter
 		offPraySuccessCount = 0;
 		deservedDamage = 0;
 		damageDealt = 0;
+		totalMagicAttackCount = 0;
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
@@ -169,6 +176,7 @@ class Fighter
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
+			totalMagicAttackCount++;
 			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
 
 			if (opponent.getGraphic() != GraphicID.SPLASH)
@@ -203,6 +211,7 @@ class Fighter
 
 		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
+			totalMagicAttackCount++;
 			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
 			// actual magicHitCount is directly added, as it can no longer
 			// be detected and should have been accurate initially.
@@ -212,12 +221,13 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
+	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
 		this.deservedDamage += deservedDamage;
 		this.damageDealt += damageDealt;
+		this.totalMagicAttackCount += totalMagicAttackCount;
 		this.magicHitCount += magicHitCount;
 		this.magicHitCountDeserved += magicHitCountDeserved;
 		this.offensivePraySuccessCount += offensivePraySuccessCount;
@@ -275,6 +285,7 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(0);
 		String stats = nf.format(magicHitCount);
+		// TODO switch to totalMagicAttackCount
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(2);
@@ -331,6 +342,10 @@ class Fighter
 
 	public long getMagicAttackCount()
 	{
+		if (totalMagicAttackCount > 0) // TODO
+		{
+			return totalMagicAttackCount;
+		}
 		return fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count();
 	}
 
