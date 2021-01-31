@@ -80,7 +80,9 @@ public class AnalyzedFightPerformance extends FightPerformance
 		this.opponent.addHpHealed(opposingFight.competitor.getHpHealed());
 
 		ArrayList<FightLogEntry> mainFightLogEntries = mainFight.getAllFightLogEntries();
+		mainFightLogEntries.sort(FightLogEntry::compareTo);
 		ArrayList<FightLogEntry> opponentFightLogEntries = opposingFight.getAllFightLogEntries();
+		opponentFightLogEntries.sort(FightLogEntry::compareTo);
 
 		// save only full entries into separate arrays, as we'll loop through those a lot.
 		ArrayList<FightLogEntry> fullMainFightLogEntries = mainFightLogEntries.stream()
@@ -88,9 +90,10 @@ public class AnalyzedFightPerformance extends FightPerformance
 		ArrayList<FightLogEntry> fullOpponentFightLogEntries = opponentFightLogEntries.stream()
 			.filter(FightLogEntry::isFullEntry).sorted().collect(Collectors.toCollection(ArrayList::new));
 
-		int offsetsToCheck = 3; // total number of fight log offsets to start from and find matches in the opposing fight.
-		int attacksToCheck = 8; // total number of opposing logs to check starting from the offset.
-		// TODO THIS SHOULDNT BREAK IF ATTACKS TO CHECK IS 300+
+		int offsetsToCheck = 2; // total number of fight log offsets to start from and find matches in the opposing fight.
+		int attacksToCheck = 16; // total number of opposing logs to check starting from the offset.
+		// TODO: THIS SHOULDNT BREAK IF attacksToCheck IS 300+ or unused & using all attacks ????
+		// ^ or maybe we dont have specific enough data to have it working 100% this way?
 
 		// save matching logs as "pairs", in an array:
 		// [0] = main fight's log entry match
@@ -118,6 +121,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 
 					// .skip: do not check for matches on an attack we already got a match for, so skip it.
 					//     if the highestMatchIdx is still <0, no matches were found yet so keep checking with oppOffset.
+					int skip = highestMatchIdx < 0 ? oppOffset : highestMatchIdx + 1;
 					// .limit: similarly to .skip, reduce the amount of attacks we check by the amount we skipped.
 					// .filter: find matching fight log entries from the opposing fight.
 					// do not use dps calc values for comparison as they can be different depending on each player's
@@ -125,8 +129,8 @@ public class AnalyzedFightPerformance extends FightPerformance
 					// should be ok enough. if gear and pray is the same, then so would dps anyways (before we do
 					// the proper brew/level merge we are currently doing)
 					FightLogEntry matchingOppLog = fullOpponentFightLogEntries.stream()
-						.skip(highestMatchIdx < 0 ? oppOffset : highestMatchIdx + 1)
-						.limit(attacksToCheck - (highestMatchIdx + 1))
+						.skip(skip)
+						.limit(attacksToCheck - skip)
 						.filter(oppEntry -> entry.attackerName.equals(oppEntry.attackerName) &&
 							entry.getAnimationData() == oppEntry.getAnimationData() &&
 							Arrays.equals(entry.getAttackerGear(), oppEntry.getAttackerGear()) &&
@@ -135,7 +139,6 @@ public class AnalyzedFightPerformance extends FightPerformance
 							entry.getDefenderOverhead() == oppEntry.getDefenderOverhead() &&
 							entry.success() == oppEntry.success() &&
 							entry.isSplash() == oppEntry.isSplash())
-						//.forEach(matchingOppLog -> currentOffsetMatches.add(new Pair<>(entry, matchingOppLog)));
 						.findFirst()
 						.orElse(null);
 
@@ -144,7 +147,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 					{
 						int logEntryIdx = fullOpponentFightLogEntries.indexOf(matchingOppLog);
 
-						if (logEntryIdx < highestMatchIdx) // this should never happen.
+						if (logEntryIdx <= highestMatchIdx) // this should never happen.
 						{
 							throw new Exception("Invalid state during fight merge: logEntryIdx was under highestMatchIdx");
 						}
@@ -160,7 +163,6 @@ public class AnalyzedFightPerformance extends FightPerformance
 				}
 			}
 		}
-
 
 		if (matchingLogs.size() < 1)
 		{
@@ -180,7 +182,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 		for (ArrayList<FightLogEntry[]> logMatches : matchingLogs)
 		{
 			int tickDiff = 0;
-			boolean tickDiffValid = false;
+			boolean tickDiffValid = true;
 			for (int i = 0; i < logMatches.size(); i++)
 			{
 				FightLogEntry[] match = logMatches.get(i);
@@ -191,7 +193,6 @@ public class AnalyzedFightPerformance extends FightPerformance
 				if (i == 0)
 				{
 					tickDiff = curTickDiff;
-					tickDiffValid = true;
 					continue;
 				}
 

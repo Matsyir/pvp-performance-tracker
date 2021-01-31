@@ -761,6 +761,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case DEFENCE: return SpriteID.SKILL_DEFENCE;
 			case RANGED: return SpriteID.SKILL_RANGED;
 			case MAGIC: return SpriteID.SKILL_MAGIC;
+			case HITPOINTS: return SpriteID.SKILL_HITPOINTS;
 			default: return -1;
 		}
 	}

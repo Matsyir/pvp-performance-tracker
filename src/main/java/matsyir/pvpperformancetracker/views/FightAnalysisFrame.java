@@ -24,14 +24,21 @@
  */
 package matsyir.pvpperformancetracker.views;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ItemEvent;
+import java.io.File;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -93,7 +100,7 @@ public class FightAnalysisFrame extends JFrame
 
 
 		setIconImage(PLUGIN_ICON);
-		Dimension size = new Dimension(700, 336);
+		Dimension size = new Dimension(700, 384);
 		setSize(size);
 		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
@@ -120,11 +127,11 @@ public class FightAnalysisFrame extends JFrame
 		mainPanel.removeAll();
 
 		// init containers
-		JPanel textLabelLine = new JPanel(new BorderLayout());
-		textLabelLine.setBackground(null);
 		GridLayout textAreaLayout = new GridLayout(1, 2);
 		textAreaLayout.setHgap(4);
 		textAreaLayout.setVgap(4);
+		JPanel textLabelLine = new JPanel(textAreaLayout);
+		textLabelLine.setBackground(null);
 		JPanel textAreaLine = new JPanel(textAreaLayout);
 		textAreaLine.setBackground(null);
 
@@ -156,28 +163,83 @@ public class FightAnalysisFrame extends JFrame
 
 		// fight data input labels
 		JLabel firstFightLabel = new JLabel();
-		firstFightLabel.setText("<html>Enter fight data for Fighter 1:</html>");
+		firstFightLabel.setText("<html><strong>Enter fight data for Fighter 1:</strong><br/>You can drag & drop a text file onto the text box.</html>");
 		firstFightLabel.setForeground(Color.WHITE);
-		textLabelLine.add(firstFightLabel, BorderLayout.WEST);
+		textLabelLine.add(firstFightLabel);
 
 		JLabel secondFightLabel = new JLabel();
-		secondFightLabel.setText("<html>Enter fight data for Fighter 2:</html>");
+		secondFightLabel.setText("<html><strong>Enter fight data for Fighter 2:</strong><br/>You can drag & drop a text file onto the text box.</html>");
 		secondFightLabel.setForeground(Color.WHITE);
-		textLabelLine.add(secondFightLabel, BorderLayout.EAST);
-		textLabelLine.setSize(mainPanel.getWidth(), firstFightLabel.getHeight() + 16);
-		textLabelLine.setMaximumSize(new Dimension(mainPanel.getWidth(), firstFightLabel.getHeight() + 16));
+		textLabelLine.add(secondFightLabel);
+		textLabelLine.setSize(mainPanel.getWidth(), 48);
+		textLabelLine.setMaximumSize(new Dimension(mainPanel.getWidth(), 48));
 
 		// fight data input fields
 		mainFightJsonInput = new JTextField(32);
 		mainFightJsonInput.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 		mainFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+		// setup drag & drop file upload support directly into textbox
+		// https://stackoverflow.com/a/9111327/7982774
+		mainFightJsonInput.setDropTarget(new DropTarget() {
+			public synchronized void drop(DropTargetDropEvent evt) {
+				try
+				{
+					evt.acceptDrop(DnDConstants.ACTION_COPY);
+					List<File> droppedFiles = (List<File>)
+						evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+
+					for (File file : droppedFiles)
+					{
+						String fileData = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())));
+						mainFightJsonInput.setText(fileData);
+						FightAnalysisFrame.this.validate();
+						break;
+					}
+
+					evt.dropComplete(true);
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}
+		});
+
 		textAreaLine.add(mainFightJsonInput);
 		opponentFightJsonInput = new JTextField(32);
 		opponentFightJsonInput.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 		opponentFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+		// setup drag & drop file upload support directly into textbox
+		opponentFightJsonInput.setDropTarget(new DropTarget() {
+			public synchronized void drop(DropTargetDropEvent evt) {
+				try
+				{
+					evt.acceptDrop(DnDConstants.ACTION_COPY);
+					List<File> droppedFiles = (List<File>)
+						evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+
+					for (File file : droppedFiles)
+					{
+						String fileData = new String(Files.readAllBytes(Paths.get(file.getAbsolutePath())));
+						opponentFightJsonInput.setText(fileData);
+						FightAnalysisFrame.this.validate();
+						break;
+					}
+
+					evt.dropComplete(true);
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}
+		});
+
 		textAreaLine.add(opponentFightJsonInput);
-		textAreaLine.setSize(mainPanel.getWidth(), 24);
-		textAreaLine.setMaximumSize(new Dimension(mainPanel.getWidth(), 24));
+		textAreaLine.setSize(mainPanel.getWidth(), 32);
+		textAreaLine.setMaximumSize(new Dimension(mainPanel.getWidth(), 32));
 
 		// confirm button
 		JButton confirmButton = new JButton("<html><strong>Merge Fight Data</strong></html>");

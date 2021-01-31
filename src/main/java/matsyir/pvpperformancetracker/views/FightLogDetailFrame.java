@@ -69,12 +69,14 @@ class FightLogDetailFrame extends JFrame
 	private JLabel attackerDefLvl;
 	private JLabel attackerRangeLvl;
 	private JLabel attackerMageLvl;
+	private JLabel attackerHpLvl;
 
 	private JLabel defenderAtkLvl;
 	private JLabel defenderStrLvl;
 	private JLabel defenderDefLvl;
 	private JLabel defenderRangeLvl;
 	private JLabel defenderMageLvl;
+	private JLabel defenderHpLvl;
 
 	private JLabel attackerOffensiveLabel;
 	private JLabel defenderOffensiveLabel;
@@ -202,12 +204,17 @@ class FightLogDetailFrame extends JFrame
 		PLUGIN.addSpriteToLabelIfValid(attackerMageLvl, PLUGIN.getSpriteForSkill(Skill.MAGIC));
 		attackerMageLvl.setText(String.valueOf(levels.mage));
 		attackerMageLvl.setToolTipText("Magic Level");
+		attackerHpLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(attackerHpLvl, PLUGIN.getSpriteForSkill(Skill.HITPOINTS));
+		attackerHpLvl.setText(String.valueOf(levels.hp));
+		attackerHpLvl.setToolTipText("Hitpoints Level");
 
 		attackerCombatLevels.add(attackerAtkLvl);
 		attackerCombatLevels.add(attackerStrLvl);
 		attackerCombatLevels.add(attackerDefLvl);
 		attackerCombatLevels.add(attackerRangeLvl);
 		attackerCombatLevels.add(attackerMageLvl);
+		attackerCombatLevels.add(attackerHpLvl);
 		combatLevelsLine.add(attackerCombatLevels, BorderLayout.WEST);
 
 		JPanel defenderCombatLevels = new JPanel(new GridLayout(2, 3));
@@ -231,12 +238,17 @@ class FightLogDetailFrame extends JFrame
 		PLUGIN.addSpriteToLabelIfValid(defenderMageLvl, PLUGIN.getSpriteForSkill(Skill.MAGIC));
 		defenderMageLvl.setText(String.valueOf(levels.mage));
 		defenderMageLvl.setToolTipText("Magic Level");
+		defenderHpLvl = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(defenderHpLvl, PLUGIN.getSpriteForSkill(Skill.HITPOINTS));
+		defenderHpLvl.setText(String.valueOf(levels.hp));
+		defenderHpLvl.setToolTipText("Hitpoints Level");
 
 		defenderCombatLevels.add(defenderAtkLvl);
 		defenderCombatLevels.add(defenderStrLvl);
 		defenderCombatLevels.add(defenderDefLvl);
 		defenderCombatLevels.add(defenderRangeLvl);
 		defenderCombatLevels.add(defenderMageLvl);
+		defenderCombatLevels.add(defenderHpLvl);
 		combatLevelsLine.add(defenderCombatLevels, BorderLayout.EAST);
 
 
@@ -296,6 +308,7 @@ class FightLogDetailFrame extends JFrame
 		attackerDefLvl.setText(String.valueOf(aLvls.def));
 		attackerRangeLvl.setText(String.valueOf(aLvls.range));
 		attackerMageLvl.setText(String.valueOf(aLvls.mage));
+		attackerHpLvl.setText(String.valueOf(aLvls.hp));
 
 		// defender lvls
 		CombatLevels dLvls = defenderLog.getAttackerLevels();
@@ -309,6 +322,7 @@ class FightLogDetailFrame extends JFrame
 		defenderDefLvl.setText(String.valueOf(dLvls.def));
 		defenderRangeLvl.setText(String.valueOf(dLvls.range));
 		defenderMageLvl.setText(String.valueOf(dLvls.mage));
+		defenderHpLvl.setText(String.valueOf(dLvls.hp));
 
 		defenderOffensiveLabel.setText("");
 		PLUGIN.addSpriteToLabelIfValid(defenderOffensiveLabel, defenderLog.getAttackerOffensivePray());

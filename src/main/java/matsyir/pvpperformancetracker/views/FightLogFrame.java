@@ -92,13 +92,13 @@ public class FightLogFrame extends JFrame
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
 		Object[][] stats = new Object[fightLogEntries.size()][11];
 		int i = 0;
-		long initialTime = 0;
+		int initialTick = 0;
 
 		for (FightLogEntry fightEntry : fightLogEntries)
 		{
 			if (i == 0)
 			{
-				initialTime = fightEntry.getTime();
+				initialTick = fightEntry.getTick();
 			}
 
 			int styleIcon = fightEntry.getAnimationData().attackStyle.getStyleSpriteId();
@@ -150,18 +150,19 @@ public class FightLogFrame extends JFrame
 				stats[i][9] = "";
 			}
 
-			long durationLong = fightEntry.getTime() - initialTime;
-			Duration duration = Duration.ofMillis(durationLong);
+			int tickDuration = fightEntry.getTick() - initialTick;
+			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
+			Duration duration = Duration.ofMillis(durationMillis);
 			String time = String.format("%02d:%02d.%01d",
 				duration.toMinutes(),
 				duration.getSeconds() % 60,
-				durationLong % 1000 / 100);
+				durationMillis % 1000 / 100) + " (" + tickDuration + ")";
 			stats[i][10] = time;
 
 			i++;
 		}
 
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time" };
+		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" };
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
