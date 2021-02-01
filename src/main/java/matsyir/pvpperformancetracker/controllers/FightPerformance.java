@@ -133,8 +133,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = new Fighter(cName, fightLogs);
 		this.opponent = new Fighter(oName, fightLogs);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22);
 
 		if (cDead)
 		{

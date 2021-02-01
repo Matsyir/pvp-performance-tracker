@@ -81,6 +81,7 @@ public class TotalStatsPanel extends JPanel
 	private JLabel dmgDealtStatsLabel;
 	private JLabel magicHitCountStatsLabel;
 	private JLabel offensivePrayCountStatsLabel;
+	private JLabel hpHealedStatsLabel;
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
 
@@ -125,14 +126,14 @@ public class TotalStatsPanel extends JPanel
 	{
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(CONFIG.settingsConfigured() ? 7 : 8, 1));
+		setLayout(new GridLayout(CONFIG.settingsConfigured() ? 8 : 9, 1));
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// FIRST LINE
 		// basic label to display a title.
 		JLabel titleLabel = new JLabel();
-		titleLabel.setText("PvP Performance Tracker");
+		titleLabel.setText("PvP Performance Tracker v" + PLUGIN.PLUGIN_VERSION);
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
 		add(titleLabel);
@@ -253,6 +254,25 @@ public class TotalStatsPanel extends JPanel
 		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(offensivePrayStatsPanel);
 
+		// EIGTH LINE
+		// panel to show the total hp healed
+		JPanel hpHealedPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's total hp healed stats
+		JLabel hpHealedLeftLabel = new JLabel();
+		hpHealedLeftLabel.setText("HP Healed:");
+		hpHealedLeftLabel.setForeground(Color.WHITE);
+		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
+
+		// label to show hp healed pray stats
+		hpHealedStatsLabel = new JLabel();
+		hpHealedStatsLabel.setForeground(Color.WHITE);
+		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
+
+		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		add(hpHealedPanel);
+
+
 		JPopupMenu popupMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
@@ -356,8 +376,9 @@ public class TotalStatsPanel extends JPanel
 		{
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
-		magicHitCountStatsLabel.setToolTipText("You hit " + nf1.format(totalStats.getMagicHitCount()) +
-			" magic attacks, but deserved to hit " + nf1.format(totalStats.getMagicHitCountDeserved()));
+		magicHitCountStatsLabel.setToolTipText("You successfully hit " +
+			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but deserved to hit " +
+		nf1.format(totalStats.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -372,6 +393,9 @@ public class TotalStatsPanel extends JPanel
 		offensivePrayCountStatsLabel.setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
+
+		hpHealedStatsLabel.setText(String.valueOf(totalStats.getHpHealed()));
+		hpHealedStatsLabel.setToolTipText("A total of " + totalStats.getHpHealed() + " hitpoints were recovered.");
 	}
 
 	public void addFight(FightPerformance fight)
@@ -426,8 +450,9 @@ public class TotalStatsPanel extends JPanel
 
 		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-			fight.getCompetitor().getTotalMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount());
+			fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+			fight.getCompetitor().getHpHealed());
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -465,8 +490,9 @@ public class TotalStatsPanel extends JPanel
 			}
 			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
 				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-				fight.getCompetitor().getTotalMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount());
+				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+				fight.getCompetitor().getHpHealed());
 		}
 
 		avgDeservedDmg = totalDeservedDmg / numFights;

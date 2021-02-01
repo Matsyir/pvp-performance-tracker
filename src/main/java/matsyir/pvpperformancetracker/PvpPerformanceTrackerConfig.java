@@ -62,6 +62,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	// ================================= Done sections, config items below =================================
 
 	@ConfigItem(
+		keyName = "pluginVersion",
+		name = "Plugin Version",
+		description = "Hidden plugin version in order to potentially 'gracefully migrate' data in the future.",
+		hidden = true
+	)
+	default String pluginVersion()
+	{
+		return PvpPerformanceTrackerPlugin.PLUGIN_VERSION;
+	}
+
+	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
 		description = "Some settings affect damage calculations, and every player should set them based on how they're pking. Please confirm them and tick this box.",

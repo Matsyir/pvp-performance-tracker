@@ -221,7 +221,7 @@ class Fighter
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount)
+	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount, int hpHealed)
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
@@ -231,6 +231,7 @@ class Fighter
 		this.magicHitCount += magicHitCount;
 		this.magicHitCountDeserved += magicHitCountDeserved;
 		this.offensivePraySuccessCount += offensivePraySuccessCount;
+		this.hpHealed += hpHealed;
 	}
 
 	void addDamageDealt(int damage)
@@ -340,13 +341,13 @@ class Fighter
 			(double) offensivePraySuccessCount / attackCount * 100.0;
 	}
 
-	public long getMagicAttackCount()
+	public int getMagicAttackCount()
 	{
-		if (totalMagicAttackCount > 0) // TODO
+		if (totalMagicAttackCount > 0) // TODO remove this legacy behavior and just use totalMagicAttackCount
 		{
 			return totalMagicAttackCount;
 		}
-		return fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count();
+		return (int)fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count();
 	}
 
 	// Return a simple string to display the current player's offensive prayer success rate.

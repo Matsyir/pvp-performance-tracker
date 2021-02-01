@@ -102,6 +102,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
+	public static final String PLUGIN_VERSION = "1.4.2";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -187,6 +188,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down or injecting
+		fightHistory = new ArrayList<>();
+
+		GSON = new GsonBuilder()
+			.excludeFieldsWithoutExposeAnnotation()
+			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
+				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
+					: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
+			).create();
+
+		if (!config.pluginVersion().equals(PLUGIN_VERSION))
+		{
+			this.update(config.pluginVersion());
+		}
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
@@ -197,17 +211,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.priority(6)
 			.panel(panel)
 			.build();
-		fightHistory = new ArrayList<>();
-
-		GSON = new GsonBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
-				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
-				: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
-			).create();
-
-		// Unset old storage config key, which is now un-used, in order to delete redundant use of storage for previous users.
-		configManager.unsetConfiguration(CONFIG_KEY, "fightHistoryData");
 
 		importFightHistoryData();
 
@@ -225,6 +228,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
+	}
+
+	private void update(String oldVersion)
+	{
+//		switch (oldVersion)
+//		{
+//			case "1.4.2":
+//				// update logic....
+//				break;
+//		}
+
+		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
 	}
 
 	@Override

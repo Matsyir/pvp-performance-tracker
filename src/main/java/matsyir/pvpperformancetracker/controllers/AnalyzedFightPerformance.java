@@ -91,7 +91,7 @@ public class AnalyzedFightPerformance extends FightPerformance
 			.filter(FightLogEntry::isFullEntry).sorted().collect(Collectors.toCollection(ArrayList::new));
 
 		int offsetsToCheck = 2; // total number of fight log offsets to start from and find matches in the opposing fight.
-		int attacksToCheck = 16; // total number of opposing logs to check starting from the offset.
+		int attacksToCheck = 12; // total number of opposing logs to check starting from the offset.
 		// TODO: THIS SHOULDNT BREAK IF attacksToCheck IS 300+ or unused & using all attacks/logs ????
 		// ^ or maybe we dont have specific enough data to have it working 100% this way?
 
