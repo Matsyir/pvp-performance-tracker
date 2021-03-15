@@ -10,7 +10,7 @@ repositories {
 	mavenCentral()
 }
 
-def runeLiteVersion = '1.6.35.1'
+def runeLiteVersion = '1.7.2.2'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -26,7 +26,7 @@ dependencies {
 }
 
 group = 'matsyir.pvpperformancetracker'
-version = '1.4.2'
+version = '1.4.3'
 sourceCompatibility = '1.8'
 
 tasks.withType(JavaCompile) {

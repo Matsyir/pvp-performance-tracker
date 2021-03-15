@@ -73,6 +73,9 @@ public class TotalStatsPanel extends JPanel
 		nf2.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
+	private static final int LAYOUT_ROWS_WITH_WARNING = 9;
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 8;
+
 	// labels to be updated
 	private JLabel killsLabel;
 	private JLabel deathsLabel;
@@ -126,7 +129,7 @@ public class TotalStatsPanel extends JPanel
 	{
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(CONFIG.settingsConfigured() ? 8 : 9, 1));
+		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -556,7 +559,7 @@ public class TotalStatsPanel extends JPanel
 	{
 		if (enable)
 		{
-			setLayout(new GridLayout(8, 1));
+			setLayout(new GridLayout(LAYOUT_ROWS_WITH_WARNING, 1));
 
 			if (settingsWarningLabel == null)
 			{
@@ -566,12 +569,12 @@ public class TotalStatsPanel extends JPanel
 		}
 		else
 		{
-			if (getComponentCount() > 7)
+			if (getComponentCount() > LAYOUT_ROWS_WITHOUT_WARNING)
 			{
 				remove(settingsWarningLabel);
 				settingsWarningLabel = null;
 			}
-			setLayout(new GridLayout(7, 1));
+			setLayout(new GridLayout(LAYOUT_ROWS_WITHOUT_WARNING, 1));
 		}
 
 		validate();
