@@ -583,11 +583,15 @@ public class TotalStatsPanel extends JPanel
 	private void initializeSettingsWarningLabel()
 	{
 		settingsWarningLabel = new JLabel();
-		settingsWarningLabel.setText("CHECK CONFIG - NOT SETUP!");
-		settingsWarningLabel.setToolTipText("Please verify that the plugin is configured according to your needs.");
+		settingsWarningLabel.setText("Check plugin config for setup options!");
+		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
-		Font f = settingsWarningLabel.getFont();
-		settingsWarningLabel.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
+
+		// make the warning font bold & smaller font size so we can fix more text.
+		Font newFont = settingsWarningLabel.getFont();
+		newFont = newFont.deriveFont(newFont.getStyle() | Font.BOLD, 12f);
+		settingsWarningLabel.setFont(newFont);
+
 		settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	}
 }

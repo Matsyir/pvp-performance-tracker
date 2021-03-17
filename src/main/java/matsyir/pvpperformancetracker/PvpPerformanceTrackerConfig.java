@@ -75,7 +75,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
-		description = "Some settings affect damage calculations, and every player should set them based on how they're pking. Please confirm them and tick this box.",
+		description = "Some settings affect damage calculations, and every player should set them based on how they're pking. Please confirm them and tick this box in order to hide the config warning.",
 		position = -1
 	)
 	default boolean settingsConfigured()
