@@ -26,87 +26,128 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.ArrayList;
+import java.awt.Image;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
-import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import matsyir.pvpperformancetracker.controllers.FightPerformance;
-import matsyir.pvpperformancetracker.views.FightPerformancePanel;
-import matsyir.pvpperformancetracker.views.TotalStatsPanel;
+import matsyir.pvpperformancetracker.views.ConfigurationTabPanel;
+import matsyir.pvpperformancetracker.views.FightHistoryTabPanel;
+import matsyir.pvpperformancetracker.views.InformationTabPanel;
+import matsyir.pvpperformancetracker.views.TabContentPanel;
+import net.runelite.client.RuneLite;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.materialtabs.MaterialTab;
+import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
-class PvpPerformanceTrackerPanel extends PluginPanel
+public class PvpPerformanceTrackerPanel extends PluginPanel
 {
-	// The main fight history container, this will hold all the individual FightPerformancePanels.
-	private final JPanel fightHistoryContainer = new JPanel();
-	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
+	private final JPanel mainContainer = new JPanel();
+	public static final int MAX_TAB_COUNT = 3;
+	public final Map<String, MaterialTab> contentTabs = new HashMap<>();
+	private final MaterialTabGroup tabGroup = new MaterialTabGroup(mainContainer);
+
+
+	public FightHistoryTabPanel fightHistoryTabPanel = new FightHistoryTabPanel(this);
+	private ConfigurationTabPanel configurationTabPanel = new ConfigurationTabPanel(this);
+	private InformationTabPanel informationTabPanel = new InformationTabPanel(this);
+
+	private TabContentPanel activeTabPanel = fightHistoryTabPanel;
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
 
 	@Inject
-	private PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config)
+	public PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.config = config;
 
-		setLayout(new BorderLayout(0, 4));
+		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setBorder(new EmptyBorder(8, 8, 8, 8));
+
+		tabGroup.setAlignmentX(LEFT_ALIGNMENT);
+
+		// First tab: Fight history tab
+		addTab(fightHistoryTabPanel);
+		addTab(configurationTabPanel);
+		addTab(informationTabPanel);
+
+		add(tabGroup, BorderLayout.NORTH);
+		add(mainContainer, BorderLayout.CENTER);
+
 		JPanel mainContent = new JPanel(new BorderLayout());
 
-		fightHistoryContainer.setSize(getSize());
-		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
-		add(totalStatsPanel, BorderLayout.NORTH, 0);
+
 
 		// wrap mainContent with scrollpane so it has a scrollbar
-		JScrollPane scrollableContainer = new JScrollPane(mainContent);
-		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(6, 0));
+//		JScrollPane scrollableContainer = new JScrollPane(mainContent);
+//		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
+//		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(6, 0));
 
-		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
-		add(scrollableContainer, BorderLayout.CENTER);
+		//mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
+		//add(scrollableContainer, BorderLayout.CENTER);
 	}
 
-	public void addFight(FightPerformance fight)
+	private void addTab(TabContentPanel tabContentPanel)
 	{
-		totalStatsPanel.addFight(fight);
+		JPanel wrapped = new JPanel(new BorderLayout());
+		wrapped.add(tabContentPanel, BorderLayout.NORTH);
+		wrapped.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		SwingUtilities.invokeLater(() ->
+		JScrollPane scroller = new JScrollPane(wrapped);
+		scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scroller.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
+		scroller.getVerticalScrollBar().setBorder(new EmptyBorder(0, 0, 0, 0));
+		scroller.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+		// Use a placeholder icon until the async image gets loaded
+		MaterialTab materialTab = new MaterialTab(new ImageIcon(), tabGroup, scroller);
+		materialTab.setPreferredSize(new Dimension(64, 28)); // Math.round(((float)this.getWidth() / MAX_TAB_COUNT) - 8) ?? TODO why no work
+		materialTab.setName(tabContentPanel.getName());
+		materialTab.setToolTipText(tabContentPanel.getName());
+
+		// TODO ICON
+		// 16x16?
+		//BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/configure.png");
+		materialTab.setIcon(new ImageIcon(tabContentPanel.getTabIcon().getScaledInstance(16, 16, Image.SCALE_SMOOTH)));
+//		Runnable resize = () ->
+//		{
+//			BufferedImage subIcon = icon.getSubimage(0, 0, 32, 32);
+//			materialTab.setIcon(new ImageIcon(subIcon.getScaledInstance(24, 24, Image.SCALE_SMOOTH)));
+//		};
+//		icon.onLoaded(resize);
+//		resize.run();
+
+		materialTab.setOnSelectEvent(() ->
 		{
-			fightHistoryContainer.add(new FightPerformancePanel(fight), 0);
-			updateUI();
+			activeTabPanel = tabContentPanel;
+			tabContentPanel.update();
+			return true;
 		});
-	}
 
-	public void addFights(ArrayList<FightPerformance> fights)
-	{
-		totalStatsPanel.addFights(fights);
-		SwingUtilities.invokeLater(() ->
-		{
-			fights.forEach((FightPerformance f) -> fightHistoryContainer.add(new FightPerformancePanel(f), 0));
-			updateUI();
-		});
-	}
+		contentTabs.put(tabContentPanel.getName(), materialTab);
+		tabGroup.addTab(materialTab);
 
-	public void rebuild()
-	{
-		totalStatsPanel.reset();
-		fightHistoryContainer.removeAll();
-		if (plugin.fightHistory.size() > 0)
+		if (activeTabPanel.getName().equals(tabContentPanel.getName()))
 		{
-			addFights(plugin.fightHistory);
+			tabGroup.select(materialTab);
 		}
-		SwingUtilities.invokeLater(this::updateUI);
 	}
 
-	public void setConfigWarning(boolean enable)
+	void switchTab(String tabName)
 	{
-		totalStatsPanel.setConfigWarning(enable);
+		tabGroup.select(contentTabs.get(tabName));
+	}
+
+	void switchTab(TabContentPanel tab)
+	{
+		tabGroup.select(contentTabs.get(tab.getName()));
 	}
 }

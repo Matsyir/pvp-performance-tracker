@@ -31,6 +31,8 @@ import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -39,6 +41,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -130,7 +133,12 @@ public class TotalStatsPanel extends JPanel
 		totalStats = new Fighter("Player");
 
 		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
-		setBorder(new EmptyBorder(8, 8, 8, 8));
+
+		// outer border: matte border with 4px bottom, with same color as the panel behind the TotalStatPanel. Used as 'invisible' 4px offset
+		// inner border: padding for the inner content of the panel.
+		setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR),
+			new EmptyBorder(8, 8, 8, 8)));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// FIRST LINE
@@ -274,6 +282,8 @@ public class TotalStatsPanel extends JPanel
 
 		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(hpHealedPanel);
+
+		//add(Box.createVerticalStrut(32));
 
 
 		JPopupMenu popupMenu = new JPopupMenu();

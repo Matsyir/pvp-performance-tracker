@@ -60,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.views.FightHistoryTabPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -203,7 +204,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
-		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/skull_red.png");
 		PLUGIN_ICON = new ImageIcon(icon).getImage();
 		navButton = NavigationButton.builder()
 			.tooltip("PvP Fight History")
@@ -293,12 +294,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					// Remove oldest fightHistory until the size is smaller than the limit.
 					// Should only remove one fight in most cases.
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-					panel.rebuild();
+					panel.fightHistoryTabPanel.rebuild();
 				}
 				break;
 			case "settingsConfigured":
 				boolean enableConfigWarning = !config.settingsConfigured();
-				panel.setConfigWarning(enableConfigWarning);
+				panel.fightHistoryTabPanel.setConfigWarning(enableConfigWarning);
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -522,11 +523,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// Remove oldest fightHistory until the size is equal to the limit.
 			// Should only remove one fight in most cases.
 			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-			panel.rebuild();
+			panel.fightHistoryTabPanel.rebuild();
 		}
 		else
 		{
-			panel.addFight(fight);
+			panel.fightHistoryTabPanel.addFight(fight);
 		}
 	}
 
@@ -565,7 +566,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		panel.rebuild();
+		panel.fightHistoryTabPanel.rebuild();
 	}
 
 	// import additional/extra fight history data supplied by the user
@@ -588,7 +589,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		panel.rebuild();
+		panel.fightHistoryTabPanel.rebuild();
 	}
 
 	// set fight log names after importing since they aren't serialized but are on the parent class
@@ -638,14 +639,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		fightHistory.clear();
 		updateFightHistoryData();
-		panel.rebuild();
+		panel.fightHistoryTabPanel.rebuild();
 	}
 
 	// remove a fight from the loaded fight history
 	public void removeFight(FightPerformance fight)
 	{
 		fightHistory.remove(fight);
-		panel.rebuild();
+		panel.fightHistoryTabPanel.rebuild();
 	}
 
 	public boolean isAtLMS()
