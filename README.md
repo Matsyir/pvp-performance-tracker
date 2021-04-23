@@ -1,4 +1,5 @@
 # PvP Performance Tracker
+[![Active Installs](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub/Matsyir) [![Plugin Rank](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/rank/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub)
 
 External Plugin for [RuneLite](https://github.com/runelite/runelite), a third-party OldSchool Runescape client.
 
