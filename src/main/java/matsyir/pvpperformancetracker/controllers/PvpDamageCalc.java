@@ -51,7 +51,7 @@ import net.runelite.api.Player;
 // call updateDamageStats(...) with required parameters, and retrieve results by using the field getters
 // for averageHit, accuracy, maxHit, and minHit.
 //
-// combat formulas source thread QFC: 317,318,461,66138854
+// combat formulas source thread QFC (official RS forums): 317,318,461,66138854
 // osrs wiki was also used a lot
 @Slf4j
 public class PvpDamageCalc

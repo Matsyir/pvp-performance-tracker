@@ -26,6 +26,10 @@ public class InformationTabPanel extends TabContentPanel
 		contentContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		contentContainer.add(new JLabel("<html>wowowowow hmmmm<br><br>TEST</html>"));
 
+		JPanel contentPanel = new JPanel(new BorderLayout());
+		contentPanel.add(new JLabel("wow this is a hidden label very cool wow wow hmmmm wow test hmm aksjdasd ajksdjkahsd kjasdhjka"));
+		contentContainer.add(new HiddenContentPanel("Testing?", "stuff", true, contentPanel));
+
 		add(contentContainer, BorderLayout.CENTER);
 	}
 

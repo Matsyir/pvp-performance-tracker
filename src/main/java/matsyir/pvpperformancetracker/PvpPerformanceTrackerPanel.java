@@ -26,10 +26,13 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -46,11 +49,11 @@ import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 
 public class PvpPerformanceTrackerPanel extends PluginPanel
 {
-	private final JPanel mainContainer = new JPanel();
-	public static final int MAX_TAB_COUNT = 3;
-	public final Map<String, MaterialTab> contentTabs = new HashMap<>();
-	private final MaterialTabGroup tabGroup = new MaterialTabGroup(mainContainer);
+	public static final int NUM_TABS = 3;
 
+	private final Map<String, MaterialTab> contentTabs = new HashMap<>();
+	private final JPanel mainContainer = new JPanel();
+	private final MaterialTabGroup tabGroup = new MaterialTabGroup(mainContainer);
 
 	public FightHistoryTabPanel fightHistoryTabPanel = new FightHistoryTabPanel(this);
 	private ConfigurationTabPanel configurationTabPanel = new ConfigurationTabPanel(this);
@@ -70,11 +73,11 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		setLayout(new BorderLayout());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(8, 8, 8, 8));
+		setBorder(new EmptyBorder(8, 8, 0, 8));
 
-		tabGroup.setAlignmentX(LEFT_ALIGNMENT);
+		GridLayout tabGroupLayout = new GridLayout(1, NUM_TABS, 8, 0);
+		tabGroup.setLayout(tabGroupLayout);
 
-		// First tab: Fight history tab
 		addTab(fightHistoryTabPanel);
 		addTab(configurationTabPanel);
 		addTab(informationTabPanel);
@@ -109,7 +112,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		// Use a placeholder icon until the async image gets loaded
 		MaterialTab materialTab = new MaterialTab(new ImageIcon(), tabGroup, scroller);
-		materialTab.setPreferredSize(new Dimension(64, 28)); // Math.round(((float)this.getWidth() / MAX_TAB_COUNT) - 8) ?? TODO why no work
+		materialTab.setPreferredSize(new Dimension(16, 24)); // gridLayout will take care of the width
 		materialTab.setName(tabContentPanel.getName());
 		materialTab.setToolTipText(tabContentPanel.getName());
 

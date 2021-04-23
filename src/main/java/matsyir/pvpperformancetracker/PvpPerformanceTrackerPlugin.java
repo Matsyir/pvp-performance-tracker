@@ -151,6 +151,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private ClientToolbar clientToolbar;
 
+	@Getter
 	@Inject
 	private ConfigManager configManager;
 

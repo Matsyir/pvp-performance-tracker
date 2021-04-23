@@ -67,7 +67,7 @@ public class CombatLevels
 	public int mage;
 	@Expose
 	@SerializedName("h")
-	public int hp; // not currently used but potential dh support in future?
+	public int hp; // useful with fight merge
 
 	public CombatLevels(int atk, int str, int def, int range, int mage, int hp)
 	{
