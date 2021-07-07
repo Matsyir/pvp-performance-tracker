@@ -89,6 +89,32 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		totalStatsPanel.addFights(fights);
 		SwingUtilities.invokeLater(() ->
 		{
+			// if we're adding more fights than we want to render at all, then reduce the number of fights and clear all the existing ones
+			if (fights.size() > config.fightHistoryRenderLimit())
+			{
+				int numFightsToRemove = fights.size() - config.fightHistoryRenderLimit();
+				fights.removeIf((FightPerformance f) -> fights.indexOf(f) < numFightsToRemove);
+				fightHistoryContainer.removeAll();
+			}
+			// if we're adding a normal number of fights, then check if we actually need to remove existing fights to make room for it.
+			else
+			{
+				int fightsToAdd = fights.size();
+				int fightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit() + fightsToAdd;
+
+				// if we do need to remove fights, then remove them from the start so we remove oldest ones
+				if (fightsToRemove > 0)
+				{
+					// Remove oldest fightHistory until the size is equal to the limit.
+					// Should only remove one fight in most cases.
+					for (int i = 0; i < fightsToRemove && i < fightHistoryContainer.getComponentCount(); i++)
+					{
+						fightHistoryContainer.remove(0);
+					}
+				}
+
+			}
+
 			fights.forEach((FightPerformance f) -> fightHistoryContainer.add(new FightPerformancePanel(f), 0));
 			updateUI();
 		});
@@ -100,7 +126,8 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		fightHistoryContainer.removeAll();
 		if (plugin.fightHistory.size() > 0)
 		{
-			addFights(plugin.fightHistory);
+			// create new arraylist from the main one so we can't modify the fight history
+			addFights(new ArrayList<>(plugin.fightHistory));
 		}
 		SwingUtilities.invokeLater(this::updateUI);
 	}

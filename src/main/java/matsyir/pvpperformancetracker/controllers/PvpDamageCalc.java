@@ -175,8 +175,8 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -231,8 +231,8 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -250,9 +250,9 @@ public class PvpDamageCalc
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
 		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MODIFIER : 1;
@@ -308,9 +308,9 @@ public class PvpDamageCalc
 
 	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
-		boolean dds = ArrayUtils.contains(EquipmentData.DRAGON_DAGGERS, weapon);
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
 		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
@@ -328,7 +328,7 @@ public class PvpDamageCalc
 		maxHit = (int) (modifier * baseDamage);
 	}
 
-	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 
@@ -352,6 +352,23 @@ public class PvpDamageCalc
 		{
 			effectiveLevel *= voidStyle.dmgModifier;
 		}
+
+		// apply crystal armor bonus if using bow
+		EquipmentData head = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.HEAD.getIndex()]);
+		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
+		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
+
+		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW) &&
+			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
+		{
+			double dmgModifier = 1 +
+				(head == EquipmentData.CRYSTAL_HELM ? 0.025 : 0) +
+				(body == EquipmentData.CRYSTAL_BODY ? 0.075 : 0) +
+				(legs == EquipmentData.CRYSTAL_LEGS ? 0.05 : 0);
+
+			effectiveLevel *= dmgModifier;
+		}
+
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
@@ -390,8 +407,8 @@ public class PvpDamageCalc
 
 	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
-		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD || weapon == EquipmentData.BLIGHTED_VESTAS_LONGSWORD;;
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD || weapon == EquipmentData.ARMADYL_GODSWORD_OR;
+		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
+		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 
 		double stabBonusPlayer = playerStats[STAB_ATTACK];
@@ -463,7 +480,7 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
@@ -488,6 +505,22 @@ public class PvpDamageCalc
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
 			effectiveLevelPlayer *= voidStyle.accuracyModifier;
+		}
+
+		// apply crystal armor bonus if using bow - not sure if this goes here but I imagine it's the same as void?
+		EquipmentData head = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.HEAD.getIndex()]);
+		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
+		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
+
+		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW) &&
+			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
+		{
+			double accuracyModifier = 1 +
+				(head == EquipmentData.CRYSTAL_HELM ? 0.05 : 0) +
+				(body == EquipmentData.CRYSTAL_BODY ? 0.15 : 0) +
+				(legs == EquipmentData.CRYSTAL_LEGS ? 0.1 : 0);
+
+			effectiveLevelPlayer *= accuracyModifier;
 		}
 
 		rangeModifier = Math.floor(effectiveLevelPlayer * ((double) playerRangeAtt + 64));

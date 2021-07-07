@@ -38,6 +38,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	int LEVEL_MIN = 1;
 	int LEVEL_MAX = 120;
 
+	// ================================= Sections =================================
+
 	@ConfigSection(name = "Overlay",
 		description = "Contains overlay settings (MAX of 5 lines)",
 		position = 20,
@@ -59,7 +61,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	String levels = "levels";
 
-	// ================================= Done sections, config items below =================================
+	// ================================= General =================================
 
 	@ConfigItem(
 		keyName = "pluginVersion",
@@ -104,6 +106,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return true;
 	}
+
+	// ================================= Overlay =================================
 
 	@ConfigItem(
 		keyName = "showFightOverlay",
@@ -213,6 +217,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return false;
 	}
 
+	// ================================= Gear/Ammo =================================
+
 	@ConfigItem(
 		keyName = "ringChoice",
 		name = "Ring Used",
@@ -260,6 +266,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return RangeAmmoData.DartAmmo.DRAGON_DARTS;
 	}
+
+	// ================================= Levels =================================
 
 	@Range(
 		min = LEVEL_MIN,
@@ -341,18 +349,34 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return 99;
 	}
 
+	// ================================= Misc/Less-Used-General =================================
+
 	@Range(
-		max = 10000
+		max = 1000
+	)
+	@ConfigItem(
+		keyName = "fightHistoryRenderLimit",
+		name = "Max Rendered Fights",
+		description = "Maximum number of previous fights to save to be displayed in the panel. WILL cause lag spikes at high numbers. This should be small if you have low RAM",
+		position = 205
+	)
+	default int fightHistoryRenderLimit()
+	{
+		return 200;
+	}
+
+	@Range(
+		max = 1000000
 	)
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
-		name = "Fight History Limit",
-		description = "Maximum number of previous fights to save and display in the panel. 0 means unlimited. Can cause lag spikes at extreme numbers",
+		name = "Max Saved Fights",
+		description = "Maximum number of previous fights to save to a local file and use for total stats. 0 means unlimited. May cause lag spikes at extreme numbers on low-end PCs",
 		position = 210
 	)
 	default int fightHistoryLimit()
 	{
-		return 1000;
+		return 10000;
 	}
 
 	@ConfigItem(

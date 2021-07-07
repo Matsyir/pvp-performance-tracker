@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
+import net.runelite.api.ItemID;
 import net.runelite.api.kit.KitType;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -35,24 +36,17 @@ import org.apache.commons.lang3.ArrayUtils;
 // cached like most items. Each LMS item will have the 'real' itemId so the stats can be looked up.
 // A few non-LMS range weapons will be saved in order to help estimate ammo type/range strength based
 // on current weapon itemId, or to determine special attacks used.
-// TODO, allow multiple "real" itemIds linked with each item, but only use the first as a stat lookup for lms items.
-// ^^ should help clean up the code a bit
 public enum EquipmentData
 {
 	// Non-LMS items:
-	DRAGON_DAGGER_P(1231), // dragon dagger (p)
-	DRAGON_DAGGER_PP(5680), // dragon dagger (p+)
-	DRAGON_DAGGER_PPP(5698), // dragon dagger (p++)
 	DRAGON_CROSSBOW(21902),
 	DRAGON_HUNTER_CROSSBOW(21012),
-	ARMADYL_GODSWORD_OR(20368),
 	LIGHT_BALLISTA(19478),
 	MAGIC_SHORTBOW(861),
 	MAGIC_SHORTBOW_I(12788),
 	TOXIC_BLOWPIPE(12926),
 	VOLATILE_NIGHTMARE_STAFF(24424),
 	//CRAWS_BOW(22550), // ammo bonus is built into weapon so we don't need to include it
-	BLIGHTED_VESTAS_LONGSWORD(24617),
 	SMOKE_BATTLESTAFF(11998),
 	TOME_OF_FIRE(20714), // (charged tome)
 	VOID_MAGE_HELM(11663, 11674), // the first void helm numbers were tested (11663-11665), the extra IDs purposes are
@@ -63,77 +57,81 @@ public enum EquipmentData
 	VOID_GLOVES(8842),
 	VOID_BODY(8839, 10611), // same here, not sure why there is a duplicate, but included just in case.
 	VOID_LEGS(8840),
+	CRYSTAL_HELM(ItemID.CRYSTAL_HELM),
+	CRYSTAL_BODY(ItemID.CRYSTAL_BODY),
+	CRYSTAL_LEGS(ItemID.CRYSTAL_LEGS),
+	BOW_OF_FAERDHINEN(ItemID.BOW_OF_FAERDHINEN, ItemID.BOW_OF_FAERDHINEN_C, ItemID.BOW_OF_FAERDHINEN_C_25869, ItemID.BOW_OF_FAERDHINEN_C_25884, ItemID.BOW_OF_FAERDHINEN_C_25886, ItemID.BOW_OF_FAERDHINEN_C_25888, ItemID.BOW_OF_FAERDHINEN_C_25890, ItemID.BOW_OF_FAERDHINEN_C_25892, ItemID.BOW_OF_FAERDHINEN_C_25894, ItemID.BOW_OF_FAERDHINEN_C_25896),
+	CRYSTAL_BOW(ItemID.CRYSTAL_BOW_FULL, ItemID.CRYSTAL_BOW_FULL_I, ItemID.CRYSTAL_BOW, ItemID.CRYSTAL_BOW_110, ItemID.CRYSTAL_BOW_110_I, ItemID.CRYSTAL_BOW_210, ItemID.CRYSTAL_BOW_210_I, ItemID.CRYSTAL_BOW_310, ItemID.CRYSTAL_BOW_310_I, ItemID.CRYSTAL_BOW_410, ItemID.CRYSTAL_BOW_410_I, ItemID.CRYSTAL_BOW_510, ItemID.CRYSTAL_BOW_510_I, ItemID.CRYSTAL_BOW_610, ItemID.CRYSTAL_BOW_610_I, ItemID.CRYSTAL_BOW_710, ItemID.CRYSTAL_BOW_710_I, ItemID.CRYSTAL_BOW_810, ItemID.CRYSTAL_BOW_810_I, ItemID.CRYSTAL_BOW_910, ItemID.CRYSTAL_BOW_910_I),
 
 	// LMS items:
-	RUNE_CROSSBOW(23601, 9185),
-	ARMADYL_CROSSBOW(23611, 11785),
-	DARK_BOW(20408, 11235),
-	HEAVY_BALLISTA(23630, 19481),
+	RUNE_CROSSBOW(9185, 23601),
+	ARMADYL_CROSSBOW(11785, 23611),
+	DARK_BOW(11235, 20408),
+	HEAVY_BALLISTA(19481, 23630),
 
-	STATIUS_WARHAMMER(23620, 22622),
-	VESTAS_LONGSWORD(23615, 22613),
-	ARMADYL_GODSWORD(20593, 11802),
-	DRAGON_CLAWS(20784, 13652),
-	DRAGON_DAGGER(20407, 1215),
-	GRANITE_MAUL(20557, 4153),
-	AMULET_OF_FURY(23640, 6585),
-	BANDOS_TASSETS(23646, 11834),
-	BLESSED_SPIRIT_SHIELD(23642, 12831),
-	DHAROKS_HELM(23639, 4716),
-	DHAROKS_PLATELEGS(23633, 4722),
-	GUTHANS_HELM(23638, 4724),
-	KARILS_TOP(23632, 4736),
-	TORAGS_HELM(23637, 4745),
-	TORAGS_PLATELEGS(23634, 4751),
-	VERACS_HELM(23636, 4753),
-	VERACS_PLATESKIRT(23635, 4759),
-	MORRIGANS_JAVELIN(23619, 22636),
-	SPIRIT_SHIELD(23599, 12829),
-	HELM_OF_NEITIZNOT(23591, 10828),
-	AMULET_OF_GLORY(20586, 1704),
-	ABYSSAL_WHIP(20405, 4151),
-	DRAGON_DEFENDER(23597, 12954),
-	BLACK_DHIDE_BODY(20423, 2503),
-	RUNE_PLATELEGS(20422, 1079),
-	ROCK_CLIMBING_BOOTS(20578, 2203),
-	BARROWS_GLOVES(23593, 7462),
-	ELDER_MAUL(21205, 21003),
-	INFERNAL_CAPE(23622, 21295),
-	GHRAZI_RAPIER(23628, 22324),
+	STATIUS_WARHAMMER(22622, 23620),
+	VESTAS_LONGSWORD(22613, 23615, 24617),
+	ARMADYL_GODSWORD(11802, 20593, 20368),
+	DRAGON_CLAWS(13652, 20784),
+	DRAGON_DAGGER(1215, 20407, 1231, 5680, 5698),
+	GRANITE_MAUL(4153, 20557),
+	AMULET_OF_FURY(6585, 23640),
+	BANDOS_TASSETS(11834, 23646),
+	BLESSED_SPIRIT_SHIELD(12831, 23642),
+	DHAROKS_HELM(4716, 23639),
+	DHAROKS_PLATELEGS(4722, 23633),
+	GUTHANS_HELM(4724, 23638),
+	KARILS_TOP(4736, 23632),
+	TORAGS_HELM(4745, 23637),
+	TORAGS_PLATELEGS(4751, 23634),
+	VERACS_HELM(4753, 23636),
+	VERACS_PLATESKIRT(4759, 23635),
+	MORRIGANS_JAVELIN(22636, 23619),
+	SPIRIT_SHIELD(12829, 23599),
+	HELM_OF_NEITIZNOT(10828, 23591),
+	AMULET_OF_GLORY(1704, 20586),
+	ABYSSAL_WHIP(4151, 20405),
+	DRAGON_DEFENDER(12954, 23597),
+	BLACK_DHIDE_BODY(2503, 20423),
+	RUNE_PLATELEGS(1079, 20422),
+	ROCK_CLIMBING_BOOTS(2203, 20578),
+	BARROWS_GLOVES(7462, 23593),
+	ELDER_MAUL(21003, 21205),
+	INFERNAL_CAPE(21295, 23622),
+	GHRAZI_RAPIER(22324, 23628),
 
-	ZURIELS_STAFF(23617, 22647),
-	STAFF_OF_THE_DEAD(23613, 11791),
-	KODAI_WAND(23626, 21006),
-	AHRIMS_STAFF(23653, 4710),
-	MYSTIC_ROBE_TOP(20425, 4091),
-	MYSTIC_ROBE_BOTTOM(20426, 4093),
-	AHRIMS_ROBE_TOP(20598, 4712),
-	AHRIMS_ROBE_SKIRT(20599, 4714),
-	OCCULT_NECKLACE(23654, 12002),
-	MAGES_BOOK(23652, 6889),
-	ETERNAL_BOOTS(23644, 13235),
-	IMBUED_ZAMORAK_CAPE(23605, 21795),
-	IMBUED_GUTHIX_CAPE(23603, 21793),
-	IMBUED_SARADOMIN_CAPE(23607, 21791);
+	ZURIELS_STAFF(22647, 23617),
+	STAFF_OF_THE_DEAD(11791, 23613),
+	KODAI_WAND(21006, 23626),
+	AHRIMS_STAFF(4710, 23653),
+	MYSTIC_ROBE_TOP(4091, 20425),
+	MYSTIC_ROBE_BOTTOM(4093, 20426),
+	AHRIMS_ROBE_TOP(4712, 20598),
+	AHRIMS_ROBE_SKIRT(4714, 20599),
+	OCCULT_NECKLACE(12002, 23654),
+	MAGES_BOOK(6889, 23652),
+	ETERNAL_BOOTS(13235, 23644),
+	IMBUED_ZAMORAK_CAPE(21795, 23605),
+	IMBUED_GUTHIX_CAPE(21793, 23603),
+	IMBUED_SARADOMIN_CAPE(21791, 23607);
 
-	public static final EquipmentData[] DRAGON_DAGGERS = { DRAGON_DAGGER, DRAGON_DAGGER_P, DRAGON_DAGGER_PP, DRAGON_DAGGER_PPP };
 	private static final Map<Integer, EquipmentData> itemData = new HashMap<>();
 
 	@Getter
-	private final int lmsItemId;
+	private final int itemId; // main id to be used for stat lookups
 	@Getter
-	private final int itemId;
-
-	EquipmentData(int lmsItemId, int itemId)
-	{
-		this.lmsItemId = lmsItemId;
-		this.itemId = itemId;
-	}
+	private final int[] additionalIds; // extra ids that might represent the same item (like LMS versions, or a dragon dagger(p) = dds, or charged items etc)
 
 	EquipmentData(int itemId)
 	{
-		this.lmsItemId = itemId;
 		this.itemId = itemId;
+		this.additionalIds = null;
+	}
+
+	EquipmentData(int itemId, int... itemIds)
+	{
+		this.itemId = itemId;
+		this.additionalIds = itemIds;
 	}
 
 	// Get the saved EquipmentData for a given itemId (could be null)
@@ -177,10 +175,13 @@ public enum EquipmentData
 	{
 		for (EquipmentData data : EquipmentData.values())
 		{
-			itemData.put(data.getLmsItemId(), data);
-			if (!itemData.containsKey(data.getItemId()))
+			itemData.putIfAbsent(data.getItemId(), data);
+			if (data.additionalIds != null && data.additionalIds.length > 0)
 			{
-				itemData.put(data.getItemId(), data);
+				for (int id : data.additionalIds)
+				{
+					itemData.putIfAbsent(id, data);
+				}
 			}
 		}
 	}

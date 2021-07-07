@@ -287,14 +287,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				break;
 			// If the user updates the fight history limit, remove fights as necessary
 			case "fightHistoryLimit":
+			case "fightHistoryRenderLimit":
 				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 				{
 					int numToRemove = fightHistory.size() - config.fightHistoryLimit();
 					// Remove oldest fightHistory until the size is smaller than the limit.
 					// Should only remove one fight in most cases.
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-					panel.rebuild();
 				}
+				panel.rebuild();
 				break;
 			case "settingsConfigured":
 				boolean enableConfigWarning = !config.settingsConfigured();
