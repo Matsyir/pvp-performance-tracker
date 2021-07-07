@@ -24,11 +24,16 @@ public class InformationTabPanel extends TabContentPanel
 
 		contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
 		contentContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		contentContainer.add(new JLabel("<html>wowowowow hmmmm<br><br>TEST</html>"));
+		contentContainer.add(new JLabel(String.format("<html><body style=\"text-align: justify; text-justify: inter-word;\">%s</body></html>", "Thanks for using the PvP Performance tracker. <strong>It's not perfect</strong>, but it is good enough to determine if you lost due to bad RNG, and find ways you can improve. Here are some details on how it works and how you can interpret the stats.")));
+
 
 		JPanel contentPanel = new JPanel(new BorderLayout());
-		contentPanel.add(new JLabel("wow this is a hidden label very cool wow wow hmmmm wow test hmm aksjdasd ajksdjkahsd kjasdhjka"));
-		contentContainer.add(new HiddenContentPanel("Testing?", "stuff", true, contentPanel));
+		contentPanel.add(new JLabel("hey its me a test"));
+		contentContainer.add(new HiddenContentPanel("Testing?", "stuff", false, contentPanel));
+
+		JPanel secondContentPanel = new JPanel(new BorderLayout());
+		secondContentPanel.add(new JLabel("hey its me another test"));
+		contentContainer.add(new HiddenContentPanel("Testing2?", "stuff2", false, secondContentPanel));
 
 		add(contentContainer, BorderLayout.CENTER);
 	}

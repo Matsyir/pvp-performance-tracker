@@ -26,6 +26,7 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.math.RoundingMode;
@@ -33,6 +34,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -42,11 +44,13 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import jdk.tools.jlink.plugin.Plugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
@@ -579,7 +583,7 @@ public class TotalStatsPanel extends JPanel
 		}
 		else
 		{
-			if (getComponentCount() > LAYOUT_ROWS_WITHOUT_WARNING)
+			if (settingsWarningLabel != null)
 			{
 				remove(settingsWarningLabel);
 				settingsWarningLabel = null;

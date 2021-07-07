@@ -1,12 +1,16 @@
 package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
+import java.awt.TextArea;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.border.LineBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 
@@ -32,11 +36,12 @@ public class HiddenContentPanel extends JPanel
 	public HiddenContentPanel(String title, String titleTooltip, boolean initiallyVisible, JPanel content)
 	{
 		this.isVisible = initiallyVisible;
-		content.setVisible(isVisible);
 
-		setLayout(new BorderLayout());
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		JPanel titlePanel = new JPanel(new BorderLayout());
+		titlePanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		JLabel titleLabel = new JLabel(title);
 		titleLabel.setIcon(isVisible ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
 		if (titleTooltip != null && titleTooltip.length() > 0)
@@ -44,12 +49,17 @@ public class HiddenContentPanel extends JPanel
 			titleLabel.setToolTipText(titleTooltip);
 		}
 
-		titlePanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		JPanel contentContainer = new JPanel(new BorderLayout());
+		contentContainer.setBorder(new LineBorder(ColorScheme.DARKER_GRAY_HOVER_COLOR));
+		contentContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-		titlePanel.add(titleLabel, BorderLayout.NORTH);
+		content.setBackground(null);
+		contentContainer.add(content, BorderLayout.CENTER);
+		contentContainer.setVisible(isVisible);
+
 
 		HiddenContentPanel that = this;
-		titlePanel.addMouseListener(new MouseListener()
+		MouseListener toggleContentOnClick = new MouseListener()
 		{
 			@Override
 			public void mouseClicked(MouseEvent e)
@@ -57,30 +67,37 @@ public class HiddenContentPanel extends JPanel
 				if (e.getButton() != MouseEvent.BUTTON1) { return; }
 
 				isVisible = !isVisible;
-				content.setVisible(isVisible);
+				contentContainer.setVisible(isVisible);
 				titleLabel.setIcon(isVisible ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
-				that.repaint();
+				that.validate();
 			}
 
 
 			@Override public void mouseEntered(MouseEvent e)
 			{
-				titleLabel.setIcon(isVisible ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
-				that.repaint();
+				titleLabel.setIcon(isVisible ? SECTION_RETRACT_ICON_HOVER : SECTION_EXPAND_ICON_HOVER);
+				that.validate();
 			}
 			@Override public void mouseExited(MouseEvent e)
 			{
 				titleLabel.setIcon(isVisible ? SECTION_RETRACT_ICON : SECTION_EXPAND_ICON);
-				that.repaint();
+				that.validate();
 			}
 
 			@Override public void mousePressed(MouseEvent e) { }
 			@Override public void mouseReleased(MouseEvent e) { }
-		});
+		};
+
+		titlePanel.addMouseListener(toggleContentOnClick);
+		titleLabel.addMouseListener(toggleContentOnClick);
 
 
 
-		add(titlePanel, BorderLayout.NORTH);
-		add(content, BorderLayout.CENTER);
+		titlePanel.add(titleLabel, BorderLayout.WEST);
+
+//		add(titlePanel, BorderLayout.NORTH);
+//		add(content, BorderLayout.CENTER);
+		add(titlePanel);
+		add(contentContainer);
 	}
 }
