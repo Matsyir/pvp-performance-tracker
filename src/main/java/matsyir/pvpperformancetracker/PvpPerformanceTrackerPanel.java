@@ -80,6 +80,19 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		SwingUtilities.invokeLater(() ->
 		{
 			fightHistoryContainer.add(new FightPerformancePanel(fight), 0);
+
+			// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
+			if (fightHistoryContainer.getComponentCount() > config.fightHistoryRenderLimit())
+			{
+				// this will probably only remove 1 fight in most cases, but just in case we need to remove more than that.
+				int numFightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit();
+				for (int i = 0; i < numFightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
+				{
+					// remove from the last components since we add to 0
+					fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
+				}
+			}
+
 			updateUI();
 		});
 	}
@@ -106,10 +119,10 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 				if (fightsToRemove > 0)
 				{
 					// Remove oldest fightHistory until the size is equal to the limit.
-					// Should only remove one fight in most cases.
-					for (int i = 0; i < fightsToRemove && i < fightHistoryContainer.getComponentCount(); i++)
+					for (int i = 0; i < fightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
 					{
-						fightHistoryContainer.remove(0);
+						// remove from the last components since we add to 0
+						fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
 					}
 				}
 
