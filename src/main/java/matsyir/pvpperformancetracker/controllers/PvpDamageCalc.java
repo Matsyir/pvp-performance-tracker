@@ -358,7 +358,7 @@ public class PvpDamageCalc
 		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
 		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
 
-		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW) &&
+		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
 			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
 		{
 			double dmgModifier = 1 +
@@ -512,7 +512,7 @@ public class PvpDamageCalc
 		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
 		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
 
-		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW) &&
+		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
 			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
 		{
 			double accuracyModifier = 1 +

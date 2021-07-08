@@ -352,6 +352,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	// ================================= Misc/Less-Used-General =================================
 
 	@Range(
+		min = 1,
 		max = 1000
 	)
 	@ConfigItem(
