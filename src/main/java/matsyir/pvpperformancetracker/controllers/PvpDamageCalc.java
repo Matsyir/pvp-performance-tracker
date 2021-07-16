@@ -163,8 +163,8 @@ public class PvpDamageCalc
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		boolean isSpecial = animationData.isSpecial;
 
-		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
-		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
+		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
+		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId > 512 ? weaponId - 512 : weaponId);
 
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition().getEquipmentIds());
 
@@ -182,7 +182,9 @@ public class PvpDamageCalc
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			getMagicMaxHit(attackerItems[KitType.SHIELD.getIndex()], playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
+			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
+			EquipmentData shield = EquipmentData.getEquipmentDataFor(shieldId > 512 ? shieldId - 512 : shieldId);
+			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
 		}
 
@@ -219,8 +221,8 @@ public class PvpDamageCalc
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		boolean isSpecial = animationData.isSpecial;
 
-		int weaponId = attackerItems[WEAPON_SLOT] > 512 ? attackerItems[WEAPON_SLOT] - 512 : attackerItems[WEAPON_SLOT];
-		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId);
+		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
+		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId > 512 ? weaponId - 512 : weaponId);
 
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attackerItems);
 
@@ -238,7 +240,9 @@ public class PvpDamageCalc
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			getMagicMaxHit(attackerItems[KitType.SHIELD.getIndex()], playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
+			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
+			EquipmentData shield = EquipmentData.getEquipmentDataFor(shieldId > 512 ? shieldId - 512 : shieldId);
+			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
@@ -380,10 +384,10 @@ public class PvpDamageCalc
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
 	}
 
-	private void getMagicMaxHit(int shieldItemId, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMagicMaxHit(EquipmentData shield, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
-		boolean tome = EquipmentData.getEquipmentDataFor(shieldItemId) == EquipmentData.TOME_OF_FIRE;
+		boolean tome = shield == EquipmentData.TOME_OF_FIRE;
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		// provide dmg buff from smoke battlestaff if applicable
@@ -507,7 +511,7 @@ public class PvpDamageCalc
 			effectiveLevelPlayer *= voidStyle.accuracyModifier;
 		}
 
-		// apply crystal armor bonus if using bow - not sure if this goes here but I imagine it's the same as void?
+		// apply crystal armor bonus if using bow
 		EquipmentData head = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.HEAD.getIndex()]);
 		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
 		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);

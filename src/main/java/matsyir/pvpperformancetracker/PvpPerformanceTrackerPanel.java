@@ -115,7 +115,6 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 				int fightsToAdd = fights.size();
 				int fightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit() + fightsToAdd;
 
-				// if we do need to remove fights, then remove them from the start so we remove oldest ones
 				if (fightsToRemove > 0)
 				{
 					// Remove oldest fightHistory until the size is equal to the limit.

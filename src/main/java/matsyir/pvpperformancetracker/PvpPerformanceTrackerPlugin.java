@@ -845,7 +845,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			final int finalItemId = itemId - (verifyId ? 512 : 0);
 			PLUGIN.clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
-				label.setToolTipText(itemManager.getItemComposition(finalItemId).getName());
+				String name = itemManager.getItemComposition(finalItemId).getName();
+				label.setToolTipText(name != null ? name : "Item Name Not Found");
 				if (swingCallback != null)
 				{
 					SwingUtilities.invokeLater(swingCallback);
