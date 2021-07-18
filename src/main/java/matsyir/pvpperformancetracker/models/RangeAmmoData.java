@@ -24,8 +24,10 @@
  */
 package matsyir.pvpperformancetracker.models;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import lombok.Getter;
-import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
+import org.apache.commons.lang3.StringUtils;
 
 public interface RangeAmmoData
 {
@@ -206,6 +208,16 @@ public interface RangeAmmoData
 		public double getBonusMaxHit(int rangeLevel)
 		{
 			return 0;
+		}
+
+		@Override
+		public String toString()
+		{
+			String[] words = super.toString().toLowerCase().split("_");
+			Arrays.stream(words)
+				.map(StringUtils::capitalize).collect(Collectors.toList()).toArray(words);
+
+			return String.join(" ", words);
 		}
 	}
 }

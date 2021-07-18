@@ -60,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -838,15 +839,23 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// if verifyId is true, takes in itemId directly from PlayerComposition, so need to -512 for actual itemid
 	// otherwise, assume valid itemId
-	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
 	{
 		if (itemId > 512 || !verifyId)
 		{
 			final int finalItemId = itemId - (verifyId ? 512 : 0);
 			PLUGIN.clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
-				String name = itemManager.getItemComposition(finalItemId).getName();
-				label.setToolTipText(name != null ? name : "Item Name Not Found");
+				if (tooltipOverride != null && tooltipOverride.length() > 0)
+				{
+					label.setToolTipText(tooltipOverride);
+				}
+				else
+				{
+					String name = itemManager.getItemComposition(finalItemId).getName();
+					label.setToolTipText(name != null ? name : "Item Name Not Found");
+				}
+
 				if (swingCallback != null)
 				{
 					SwingUtilities.invokeLater(swingCallback);
@@ -863,6 +872,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			}
 		}
 	}
+
+	public void addItemToLabelIfValid(JLabel label, RangeAmmoData data, boolean verifyId, Runnable swingCallback)
+	{
+		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString());
+	}
+
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
+	{
+		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null);
+	}
+
 	public void addItemToLabelIfValid(JLabel label, int itemId)
 	{
 		addItemToLabelIfValid(label, itemId, true, null);

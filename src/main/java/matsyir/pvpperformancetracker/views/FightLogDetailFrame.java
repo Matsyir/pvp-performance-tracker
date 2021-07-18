@@ -364,7 +364,7 @@ class FightLogDetailFrame extends JFrame
 		if (weaponAmmo != null)
 		{
 			JLabel ammo = new JLabel();
-			PLUGIN.addItemToLabelIfValid(ammo, weaponAmmo.getItemId(), false, null);
+			PLUGIN.addItemToLabelIfValid(ammo, weaponAmmo, false, null);
 			capeLine.add(ammo, BorderLayout.EAST);
 		}
 
