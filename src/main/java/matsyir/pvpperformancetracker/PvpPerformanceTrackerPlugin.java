@@ -102,7 +102,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.4.4";
+	public static final String PLUGIN_VERSION = "1.4.5";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -113,8 +113,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A state.
 	public static Gson GSON;
 
-	// Last man standing map regions, excluding lobby
-	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13658, 13659, 13660, 13914, 13915, 13916);
+	// Last man standing map regions, not including lobby
+	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(13658, 13659, 13660, 13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
 
 	static
 	{

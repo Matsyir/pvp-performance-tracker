@@ -56,9 +56,8 @@ import net.runelite.api.Player;
 @Slf4j
 public class PvpDamageCalc
 {
-	private static final int WEAPON_SLOT = 3,
-		STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3, RANGE_ATTACK = 4,
-		STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
+	private static final int STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3,
+		RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
 		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
@@ -337,8 +336,8 @@ public class PvpDamageCalc
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
-		if (this.isLmsFight && weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
-			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo)
+		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
+			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
 		{
 			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
 		}
@@ -488,8 +487,8 @@ public class PvpDamageCalc
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
-		if (this.isLmsFight && weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
-			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo)
+		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
+			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
 		{
 			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
 		}
