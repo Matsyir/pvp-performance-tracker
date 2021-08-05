@@ -78,7 +78,7 @@ public enum AnimationData
 	MELEE_GODSWORD_SLASH(7045, AttackStyle.SLASH), // tested w/ AGS, BGS, ZGS, SGS, AGS(or) sara sword
 	MELEE_GODSWORD_CRUSH(7054, AttackStyle.CRUSH), // tested w/ AGS, BGS, ZGS, SGS, sara sword
 	MELEE_DRAGON_CLAWS_SPEC(7514, AttackStyle.SLASH, true),
-	MELEE_DRAGON_SWORD_SPEC(7515, AttackStyle.STAB, true), // also VLS spec
+	MELEE_VLS_SPEC(7515, AttackStyle.SLASH, true), // both VLS and dragon sword spec
 	MELEE_ELDER_MAUL(7516, AttackStyle.CRUSH),
 	MELEE_ZAMORAK_GODSWORD_SPEC(7638, AttackStyle.SLASH, true), // tested zgs spec
 	MELEE_ZAMORAK_GODSWORD_OR_SPEC(7639, AttackStyle.SLASH, true), // UNTESTED, assumed due to ags(or)
@@ -177,7 +177,7 @@ public enum AnimationData
 		DATA = builder.build();
 	}
 
-	public static AnimationData dataForAnimation(int animationId)
+	public static AnimationData fromId(int animationId)
 	{
 		return DATA.get(animationId);
 	}

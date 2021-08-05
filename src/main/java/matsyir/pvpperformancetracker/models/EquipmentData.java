@@ -63,6 +63,7 @@ public enum EquipmentData
 	BOW_OF_FAERDHINEN(ItemID.BOW_OF_FAERDHINEN, ItemID.BOW_OF_FAERDHINEN_C, ItemID.BOW_OF_FAERDHINEN_C_25869, ItemID.BOW_OF_FAERDHINEN_C_25884, ItemID.BOW_OF_FAERDHINEN_C_25886, ItemID.BOW_OF_FAERDHINEN_C_25888, ItemID.BOW_OF_FAERDHINEN_C_25890, ItemID.BOW_OF_FAERDHINEN_C_25892, ItemID.BOW_OF_FAERDHINEN_C_25894, ItemID.BOW_OF_FAERDHINEN_C_25896),
 	CRYSTAL_BOW(ItemID.CRYSTAL_BOW_FULL, ItemID.CRYSTAL_BOW, ItemID.CRYSTAL_BOW_110, ItemID.CRYSTAL_BOW_210, ItemID.CRYSTAL_BOW_310, ItemID.CRYSTAL_BOW_410, ItemID.CRYSTAL_BOW_510, ItemID.CRYSTAL_BOW_610, ItemID.CRYSTAL_BOW_710, ItemID.CRYSTAL_BOW_810, ItemID.CRYSTAL_BOW_910),
 	CRYSTAL_BOW_I(ItemID.CRYSTAL_BOW_FULL_I, ItemID.CRYSTAL_BOW_110_I, ItemID.CRYSTAL_BOW_210_I, ItemID.CRYSTAL_BOW_310_I, ItemID.CRYSTAL_BOW_410_I, ItemID.CRYSTAL_BOW_510_I, ItemID.CRYSTAL_BOW_610_I, ItemID.CRYSTAL_BOW_710_I, ItemID.CRYSTAL_BOW_810_I, ItemID.CRYSTAL_BOW_910_I),
+	DRAGON_LONGSWORD(ItemID.DRAGON_LONGSWORD),
 
 	// LMS items:
 	RUNE_CROSSBOW(ItemID.RUNE_CROSSBOW, ItemID.RUNE_CROSSBOW_23601),
@@ -114,7 +115,7 @@ public enum EquipmentData
 	ETERNAL_BOOTS(ItemID.ETERNAL_BOOTS, ItemID.ETERNAL_BOOTS_23644),
 	IMBUED_ZAMORAK_CAPE(ItemID.IMBUED_ZAMORAK_CAPE, ItemID.IMBUED_ZAMORAK_CAPE_23605),
 	IMBUED_GUTHIX_CAPE(ItemID.IMBUED_GUTHIX_CAPE, ItemID.IMBUED_GUTHIX_CAPE_23603),
-	IMBUED_SARADOMIN_CAPE(ItemID.IMBUED_SARADOMIN_CAPE, ItemID. IMBUED_SARADOMIN_CAPE_23607);
+	IMBUED_SARADOMIN_CAPE(ItemID.IMBUED_SARADOMIN_CAPE, ItemID.IMBUED_SARADOMIN_CAPE_23607);
 
 	private static final Map<Integer, EquipmentData> itemData = new HashMap<>();
 
@@ -136,7 +137,7 @@ public enum EquipmentData
 	}
 
 	// Get the saved EquipmentData for a given itemId (could be null)
-	public static EquipmentData getEquipmentDataFor(int itemId)
+	public static EquipmentData fromId(int itemId)
 	{
 		return itemData.get(itemId);
 	}
@@ -211,13 +212,13 @@ public enum EquipmentData
 		{
 			if (playerComposition == null) { return NONE; }
 
-			EquipmentData gloves = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HANDS.getIndex()]);
+			EquipmentData gloves = EquipmentData.fromId(playerComposition[KitType.HANDS.getIndex()]);
 
 			if (gloves != EquipmentData.VOID_GLOVES) { return NONE; }
 
-			EquipmentData helm = EquipmentData.getEquipmentDataFor(playerComposition[KitType.HEAD.getIndex()]);
-			EquipmentData torso = EquipmentData.getEquipmentDataFor(playerComposition[KitType.TORSO.getIndex()]);
-			EquipmentData legs = EquipmentData.getEquipmentDataFor(playerComposition[KitType.LEGS.getIndex()]);
+			EquipmentData helm = EquipmentData.fromId(playerComposition[KitType.HEAD.getIndex()]);
+			EquipmentData torso = EquipmentData.fromId(playerComposition[KitType.TORSO.getIndex()]);
+			EquipmentData legs = EquipmentData.fromId(playerComposition[KitType.LEGS.getIndex()]);
 
 			if (torso == EquipmentData.VOID_BODY && legs == EquipmentData.VOID_LEGS)
 			{

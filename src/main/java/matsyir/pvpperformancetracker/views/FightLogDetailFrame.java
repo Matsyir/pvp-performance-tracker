@@ -360,7 +360,7 @@ class FightLogDetailFrame extends JFrame
 		// ammo: get config's ammo for current weapon
 		int weaponId = itemIds[KitType.WEAPON.getIndex()] > 512 ?
 			itemIds[KitType.WEAPON.getIndex()] - 512 : itemIds[KitType.WEAPON.getIndex()];
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.getEquipmentDataFor(weaponId));
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(weaponId));
 		if (weaponAmmo != null)
 		{
 			JLabel ammo = new JLabel();
@@ -412,7 +412,7 @@ class FightLogDetailFrame extends JFrame
 		// ammo: get config's ammo for current weapon
 		int weaponId = equipment[KitType.WEAPON.getIndex()] > 512 ?
 			equipment[KitType.WEAPON.getIndex()] - 512 : equipment[KitType.WEAPON.getIndex()];
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.getEquipmentDataFor(weaponId));
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(weaponId));
 		int ammoRangeStr = 0;
 		if (weaponAmmo != null)
 		{

@@ -381,6 +381,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "dlongIsVls",
+		name = "Dlong = Vls",
+		description = "Track Dragon Longsword & its spec as a VLS for deserved damage. Requested for DMM practice purposes.",
+		position = 215
+	)
+	default boolean dlongIsVls()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "fightLogInChat",
 		name = "Fight Log In Chat",
 		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",

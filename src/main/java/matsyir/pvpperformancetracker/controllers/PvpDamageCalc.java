@@ -152,19 +152,34 @@ public class PvpDamageCalc
 		minHit = 0;
 		maxHit = 0;
 
-		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
-
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
-		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
-		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
-
-		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
-		boolean isSpecial = animationData.isSpecial;
 
 		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
-		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId > 512 ? weaponId - 512 : weaponId);
+		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
 
+		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
+		{
+			weapon = EquipmentData.VESTAS_LONGSWORD;
+			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512; // have to +512 here because the stat additions later will -512 for real itemIds
+			if (animationData.isSpecial)
+			{
+				animationData = AnimationData.MELEE_VLS_SPEC;
+			}
+			else
+			{
+				animationData = AnimationData.MELEE_SCIM_SLASH;
+			}
+		}
+
+		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
+		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
+		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
+
+		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
+		// the animation just serves to tell if they actually did a special attack animation, since some animations
+		// are used for multiple special attacks.
+		boolean isSpecial = animationData.isSpecial;
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition().getEquipmentIds());
 
 		if (attackStyle.isMelee())
@@ -182,7 +197,7 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
-			EquipmentData shield = EquipmentData.getEquipmentDataFor(shieldId > 512 ? shieldId - 512 : shieldId);
+			EquipmentData shield = EquipmentData.fromId(shieldId > 512 ? shieldId - 512 : shieldId);
 			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
 		}
@@ -212,17 +227,31 @@ public class PvpDamageCalc
 		minHit = 0;
 		maxHit = 0;
 
-		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: melee/ranged/magic
+		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
+		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
+
+		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
+		{
+			weapon = EquipmentData.VESTAS_LONGSWORD;
+			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512; // have to +512 here because the stat additions later will -512 for real itemIds
+			if (animationData.isSpecial)
+			{
+				animationData = AnimationData.MELEE_VLS_SPEC;
+			}
+			else
+			{
+				animationData = AnimationData.MELEE_SCIM_SLASH;
+			}
+		}
 
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
+		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
+		// the animation just serves to tell if they actually did a special attack animation, since some animations
+		// are used for multiple special attacks.
 		boolean isSpecial = animationData.isSpecial;
-
-		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
-		EquipmentData weapon = EquipmentData.getEquipmentDataFor(weaponId > 512 ? weaponId - 512 : weaponId);
-
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attackerItems);
 
 		if (attackStyle.isMelee())
@@ -240,7 +269,7 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
-			EquipmentData shield = EquipmentData.getEquipmentDataFor(shieldId > 512 ? shieldId - 512 : shieldId);
+			EquipmentData shield = EquipmentData.fromId(shieldId > 512 ? shieldId - 512 : shieldId);
 			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
@@ -334,6 +363,9 @@ public class PvpDamageCalc
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+		EquipmentData head = EquipmentData.fromId(attackerComposition[KitType.HEAD.getIndex()]);
+		EquipmentData body = EquipmentData.fromId(attackerComposition[KitType.TORSO.getIndex()]);
+		EquipmentData legs = EquipmentData.fromId(attackerComposition[KitType.LEGS.getIndex()]);
 
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
 		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
@@ -356,22 +388,6 @@ public class PvpDamageCalc
 			effectiveLevel *= voidStyle.dmgModifier;
 		}
 
-		// apply crystal armor bonus if using bow
-		EquipmentData head = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.HEAD.getIndex()]);
-		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
-		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
-
-		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
-			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
-		{
-			double dmgModifier = 1 +
-				(head == EquipmentData.CRYSTAL_HELM ? 0.025 : 0) +
-				(body == EquipmentData.CRYSTAL_BODY ? 0.075 : 0) +
-				(legs == EquipmentData.CRYSTAL_LEGS ? 0.05 : 0);
-
-			effectiveLevel *= dmgModifier;
-		}
-
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
@@ -381,6 +397,18 @@ public class PvpDamageCalc
 		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
+
+		// apply crystal armor bonus if using bow
+		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
+			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
+		{
+			double dmgModifier = 1 +
+				(head == EquipmentData.CRYSTAL_HELM ? 0.025 : 0) +
+				(body == EquipmentData.CRYSTAL_BODY ? 0.075 : 0) +
+				(legs == EquipmentData.CRYSTAL_LEGS ? 0.05 : 0);
+
+			maxHit *= dmgModifier;
+		}
 	}
 
 	private void getMagicMaxHit(EquipmentData shield, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
@@ -511,9 +539,9 @@ public class PvpDamageCalc
 		}
 
 		// apply crystal armor bonus if using bow
-		EquipmentData head = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.HEAD.getIndex()]);
-		EquipmentData body = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.TORSO.getIndex()]);
-		EquipmentData legs = EquipmentData.getEquipmentDataFor(attackerComposition[KitType.LEGS.getIndex()]);
+		EquipmentData head = EquipmentData.fromId(attackerComposition[KitType.HEAD.getIndex()]);
+		EquipmentData body = EquipmentData.fromId(attackerComposition[KitType.TORSO.getIndex()]);
+		EquipmentData legs = EquipmentData.fromId(attackerComposition[KitType.LEGS.getIndex()]);
 
 		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
 			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
@@ -640,7 +668,7 @@ public class PvpDamageCalc
 		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
 		if (itemStats == null)
 		{
-			EquipmentData itemData = EquipmentData.getEquipmentDataFor(itemId);
+			EquipmentData itemData = EquipmentData.fromId(itemId);
 			if (itemData != null)
 			{
 				itemId = itemData.getItemId();

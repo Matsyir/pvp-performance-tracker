@@ -33,11 +33,13 @@ import java.text.NumberFormat;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
+import net.runelite.api.kit.KitType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
 
@@ -130,10 +132,30 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.time = Instant.now().toEpochMilli();
 		this.tick = PLUGIN.getClient().getTickCount();
 
+		this.animationData = AnimationData.fromId(attacker.getAnimation());
+
+		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
+		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
+		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
+
+		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
+		{
+			// have to +512 here because the stat additions later will -512 for real itemIds
+			attackerItems[KitType.WEAPON.getIndex()] = EquipmentData.VESTAS_LONGSWORD.getItemId() + 512;
+			if (this.animationData.isSpecial)
+			{
+				this.animationData = AnimationData.MELEE_VLS_SPEC;
+			}
+			else
+			{
+				this.animationData = AnimationData.MELEE_SCIM_SLASH;
+			}
+		}
+
 		// attacker data
-		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
+		this.attackerGear = attackerItems;
 		this.attackerOverhead = attacker.getOverheadIcon();
-		this.animationData = AnimationData.dataForAnimation(attacker.getAnimation());
+
 		this.deservedDamage = pvpDamageCalc.getAverageHit();
 		this.accuracy = pvpDamageCalc.getAccuracy();
 		this.minHit = pvpDamageCalc.getMinHit();

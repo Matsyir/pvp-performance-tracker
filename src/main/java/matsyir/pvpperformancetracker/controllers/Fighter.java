@@ -257,7 +257,7 @@ class Fighter
 
 	AnimationData getAnimationData()
 	{
-		return AnimationData.dataForAnimation(player.getAnimation());
+		return AnimationData.fromId(player.getAnimation());
 	}
 
 	// the "addAttack" for a defensive log that creates an "incomplete" fight log entry.
