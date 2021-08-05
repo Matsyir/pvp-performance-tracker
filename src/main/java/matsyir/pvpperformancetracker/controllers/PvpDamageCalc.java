@@ -26,15 +26,16 @@
 package matsyir.pvpperformancetracker.controllers;
 
 import lombok.Getter;
-import matsyir.pvpperformancetracker.models.AnimationData;
-import static matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.models.AnimationData;
+import static matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import static matsyir.pvpperformancetracker.models.FightLogEntry.nf;
+import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -155,13 +156,13 @@ public class PvpDamageCalc
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
 
-		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
-		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
 		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
 		{
 			weapon = EquipmentData.VESTAS_LONGSWORD;
-			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512; // have to +512 here because the stat additions later will -512 for real itemIds
+			// have to +512 here because the stat additions later will -512 for real itemIds
+			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512;
 			if (animationData.isSpecial)
 			{
 				animationData = AnimationData.MELEE_VLS_SPEC;
@@ -196,8 +197,7 @@ public class PvpDamageCalc
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
-			EquipmentData shield = EquipmentData.fromId(shieldId > 512 ? shieldId - 512 : shieldId);
+			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
 			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
 		}
@@ -227,8 +227,7 @@ public class PvpDamageCalc
 		minHit = 0;
 		maxHit = 0;
 
-		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
-		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
 		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
 		{
@@ -268,8 +267,7 @@ public class PvpDamageCalc
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
-			int shieldId = attackerItems[KitType.SHIELD.getIndex()];
-			EquipmentData shield = EquipmentData.fromId(shieldId > 512 ? shieldId - 512 : shieldId);
+			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
 			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
@@ -363,9 +361,9 @@ public class PvpDamageCalc
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		EquipmentData head = EquipmentData.fromId(attackerComposition[KitType.HEAD.getIndex()]);
-		EquipmentData body = EquipmentData.fromId(attackerComposition[KitType.TORSO.getIndex()]);
-		EquipmentData legs = EquipmentData.fromId(attackerComposition[KitType.LEGS.getIndex()]);
+		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
+		EquipmentData body = EquipmentData.fromId(fixItemId(attackerComposition[KitType.TORSO.getIndex()]));
+		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
 
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
 		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
@@ -539,9 +537,9 @@ public class PvpDamageCalc
 		}
 
 		// apply crystal armor bonus if using bow
-		EquipmentData head = EquipmentData.fromId(attackerComposition[KitType.HEAD.getIndex()]);
-		EquipmentData body = EquipmentData.fromId(attackerComposition[KitType.TORSO.getIndex()]);
-		EquipmentData legs = EquipmentData.fromId(attackerComposition[KitType.LEGS.getIndex()]);
+		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
+		EquipmentData body = EquipmentData.fromId(fixItemId(attackerComposition[KitType.TORSO.getIndex()]));
+		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
 
 		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
 			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))

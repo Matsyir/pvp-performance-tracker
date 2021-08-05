@@ -34,6 +34,7 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.GraphicID;
@@ -135,8 +136,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.animationData = AnimationData.fromId(attacker.getAnimation());
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
-		int weaponId = attackerItems[KitType.WEAPON.getIndex()];
-		EquipmentData weapon = EquipmentData.fromId(weaponId > 512 ? weaponId - 512 : weaponId);
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
 		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
 		{

@@ -844,7 +844,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (itemId > 512 || !verifyId)
 		{
 			final int finalItemId = itemId - (verifyId ? 512 : 0);
-			PLUGIN.clientThread.invokeLater(() -> {
+			clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
 				if (tooltipOverride != null && tooltipOverride.length() > 0)
 				{
@@ -886,5 +886,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void addItemToLabelIfValid(JLabel label, int itemId)
 	{
 		addItemToLabelIfValid(label, itemId, true, null);
+	}
+
+	// fix an itemId that came from getPlayerComposition().getEquipmentIds()
+	// you have to do -512 if >512 if it's a real item.
+	public static int fixItemId(int itemId)
+	{
+		return itemId > 512 ? itemId - 512 : itemId;
+	}
+
+	public static int[] fixItemIds(int[] itemIds)
+	{
+		if (itemIds == null || itemIds.length < 1)
+		{
+			return new int[] { 0 };
+		}
+		int[] fixedItemIds = new int[itemIds.length];
+		for (int i = 0; i < itemIds.length; i++)
+		{
+			fixedItemIds[i] = fixItemId(itemIds[i]);
+		}
+
+		return fixedItemIds;
 	}
 }

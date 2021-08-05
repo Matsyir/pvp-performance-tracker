@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -358,9 +359,7 @@ class FightLogDetailFrame extends JFrame
 		capeLine.add(amulet, BorderLayout.CENTER);
 
 		// ammo: get config's ammo for current weapon
-		int weaponId = itemIds[KitType.WEAPON.getIndex()] > 512 ?
-			itemIds[KitType.WEAPON.getIndex()] - 512 : itemIds[KitType.WEAPON.getIndex()];
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(weaponId));
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(itemIds[KitType.WEAPON.getIndex()])));
 		if (weaponAmmo != null)
 		{
 			JLabel ammo = new JLabel();
@@ -410,9 +409,7 @@ class FightLogDetailFrame extends JFrame
 	{
 		ItemEquipmentStats stats = PvpDamageCalc.calculateBonusesToStats(equipment);
 		// ammo: get config's ammo for current weapon
-		int weaponId = equipment[KitType.WEAPON.getIndex()] > 512 ?
-			equipment[KitType.WEAPON.getIndex()] - 512 : equipment[KitType.WEAPON.getIndex()];
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(weaponId));
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])));
 		int ammoRangeStr = 0;
 		if (weaponAmmo != null)
 		{

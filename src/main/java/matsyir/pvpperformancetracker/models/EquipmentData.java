@@ -211,6 +211,7 @@ public enum EquipmentData
 		public static VoidStyle getVoidStyleFor(int[] playerComposition)
 		{
 			if (playerComposition == null) { return NONE; }
+			playerComposition = PvpPerformanceTrackerPlugin.fixItemIds(playerComposition);
 
 			EquipmentData gloves = EquipmentData.fromId(playerComposition[KitType.HANDS.getIndex()]);
 
