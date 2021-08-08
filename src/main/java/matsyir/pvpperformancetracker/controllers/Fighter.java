@@ -33,11 +33,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
+import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
+import net.runelite.api.kit.KitType;
 
 @Slf4j
 @Getter
@@ -171,6 +175,22 @@ class Fighter
 			offensivePraySuccessCount++;
 		}
 
+
+		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+
+		// track dragon longsword as VLS if enabled, for dmm practice purposes.
+		// also check if weapon = VLS because the itemId stays as VLS if they don't switch weapons between
+		// attacks, but we still need to update the animationData in case it's actually a dlong.
+		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD || weapon == EquipmentData.VESTAS_LONGSWORD)
+		{
+			// have to +512 here because the stat additions later will -512 for real itemIds
+			// modifying attackerItems will modify the actual playerComposition, so future
+			// .getPlayerComposition().getEquipmentIds() calls will also be modified
+			attackerItems[KitType.WEAPON.getIndex()] = EquipmentData.VESTAS_LONGSWORD.getItemId() + 512;
+			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
+		}
+
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 		deservedDamage += pvpDamageCalc.getAverageHit();
 
@@ -185,7 +205,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
 			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
@@ -343,11 +363,7 @@ class Fighter
 
 	public int getMagicAttackCount()
 	{
-		if (totalMagicAttackCount > 0) // TODO remove this legacy behavior and just use totalMagicAttackCount
-		{
-			return totalMagicAttackCount;
-		}
-		return (int)fightLogEntries.stream().filter(FightLogEntry::isFullEntry).filter(l->l.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC).count();
+		return totalMagicAttackCount;
 	}
 
 	// Return a simple string to display the current player's offensive prayer success rate.

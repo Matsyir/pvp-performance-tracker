@@ -103,7 +103,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.4.6";
+	public static final String PLUGIN_VERSION = "1.4.7";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -895,6 +895,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		return itemId > 512 ? itemId - 512 : itemId;
 	}
 
+	// create new array so we don't modify original array
 	public static int[] fixItemIds(int[] itemIds)
 	{
 		if (itemIds == null || itemIds.length < 1)

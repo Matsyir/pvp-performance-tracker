@@ -33,14 +33,11 @@ import java.text.NumberFormat;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
-import net.runelite.api.kit.KitType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
 
@@ -124,7 +121,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels)
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
 		this.isFullEntry = true;
 
@@ -133,27 +130,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.time = Instant.now().toEpochMilli();
 		this.tick = PLUGIN.getClient().getTickCount();
 
-		this.animationData = AnimationData.fromId(attacker.getAnimation());
-
-		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
-		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
-
-		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
-		{
-			// have to +512 here because the stat additions later will -512 for real itemIds
-			attackerItems[KitType.WEAPON.getIndex()] = EquipmentData.VESTAS_LONGSWORD.getItemId() + 512;
-			if (this.animationData.isSpecial)
-			{
-				this.animationData = AnimationData.MELEE_VLS_SPEC;
-			}
-			else
-			{
-				this.animationData = AnimationData.MELEE_SCIM_SLASH;
-			}
-		}
+		this.animationData = animationData;
 
 		// attacker data
-		this.attackerGear = attackerItems;
+		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
 		this.attackerOverhead = attacker.getOverheadIcon();
 
 		this.deservedDamage = pvpDamageCalc.getAverageHit();

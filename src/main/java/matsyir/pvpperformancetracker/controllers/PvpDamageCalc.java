@@ -158,21 +158,6 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
-		{
-			weapon = EquipmentData.VESTAS_LONGSWORD;
-			// have to +512 here because the stat additions later will -512 for real itemIds
-			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512;
-			if (animationData.isSpecial)
-			{
-				animationData = AnimationData.MELEE_VLS_SPEC;
-			}
-			else
-			{
-				animationData = AnimationData.MELEE_SCIM_SLASH;
-			}
-		}
-
 		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
 		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
@@ -228,20 +213,6 @@ public class PvpDamageCalc
 		maxHit = 0;
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
-
-		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD)
-		{
-			weapon = EquipmentData.VESTAS_LONGSWORD;
-			attackerItems[KitType.WEAPON.getIndex()] = weapon.getItemId() + 512; // have to +512 here because the stat additions later will -512 for real itemIds
-			if (animationData.isSpecial)
-			{
-				animationData = AnimationData.MELEE_VLS_SPEC;
-			}
-			else
-			{
-				animationData = AnimationData.MELEE_SCIM_SLASH;
-			}
-		}
 
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
@@ -386,7 +357,7 @@ public class PvpDamageCalc
 			effectiveLevel *= voidStyle.dmgModifier;
 		}
 
-		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (rangeStrength + 64) / 640);
+		int baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (rangeStrength + 64) / 640));
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;

@@ -59,7 +59,7 @@ public enum AnimationData
 	MELEE_STAFF_STAB(428, AttackStyle.STAB), // tested w/ SOTD/SOL jab, vesta's spear stab, c hally
 	MELEE_SPEAR_CRUSH(429, AttackStyle.CRUSH), // tested w/ vesta's spear
 	MELEE_STAFF_SLASH(440, AttackStyle.SLASH), // tested w/ SOTD/SOL slash, zammy hasta slash, vesta's spear slash, c hally
-	MELEE_SCEPTRE_CRUSH(1058, AttackStyle.CRUSH), // tested w/ thammaron's sceptre, d long spec
+	MELEE_DLONG_SPEC(1058, AttackStyle.SLASH, true), // tested w/ d long spec, also thammaron's sceptre crush (????)...
 	MELEE_DRAGON_MACE_SPEC(1060, AttackStyle.CRUSH, true),
 	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true),
 	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec
@@ -121,7 +121,7 @@ public enum AnimationData
 
 	private static final Map<Integer, AnimationData> DATA;
 
-	int animationId;
+	public int animationId;
 	public boolean isSpecial;
 	public AttackStyle attackStyle;
 	public int baseSpellDamage;

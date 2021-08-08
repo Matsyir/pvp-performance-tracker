@@ -382,8 +382,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	@ConfigItem(
 		keyName = "dlongIsVls",
-		name = "Dlong = Vls",
-		description = "Track Dragon Longsword & its spec as a VLS for deserved damage. Requested for DMM practice purposes.",
+		name = "Dlong = VLS",
+		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for deserved damage. Requested for DMM practice purposes.",
 		position = 215
 	)
 	default boolean dlongIsVls()
