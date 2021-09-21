@@ -103,7 +103,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.4.7";
+	public static final String PLUGIN_VERSION = "1.4.8";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -296,6 +296,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					// Should only remove one fight in most cases.
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
 				}
+				panel.rebuild();
+				break;
+			case "exactNameFilter":
 				panel.rebuild();
 				break;
 			case "settingsConfigured":
@@ -909,5 +912,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		return fixedItemIds;
+	}
+
+	public void updateNameFilterConfig(String newFilterName)
+	{
+		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
 	}
 }

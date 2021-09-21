@@ -28,11 +28,17 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import javax.inject.Inject;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
@@ -55,14 +61,50 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		this.plugin = plugin;
 		this.config = config;
 
-		setLayout(new BorderLayout(0, 4));
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
 		setBorder(new EmptyBorder(8, 8, 8, 8));
 		JPanel mainContent = new JPanel(new BorderLayout());
 
-		fightHistoryContainer.setSize(getSize());
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
-		add(totalStatsPanel, BorderLayout.NORTH, 0);
+
+		add(totalStatsPanel);
+
+		// add filter line with label & text field.
+		JPanel filterLine = new JPanel(new BorderLayout());
+		filterLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)filterLine.getPreferredSize().getHeight()));
+
+		// filter label
+		JLabel filterLabel = new JLabel("Filter Usernames:");
+		filterLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+		// filter textfield
+		JTextField nameFilter = new JTextField(config.nameFilter());
+
+		nameFilter.getDocument().addDocumentListener(new DocumentListener() {
+			private void updateNameFilterValue()
+			{
+				plugin.updateNameFilterConfig(nameFilter.getText());
+
+				// do not rebuild the panel if the filter starts with a space. This is because you could spam rebuild()
+				// by holding down space and causing massive lag. This isn't really an issue with real filters as the
+				// results quickly get filtered down, resulting in less UI elements.
+				if (!nameFilter.getText().startsWith(" "))
+				{
+					PvpPerformanceTrackerPanel.this.rebuild();
+				}
+			}
+
+			public void changedUpdate(DocumentEvent e) { updateNameFilterValue(); }
+			public void removeUpdate(DocumentEvent e) { updateNameFilterValue(); }
+			public void insertUpdate(DocumentEvent e) { updateNameFilterValue(); }
+		});
+
+		filterLine.add(filterLabel, BorderLayout.NORTH);
+		filterLine.add(nameFilter, BorderLayout.CENTER);
+
+		add(Box.createRigidArea(new Dimension(0, 4)));
+		add(filterLine);
 
 		// wrap mainContent with scrollpane so it has a scrollbar
 		JScrollPane scrollableContainer = new JScrollPane(mainContent);
@@ -70,7 +112,9 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(6, 0));
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
-		add(scrollableContainer, BorderLayout.CENTER);
+
+		add(Box.createRigidArea(new Dimension(0, 4)));
+		add(scrollableContainer);
 	}
 
 	public void addFight(FightPerformance fight)
@@ -139,7 +183,22 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		if (plugin.fightHistory.size() > 0)
 		{
 			// create new arraylist from the main one so we can't modify the fight history
-			addFights(new ArrayList<>(plugin.fightHistory));
+			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
+
+			// if the nameFilter isn't blank
+			if (!config.nameFilter().equals(""))
+			{
+
+				fightsToAdd.removeIf((FightPerformance f) ->
+					// remove if the names aren't EQUAL when using "exactNameFilter",
+					// if not then remove names that don't start with the name filter.
+					config.exactNameFilter() ? !f.getCompetitor().getName().toLowerCase().equals(config.nameFilter()) &&
+						!f.getOpponent().getName().toLowerCase().equals(config.nameFilter()) :
+						!f.getCompetitor().getName().toLowerCase().startsWith(config.nameFilter()) &&
+						!f.getOpponent().getName().toLowerCase().startsWith(config.nameFilter()));
+			}
+
+			addFights(fightsToAdd);
 		}
 		SwingUtilities.invokeLater(this::updateUI);
 	}

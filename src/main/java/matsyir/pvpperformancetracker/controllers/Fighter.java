@@ -306,7 +306,6 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(0);
 		String stats = nf.format(magicHitCount);
-		// TODO switch to totalMagicAttackCount
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(2);

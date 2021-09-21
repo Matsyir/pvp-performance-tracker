@@ -26,6 +26,7 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.math.RoundingMode;
@@ -44,6 +45,7 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
@@ -328,6 +330,8 @@ public class TotalStatsPanel extends JPanel
 		setComponentPopupMenu(popupMenu);
 
 		setLabels();
+
+		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int)getPreferredSize().getHeight()));
 	}
 
 	private void setLabels()
@@ -340,8 +344,8 @@ public class TotalStatsPanel extends JPanel
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
-			offPrayStatsLabel.setText(nf1.format(totalStats.getOffPraySuccessCount() / 1000.0) + "K/" +
-				nf1.format(totalStats.getAttackCount() / 1000.0) + "K (" +
+			offPrayStatsLabel.setText(nfWithK(totalStats.getOffPraySuccessCount()) + "/" +
+				nfWithK(totalStats.getAttackCount()) + " (" +
 				Math.round(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 		}
 		else
@@ -372,8 +376,8 @@ public class TotalStatsPanel extends JPanel
 
 		if (totalStats.getMagicHitCountDeserved() >= 10000)
 		{
-			magicHitCountStatsLabel.setText(nf1.format(totalStats.getMagicHitCount() / 1000.0) + "K/" +
-				nf1.format(totalStats.getMagicHitCountDeserved() / 1000.0) + "K");
+			magicHitCountStatsLabel.setText(nfWithK(totalStats.getMagicHitCount()) + "/" +
+				nfWithK((int)totalStats.getMagicHitCountDeserved()));
 		}
 		else
 		{
@@ -385,8 +389,8 @@ public class TotalStatsPanel extends JPanel
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
-			offensivePrayCountStatsLabel.setText(nf1.format(totalStats.getOffensivePraySuccessCount() / 1000.0) + "K/" +
-				nf1.format(totalStats.getAttackCount() / 1000.0) + "K (" +
+			offensivePrayCountStatsLabel.setText(nfWithK(totalStats.getOffensivePraySuccessCount()) + "/" +
+				nfWithK(totalStats.getAttackCount()) + " (" +
 				Math.round(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
 		}
 		else
@@ -397,8 +401,16 @@ public class TotalStatsPanel extends JPanel
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
 
-		hpHealedStatsLabel.setText(String.valueOf(totalStats.getHpHealed()));
+		hpHealedStatsLabel.setText(nf.format(totalStats.getHpHealed()));
 		hpHealedStatsLabel.setToolTipText("A total of " + totalStats.getHpHealed() + " hitpoints were recovered.");
+	}
+
+	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
+	// with 1 decimal.
+	// Ex. could turn 172,308 into 172.3k
+	private String nfWithK(int number)
+	{
+		return nf1.format(number / 1000.0) + "K";
 	}
 
 	public void addFight(FightPerformance fight)
@@ -462,6 +474,8 @@ public class TotalStatsPanel extends JPanel
 
 	public void addFights(ArrayList<FightPerformance> fights)
 	{
+		if (fights == null || fights.size() < 1) { return; }
+
 		numFights += fights.size();
 		for (FightPerformance fight : fights)
 		{
@@ -498,23 +512,23 @@ public class TotalStatsPanel extends JPanel
 				fight.getCompetitor().getHpHealed());
 		}
 
-		avgDeservedDmg = totalDeservedDmg / numFights;
-		avgDeservedDmgDiff = totalDeservedDmgDiff / numFights;
+		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
+		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights: 0;
 
-		avgDmgDealt = totalDmgDealt / numFights;
-		avgDmgDealtDiff = totalDmgDealtDiff / numFights;
+		avgDmgDealt = numFights != 0 ? totalDmgDealt / numFights : 0;
+		avgDmgDealtDiff = numFights != 0 ? totalDmgDealtDiff / numFights : 0;
 
-		killAvgDeservedDmg = killTotalDeservedDmg / numKills;
-		killAvgDeservedDmgDiff = killTotalDeservedDmgDiff / numKills;
+		killAvgDeservedDmg = numKills != 0 ? killTotalDeservedDmg / numKills : 0;
+		killAvgDeservedDmgDiff = numKills != 0 ? killTotalDeservedDmgDiff / numKills : 0;
 
-		deathAvgDeservedDmg = deathTotalDeservedDmg / numDeaths;
-		deathAvgDeservedDmgDiff = deathTotalDeservedDmgDiff / numDeaths;
+		deathAvgDeservedDmg = numDeaths != 0 ? deathTotalDeservedDmg / numDeaths : 0;
+		deathAvgDeservedDmgDiff = numDeaths != 0 ? deathTotalDeservedDmgDiff / numDeaths : 0;
 
-		killAvgDmgDealt = killTotalDmgDealt / numKills;
-		killAvgDmgDealtDiff = killTotalDmgDealtDiff / numKills;
+		killAvgDmgDealt = numKills != 0 ? killTotalDmgDealt / numKills : 0;
+		killAvgDmgDealtDiff = numKills != 0 ? killTotalDmgDealtDiff / numKills : 0;
 
-		deathAvgDmgDealt = deathTotalDmgDealt / numDeaths;
-		deathAvgDmgDealtDiff = deathTotalDmgDealtDiff / numDeaths;
+		deathAvgDmgDealt = numDeaths != 0 ? deathTotalDmgDealt / numDeaths : 0;
+		deathAvgDmgDealtDiff = numDeaths != 0 ? deathTotalDmgDealtDiff / numDeaths : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}

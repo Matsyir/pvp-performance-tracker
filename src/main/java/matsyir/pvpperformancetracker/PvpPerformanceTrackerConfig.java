@@ -381,10 +381,21 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "exactNameFilter",
+		name = "Exact Name Filter",
+		description = "Makes the username filter look for an exact match (case-insensitive), rather than any name starting with the filter.",
+		position = 220
+	)
+	default boolean exactNameFilter()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "dlongIsVls",
 		name = "Dlong = VLS",
 		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for deserved damage. Requested for DMM practice purposes.",
-		position = 215
+		position = 230
 	)
 	default boolean dlongIsVls()
 	{
@@ -395,10 +406,22 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "fightLogInChat",
 		name = "Fight Log In Chat",
 		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",
-		position = 220
+		position = 500
 	)
 	default boolean fightLogInChat()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "nameFilter",
+		name = "Name Filter",
+		description = "Used to save user's selected name/RSN filter for the panel views.",
+		position = 1000,
+		hidden = true
+	)
+	default String nameFilter()
+	{
+		return "";
 	}
 }
