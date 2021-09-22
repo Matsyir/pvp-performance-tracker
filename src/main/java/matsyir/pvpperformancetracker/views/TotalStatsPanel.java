@@ -132,7 +132,7 @@ public class TotalStatsPanel extends JPanel
 		totalStats = new Fighter("Player");
 
 		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
-		setBorder(new EmptyBorder(8, 8, 8, 8));
+		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// FIRST LINE
@@ -410,7 +410,7 @@ public class TotalStatsPanel extends JPanel
 	// Ex. could turn 172,308 into 172.3k
 	private String nfWithK(int number)
 	{
-		return nf1.format(number / 1000.0) + "K";
+		return nf1.format(number / 1000.0) + "k";
 	}
 
 	public void addFight(FightPerformance fight)

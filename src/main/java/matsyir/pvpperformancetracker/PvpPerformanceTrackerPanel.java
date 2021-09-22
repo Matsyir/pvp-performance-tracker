@@ -72,14 +72,12 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		// add filter line with label & text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
-		filterLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)filterLine.getPreferredSize().getHeight()));
-
 		// filter label
 		JLabel filterLabel = new JLabel("Filter Usernames:");
 		filterLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
 		// filter textfield
 		JTextField nameFilter = new JTextField(config.nameFilter());
+		filterLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)filterLine.getPreferredSize().getHeight()));
 
 		nameFilter.getDocument().addDocumentListener(new DocumentListener() {
 			private void updateNameFilterValue()
