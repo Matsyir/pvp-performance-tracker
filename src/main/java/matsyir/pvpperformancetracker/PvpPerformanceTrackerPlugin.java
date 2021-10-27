@@ -103,7 +103,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.4.8";
+	public static final String PLUGIN_VERSION = "1.4.9";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -177,6 +177,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
+
+	// #################################################################################################################
+	// ##################################### Core RL plugin functions & RL Events ######################################
+	// #################################################################################################################
 
 	@Provides
 	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
@@ -474,6 +478,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		event.waitFor(executor.submit(this::updateFightHistoryData));
 	}
+
+	// #################################################################################################################
+	// ################################## Plugin-specific functions & global helpers ###################################
+	// #################################################################################################################
 
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()

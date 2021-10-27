@@ -117,6 +117,17 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 	public void addFight(FightPerformance fight)
 	{
+		// if the nameFilter isn't blank, skip adding the fight to panels if it doesn't respect the name filter
+		if (!config.nameFilter().equals("")
+			&& (config.exactNameFilter() ?
+				!fight.getCompetitor().getName().toLowerCase().equals(config.nameFilter())
+				&& !fight.getOpponent().getName().toLowerCase().equals(config.nameFilter())
+				: !fight.getCompetitor().getName().toLowerCase().startsWith(config.nameFilter())
+				&& !fight.getOpponent().getName().toLowerCase().startsWith(config.nameFilter())))
+		{
+			return;
+		}
+
 		totalStatsPanel.addFight(fight);
 
 		SwingUtilities.invokeLater(() ->
@@ -141,6 +152,19 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 	public void addFights(ArrayList<FightPerformance> fights)
 	{
+		// if the nameFilter isn't blank, skip adding any fights to panels if they don't respect the name filter
+		if (!config.nameFilter().equals(""))
+		{
+			fights.removeIf((FightPerformance f) ->
+				// remove if the names aren't EQUAL when using "exactNameFilter",
+				// if not then remove names that don't start with the name filter.
+				config.exactNameFilter() ?
+					!f.getCompetitor().getName().toLowerCase().equals(config.nameFilter())
+						&& !f.getOpponent().getName().toLowerCase().equals(config.nameFilter())
+					: !f.getCompetitor().getName().toLowerCase().startsWith(config.nameFilter())
+					&& !f.getOpponent().getName().toLowerCase().startsWith(config.nameFilter()));
+		}
+
 		totalStatsPanel.addFights(fights);
 		SwingUtilities.invokeLater(() ->
 		{
@@ -182,19 +206,6 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			// create new arraylist from the main one so we can't modify the fight history
 			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
-
-			// if the nameFilter isn't blank
-			if (!config.nameFilter().equals(""))
-			{
-
-				fightsToAdd.removeIf((FightPerformance f) ->
-					// remove if the names aren't EQUAL when using "exactNameFilter",
-					// if not then remove names that don't start with the name filter.
-					config.exactNameFilter() ? !f.getCompetitor().getName().toLowerCase().equals(config.nameFilter()) &&
-						!f.getOpponent().getName().toLowerCase().equals(config.nameFilter()) :
-						!f.getCompetitor().getName().toLowerCase().startsWith(config.nameFilter()) &&
-						!f.getOpponent().getName().toLowerCase().startsWith(config.nameFilter()));
-			}
 
 			addFights(fightsToAdd);
 		}
