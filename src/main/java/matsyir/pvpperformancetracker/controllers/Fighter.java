@@ -83,9 +83,17 @@ class Fighter
 	@Expose
 	@SerializedName("M")
 	private double magicHitCountDeserved; // cumulative magic accuracy percentage for each attack
+
 	@Expose
 	@SerializedName("p")
 	private int offensivePraySuccessCount;
+
+	@Expose
+	@SerializedName("g")
+	private int ghostBarrageCount;
+	@Expose
+	@SerializedName("y")
+	private double ghostBarrageDeservedDamage;
 
 	@Expose
 	@SerializedName("H")
@@ -240,6 +248,19 @@ class Fighter
 		fightLogEntries.add(new FightLogEntry(logEntry, pvpDamageCalc));
 	}
 
+	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	{
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+
+		ghostBarrageCount++;
+		ghostBarrageDeservedDamage += pvpDamageCalc.getAverageHit();
+
+		log.info("@@@@@@@@@@@@@@@@@@@@ WOWZERS we got a ghost barrage");
+
+		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
+		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
+	}
+
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
 	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount, int hpHealed)
 	{
@@ -379,5 +400,10 @@ class Fighter
 	public String getOffensivePrayStats()
 	{
 		return getOffensivePrayStats(false);
+	}
+
+	public String getGhostBarrageStats()
+	{
+		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageDeservedDamage) + ")";
 	}
 }

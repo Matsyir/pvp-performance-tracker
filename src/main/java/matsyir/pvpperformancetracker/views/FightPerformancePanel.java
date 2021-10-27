@@ -101,13 +101,14 @@ public class FightPerformancePanel extends JPanel
 	// Panel to display previous fight performance data.
 	// intended layout:
 	//
-	// Line 1: Player name - Opponent Name
-	// Line 2: Player off-pray hit stats - opponent off-pray hit stats
-	// Line 3: Player deserved dps stats - opponent deserved dps stats
-	// Line 4: Player damage dealt - opponent damage dealt
-	// Line 5: Player magic hits/deserved magic hits - opponent magic hits/deserved magic hits
-	// Line 6: Player offensive pray stats - N/A (no data)
-	// Line 7: Player hp healed - N/A (no data)
+	// Line 1: Player name ; 									Opponent Name
+	// Line 2: Player off-pray hit stats ; 						Opponent off-pray hit stats
+	// Line 3: Player deserved dps stats ; 						Opponent deserved dps stats
+	// Line 4: Player damage dealt ; 							Opponent damage dealt
+	// Line 5: Player magic hits/deserved magic hits ; 			Opponent magic hits/deserved magic hits
+	// Line 6: Player offensive pray stats ; 					N/A (no data, client only)
+	// Line 7: Player hp healed ; 								N/A (no data, client only)
+	// Line 8: Player Ghost barrages & extra deserved damage ; 	N/A (no data, client only)
 	// The greater stats will be highlighted green. In this example, the player would have all the green highlights.
 	// example:
 	//
@@ -118,6 +119,7 @@ public class FightPerformancePanel extends JPanel
 	//     8/7.62               11/9.21
 	//     27/55 (49%)              N/A
 	//     100                      N/A
+	//     4 G.B. (37)				N/A
 	//
 	// these are the params to use for a normal panel.
 	public FightPerformancePanel(FightPerformance fight)
@@ -330,8 +332,7 @@ public class FightPerformancePanel extends JPanel
 
 		hpHealedLine.add(playerHpHealed, BorderLayout.WEST);
 
-		//
-		// SEVENTH LINE RIGHT: "N/A", no data. unless...
+		// SEVENTH LINE RIGHT: "N/A", no data.
 		JLabel opponentHpHealed = new JLabel();
 		if (showOpponentClientStats)
 		{
@@ -350,6 +351,47 @@ public class FightPerformancePanel extends JPanel
 		}
 		hpHealedLine.add(opponentHpHealed, BorderLayout.EAST);
 
+		// EIGHTH LINE: line container for player's Ghost barrages (only player's, no data for opponent)
+		JPanel ghostBarragesLine = new JPanel();
+		ghostBarragesLine.setLayout(new BorderLayout());
+		ghostBarragesLine.setBackground(null);
+
+		// EIGHTH LINE LEFT: player's ghost barrage stats
+		JLabel playerGhostBarrages = new JLabel();
+		playerGhostBarrages.setText(competitor.getGhostBarrageStats());
+		playerGhostBarrages.setToolTipText("(Advanced): " + competitor.getName() + " hit " + competitor.getGhostBarrageCount()
+			+ " ghost barrages during the fight, worth an extra " + nf.format(competitor.getGhostBarrageDeservedDamage())
+			+ " deserved damage.");
+
+		playerGhostBarrages.setForeground(
+			(showOpponentClientStats
+				&& competitor.getGhostBarrageDeservedDamage() > oppFight.getCompetitor().getGhostBarrageDeservedDamage())
+				? Color.GREEN : ColorScheme.BRAND_ORANGE);
+
+		ghostBarragesLine.add(playerGhostBarrages, BorderLayout.WEST);
+
+		// EIGHTH LINE RIGHT: "N/A", no data.
+		JLabel opponentGhostBarrages = new JLabel();
+		if (showOpponentClientStats)
+		{
+			Fighter oppComp = oppFight.getCompetitor();
+
+			opponentGhostBarrages.setText(oppComp.getGhostBarrageStats());
+			opponentGhostBarrages.setToolTipText("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
+				+ " ghost barrages during the fight, worth an extra " + nf.format(oppComp.getGhostBarrageDeservedDamage())
+				+ " deserved damage.");
+			opponentGhostBarrages.setForeground(
+				oppFight.getCompetitor().getGhostBarrageDeservedDamage() > competitor.getGhostBarrageDeservedDamage()
+				? Color.GREEN : ColorScheme.BRAND_ORANGE);
+		}
+		else
+		{
+			opponentGhostBarrages.setText("N/A");
+			opponentGhostBarrages.setToolTipText("No data is available for the opponent's ghost barrages");
+			opponentGhostBarrages.setForeground(ColorScheme.BRAND_ORANGE);
+		}
+		ghostBarragesLine.add(opponentGhostBarrages, BorderLayout.EAST);
+
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
 		fightPanel.add(deservedDpsStatsLine);
@@ -357,6 +399,7 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.add(magicHitStatsLine);
 		fightPanel.add(offensivePrayStatsLine);
 		fightPanel.add(hpHealedLine);
+		fightPanel.add(ghostBarragesLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 

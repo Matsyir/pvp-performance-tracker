@@ -72,6 +72,7 @@ import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
+import net.runelite.api.events.FakeXpDrop;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
@@ -103,7 +104,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.4.9";
+	public static final String PLUGIN_VERSION = "1.5.0";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -288,6 +289,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayMagicHits":
 			case "showOverlayOffensivePray":
 			case "showOverlayHpHealed":
+			case "showOverlayGhostBarrage":
 				overlay.setLines();
 				break;
 			// If the user updates the fight history limit, remove fights as necessary
@@ -458,9 +460,34 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void onStatChanged(StatChanged statChanged)
 	{
 		Skill skill = statChanged.getSkill();
-		if (skill != Skill.HITPOINTS || !hasOpponent()) { return; }
+		if (!hasOpponent()) { return; }
 
-		currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
+		if (skill == Skill.HITPOINTS)
+		{
+			currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
+		}
+		else if (skill == Skill.MAGIC)
+		{
+			clientThread.invokeLater(this::checkForGhostBarrage);
+		}
+	}
+
+	@Subscribe
+	public void onFakeXpDrop(FakeXpDrop fakeXpDrop)
+	{
+		if (!hasOpponent() && fakeXpDrop.getSkill() != Skill.MAGIC) { return; }
+
+		clientThread.invokeLater(this::checkForGhostBarrage);
+	}
+
+	// if the player gained magic xp but doesn't have a magic-attack animation, consider it as a ghost barrage.
+	// however this won't be added as a normal attack, it is for an extra ghost-barrage statistic as
+	// we can only detect this for the local player
+	private void checkForGhostBarrage()
+	{
+		if (!hasOpponent()) { return; }
+
+		currentFight.checkForLocalGhostBarrage(new CombatLevels(client));
 	}
 
 	// When the config is reset, also reset the fight history data, as a way to restart

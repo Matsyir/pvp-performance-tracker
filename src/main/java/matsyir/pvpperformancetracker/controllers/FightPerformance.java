@@ -168,12 +168,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 			AnimationData animationData = competitor.getAnimationData();
 			if (animationData != null)
 			{
-				int pray = PLUGIN.currentlyUsedOffensivePray();
+				int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
 					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
 					animationData,
-					pray,
+					offensivePray,
 					competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
@@ -192,6 +192,24 @@ public class FightPerformance implements Comparable<FightPerformance>
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}
+		}
+	}
+
+	// this only gets called when the local client player receives a magic xp drop.
+	public void checkForLocalGhostBarrage(CombatLevels competitorLevels)
+	{
+		AnimationData animationData = competitor.getAnimationData();
+
+		if (animationData == null || animationData.attackStyle != AnimationData.AttackStyle.MAGIC)
+		{
+			animationData = AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
+
+			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
+			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+				opponent.getPlayer(),
+				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
+				offensivePray,
+				competitorLevels);
 		}
 	}
 

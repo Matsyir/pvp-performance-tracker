@@ -30,6 +30,7 @@ import java.awt.Graphics2D;
 import javax.inject.Inject;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
@@ -56,6 +57,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
 	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
 	private LineComponent overlaySeventhLine; // left: player's hp healed pray stats, right: opponent's hp healed
+	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -83,6 +85,11 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlaySeventhLine.setLeftColor(Color.WHITE); // this is static so set onload
 		overlaySeventhLine.setRight("N/A"); // static
 		overlaySeventhLine.setRightColor(Color.WHITE); // static
+		overlayEighthLine = LineComponent.builder().build();
+		overlayEighthLine.setLeft("N/A"); // not static but possibly unused for some full fights
+		overlayEighthLine.setLeftColor(ColorScheme.BRAND_ORANGE); // static
+		overlayEighthLine.setRight("N/A"); // static
+		overlayEighthLine.setRightColor(ColorScheme.BRAND_ORANGE); // static
 
 		setLines();
 	}
@@ -131,6 +138,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 		overlaySeventhLine.setLeft(String.valueOf(fight.getCompetitor().getHpHealed()));
 
+		overlayEighthLine.setLeft(fight.getCompetitor().getGhostBarrageStats());
+
 		return panelComponent.render(graphics);
 	}
 
@@ -173,7 +182,10 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		{
 			panelComponent.getChildren().add(overlaySeventhLine);
 		}
-
+		if (config.showOverlayGhostBarrage())
+		{
+			panelComponent.getChildren().add(overlayEighthLine);
+		}
 	}
 
 	void setFight(FightPerformance fight)

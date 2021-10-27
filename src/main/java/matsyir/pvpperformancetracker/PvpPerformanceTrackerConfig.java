@@ -217,6 +217,18 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "showOverlayGhostBarrage",
+		name = "Overlay: Show Ghost Barrage",
+		description = "(Advanced): The overlay will display ghost barrage stats. (max. 5 lines/stats)",
+		position = 106,
+		section = overlay
+	)
+	default boolean showOverlayGhostBarrage()
+	{
+		return false;
+	}
+
 	// ================================= Gear/Ammo =================================
 
 	@ConfigItem(
