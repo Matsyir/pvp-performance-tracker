@@ -144,7 +144,7 @@ public class FightPerformancePanel extends JPanel
 		setLayout(new BorderLayout(5, 0));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		String tooltipText = "Ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
+		String tooltipText = "This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
 		setToolTipText(tooltipText);
 
 		if (showBorders)
@@ -259,18 +259,18 @@ public class FightPerformancePanel extends JPanel
 		// fifth line LEFT: player's magic hit stats
 		JLabel playerMagicHitStats = new JLabel();
 		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
-		playerMagicHitStats.setToolTipText(competitor.getName() + " successfully hit " +
+		playerMagicHitStats.setToolTipText("<html>" + competitor.getName() + " successfully hit " +
 			competitor.getMagicHitCount() + " of " + competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(competitor.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
+			nf.format(competitor.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
 		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
 
 		// fifth line RIGHT: opponent's magic hit stats
 		JLabel opponentMagicHitStats = new JLabel();
 		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
-		opponentMagicHitStats.setToolTipText(opponent.getName() + " successfully hit " +
+		opponentMagicHitStats.setToolTipText("<html>" + opponent.getName() + " successfully hit " +
 			opponent.getMagicHitCount() + " of " + opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(opponent.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
+			nf.format(opponent.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
@@ -359,9 +359,9 @@ public class FightPerformancePanel extends JPanel
 		// EIGHTH LINE LEFT: player's ghost barrage stats
 		JLabel playerGhostBarrages = new JLabel();
 		playerGhostBarrages.setText(competitor.getGhostBarrageStats());
-		playerGhostBarrages.setToolTipText("(Advanced): " + competitor.getName() + " hit " + competitor.getGhostBarrageCount()
+		playerGhostBarrages.setToolTipText("<html>(Advanced): " + competitor.getName() + " hit " + competitor.getGhostBarrageCount()
 			+ " ghost barrages during the fight, worth an extra " + nf.format(competitor.getGhostBarrageDeservedDamage())
-			+ " deserved damage.");
+			+ " deserved damage.<br>Unless fighting in Duel Arena, your opponent likely had a similar value.</html>");
 
 		playerGhostBarrages.setForeground(
 			(showOpponentClientStats
@@ -377,9 +377,9 @@ public class FightPerformancePanel extends JPanel
 			Fighter oppComp = oppFight.getCompetitor();
 
 			opponentGhostBarrages.setText(oppComp.getGhostBarrageStats());
-			opponentGhostBarrages.setToolTipText("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
+			opponentGhostBarrages.setToolTipText("<html>(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
 				+ " ghost barrages during the fight, worth an extra " + nf.format(oppComp.getGhostBarrageDeservedDamage())
-				+ " deserved damage.");
+				+ " deserved damage.<br>Unless fighting in Duel Arena, your opponent likely had a similar value.</html>");
 			opponentGhostBarrages.setForeground(
 				oppFight.getCompetitor().getGhostBarrageDeservedDamage() > competitor.getGhostBarrageDeservedDamage()
 				? Color.GREEN : ColorScheme.BRAND_ORANGE);

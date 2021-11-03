@@ -34,6 +34,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -108,6 +109,9 @@ class Fighter
 	private ArrayList<FightLogEntry> fightLogEntries;
 
 	private PvpDamageCalc pvpDamageCalc;
+	private int lastGhostBarrageCheckedTick = -1;
+	@Setter
+	private int lastGhostBarrageCheckedMageXp = -1;
 
 	// fighter that is bound to a player and gets updated during a fight
 	Fighter(Player player)
@@ -250,19 +254,32 @@ class Fighter
 
 	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
 	{
+		int currentTick = PLUGIN.getClient().getTickCount();
+		if (currentTick <= lastGhostBarrageCheckedTick)
+		{
+			return;
+		}
+		lastGhostBarrageCheckedTick = currentTick;
+
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 
 		ghostBarrageCount++;
 		ghostBarrageDeservedDamage += pvpDamageCalc.getAverageHit();
 
 		log.info("@@@@@@@@@@@@@@@@@@@@ WOWZERS we got a ghost barrage");
-
 		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
 		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
 	}
 
+	// used to manually build Fighters in AnalyzedFightPerformance.
+	public void setTotalGhostBarrageStats(int ghostBarrageCount, double ghostBarrageDeservedDamage)
+	{
+		this.ghostBarrageCount = ghostBarrageCount;
+		this.ghostBarrageDeservedDamage = ghostBarrageDeservedDamage;
+	}
+
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount, int hpHealed)
+	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount, int hpHealed, int ghostBarrageCount, double ghostBarrageDeservedDamage)
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
@@ -273,6 +290,8 @@ class Fighter
 		this.magicHitCountDeserved += magicHitCountDeserved;
 		this.offensivePraySuccessCount += offensivePraySuccessCount;
 		this.hpHealed += hpHealed;
+		this.ghostBarrageCount += ghostBarrageCount;
+		this.ghostBarrageDeservedDamage += ghostBarrageDeservedDamage;
 	}
 
 	void addDamageDealt(int damage)

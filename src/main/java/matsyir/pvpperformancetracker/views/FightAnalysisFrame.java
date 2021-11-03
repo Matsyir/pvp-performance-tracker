@@ -63,6 +63,7 @@ import org.pushingpixels.substance.internal.SubstanceSynapse;
 public class FightAnalysisFrame extends JFrame
 {
 	public static String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#fight-analysisfight-merge";
+	private static String WINDOW_TITLE = "PvP Performance Tracker: Fight Analysis";
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
 	private JPanel mainPanel;
@@ -90,7 +91,7 @@ public class FightAnalysisFrame extends JFrame
 
 	FightAnalysisFrame(JRootPane rootPane)
 	{
-		super("Fight Analysis");
+		super("PvP Performance Tracker: Fight Analysis");
 		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
 		// on top as well so it can be above the client.
 		if (isAlwaysOnTopSupported())
@@ -98,9 +99,8 @@ public class FightAnalysisFrame extends JFrame
 			setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
 		}
 
-
 		setIconImage(PLUGIN_ICON);
-		Dimension size = new Dimension(700, 384);
+		Dimension size = new Dimension(700, 448);
 		setSize(size);
 		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
@@ -124,6 +124,7 @@ public class FightAnalysisFrame extends JFrame
 	// two single related fightPerformance json data.
 	private void initializeFrame()
 	{
+		setTitle(WINDOW_TITLE);
 		mainPanel.removeAll();
 
 		// init containers
@@ -148,14 +149,17 @@ public class FightAnalysisFrame extends JFrame
 
 		// instruction label
 		JLabel instructionLabel = new JLabel();
-		instructionLabel.setText("<html>This panel is used to merge two opposing fighters' fight data in order to " +
+		instructionLabel.setText("<html>This window is used to merge two opposing fighters' fight data in order to " +
 			"get more accurate stats about the fight, since some data is only available client-side. Both data " +
 			"entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's " +
 			"opponent. Right click a fight in order to copy its data.<br/><br/>" +
 			"When using this, the following stats are applied to deserved damage & deserved magic hits:<br/>" +
 			"&nbsp;&nbsp;&mdash; Offensive prayers, instead of always being correct<br/>" +
-			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g from brewing down), instead of using config stats<br/>" +
-			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury, instead of assuming Piety/Rigour while getting maged</html>");
+			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g from brewing down), instead of using config stats or fixed LMS stats<br/>" +
+			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury, instead of assuming Piety/Rigour while getting maged (if it's used)" +
+			"<br><br><strong>Note: </strong>For now, ghost barrages are not integrated into this, the above improvements " +
+			"do not apply for its deserved damage, and its deserved damage is not included in the main deserved damage " +
+			"stat. It merely displays what each client had saved.</html>");
 		instructionLabel.setForeground(Color.WHITE);
 		instructionLabel.setSize(mainPanel.getWidth(), instructionLabel.getHeight());
 		instructionLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -305,15 +309,14 @@ public class FightAnalysisFrame extends JFrame
 	private void performAnalysis()
 	{
 		boolean fightsValid = parseFights();
-
+		// parseFights includes error messages if the parse fails
 		if (!fightsValid) { return; }
 
 		try
 		{
 
 			analyzedFight = new AnalyzedFightPerformance(mainFight, opponentFight, this::displayAnalysis);
-
-			// now that we've got the merged fight, display results
+			// now that we've got the merged fight, display results, this is done with the displayAnalysis callback
 		}
 		catch(Exception e)
 		{
@@ -325,6 +328,7 @@ public class FightAnalysisFrame extends JFrame
 	private void displayAnalysis()
 	{
 		mainPanel.removeAll();
+		setTitle(WINDOW_TITLE + " - " + analyzedFight.competitor.getName() + " vs " + analyzedFight.opponent.getName());
 
 		// intro label
 		JLabel mergedFightLabel = new JLabel("<html><strong>Merged Fight &mdash; Click the panel for more details.</strong></html>");
@@ -333,8 +337,8 @@ public class FightAnalysisFrame extends JFrame
 
 		// analyzed fight
 		FightPerformancePanel analyzedFightPanel = new FightPerformancePanel(analyzedFight);
-		analyzedFightPanel.setSize(220, 120);
-		analyzedFightPanel.setMaximumSize(new Dimension(220, 128));
+		analyzedFightPanel.setSize(220, 134);
+		analyzedFightPanel.setMaximumSize(new Dimension(220, 134));
 		analyzedFightPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		// back to setup/config button
@@ -356,14 +360,14 @@ public class FightAnalysisFrame extends JFrame
 		initialFightsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		// initial fights
 		FightPerformancePanel mainFightPanel = new FightPerformancePanel(mainFight, false, true, false, null);
-		mainFightPanel.setSize(220, 120);
-		mainFightPanel.setMaximumSize(new Dimension(220, 128));
+		mainFightPanel.setSize(220, 134);
+		mainFightPanel.setMaximumSize(new Dimension(220, 134));
 		initialFightsPanel.add(mainFightPanel);
 		initialFightsPanel.add(Box.createRigidArea(new Dimension(8, 0)));
 
 		FightPerformancePanel oppFightPanel = new FightPerformancePanel(opponentFight, false, true, false, null);
-		oppFightPanel.setSize(220, 120);
-		oppFightPanel.setMaximumSize(new Dimension(220, 128));
+		oppFightPanel.setSize(220, 134);
+		oppFightPanel.setMaximumSize(new Dimension(220, 134));
 		initialFightsPanel.add(oppFightPanel);
 		initialFightsPanel.setVisible(false);
 

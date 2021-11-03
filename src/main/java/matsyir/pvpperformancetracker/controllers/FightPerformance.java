@@ -95,6 +95,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 
 		this.competitorPrevHp = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
+		this.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
 	}
 
 	// return a random fightPerformance used for testing UI
@@ -133,8 +134,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = new Fighter(cName, fightLogs);
 		this.opponent = new Fighter(oName, fightLogs);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22, 25, 26);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22, 25, 26);
 
 		if (cDead)
 		{
@@ -196,8 +197,20 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// this only gets called when the local client player receives a magic xp drop.
-	public void checkForLocalGhostBarrage(CombatLevels competitorLevels)
+	public void checkForLocalGhostBarrage(CombatLevels competitorLevels, Player localPlayer)
 	{
+		if (localPlayer == null)
+		{
+			log.info("Client player null while checking for ghost barrage - shouldn't happen");
+			return;
+		}
+
+		competitor.setPlayer(localPlayer);
+		if (localPlayer.getInteracting() instanceof Player && localPlayer.getInteracting().getName().equals(opponent.getName()))
+		{
+			opponent.setPlayer((Player)localPlayer.getInteracting());
+		}
+
 		AnimationData animationData = competitor.getAnimationData();
 
 		if (animationData == null || animationData.attackStyle != AnimationData.AttackStyle.MAGIC)

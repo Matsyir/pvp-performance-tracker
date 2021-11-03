@@ -456,7 +456,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	// track hitpoints healed for main competitor
+	// track hitpoints healed & ghost barrages for main competitor/client player
 	public void onStatChanged(StatChanged statChanged)
 	{
 		Skill skill = statChanged.getSkill();
@@ -466,17 +466,26 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
 		}
-		else if (skill == Skill.MAGIC)
+
+		if (skill == Skill.MAGIC)
 		{
-			clientThread.invokeLater(this::checkForGhostBarrage);
+			int magicXp = client.getSkillExperience(Skill.MAGIC);
+			if (magicXp > currentFight.competitor.getLastGhostBarrageCheckedMageXp())
+			{
+				log.info("We're checking for GBs(sChanged): skill=" + statChanged.getSkill().toString() + " , " + "xp=" + statChanged.getXp());
+				currentFight.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
+				clientThread.invokeLater(this::checkForGhostBarrage);
+			}
 		}
 	}
 
 	@Subscribe
+	// track ghost barrages for main competitor/client player
 	public void onFakeXpDrop(FakeXpDrop fakeXpDrop)
 	{
-		if (!hasOpponent() && fakeXpDrop.getSkill() != Skill.MAGIC) { return; }
+		if (!hasOpponent() || fakeXpDrop.getSkill() != Skill.MAGIC) { return; }
 
+		log.info("We're checking for GBs(fakeXP): skill=" + fakeXpDrop.getSkill().toString() + " , " + "xp=" + fakeXpDrop.getXp());
 		clientThread.invokeLater(this::checkForGhostBarrage);
 	}
 
@@ -487,7 +496,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		if (!hasOpponent()) { return; }
 
-		currentFight.checkForLocalGhostBarrage(new CombatLevels(client));
+		currentFight.checkForLocalGhostBarrage(new CombatLevels(client), client.getLocalPlayer());
 	}
 
 	// When the config is reset, also reset the fight history data, as a way to restart

@@ -75,8 +75,8 @@ public class TotalStatsPanel extends JPanel
 		nf2.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 9;
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 8;
+	private static final int LAYOUT_ROWS_WITH_WARNING = 10;
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 9;
 
 	// labels to be updated
 	private JLabel killsLabel;
@@ -87,15 +87,16 @@ public class TotalStatsPanel extends JPanel
 	private JLabel magicHitCountStatsLabel;
 	private JLabel offensivePrayCountStatsLabel;
 	private JLabel hpHealedStatsLabel;
+	private JLabel ghostBarrageStatsLabel;
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
 
 	private Fighter totalStats;
 
+	private int numFights = 0;
+
 	private int numKills = 0;
 	private int numDeaths = 0;
-
-	private int numFights = 0;
 
 	private double totalDeservedDmg = 0;
 	private double totalDeservedDmgDiff = 0;
@@ -127,6 +128,11 @@ public class TotalStatsPanel extends JPanel
 	private double deathAvgDmgDealt = 0;
 	private double deathAvgDmgDealtDiff = 0;
 
+	private double avgHpHealed = 0;
+
+	private double avgGhostBarrageCount = 0;
+	private double avgGhostBarrageDeservedDamage = 0;
+
 	public TotalStatsPanel()
 	{
 		totalStats = new Fighter("Player");
@@ -135,149 +141,7 @@ public class TotalStatsPanel extends JPanel
 		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		// FIRST LINE
-		// basic label to display a title.
-		JLabel titleLabel = new JLabel();
-		titleLabel.setText("PvP Performance Tracker v" + PLUGIN.PLUGIN_VERSION);
-		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		titleLabel.setForeground(Color.WHITE);
-		add(titleLabel);
-
-		// if settings haven't been configured, add a red label to display that they should be.
-		if (!CONFIG.settingsConfigured())
-		{
-			initializeSettingsWarningLabel();
-			add(settingsWarningLabel);
-		}
-
-		// SECOND LINE
-		// panel to show total kills/deaths
-		JPanel killDeathPanel = new JPanel(new BorderLayout());
-
-		// left label to show kills
-		killsLabel = new JLabel();
-		killsLabel.setText(numKills + " Kills");
-		killsLabel.setForeground(Color.WHITE);
-		killDeathPanel.add(killsLabel, BorderLayout.WEST);
-
-		// right label to show deaths
-		deathsLabel = new JLabel();
-		deathsLabel.setText(numDeaths + " Deaths");
-		deathsLabel.setForeground(Color.WHITE);
-		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
-
-		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(killDeathPanel);
-
-		// THIRD LINE
-		// panel to show the total off-pray stats (successful hits/total attacks)
-		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's off-pray stats
-		JLabel leftLabel = new JLabel();
-		leftLabel.setText("Total Off-Pray:");
-		leftLabel.setForeground(Color.WHITE);
-		offPrayStatsPanel.add(leftLabel, BorderLayout.WEST);
-
-		// right shows off-pray stats
-		offPrayStatsLabel = new JLabel();
-		offPrayStatsLabel.setForeground(Color.WHITE);
-		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
-
-		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(offPrayStatsPanel);
-
-		// FOURTH LINE
-		// panel to show the average deserved damage stats (average damage & average diff)
-		JPanel deservedDmgStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's deserved dmg stats
-		JLabel deservedDmgStatsLeftLabel = new JLabel();
-		deservedDmgStatsLeftLabel.setText("Avg Deserved Dmg:");
-		deservedDmgStatsLeftLabel.setForeground(Color.WHITE);
-		deservedDmgStatsPanel.add(deservedDmgStatsLeftLabel, BorderLayout.WEST);
-
-		// label to show deserved dmg stats
-		deservedDmgStatsLabel = new JLabel();
-		deservedDmgStatsLabel.setForeground(Color.WHITE);
-		deservedDmgStatsPanel.add(deservedDmgStatsLabel, BorderLayout.EAST);
-
-		deservedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(deservedDmgStatsPanel);
-
-		// FIFTH LINE
-		// panel to show the average damage dealt stats (average damage & average diff)
-		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's avg dmg dealt
-		JLabel dmgDealtStatsLeftLabel = new JLabel();
-		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
-		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
-		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
-
-		// label to show avg dmg dealt
-		dmgDealtStatsLabel = new JLabel();
-		dmgDealtStatsLabel.setForeground(Color.WHITE);
-		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
-
-		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(dmgDealtStatsPanel);
-
-		// SIXTH LINE
-		// panel to show the total magic hit count and deserved hit count
-		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's magic hit count stats
-		JLabel magicHitStatsLeftLabel = new JLabel();
-		magicHitStatsLeftLabel.setText("Magic Luck:");
-		magicHitStatsLeftLabel.setForeground(Color.WHITE);
-		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
-
-		// label to show magic hit count stats
-		magicHitCountStatsLabel = new JLabel();
-		magicHitCountStatsLabel.setForeground(Color.WHITE);
-		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
-
-		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(magicHitStatsPanel);
-
-		// SEVENTH LINE
-		// panel to show the offensive prayer success count
-		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's offensive pray stats
-		JLabel offensivePrayStatsLeftLabel = new JLabel();
-		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
-		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
-		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
-
-		// label to show offensive pray stats
-		offensivePrayCountStatsLabel = new JLabel();
-		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
-		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
-
-		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(offensivePrayStatsPanel);
-
-		// EIGTH LINE
-		// panel to show the total hp healed
-		JPanel hpHealedPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's total hp healed stats
-		JLabel hpHealedLeftLabel = new JLabel();
-		hpHealedLeftLabel.setText("HP Healed:");
-		hpHealedLeftLabel.setForeground(Color.WHITE);
-		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
-
-		// label to show hp healed pray stats
-		hpHealedStatsLabel = new JLabel();
-		hpHealedStatsLabel.setForeground(Color.WHITE);
-		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
-
-		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		add(hpHealedPanel);
-
-
+		// Create popupMenu with various general actions
 		JPopupMenu popupMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
@@ -329,6 +193,173 @@ public class TotalStatsPanel extends JPanel
 		popupMenu.add(fightAnalysis);
 		setComponentPopupMenu(popupMenu);
 
+		// Now initializing all lines:
+		// FIRST LINE
+		// basic label to display a title.
+		JLabel titleLabel = new JLabel();
+		titleLabel.setText("PvP Performance Tracker v" + PLUGIN.PLUGIN_VERSION);
+		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		titleLabel.setForeground(Color.WHITE);
+		add(titleLabel);
+
+		// if settings haven't been configured, add a red label to display that they should be.
+		if (!CONFIG.settingsConfigured())
+		{
+			initializeSettingsWarningLabel();
+			add(settingsWarningLabel);
+		}
+
+		// SECOND LINE
+		// panel to show total kills/deaths
+		JPanel killDeathPanel = new JPanel(new BorderLayout());
+
+		// left label to show kills
+		killsLabel = new JLabel();
+		killsLabel.setText(numKills + " Kills");
+		killsLabel.setForeground(Color.WHITE);
+		killDeathPanel.add(killsLabel, BorderLayout.WEST);
+
+		// right label to show deaths
+		deathsLabel = new JLabel();
+		deathsLabel.setText(numDeaths + " Deaths");
+		deathsLabel.setForeground(Color.WHITE);
+		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
+
+		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		killDeathPanel.setComponentPopupMenu(popupMenu);
+		add(killDeathPanel);
+
+		// THIRD LINE
+		// panel to show the total off-pray stats (successful hits/total attacks)
+		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's off-pray stats
+		JLabel leftLabel = new JLabel();
+		leftLabel.setText("Total Off-Pray:");
+		leftLabel.setForeground(Color.WHITE);
+		offPrayStatsPanel.add(leftLabel, BorderLayout.WEST);
+
+		// right shows off-pray stats
+		offPrayStatsLabel = new JLabel();
+		offPrayStatsLabel.setForeground(Color.WHITE);
+		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
+
+		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		offPrayStatsPanel.setComponentPopupMenu(popupMenu);
+		add(offPrayStatsPanel);
+
+		// FOURTH LINE
+		// panel to show the average deserved damage stats (average damage & average diff)
+		JPanel deservedDmgStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's deserved dmg stats
+		JLabel deservedDmgStatsLeftLabel = new JLabel();
+		deservedDmgStatsLeftLabel.setText("Avg Deserved Dmg:");
+		deservedDmgStatsLeftLabel.setForeground(Color.WHITE);
+		deservedDmgStatsPanel.add(deservedDmgStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show deserved dmg stats
+		deservedDmgStatsLabel = new JLabel();
+		deservedDmgStatsLabel.setForeground(Color.WHITE);
+		deservedDmgStatsPanel.add(deservedDmgStatsLabel, BorderLayout.EAST);
+
+		deservedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		deservedDmgStatsPanel.setComponentPopupMenu(popupMenu);
+		add(deservedDmgStatsPanel);
+
+		// FIFTH LINE
+		// panel to show the average damage dealt stats (average damage & average diff)
+		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's avg dmg dealt
+		JLabel dmgDealtStatsLeftLabel = new JLabel();
+		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
+		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
+		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show avg dmg dealt
+		dmgDealtStatsLabel = new JLabel();
+		dmgDealtStatsLabel.setForeground(Color.WHITE);
+		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
+
+		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		dmgDealtStatsPanel.setComponentPopupMenu(popupMenu);
+		add(dmgDealtStatsPanel);
+
+		// SIXTH LINE
+		// panel to show the total magic hit count and deserved hit count
+		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's magic hit count stats
+		JLabel magicHitStatsLeftLabel = new JLabel();
+		magicHitStatsLeftLabel.setText("Magic Luck:");
+		magicHitStatsLeftLabel.setForeground(Color.WHITE);
+		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show magic hit count stats
+		magicHitCountStatsLabel = new JLabel();
+		magicHitCountStatsLabel.setForeground(Color.WHITE);
+		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
+
+		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		magicHitStatsPanel.setComponentPopupMenu(popupMenu);
+		add(magicHitStatsPanel);
+
+		// SEVENTH LINE
+		// panel to show the offensive prayer success count
+		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's offensive pray stats
+		JLabel offensivePrayStatsLeftLabel = new JLabel();
+		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
+		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
+		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
+
+		// label to show offensive pray stats
+		offensivePrayCountStatsLabel = new JLabel();
+		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
+		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
+
+		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		offensivePrayStatsPanel.setComponentPopupMenu(popupMenu);
+		add(offensivePrayStatsPanel);
+
+		// EIGTH LINE
+		// panel to show the total hp healed
+		JPanel hpHealedPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's avg hp healed stats
+		JLabel hpHealedLeftLabel = new JLabel();
+		hpHealedLeftLabel.setText("Avg HP Healed:");
+		hpHealedLeftLabel.setForeground(Color.WHITE);
+		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
+
+		// label to show hp healed stats
+		hpHealedStatsLabel = new JLabel();
+		hpHealedStatsLabel.setForeground(Color.WHITE);
+		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
+
+		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		hpHealedPanel.setComponentPopupMenu(popupMenu);
+		add(hpHealedPanel);
+
+		// NINTH LINE
+		// panel to show the avg ghost barrage stats
+		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's avg ghost barrage stats
+		JLabel ghostBarrageStatsLeftLabel = new JLabel();
+		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
+		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
+		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
+
+		ghostBarrageStatsLabel = new JLabel();
+		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
+		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
+		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
+		add(ghostBarrageStatsPanel);
+
 		setLabels();
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int)getPreferredSize().getHeight()));
@@ -340,7 +371,11 @@ public class TotalStatsPanel extends JPanel
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
 		killsLabel.setText(nf.format(numKills) + " Kill" + (numKills != 1 ? "s" : ""));
+		killsLabel.setToolTipText("From a total of " + numFights + " fights, you got " + nf.format(numKills)
+			+ " kill" + (numKills != 1 ? "s" : ""));
 		deathsLabel.setText(nf.format(numDeaths) + " Death" + (numDeaths != 1 ? "s" : ""));
+		deathsLabel.setToolTipText("From a total of " + numFights + " fights, you died "
+			+ (numDeaths != 1 ? (nf.format(numDeaths) + " times") : "once"));
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -352,27 +387,30 @@ public class TotalStatsPanel extends JPanel
 		{
 			offPrayStatsLabel.setText(totalStats.getOffPrayStats());
 		}
-		offPrayStatsLabel.setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
+
+		// put tooltip on parent JPanel so that you can hover anywhere on the line to get the tooltip,
+		// rather than having to hover exactly on the statistic label
+		((JPanel)offPrayStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 
 		deservedDmgStatsLabel.setText(nf.format(avgDeservedDmg) + " (" +
 			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
-		deservedDmgStatsLabel.setToolTipText("Avg of " + nf1.format(avgDeservedDmg) +
+		((JPanel)deservedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDeservedDmg) +
 			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
-			avgDeservedDmgDiffOneDecimal + ". On kills: " + nf1.format(killAvgDeservedDmg) +
+			avgDeservedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDeservedDmg) +
 			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
 			"), on deaths: " + nf1.format(deathAvgDeservedDmg) +
-			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")");
+			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")</html>");
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
-		dmgDealtStatsLabel.setToolTipText("Avg of " + nf1.format(avgDmgDealt) +
+		((JPanel)dmgDealtStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDmgDealt) +
 			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
-			avgDmgDealtDiffOneDecimal + ". On kills: " + nf1.format(killAvgDmgDealt) +
+			avgDmgDealtDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
 			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
-			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")");
+			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")</html>");
 
 		if (totalStats.getMagicHitCountDeserved() >= 10000)
 		{
@@ -383,9 +421,9 @@ public class TotalStatsPanel extends JPanel
 		{
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
-		magicHitCountStatsLabel.setToolTipText("You successfully hit " +
+		((JPanel)magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
 			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-		nf1.format(totalStats.getMagicHitCountDeserved()) + ". Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky");
+		nf1.format(totalStats.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -397,12 +435,19 @@ public class TotalStatsPanel extends JPanel
 		{
 			offensivePrayCountStatsLabel.setText(totalStats.getOffensivePrayStats());
 		}
-		offensivePrayCountStatsLabel.setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
+		((JPanel)offensivePrayCountStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
 
-		hpHealedStatsLabel.setText(nf.format(totalStats.getHpHealed()));
-		hpHealedStatsLabel.setToolTipText("A total of " + totalStats.getHpHealed() + " hitpoints were recovered.");
+		hpHealedStatsLabel.setText(nf.format(avgHpHealed));
+		((JPanel)hpHealedStatsLabel.getParent()).setToolTipText("A total of " + nf.format(totalStats.getHpHealed())
+			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight.");
+
+		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
+		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
+			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
+			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
+			+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
 	}
 
 	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
@@ -417,18 +462,14 @@ public class TotalStatsPanel extends JPanel
 	{
 		numFights++;
 
-		totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-		totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
+			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+			fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+			fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
+			fight.getCompetitor().getGhostBarrageDeservedDamage());
 
-		totalDmgDealt += fight.getCompetitor().getDamageDealt();
-		totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
-
-		avgDeservedDmg = totalDeservedDmg / numFights;
-		avgDeservedDmgDiff = totalDeservedDmgDiff / numFights;
-
-		avgDmgDealt = totalDmgDealt / numFights;
-		avgDmgDealtDiff = totalDmgDealtDiff / numFights;
-
+		// add kill-specific or death-specific stats
 		if (fight.getCompetitor().isDead())
 		{
 			numDeaths++;
@@ -463,11 +504,23 @@ public class TotalStatsPanel extends JPanel
 			killAvgDmgDealtDiff = killTotalDmgDealtDiff / numKills;
 		}
 
-		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-			fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
-			fight.getCompetitor().getHpHealed());
+		totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
+		totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+
+		totalDmgDealt += fight.getCompetitor().getDamageDealt();
+		totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
+
+		// calculate avg stats based on total/numFights
+		avgDeservedDmg = totalDeservedDmg / numFights;
+		avgDeservedDmgDiff = totalDeservedDmgDiff / numFights;
+
+		avgDmgDealt = totalDmgDealt / numFights;
+		avgDmgDealtDiff = totalDmgDealtDiff / numFights;
+
+		avgHpHealed = (double)totalStats.getHpHealed() / numFights;
+
+		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -477,13 +530,15 @@ public class TotalStatsPanel extends JPanel
 		if (fights == null || fights.size() < 1) { return; }
 
 		numFights += fights.size();
+
 		for (FightPerformance fight : fights)
 		{
-			totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-			totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
-
-			totalDmgDealt += fight.getCompetitor().getDamageDealt();
-			totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
+			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
+				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+				fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
+				fight.getCompetitor().getGhostBarrageDeservedDamage());
 
 			if (fight.getCompetitor().isDead())
 			{
@@ -505,11 +560,12 @@ public class TotalStatsPanel extends JPanel
 				killTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 				killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 			}
-			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
-				fight.getCompetitor().getHpHealed());
+
+			totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
+			totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+
+			totalDmgDealt += fight.getCompetitor().getDamageDealt();
+			totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 		}
 
 		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
@@ -529,6 +585,11 @@ public class TotalStatsPanel extends JPanel
 
 		deathAvgDmgDealt = numDeaths != 0 ? deathTotalDmgDealt / numDeaths : 0;
 		deathAvgDmgDealtDiff = numDeaths != 0 ? deathTotalDmgDealtDiff / numDeaths : 0;
+
+		avgHpHealed = numFights != 0 ? (double)totalStats.getHpHealed() / numFights : 0;
+
+		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -564,6 +625,11 @@ public class TotalStatsPanel extends JPanel
 		killAvgDmgDealtDiff = 0;
 		deathAvgDmgDealt = 0;
 		deathAvgDmgDealtDiff = 0;
+
+		avgHpHealed = 0;
+
+		avgGhostBarrageCount = 0;
+		avgGhostBarrageDeservedDamage = 0;
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);
@@ -601,7 +667,7 @@ public class TotalStatsPanel extends JPanel
 		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
 
-		// make the warning font bold & smaller font size so we can fix more text.
+		// make the warning font bold & smaller font size so we can fit more text.
 		Font newFont = settingsWarningLabel.getFont();
 		newFont = newFont.deriveFont(newFont.getStyle() | Font.BOLD, 12f);
 		settingsWarningLabel.setFont(newFont);

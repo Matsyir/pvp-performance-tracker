@@ -40,8 +40,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= Sections =================================
 
-	@ConfigSection(name = "Overlay",
-		description = "Contains overlay settings (MAX of 5 lines)",
+	@ConfigSection(name = "Overlay (5 lines max)",
+		description = "Contains overlay settings (MAX of 5 lines allowed)",
 		position = 20,
 		closedByDefault = true
 	)
@@ -77,7 +77,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
-		description = "Some settings affect damage calculations, and every player should set them based on how they're pking. Please confirm them and tick this box in order to hide the config warning.",
+		description = "Some settings affect damage calculations, and every player should set them based on how they're pking." +
+			"<br>Please confirm them and tick this box in order to hide the config warning.",
 		position = -1
 	)
 	default boolean settingsConfigured()
@@ -88,7 +89,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "restrictToLms",
 		name = "Restrict to LMS",
-		description = "Restricts use within the LMS area. WARNING: can be inaccurate outside LMS, as every attack animation's combat style must be manually mapped.",
+		description = "Restricts use within the LMS area." +
+			"<br>WARNING: can be inaccurate outside LMS, as every attack animation's combat style must be manually mapped.",
 		position = 0
 	)
 	default boolean restrictToLms()
@@ -99,7 +101,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showFightHistoryPanel",
 		name = "Show Fight History Panel",
-		description = "Enables the side-panel which displays previous fight statistics.",
+		description = "Enables the side-panel which displays previous fight's statistics.",
 		position = 10
 	)
 	default boolean showFightHistoryPanel()
@@ -136,7 +138,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayNames",
 		name = "Overlay: Show Names",
-		description = "The overlay will display names. (max. 5 lines/stats)",
+		description = "The overlay will display names.<br>Max. of 5 lines on the overlay",
 		position = 50,
 		section = overlay
 	)
@@ -148,7 +150,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayOffPray",
 		name = "Overlay: Show Off-Pray",
-		description = "The overlay will display off-pray stats as a fraction & percentage. (max. 5 lines/stats)",
+		description = "The overlay will display off-pray stats as a fraction & percentage.<br>Max. of 5 lines on the overlay",
 		position = 60,
 		section = overlay
 	)
@@ -160,7 +162,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayDeservedDmg",
 		name = "Overlay: Show Deserved Dmg",
-		description = "The overlay will display deserved damage & difference. (max. 5 lines/stats)",
+		description = "The overlay will display deserved damage & difference.<br>Max. of 5 lines on the overlay",
 		position = 70,
 		section = overlay
 	)
@@ -172,7 +174,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayDmgDealt",
 		name = "Overlay: Show Dmg Dealt",
-		description = "The overlay will display damage dealt. (max. 5 lines/stats)",
+		description = "The overlay will display damage dealt.<br>Max. of 5 lines on the overlay",
 		position = 80,
 		section = overlay
 	)
@@ -184,7 +186,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayMagicHits",
 		name = "Overlay: Show Magic Hits",
-		description = "The overlay will display successful magic hits & deserved magic hits. (max. 5 lines/stats)",
+		description = "The overlay will display successful magic hits & deserved magic hits.<br>Max. of 5 lines on the overlay",
 		position = 90,
 		section = overlay
 	)
@@ -196,7 +198,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayOffensivePray",
 		name = "Overlay: Show Offensive Pray",
-		description = "The overlay will display offensive pray stats. (max. 5 lines/stats)",
+		description = "The overlay will display offensive pray stats.<br>Max. of 5 lines on the overlay",
 		position = 100,
 		section = overlay
 	)
@@ -208,7 +210,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayHpHealed",
 		name = "Overlay: Show HP Healed",
-		description = "The overlay will display hitpoints healed. (max. 5 lines/stats)",
+		description = "The overlay will display hitpoints healed.<br>Max. of 5 lines on the overlay",
 		position = 105,
 		section = overlay
 	)
@@ -220,7 +222,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayGhostBarrage",
 		name = "Overlay: Show Ghost Barrage",
-		description = "(Advanced): The overlay will display ghost barrage stats. (max. 5 lines/stats)",
+		description = "(Advanced): The overlay will display ghost barrage stats.<br>Max. of 5 lines on the overlay",
 		position = 106,
 		section = overlay
 	)
@@ -246,7 +248,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "boltChoice",
 		name = "RCB Ammo",
-		description = "Bolts used for rune crossbow's deserved damage calculation. LMS fights always use diamond (e). Dragonfire protection not accounted for.",
+		description = "Bolts used for rune crossbow's deserved damage calculation." +
+			"<br>LMS fights always use diamond (e). Dragonfire protection not accounted for.",
 		position = 120,
 		section = gearAmmo
 	)
@@ -258,7 +261,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "strongBoltChoice",
 		name = "ACB/DCB/DHCB Ammo",
-		description = "Bolts used for ACB/DCB/DHCB's deserved damage calculation. LMS fights always use regular diamond (e). Dragonfire protection not accounted for.",
+		description = "Bolts used for ACB/DCB/DHCB's deserved damage calculation." +
+			"<br>LMS fights always use regular diamond (e). Dragonfire protection not accounted for.",
 		position = 130,
 		section = gearAmmo
 	)
@@ -370,7 +374,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryRenderLimit",
 		name = "Max Rendered Fights",
-		description = "Maximum number of previous fights to save to be displayed in the panel. WILL cause lag spikes at high numbers. This should be small if you have low RAM",
+		description = "Maximum number of previous fights to be displayed in the fight history side-panel." +
+			"<br>WILL cause lag spikes at very high numbers. This should be small if you have low RAM",
 		position = 205
 	)
 	default int fightHistoryRenderLimit()
@@ -384,7 +389,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Max Saved Fights",
-		description = "Maximum number of previous fights to save to a local file and use for total stats. 0 means unlimited. May cause lag spikes at extreme numbers on low-end PCs",
+		description = "Maximum number of previous fights to be saved to a local file and used for total/avg stats." +
+			"<br>0 means unlimited. May cause lag spikes at extreme numbers on low-end PCs",
 		position = 210
 	)
 	default int fightHistoryLimit()
@@ -406,7 +412,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "dlongIsVls",
 		name = "Dlong = VLS",
-		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for deserved damage. Requested for DMM practice purposes.",
+		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for deserved damage." +
+			"<br>Requested/used for for DMM practice purposes.",
 		position = 230
 	)
 	default boolean dlongIsVls()
@@ -417,7 +424,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightLogInChat",
 		name = "Fight Log In Chat",
-		description = "Display basic fight logs in trade chat during a fight. This is very excessive, mostly for testing/verification.",
+		description = "Display basic fight logs in trade chat during a fight." +
+			"<br><strong>This is very excessive, mostly for testing/verification.<strong>",
 		position = 500
 	)
 	default boolean fightLogInChat()
@@ -428,7 +436,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "nameFilter",
 		name = "Name Filter",
-		description = "Used to save user's selected name/RSN filter for the panel views.",
+		description = "Hidden config used to save user's selected name/RSN filter for the panel views.",
 		position = 1000,
 		hidden = true
 	)
