@@ -213,20 +213,20 @@ public class FightPerformancePanel extends JPanel
 		// third line LEFT: player's deserved dps stats
 		JLabel playerDeservedDpsStats = new JLabel();
 		playerDeservedDpsStats.setText(competitor.getDeservedDmgString(opponent));
-		//playerDeservedDpsStats.setToolTipText(fight.getCompetitorDeservedDmgString(1, false) +  ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		//playerDeservedDpsStats.setToolTipText(fight.getCompetitorDeservedDmgString(1, false) +  ": Average damage deserved based on gear & overheads (difference vs opponent in brackets)");
 		playerDeservedDpsStats.setToolTipText(
 			competitor.getName() + " deserved to deal " + nf.format(competitor.getDeservedDamage()) +
-			" damage based on gear/pray (" + competitor.getDeservedDmgString(opponent, 1, true) + " vs opponent)");
+			" damage based on gear & overheads (" + competitor.getDeservedDmgString(opponent, 1, true) + " vs opponent)");
 		playerDeservedDpsStats.setForeground(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(playerDeservedDpsStats, BorderLayout.WEST);
 
 		// third line RIGHT: opponent's deserved dps stats
 		JLabel opponentDeservedDpsStats = new JLabel();
 		opponentDeservedDpsStats.setText(opponent.getDeservedDmgString(competitor));
-		//opponentDeservedDpsStats.setToolTipText(fight.getOpponentDeservedDmgString(1, false) + ": Average damage deserved based on gear/pray (difference vs opponent in brackets)");
+		//opponentDeservedDpsStats.setToolTipText(fight.getOpponentDeservedDmgString(1, false) + ": Average damage deserved based on gear & overheads (difference vs opponent in brackets)");
 		opponentDeservedDpsStats.setToolTipText(
 			opponent.getName() + " deserved to deal " + nf.format(opponent.getDeservedDamage()) +
-			" damage based on gear/pray (" + opponent.getDeservedDmgString(competitor, 1, true) + " vs you)");
+			" damage based on gear & overheads (" + opponent.getDeservedDmgString(competitor, 1, true) + " vs you)");
 		opponentDeservedDpsStats.setForeground(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 		deservedDpsStatsLine.add(opponentDeservedDpsStats, BorderLayout.EAST);
 

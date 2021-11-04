@@ -266,7 +266,6 @@ class Fighter
 		ghostBarrageCount++;
 		ghostBarrageDeservedDamage += pvpDamageCalc.getAverageHit();
 
-		log.info("@@@@@@@@@@@@@@@@@@@@ WOWZERS we got a ghost barrage");
 		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
 		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
 	}

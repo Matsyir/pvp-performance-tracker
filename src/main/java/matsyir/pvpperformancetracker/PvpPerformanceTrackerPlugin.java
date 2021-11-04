@@ -472,7 +472,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			int magicXp = client.getSkillExperience(Skill.MAGIC);
 			if (magicXp > currentFight.competitor.getLastGhostBarrageCheckedMageXp())
 			{
-				log.info("We're checking for GBs(sChanged): skill=" + statChanged.getSkill().toString() + " , " + "xp=" + statChanged.getXp());
 				currentFight.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
 				clientThread.invokeLater(this::checkForGhostBarrage);
 			}
@@ -485,7 +484,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		if (!hasOpponent() || fakeXpDrop.getSkill() != Skill.MAGIC) { return; }
 
-		log.info("We're checking for GBs(fakeXP): skill=" + fakeXpDrop.getSkill().toString() + " , " + "xp=" + fakeXpDrop.getXp());
 		clientThread.invokeLater(this::checkForGhostBarrage);
 	}
 
