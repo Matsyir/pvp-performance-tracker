@@ -48,14 +48,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 	String overlay = "overlay";
 
 	@ConfigSection(name = "Gear/Ammo",
-		description = "Contains gear/ammo settings",
+		description = "Contains gear/ammo settings for fights outside LMS",
 		position = 110,
 		closedByDefault = false
 	)
 	String gearAmmo = "gearAmmo";
 
 	@ConfigSection(name = "Levels",
-		description = "Contains level settings for the deserved damage statistic outside of LMS",
+		description = "Contains level settings for fights outside of LMS (including boosts)",
 		position = 150,
 		closedByDefault = false
 	)
@@ -89,7 +89,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "restrictToLms",
 		name = "Restrict to LMS",
-		description = "Restricts use within the LMS area." +
+		description = "Restricts functionality and visibility to the LMS areas & its lobby (Ferox Enclave)." +
 			"<br>WARNING: can be inaccurate outside LMS, as every attack animation's combat style must be manually mapped.",
 		position = 0
 	)

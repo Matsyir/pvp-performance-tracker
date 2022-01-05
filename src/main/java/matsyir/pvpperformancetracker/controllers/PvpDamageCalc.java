@@ -91,8 +91,7 @@ public class PvpDamageCalc
 	private static final double DDS_SPEC_DMG_MODIFIER = 2.3;
 
 	private static final int AGS_SPEC_ACCURACY_MODIFIER = 2;
-	private static final double AGS_SPEC_INITIAL_DMG_MODIFIER = 1.1;
-	private static final double AGS_SPEC_FINAL_DMG_MODIFIER = 1.25;
+	private static final double AGS_SPEC_DMG_MODIFIER = 1.375;
 
 	private static final double VLS_SPEC_DMG_MODIFIER = 1.2;
 	private static final double VLS_SPEC_MIN_DMG_MODIFIER = .2;
@@ -191,7 +190,7 @@ public class PvpDamageCalc
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
-		log.info("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
+		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
 			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
@@ -256,7 +255,6 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
-		double agsModifier = ags ? AGS_SPEC_FINAL_DMG_MODIFIER : 1;
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
 		if (usingSpec && (dbow || vls || swh))
@@ -304,7 +302,7 @@ public class PvpDamageCalc
 			averageSuccessfulHit = maxHit / 2.0;
 		}
 
-		averageHit = accuracy * averageSuccessfulHit * prayerModifier * agsModifier;
+		averageHit = accuracy * averageSuccessfulHit * prayerModifier;
 	}
 
 	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
@@ -322,7 +320,7 @@ public class PvpDamageCalc
 		}
 
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
-		double modifier = ags && usingSpec ? AGS_SPEC_INITIAL_DMG_MODIFIER : 1;
+		double modifier = ags && usingSpec ? AGS_SPEC_DMG_MODIFIER : 1;
 		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
 		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
 		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
