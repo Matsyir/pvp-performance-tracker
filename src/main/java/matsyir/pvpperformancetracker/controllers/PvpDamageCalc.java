@@ -90,8 +90,11 @@ public class PvpDamageCalc
 	private static final double DDS_SPEC_ACCURACY_MODIFIER = 1.25;
 	private static final double DDS_SPEC_DMG_MODIFIER = 2.3;
 
-	private static final int AGS_SPEC_ACCURACY_MODIFIER = 2;
-	private static final double AGS_SPEC_DMG_MODIFIER = 1.375;
+	private static final int ARMA_GS_SPEC_ACCURACY_MODIFIER = 2;
+	private static final double ARMA_GS_SPEC_DMG_MODIFIER = 1.375;
+	private static final int ANCIENT_GS_SPEC_ACCURACY_MODIFIER = 2;
+	private static final double ANCIENT_GS_SPEC_DMG_MODIFIER = 1.1;
+	private static final int ANCIENT_GS_FIXED_DAMAGE = 25;
 
 	private static final double VLS_SPEC_DMG_MODIFIER = 1.2;
 	private static final double VLS_SPEC_MIN_DMG_MODIFIER = .2;
@@ -249,8 +252,8 @@ public class PvpDamageCalc
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
+		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
-		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
@@ -303,11 +306,17 @@ public class PvpDamageCalc
 		}
 
 		averageHit = accuracy * averageSuccessfulHit * prayerModifier;
+
+		if (usingSpec && ancientGs)
+		{
+			averageHit += ANCIENT_GS_FIXED_DAMAGE;
+		}
 	}
 
 	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
@@ -320,11 +329,13 @@ public class PvpDamageCalc
 		}
 
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
-		double modifier = ags && usingSpec ? AGS_SPEC_DMG_MODIFIER : 1;
-		modifier = (swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER : modifier;
-		modifier = (dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER : modifier;
-		modifier = (vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER : modifier;
-		maxHit = (int) (modifier * baseDamage);
+		double damageModifier = (ags && usingSpec) ? ARMA_GS_SPEC_DMG_MODIFIER :
+			(ancientGs && usingSpec) ? ANCIENT_GS_SPEC_DMG_MODIFIER :
+			(swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER :
+			(dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER :
+			(vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER :
+			1;
+		maxHit = (int) (damageModifier * baseDamage);
 	}
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
@@ -407,6 +418,7 @@ public class PvpDamageCalc
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
+		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 
 		double stabBonusPlayer = playerStats[STAB_ATTACK];
@@ -424,7 +436,10 @@ public class PvpDamageCalc
 		double attackerChance;
 		double defenderChance = 0;
 
-		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER : ags ? AGS_SPEC_ACCURACY_MODIFIER : 1;
+		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER :
+			ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :
+			ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
+			1;
 
 		/**
 		 * Attacker Chance
