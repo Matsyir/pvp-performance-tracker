@@ -106,6 +106,7 @@ public enum AnimationData
 	RANGED_DRAGON_KNIFE(8194, AttackStyle.RANGED),
 	RANGED_DRAGON_KNIFE_POISONED(8195, AttackStyle.RANGED), // tested w/ d knife p++
 	RANGED_DRAGON_KNIFE_SPEC(8292, AttackStyle.RANGED, true),
+	RANGED_ZARYTE_CROSSBOW(9168, AttackStyle.RANGED),
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
