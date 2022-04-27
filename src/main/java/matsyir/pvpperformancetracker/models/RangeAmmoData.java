@@ -107,7 +107,8 @@ public interface RangeAmmoData
 		static EquipmentData[] WEAPONS_USING = {
 			EquipmentData.ARMADYL_CROSSBOW,
 			EquipmentData.DRAGON_CROSSBOW,
-			EquipmentData.DRAGON_HUNTER_CROSSBOW
+			EquipmentData.DRAGON_HUNTER_CROSSBOW,
+			EquipmentData.ZARYTE_CROSSBOW
 		};
 
 		private String name;
