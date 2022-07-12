@@ -11,4 +11,6 @@ This plugin was created in collaboration with [Mazhar, @maz_rs on twitter](https
 ![Plugin Overview Image](https://i.imgur.com/LkQGda3.png)
 
 -------------------------------
-I would love to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
+I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
+
+Note that I'm not very active on RS lately myself, so this project is not among my highest priorities - but I'm happy to keep supporting it, especially for significant issues that may affect most average users with average gear setups in places like LMS.
