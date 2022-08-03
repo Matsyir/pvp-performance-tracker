@@ -311,7 +311,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				boolean enableConfigWarning = !config.settingsConfigured();
 				panel.setConfigWarning(enableConfigWarning);
 				break;
-			// potential future code for level presets/dynamic config if RL ever supports it.
+				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
 //			case "strengthLevel":
 //			case "defenceLevel":
@@ -790,12 +790,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public int currentlyUsedOffensivePray()
 	{
 		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
-			client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
+				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
 				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
-					client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
-						client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
-							client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
-								0;
+				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
+				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
+				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
+				0;
 	}
 
 	// returns SpriteID for a given HeadIcon. returns -1 if not found
