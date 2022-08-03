@@ -66,7 +66,7 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.HeadIcon;
-import net.runelite.api.Hitsplat.HitsplatType;
+import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
@@ -440,14 +440,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// track damage dealt/taken
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
-		HitsplatType hitType = event.getHitsplat().getHitsplatType();
+		int hitType = event.getHitsplat().getHitsplatType();
 
 		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
 		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
 		// Fighters in the fight being hit.
 		if (!hasOpponent() || !(event.getActor() instanceof Player) ||
-			!(hitType == HitsplatType.DAMAGE_ME || hitType == HitsplatType.DAMAGE_OTHER ||
-				hitType == HitsplatType.POISON || hitType == HitsplatType.VENOM))
+			!(hitType == HitsplatID.DAMAGE_ME || hitType == HitsplatID.DAMAGE_ME_ORANGE || hitType == HitsplatID.DAMAGE_OTHER_ORANGE || hitType == HitsplatID.DAMAGE_OTHER || hitType == HitsplatID.DAMAGE_MAX_ME || hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE ||
+				hitType == HitsplatID.POISON || hitType == HitsplatID.VENOM))
 		{
 			return;
 		}
