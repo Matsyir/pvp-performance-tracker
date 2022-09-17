@@ -44,6 +44,9 @@ public enum AnimationData
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
 	MELEE_SCIM_SLASH(390, AttackStyle.SLASH), // tested w/ rune & dragon scim, d sword, VLS, obby sword
 
+	MELEE_FANG_STAB(9471, AttackStyle.STAB), // tested w/ fang
+	MELEE_FANG_SPEC(6118, AttackStyle.STAB, true), // tested w/ fang spec
+
 	MELEE_GENERIC_SLASH(393, AttackStyle.SLASH), // tested w/ zuriel's staff, d long slash, dclaws regular slash
 	MELEE_STAFF_CRUSH(0, AttackStyle.SLASH), // 393 previously, save name to support old fights but no longer track
 

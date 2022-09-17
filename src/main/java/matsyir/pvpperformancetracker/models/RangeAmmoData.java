@@ -37,6 +37,10 @@ public interface RangeAmmoData
 		StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E
 	};
 
+	RangeAmmoData[] OPAL_BOLTS = {
+		StrongBoltAmmo.OPAL_DRAGON_BOLTS_E
+	};
+
 	int getItemId(); // itemIDs used for DISPLAYING bolts, not getting them.
 	int getRangeStr();
 	double getBonusMaxHit(int rangeLevel); // damage bonus from bolt specs.
