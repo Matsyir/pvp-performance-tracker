@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum AnimationData
 {
 	// MELEE
+	MELEE_VIGGORAS_CHAINMACE(245, AttackStyle.CRUSH),
 	MELEE_DAGGER_SLASH(376, AttackStyle.SLASH), // tested w/ dds
 	MELEE_SPEAR_STAB(381, AttackStyle.STAB), // tested w/ zammy hasta
 	MELEE_SWORD_STAB(386, AttackStyle.STAB), // tested w/ dragon sword, obby sword, d long
@@ -76,6 +77,7 @@ public enum AnimationData
 	MELEE_ABYSSAL_DAGGER_STAB(3297, AttackStyle.STAB),
 	MELEE_ABYSSAL_BLUDGEON_CRUSH(3298, AttackStyle.CRUSH),
 	MELEE_LEAF_BLADED_BATTLEAXE_CRUSH(3852, AttackStyle.CRUSH),
+	MELEE_INQUISITORS_MACE(4503, AttackStyle.CRUSH),
 	MELEE_BARRELCHEST_ANCHOR_CRUSH(5865, AttackStyle.CRUSH),
 	MELEE_LEAF_BLADED_BATTLEAXE_SLASH(7004, AttackStyle.SLASH),
 	MELEE_GODSWORD_SLASH(7045, AttackStyle.SLASH), // tested w/ AGS, BGS, ZGS, SGS, AGS(or) sara sword
