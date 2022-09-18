@@ -93,6 +93,7 @@ public class PvpDamageCalc
 	private static final int ARMA_GS_SPEC_ACCURACY_MODIFIER = 2;
 	private static final double ARMA_GS_SPEC_DMG_MODIFIER = 1.375;
 	private static final int ANCIENT_GS_SPEC_ACCURACY_MODIFIER = 2;
+	private static final double FANG_SPEC_ACCURACY_MODIFIER = 1.5;
 	private static final double ANCIENT_GS_SPEC_DMG_MODIFIER = 1.1;
 	private static final int ANCIENT_GS_FIXED_DAMAGE = 25;
 
@@ -255,6 +256,7 @@ public class PvpDamageCalc
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
+		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 
@@ -299,6 +301,17 @@ public class PvpDamageCalc
 			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
 			maxHit = maxHit * 2 + 1;
 			return;
+		} else if (fang) {
+			double maxHitMultiplier = usingSpec ? 1: 0.85; // max hit when using spec is 100% but minHit stays the same
+			// accuracy rolls twice for the fang, so the accuracy is equal to 1 - chance of hit1 OR hit2
+			double invertedAccuracy = 1 - accuracy; // example: if accuracy is 20% and thus 0.2, inverted accuracy is 0.8
+			double chanceOfMissingTwice = Math.pow(invertedAccuracy, 2); // 0.8 squared is 0.64 or 64%
+			accuracy = 1 - chanceOfMissingTwice; // thus 64% chance of missing, or 36% accuracy
+			// max hit is 0.85% and min hit is 15%
+			// unlike VLS/SWH/Dbow I believe this rolls between min and max instead of raising hits between 0 - minHit to minHit
+			minHit = (int) (0.15 * maxHit);
+			maxHit = (int) (maxHitMultiplier * maxHit);
+			averageSuccessfulHit = (minHit + maxHit) / 2;
 		}
 		else
 		{
@@ -420,6 +433,7 @@ public class PvpDamageCalc
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
+		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
 
 		double stabBonusPlayer = playerStats[STAB_ATTACK];
 		double slashBonusPlayer = playerStats[SLASH_ATTACK];
@@ -439,6 +453,7 @@ public class PvpDamageCalc
 		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER :
 			ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :
 			ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
+			fang ? FANG_SPEC_ACCURACY_MODIFIER :
 			1;
 
 		/**
@@ -504,6 +519,7 @@ public class PvpDamageCalc
 		}
 
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
+		boolean opals = ArrayUtils.contains(RangeAmmoData.OPAL_BOLTS, weaponAmmo);
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;
 		double rangeModifier;
@@ -570,9 +586,11 @@ public class PvpDamageCalc
 			accuracy = attackerChance / (2 * (defenderChance + 1));
 		}
 
-		// diamond bolts accuracy: 10% of attacks are 100% accuracy, so apply avg accuracy as:
-		// (90% of normal accuracy) + (10% of 100% accuracy)
-		accuracy = diamonds ? (accuracy * .9) + .1 : accuracy;
+		// the effect in pvp is 5% instead of 10% like it is for pvm
+		// upon further testing this effect applies to opal dragon bolts as well
+		// diamond bolts and opal bolts accuracy: 5% of attacks are 100% accuracy, so apply avg accuracy as:
+		// (95% of normal accuracy) + (5% of 100% accuracy)
+		accuracy = (diamonds || opals) ? (accuracy * .95) + .05 : accuracy;
 	}
 
 	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, boolean successfulOffensive, boolean defensiveAugurySuccess)
