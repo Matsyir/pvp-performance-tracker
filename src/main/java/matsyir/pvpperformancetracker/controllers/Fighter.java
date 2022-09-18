@@ -114,7 +114,7 @@ class Fighter
 	private int lastGhostBarrageCheckedMageXp = -1;
 
 	// fighter that is bound to a player and gets updated during a fight
-	Fighter(Player player)
+	Fighter(FightPerformance fight, Player player)
 	{
 		this.player = player;
 		name = player.getName();
@@ -127,12 +127,12 @@ class Fighter
 		magicHitCountDeserved = 0;
 		offensivePraySuccessCount = 0;
 		dead = false;
-		pvpDamageCalc = new PvpDamageCalc();
+		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = new ArrayList<>();
 	}
 
 	// fighter for merging fight logs together for detailed data (fight analysis)
-	Fighter(String name, ArrayList<FightLogEntry> logs)
+	Fighter(FightPerformance fight, String name, ArrayList<FightLogEntry> logs)
 	{
 		player = null;
 		this.name = name;
@@ -144,7 +144,7 @@ class Fighter
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
-		pvpDamageCalc = new PvpDamageCalc();
+		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = logs;
 	}
 
@@ -162,8 +162,15 @@ class Fighter
 		magicHitCount = 0;
 		magicHitCountDeserved = 0;
 		dead = false;
-		pvpDamageCalc = new PvpDamageCalc();
+		pvpDamageCalc = null;
 		fightLogEntries = new ArrayList<>();
+	}
+
+	// Fighter for AnalyzedFightPerformance
+	public Fighter(FightPerformance fight, String name)
+	{
+		this(name);
+		pvpDamageCalc = new PvpDamageCalc(fight);
 	}
 
 	// add an attack to the counters depending if it is successful or not.

@@ -61,6 +61,7 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
+import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -104,7 +105,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.5.5";
+	public static final String PLUGIN_VERSION = "1.5.6";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	public static final String DATA_FOLDER = "pvp-performance-tracker";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
@@ -236,22 +237,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
 	}
 
-	private void update(String oldVersion)
-	{
-//		switch (oldVersion)
-//		{
-//			case "1.4.2":
-//				// update logic....
-//				break;
-//		}
-
-		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
-	}
-
 	@Override
 	protected void shutDown() throws Exception
 	{
-		updateFightHistoryData();
+		saveFightHistoryData();
 
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
@@ -510,13 +499,75 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onClientShutdown(ClientShutdown event)
 	{
-		event.waitFor(executor.submit(this::updateFightHistoryData));
+		event.waitFor(executor.submit(this::saveFightHistoryData));
 	}
 
 	// #################################################################################################################
 	// ################################## Plugin-specific functions & global helpers ###################################
 	// #################################################################################################################
 
+	private void update(String oldVersion)
+	{
+		switch (oldVersion)
+		{
+			case "1.4.0":
+			case "1.4.1":
+			case "1.4.2":
+			case "1.4.3":
+			case "1.4.4":
+			case "1.4.5":
+			case "1.4.6":
+			case "1.4.7":
+			case "1.4.8":
+			case "1.5.0":
+			case "1.5.1":
+			case "1.5.2":
+			case "1.5.3":
+			case "1.5.4":
+			case "1.5.5":
+				updateFrom1_5_5to1_5_6();
+				break;
+		}
+
+		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
+	}
+
+	private void updateFrom1_5_5to1_5_6()
+	{
+		try
+		{
+			log.info("Updating data from 1.5.5 (or earlier) to 1.5.6...");
+
+			FIGHT_HISTORY_DATA_DIR.mkdirs();
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
+
+			// if the fight history data file doesn't exist, create it with an empty array.
+			if (!fightHistoryData.exists())
+			{
+				Writer writer = new FileWriter(fightHistoryData);
+				writer.write("[]");
+				writer.close();
+				return;
+			}
+
+			fightHistory.clear();
+
+			// read the old saved fights from the file into an array, and add them as an updated
+			// fight to the fightHistory list.
+			Arrays.asList(GSON.fromJson(new FileReader(fightHistoryData), FightPerformance__1_5_5[].class))
+				.forEach((oldFight) -> fightHistory.add(new FightPerformance(oldFight)));
+
+			// now that the fights were deserialized and updated to the newest version, simply save them.
+			// afterwards, they will be re-loaded normally. Bit inefficient but not a big deal
+			saveFightHistoryData();
+			log.info("Successfully updated from 1.5.5 to 1.5.6");
+		}
+		catch (Exception e)
+		{
+			log.warn("Error while updating fight history data from 1.5.5 to 1.5.6: " + e.getMessage());
+			// Display no modal for this error since it could happen on client load and that has odd behavior.
+		}
+	}
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()
 	{
@@ -537,7 +588,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// save the currently loaded fightHistory to the local json data so it is saved for the next client launch.
-	private void updateFightHistoryData()
+	private void saveFightHistoryData()
 	{
 		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
 		// from continuing to work, even if there are issues saving the data.
@@ -684,7 +735,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void resetFightHistory()
 	{
 		fightHistory.clear();
-		updateFightHistoryData();
+		saveFightHistoryData();
 		panel.rebuild();
 	}
 

@@ -55,8 +55,8 @@ public class AnalyzedFightPerformance extends FightPerformance
 		this.opposingFight = opposingFight;
 		String cName = mainFight.competitor.getName();
 		String oName = mainFight.opponent.getName();
-		this.competitor = new Fighter(cName);
-		this.opponent = new Fighter(oName);
+		this.competitor = new Fighter(mainFight, cName);
+		this.opponent = new Fighter(mainFight, oName);
 		if (mainFight.competitor.isDead())
 		{
 			this.competitor.died();

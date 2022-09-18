@@ -55,7 +55,7 @@ public interface RangeAmmoData
 	enum BoltAmmo implements RangeAmmoConfigData
 	{
 		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, .2, 0.06, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, 1, .2, 0.06),
 		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.RUNE_CROSSBOW };
@@ -67,7 +67,7 @@ public interface RangeAmmoData
 		private double specChance;
 		private double dmgModifier;
 
-		BoltAmmo(String name, int itemId, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
+		BoltAmmo(String name, int itemId, int rangeStr, double dmgModifier, double specRangeLevelModifier, double specChance)
 		{
 			this.name = name;
 			this.itemId = itemId;
@@ -102,10 +102,10 @@ public interface RangeAmmoData
 	enum StrongBoltAmmo implements RangeAmmoConfigData
 	{
 		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, .2, 0.06, 1),
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, 1, .2, 0.06),
 		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015),
-		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 1668, 122, .2, .06, 1),
-		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 8729, 122, .1, .05, 1),
+		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 1668, 122, 1, .2, .06),
+		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 8729, 122, 1, .1, .05),
 		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 1690, 122, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = {
@@ -122,7 +122,7 @@ public interface RangeAmmoData
 		private double specChance;
 		private double dmgModifier;
 
-		StrongBoltAmmo(String name, int itemId, int rangeStr, double specRangeLevelModifier, double specChance, double dmgModifier)
+		StrongBoltAmmo(String name, int itemId, int rangeStr, double dmgModifier, double specRangeLevelModifier, double specChance)
 		{
 			this.name = name;
 			this.itemId = itemId;

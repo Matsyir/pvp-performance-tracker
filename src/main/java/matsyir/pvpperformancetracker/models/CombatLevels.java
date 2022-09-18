@@ -45,11 +45,6 @@ public class CombatLevels
 			99);
 	}
 
-	public static CombatLevels getLmsLevels()
-	{
-		return new CombatLevels(118, 118, 75, 112, 99, 99);
-	}
-
 	@Expose
 	@SerializedName("a")
 	public int atk;

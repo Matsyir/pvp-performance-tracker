@@ -40,6 +40,8 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.models.FightType;
+import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
@@ -63,8 +65,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	@Expose
 	@SerializedName("c") // use 1 letter serialized variable names for more compact storage
-	public
-	Fighter competitor;
+	public Fighter competitor;
 	@Expose
 	@SerializedName("o")
 	public Fighter opponent;
@@ -73,7 +74,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 	@Expose
 	@SerializedName("l")
-	public boolean isLmsFight; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
+	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -86,16 +87,50 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
 	public FightPerformance(Player competitor, Player opponent)
 	{
-		this.competitor = new Fighter(competitor);
-		this.opponent = new Fighter(opponent);
-		this.isLmsFight = PLUGIN.isAtLMS();
+		int defLvl = PLUGIN.getClient().getBoostedSkillLevel(Skill.DEFENCE);
+
+		// determine fight type based on being at LMS areas & use def level to check for LMS builds.
+		this.fightType = !PLUGIN.isAtLMS() ? FightType.NORMAL :
+			defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
+			defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
+			FightType.LMS_MAXMED;
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 
+		this.competitor = new Fighter(this, competitor);
+		this.opponent = new Fighter(this, opponent);
+
 		this.competitorPrevHp = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
 		this.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
+	}
+
+	// create a FightPerformance using an old 1.5.5 or earlier version.
+	public FightPerformance(FightPerformance__1_5_5 old)
+	{
+		this.competitor = old.competitor;
+		this.opponent = old.opponent;
+		this.lastFightTime = old.lastFightTime;
+		if (old.isLmsFight)
+		{
+			if (competitor.getFightLogEntries().size() > 0)
+			{
+				int defLvl = competitor.getFightLogEntries().get(0).getAttackerLevels().def;
+				this.fightType =
+					defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
+					defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
+					FightType.LMS_MAXMED;
+			}
+			else
+			{
+				this.fightType = FightType.LMS_MAXMED;
+			}
+		}
+		else
+		{
+			this.fightType = FightType.NORMAL;
+		}
 	}
 
 	// return a random fightPerformance used for testing UI
@@ -131,8 +166,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Used for testing purposes
 	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset, ArrayList<FightLogEntry> fightLogs)
 	{
-		this.competitor = new Fighter(cName, fightLogs);
-		this.opponent = new Fighter(oName, fightLogs);
+		this.competitor = new Fighter(this, cName, fightLogs);
+		this.opponent = new Fighter(this, oName, fightLogs);
 
 		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22, 25, 26);
 		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22, 25, 26);

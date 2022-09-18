@@ -127,22 +127,13 @@ public class PvpDamageCalc
 	private RingData ringUsed;
 	boolean isLmsFight;
 
-	public PvpDamageCalc()
+	public PvpDamageCalc(FightPerformance relatedFight)
 	{
-		if (PLUGIN.isAtLMS()) // use LMS levels if the user is at LMS.
-		{
-			this.attackerLevels = CombatLevels.getLmsLevels();
-			this.defenderLevels = CombatLevels.getLmsLevels();
-			this.ringUsed = RingData.BERSERKER_RING;
-			this.isLmsFight = true;
-		}
-		else
-		{
-			this.attackerLevels = CombatLevels.getConfigLevels();
-			this.defenderLevels = CombatLevels.getConfigLevels();
-			this.ringUsed = CONFIG.ringChoice();
-			this.isLmsFight = false;
-		}
+		isLmsFight = relatedFight.fightType.isLmsFight();
+		this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
+		this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
+
+		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING : CONFIG.ringChoice();
 	}
 
 	// main function used to update stats during an ongoing fight
@@ -301,7 +292,9 @@ public class PvpDamageCalc
 			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
 			maxHit = maxHit * 2 + 1;
 			return;
-		} else if (fang) {
+		}
+		else if (fang)
+		{
 			double maxHitMultiplier = usingSpec ? 1: 0.85; // max hit when using spec is 100% but minHit stays the same
 			// accuracy rolls twice for the fang, so the accuracy is equal to 1 - chance of hit1 OR hit2
 			double invertedAccuracy = 1 - accuracy; // example: if accuracy is 20% and thus 0.2, inverted accuracy is 0.8
@@ -311,11 +304,16 @@ public class PvpDamageCalc
 			// unlike VLS/SWH/Dbow I believe this rolls between min and max instead of raising hits between 0 - minHit to minHit
 			minHit = (int) (0.15 * maxHit);
 			maxHit = (int) (maxHitMultiplier * maxHit);
-			averageSuccessfulHit = (minHit + maxHit) / 2;
+
+			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 		else
 		{
-			averageSuccessfulHit = maxHit / 2.0;
+			// divide by double to get accurate decimals, since this is the averageHit result,
+			// not a core OSRS damage calc that is meant to be rounded down by int
+			// If reaching this part of the code, the minHit should always be 0, but include it anyways
+			// just in case.
+			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 
 		averageHit = accuracy * averageSuccessfulHit * prayerModifier;
