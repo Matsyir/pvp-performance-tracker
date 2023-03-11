@@ -116,7 +116,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A state.
 	public static Gson GSON;
 
-	// Last man standing map regions, not including lobby
+	// Last man standing map regions, including ferox enclave
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12344, 12600, 13658, 13659, 13660, 13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
 
 	static
