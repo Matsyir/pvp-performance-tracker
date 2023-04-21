@@ -206,7 +206,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
-					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 					opponent.getPlayer(),
 					animationData,
 					offensivePray,
@@ -221,8 +220,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (animationData != null)
 			{
 				// there is no offensive prayer data for the opponent so hardcode 0
-				opponent.addAttack(competitor.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-					competitor.getPlayer(), animationData, 0);
+				opponent.addAttack(competitor.getPlayer(), animationData, 0);
 
 				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());

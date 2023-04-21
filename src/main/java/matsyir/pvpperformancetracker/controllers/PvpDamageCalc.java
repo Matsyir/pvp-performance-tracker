@@ -102,6 +102,11 @@ public class PvpDamageCalc
 	private static final double VLS_SPEC_DEFENCE_SCALE = .25;
 	private static final double SWH_SPEC_DMG_MODIFIER = 1.25;
 	private static final double SWH_SPEC_MIN_DMG_MODIFIER = .25;
+	private static final double DWH_SPEC_DMG_MODIFIER = 1.5;
+	private static final double VOIDWAKER_SPEC_DMG_MODIFIER = 1.5;
+	private static final double VOIDWAKER_SPEC_MIN_DMG_MODIFIER = .5;
+	private static final double VOIDWAKER_FIXED_ACCURACY = 1;
+
 
 	// 0.975x is a simplified average brimstone mage def formula, where x = opponent's mage def
 	// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
@@ -162,7 +167,7 @@ public class PvpDamageCalc
 		boolean isSpecial = animationData.isSpecial;
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition().getEquipmentIds());
 
-		if (attackStyle.isMelee())
+		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, true);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, true);
@@ -250,9 +255,11 @@ public class PvpDamageCalc
 		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
+		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
+		// average hit calculation for attacks that have minimum hits that are skewed towards hitting minimum hit more often
 		if (usingSpec && (dbow || vls || swh))
 		{
 			double accuracyAdjuster = dbow ? accuracy : 1;
@@ -307,6 +314,13 @@ public class PvpDamageCalc
 
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
+		// average hit calculation for attacks with minimum hits that use a more 'intuitive' average hit, similar to osmuten's fang
+		else if (usingSpec && voidwaker)
+		{
+			minHit = (int) (maxHit * VOIDWAKER_SPEC_MIN_DMG_MODIFIER);
+
+			averageSuccessfulHit = (minHit + maxHit) / 2.0;
+		}
 		else
 		{
 			// divide by double to get accurate decimals, since this is the averageHit result,
@@ -314,6 +328,11 @@ public class PvpDamageCalc
 			// If reaching this part of the code, the minHit should always be 0, but include it anyways
 			// just in case.
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
+			if (minHit > 0)
+			{
+				log.info("PvpDamageCalc:getAverageHit: Fell into default avg hit calculation with a minHit > 0 (" +
+					minHit + "). Shouldn't happen. Weapon: " + weapon.toString());
+			}
 		}
 
 		averageHit = accuracy * averageSuccessfulHit * prayerModifier;
@@ -331,6 +350,8 @@ public class PvpDamageCalc
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
+		boolean dwh = weapon == EquipmentData.DRAGON_WARHAMMER;
+		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 
 		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
 		// apply void bonus if applicable
@@ -345,6 +366,8 @@ public class PvpDamageCalc
 			(swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER :
 			(dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER :
 			(vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER :
+			(dwh && usingSpec) ? DWH_SPEC_DMG_MODIFIER :
+			(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
 			1;
 		maxHit = (int) (damageModifier * baseDamage);
 	}
@@ -432,6 +455,13 @@ public class PvpDamageCalc
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
+		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
+
+		if (voidwaker && usingSpec)
+		{
+			accuracy = VOIDWAKER_FIXED_ACCURACY;
+			return;
+		}
 
 		double stabBonusPlayer = playerStats[STAB_ATTACK];
 		double slashBonusPlayer = playerStats[SLASH_ATTACK];
@@ -440,6 +470,7 @@ public class PvpDamageCalc
 		double stabBonusTarget = opponentStats[STAB_DEF];
 		double slashBonusTarget = opponentStats[SLASH_DEF];
 		double crushBonusTarget = opponentStats[CRUSH_DEF];
+		double magicBonusTarget = opponentStats[MAGIC_DEF];
 
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;

@@ -176,14 +176,26 @@ class Fighter
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
 	// Used for regular, ongoing fights
-	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
+	void addAttack(Player opponent, AnimationData animationData, int offensivePray)
 	{
-		addAttack(successful, opponent, animationData, offensivePray, null);
+		addAttack(opponent, animationData, offensivePray, null);
 	}
 
 	// Levels can be null
-	void addAttack(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
 	{
+		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
+
+		// correct re-used animations into their separate AnimationData so it uses the correct attack style
+		// for overhead success & accuracy calcs
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		if (weapon == EquipmentData.VOIDWAKER && animationData == AnimationData.MELEE_DRAGON_WARHAMMER_SPEC)
+		{
+			animationData = AnimationData.MELEE_VOIDWAKER_SPEC;
+		}
+
+		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
+
 		attackCount++;
 		if (successful)
 		{
@@ -193,10 +205,6 @@ class Fighter
 		{
 			offensivePraySuccessCount++;
 		}
-
-
-		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
-		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
 		// track dragon longsword as VLS if enabled, for dmm practice purposes.
 		// also check if weapon = VLS because the itemId stays as VLS if they don't switch weapons between
