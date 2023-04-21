@@ -379,11 +379,11 @@ public class PvpDamageCalc
 		EquipmentData body = EquipmentData.fromId(fixItemId(attackerComposition[KitType.TORSO.getIndex()]));
 		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
 
-		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
-		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
-			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
+		// if it's an LMS fight and bolts are used, force diamond bolts (e) or opal dragon bolts (e) based on weapon used.
+		if (this.isLmsFight)
 		{
-			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
+			weaponAmmo = weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo ? RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E :
+				weaponAmmo instanceof RangeAmmoData.BoltAmmo ? RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E : weaponAmmo;
 		}
 
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
