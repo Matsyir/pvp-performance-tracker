@@ -173,6 +173,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private ScheduledExecutorService executor;
 
+	@Inject
+	private Gson injectedGson;
+
 	// custom fields/props
 	public ArrayList<FightPerformance> fightHistory;
 	@Getter
@@ -197,7 +200,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		PLUGIN = this;   // other contexts without passing them all the way down or injecting
 		fightHistory = new ArrayList<>();
 
-		GSON = new GsonBuilder()
+		GSON = injectedGson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
 			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
 				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
