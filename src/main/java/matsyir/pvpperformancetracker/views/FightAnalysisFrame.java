@@ -57,7 +57,6 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.LinkBrowser;
-import org.pushingpixels.substance.internal.SubstanceSynapse;
 
 @Slf4j
 public class FightAnalysisFrame extends JFrame
@@ -105,7 +104,6 @@ public class FightAnalysisFrame extends JFrame
 		setMinimumSize(size);
 		setLocation(rootPane.getLocationOnScreen());
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		getRootPane().putClientProperty(SubstanceSynapse.COLORIZATION_FACTOR, 1.0);
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
