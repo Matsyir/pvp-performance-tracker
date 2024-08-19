@@ -41,6 +41,7 @@ import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
+import net.runelite.api.PlayerComposition;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
 import net.runelite.http.api.item.ItemEquipmentStats;
@@ -755,9 +756,9 @@ public class PvpDamageCalc
 
 		for (int item : itemIds)
 		{
-			if (item > 512)
+			if (item > PlayerComposition.ITEM_OFFSET)
 			{
-				int[] bonuses = getItemStats(item - 512);
+				int[] bonuses = getItemStats(item - PlayerComposition.ITEM_OFFSET);
 
 				if (bonuses == null)
 				{

@@ -69,6 +69,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
+import net.runelite.api.PlayerComposition;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
@@ -936,13 +937,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		addSpriteToLabelIfValid(label, spriteId, null);
 	}
 
-	// if verifyId is true, takes in itemId directly from PlayerComposition, so need to -512 for actual itemid
+	// if verifyId is true, takes in itemId directly from PlayerComposition
 	// otherwise, assume valid itemId
 	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
 	{
-		if (itemId > 512 || !verifyId)
+		if (itemId > PlayerComposition.ITEM_OFFSET || !verifyId)
 		{
-			final int finalItemId = itemId - (verifyId ? 512 : 0);
+			final int finalItemId = itemId - (verifyId ? PlayerComposition.ITEM_OFFSET : 0);
 			clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
 				if (tooltipOverride != null && tooltipOverride.length() > 0)
@@ -988,10 +989,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// fix an itemId that came from getPlayerComposition().getEquipmentIds()
-	// you have to do -512 if >512 if it's a real item.
 	public static int fixItemId(int itemId)
 	{
-		return itemId > 512 ? itemId - 512 : itemId;
+		return itemId > PlayerComposition.ITEM_OFFSET ? itemId - PlayerComposition.ITEM_OFFSET : itemId;
 	}
 
 	// create new array so we don't modify original array
