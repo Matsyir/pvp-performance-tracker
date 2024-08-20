@@ -1,4 +1,5 @@
 # PvP Performance Tracker (v1.5.9)
+# CURRENTLY UNAVAILABLE DUE TO A BUG - The update has been submitted and is awaiting approval to be merged.
 [![Active Installs](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub/Matsyir) [![Plugin Rank](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/rank/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub)
 
 Tracks PvP performance by keeping track of various stats. Only useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, Last Man Standing being the perfect example. Multi will cause problems. **Potentially inaccurate:** there are some imperfections and assumptions in this plugin, but it is generally accurate for most popular gear setups & spec weapons. 
