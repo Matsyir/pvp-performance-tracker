@@ -106,9 +106,12 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.5.8";
+	public static final String PLUGIN_VERSION = "1.5.9";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
-	public static final String DATA_FOLDER = "pvp-performance-tracker";
+	// Data folder naming history:
+	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
+	// "pvp-performance-tracker2": From 1.5.9 update, until present
+	public static final String DATA_FOLDER = "pvp-performance-tracker2";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static PvpPerformanceTrackerConfig CONFIG;
