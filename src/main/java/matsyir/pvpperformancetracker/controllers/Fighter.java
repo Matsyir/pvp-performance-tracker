@@ -42,6 +42,7 @@ import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.GraphicID;
 import net.runelite.api.Player;
+import net.runelite.api.PlayerComposition;
 import net.runelite.api.kit.KitType;
 
 @Slf4j
@@ -211,10 +212,9 @@ class Fighter
 		// attacks, but we still need to update the animationData in case it's actually a dlong.
 		if (CONFIG.dlongIsVls() && weapon == EquipmentData.DRAGON_LONGSWORD || weapon == EquipmentData.VESTAS_LONGSWORD)
 		{
-			// have to +512 here because the stat additions later will -512 for real itemIds
 			// modifying attackerItems will modify the actual playerComposition, so future
 			// .getPlayerComposition().getEquipmentIds() calls will also be modified
-			attackerItems[KitType.WEAPON.getIndex()] = EquipmentData.VESTAS_LONGSWORD.getItemId() + 512;
+			attackerItems[KitType.WEAPON.getIndex()] = EquipmentData.VESTAS_LONGSWORD.getItemId() + PlayerComposition.ITEM_OFFSET;
 			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
 		}
 
