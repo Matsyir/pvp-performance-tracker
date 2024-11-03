@@ -25,17 +25,25 @@
 package matsyir.pvpperformancetracker.models;
 
 import lombok.Getter;
+import net.runelite.api.ItemID;
 
 @Getter
 public enum RingData
 {
-	SEERS_RING("Seers Ring", 6731),
-	ARCHERS_RING("Archers Ring", 6733),
-	BERSERKER_RING("Berserker Ring", 6737),
-	SEERS_RING_I("Seers Ring (i)", 11770),
-	ARCHERS_RING_I("Archers Ring (i)", 11771),
-	BERSERKER_RING_I("Berserker Ring (i)", 11773),
-	BRIMSTONE_RING("Brimstone Ring", 22975),
+	SEERS_RING("Seers Ring", ItemID.SEERS_RING),
+	ARCHERS_RING("Archers Ring", ItemID.ARCHERS_RING),
+	BERSERKER_RING("Berserker Ring", ItemID.BERSERKER_RING),
+	RING_OF_SUFFERING("Ring of Suffering", ItemID.RING_OF_SUFFERING),
+	SEERS_RING_I("Seers Ring (i)", ItemID.SEERS_RING_I),
+	ARCHERS_RING_I("Archers Ring (i)", ItemID.ARCHERS_RING_I),
+	BERSERKER_RING_I("Berserker Ring (i)", ItemID.BERSERKER_RING_I),
+	RING_OF_SUFFERING_I("Ring of Suffering (i)", ItemID.RING_OF_SUFFERING_I),
+	BRIMSTONE_RING("Brimstone Ring", ItemID.BRIMSTONE_RING),
+	MAGUS_RING("Magus ring", ItemID.MAGUS_RING),
+	VENATOR_RING("Venator ring", ItemID.VENATOR_RING),
+	BELLATOR_RING("Bellator ring", ItemID.BELLATOR_RING),
+	ULTOR_RING("Ultor ring", ItemID.ULTOR_RING),
+	RING_OF_SHADOWS("Ring of Shadows", ItemID.RING_OF_SHADOWS),
 	NONE("None", -1);
 
 	private String name;
