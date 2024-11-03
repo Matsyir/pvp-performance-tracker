@@ -190,10 +190,6 @@ class Fighter
 		// correct re-used animations into their separate AnimationData so it uses the correct attack style
 		// for overhead success & accuracy calcs
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
-		if (weapon == EquipmentData.VOIDWAKER && animationData == AnimationData.MELEE_DRAGON_WARHAMMER_SPEC)
-		{
-			animationData = AnimationData.MELEE_VOIDWAKER_SPEC;
-		}
 
 		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
 

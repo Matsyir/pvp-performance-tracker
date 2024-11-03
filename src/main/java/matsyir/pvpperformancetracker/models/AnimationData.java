@@ -66,8 +66,8 @@ public enum AnimationData
 	MELEE_DLONG_SPEC(1058, AttackStyle.SLASH, true), // tested w/ d long spec, also thammaron's sceptre crush (????)...
 	MELEE_DRAGON_MACE_SPEC(1060, AttackStyle.CRUSH, true),
 	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true),
-	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec, also voidwaker spec
-	MELEE_VOIDWAKER_SPEC(0, AttackStyle.MAGIC, true), // same animation as DWH which will have to be 'converted to' based on weapon
+	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec
+	MELEE_VOIDWAKER_SPEC(11275, AttackStyle.MAGIC, true),
 	MELEE_ABYSSAL_WHIP(1658, AttackStyle.SLASH), // tested w/ whip, tent whip
 	MELEE_GRANITE_MAUL(1665, AttackStyle.CRUSH), // tested w/ normal gmaul, ornate maul
 	MELEE_GRANITE_MAUL_SPEC(1667, AttackStyle.CRUSH, true), // tested w/ normal gmaul, ornate maul
