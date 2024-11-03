@@ -63,11 +63,14 @@ public enum AnimationData
 	MELEE_STAFF_STAB(428, AttackStyle.STAB), // tested w/ SOTD/SOL jab, vesta's spear stab, c hally
 	MELEE_SPEAR_CRUSH(429, AttackStyle.CRUSH), // tested w/ vesta's spear
 	MELEE_STAFF_SLASH(440, AttackStyle.SLASH), // tested w/ SOTD/SOL slash, zammy hasta slash, vesta's spear slash, c hally
+	MELEE_BLUE_MOON_FEND(1710, AttackStyle.CRUSH), // Note: the animation is identical between normal/special attacks
+	MELEE_BLUE_MOON_JAB(1711, AttackStyle.STAB), // Note: the animation is identical between normal/special attacks
+	MELEE_BLUE_MOON_SWIPE(1712, AttackStyle.SLASH), // Note: the animation is identical between normal/special attacks
 	MELEE_DLONG_SPEC(1058, AttackStyle.SLASH, true), // tested w/ d long spec, also thammaron's sceptre crush (????)...
 	MELEE_DRAGON_MACE_SPEC(1060, AttackStyle.CRUSH, true),
 	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true),
-	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec, also voidwaker spec
-	MELEE_VOIDWAKER_SPEC(0, AttackStyle.MAGIC, true), // same animation as DWH which will have to be 'converted to' based on weapon
+	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec
+	MELEE_VOIDWAKER_SPEC(11275, AttackStyle.MAGIC, true),
 	MELEE_ABYSSAL_WHIP(1658, AttackStyle.SLASH), // tested w/ whip, tent whip
 	MELEE_GRANITE_MAUL(1665, AttackStyle.CRUSH), // tested w/ normal gmaul, ornate maul
 	MELEE_GRANITE_MAUL_SPEC(1667, AttackStyle.CRUSH, true), // tested w/ normal gmaul, ornate maul
@@ -97,6 +100,7 @@ public enum AnimationData
 	MELEE_SCYTHE(8056, AttackStyle.SLASH), // tested w/ all scythe styles (so could be crush, but unlikely)
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
+	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, craw's bow, dbow, dbow spec
@@ -115,6 +119,9 @@ public enum AnimationData
 	RANGED_DRAGON_KNIFE_SPEC(8292, AttackStyle.RANGED, true),
 	RANGED_ZARYTE_CROSSBOW(9168, AttackStyle.RANGED),
 	RANGED_ZARYTE_CROSSBOW_PVP(9166, AttackStyle.RANGED),
+	RANGED_VENATOR(9858, AttackStyle.RANGED),
+	RANGED_ECLIPSE_ATLATL(11057, AttackStyle.RANGED),
+	RANGED_ECLIPSE_ATLATL_SPEC(11060, AttackStyle.RANGED, true),
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
