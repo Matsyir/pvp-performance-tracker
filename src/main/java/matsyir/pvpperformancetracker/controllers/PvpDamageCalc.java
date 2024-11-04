@@ -44,8 +44,8 @@ import matsyir.pvpperformancetracker.models.RingData;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
-import net.runelite.http.api.item.ItemEquipmentStats;
-import net.runelite.http.api.item.ItemStats;
+import net.runelite.client.game.ItemEquipmentStats;
+import net.runelite.client.game.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
 
@@ -695,14 +695,14 @@ public class PvpDamageCalc
 	// and count as 0 stats, but that should be very rare.
 	public static int[] getItemStats(int itemId)
 	{
-		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
+		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId);
 		if (itemStats == null)
 		{
 			EquipmentData itemData = EquipmentData.fromId(itemId);
 			if (itemData != null)
 			{
 				itemId = itemData.getItemId();
-				itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
+				itemStats = PLUGIN.getItemManager().getItemStats(itemId);
 			}
 		}
 
@@ -722,7 +722,7 @@ public class PvpDamageCalc
 				equipmentStats.getDrange(),	// 9
 				equipmentStats.getStr(),	// 10
 				equipmentStats.getRstr(),	// 11
-				equipmentStats.getMdmg(),	// 12
+				(int)equipmentStats.getMdmg(),	// 12
 			};
 		}
 
