@@ -26,7 +26,6 @@
 package matsyir.pvpperformancetracker.controllers;
 
 import lombok.Getter;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -44,8 +43,8 @@ import matsyir.pvpperformancetracker.models.RingData;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
-import net.runelite.http.api.item.ItemEquipmentStats;
-import net.runelite.http.api.item.ItemStats;
+import net.runelite.client.game.ItemEquipmentStats;
+import net.runelite.client.game.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
 
@@ -58,9 +57,6 @@ import net.runelite.api.Player;
 @Slf4j
 public class PvpDamageCalc
 {
-	private static final int STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3,
-		RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8, RANGE_DEF = 9,
-		STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
 	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you unsuccessfully hit off-pray
@@ -158,8 +154,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
-		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
+		ItemEquipmentStats playerStats = this.calculateBonusesWithRing(attackerItems);
+		ItemEquipmentStats opponentStats = this.calculateBonusesWithRing(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
@@ -170,21 +166,21 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, true);
+			getMeleeMaxHit(playerStats.getStr(), isSpecial, weapon, voidStyle, true);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, true);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems);
+			getRangedMaxHit(playerStats.getRstr(), isSpecial, weapon, voidStyle, true, attackerItems);
+			getRangeAccuracy(playerStats.getArange(), opponentStats.getDrange(), isSpecial, weapon, voidStyle, true, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
-			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
+			getMagicMaxHit(shield, playerStats.getMdmg(), animationData, weapon, voidStyle, true);
+			getMagicAccuracy(playerStats.getAmagic(), opponentStats.getDmagic(), weapon, animationData, voidStyle, true, false);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -192,8 +188,8 @@ public class PvpDamageCalc
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
 		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
-			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
-			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
+			"\nattacker(" + attacker.getName() + ")stats: " + playerStats.toString() +
+			"\ndefender(" +  defender.getName() + ")stats: " + opponentStats.toString());
 	}
 
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
@@ -214,8 +210,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonuses(attackerItems);
-		int[] opponentStats = this.calculateBonuses(defenderItems);
+		ItemEquipmentStats playerStats = calculateBonuses(attackerItems);
+		ItemEquipmentStats opponentStats = calculateBonuses(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
@@ -226,21 +222,21 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee())
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
+			getMeleeMaxHit(playerStats.getStr(), isSpecial, weapon, voidStyle, successfulOffensive);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangedMaxHit(playerStats.getRstr(), isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangeAccuracy(playerStats.getArange(), opponentStats.getDrange(), isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
-			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
+			getMagicMaxHit(shield, playerStats.getMdmg(), animationData, weapon, voidStyle, successfulOffensive);
+			getMagicAccuracy(playerStats.getAmagic(), opponentStats.getDmagic(), weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -424,7 +420,7 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getMagicMaxHit(EquipmentData shield, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMagicMaxHit(EquipmentData shield, float mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
 		boolean tome = shield == EquipmentData.TOME_OF_FIRE;
@@ -449,7 +445,7 @@ public class PvpDamageCalc
 		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
 	}
 
-	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMeleeAccuracy(ItemEquipmentStats playerStats, ItemEquipmentStats opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -464,14 +460,14 @@ public class PvpDamageCalc
 			return;
 		}
 
-		double stabBonusPlayer = playerStats[STAB_ATTACK];
-		double slashBonusPlayer = playerStats[SLASH_ATTACK];
-		double crushBonusPlayer = playerStats[CRUSH_ATTACK];
+		double stabBonusPlayer = playerStats.getAstab();
+		double slashBonusPlayer = playerStats.getAslash();
+		double crushBonusPlayer = playerStats.getAcrush();
 
-		double stabBonusTarget = opponentStats[STAB_DEF];
-		double slashBonusTarget = opponentStats[SLASH_DEF];
-		double crushBonusTarget = opponentStats[CRUSH_DEF];
-		double magicBonusTarget = opponentStats[MAGIC_DEF];
+		double stabBonusTarget = opponentStats.getDstab();
+		double slashBonusTarget = opponentStats.getDslash();
+		double crushBonusTarget = opponentStats.getDcrush();
+		double magicBonusTarget = opponentStats.getDmagic();
 
 		double effectiveLevelPlayer;
 		double effectiveLevelTarget;
@@ -693,37 +689,22 @@ public class PvpDamageCalc
 	// First, try to get the item stats from the item manager. If stats weren't present in the
 	// itemManager, try get the 'real' item id from the EquipmentData. If it's not defined in EquipmentData, it will return null
 	// and count as 0 stats, but that should be very rare.
-	public static int[] getItemStats(int itemId)
+	public static ItemEquipmentStats getItemStats(int itemId)
 	{
-		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
+		ItemStats itemStats = PLUGIN.getItemManager().getItemStats(itemId);
 		if (itemStats == null)
 		{
 			EquipmentData itemData = EquipmentData.fromId(itemId);
 			if (itemData != null)
 			{
 				itemId = itemData.getItemId();
-				itemStats = PLUGIN.getItemManager().getItemStats(itemId, false);
+				itemStats = PLUGIN.getItemManager().getItemStats(itemId);
 			}
 		}
 
 		if (itemStats != null)
 		{
-			final ItemEquipmentStats equipmentStats = itemStats.getEquipment();
-			return new int[] {
-				equipmentStats.getAstab(),	// 0
-				equipmentStats.getAslash(),	// 1
-				equipmentStats.getAcrush(),	// 2
-				equipmentStats.getAmagic(),	// 3
-				equipmentStats.getArange(),	// 4
-				equipmentStats.getDstab(),	// 5
-				equipmentStats.getDslash(),	// 6
-				equipmentStats.getDcrush(),	// 7
-				equipmentStats.getDmagic(),	// 8
-				equipmentStats.getDrange(),	// 9
-				equipmentStats.getStr(),	// 10
-				equipmentStats.getRstr(),	// 11
-				equipmentStats.getMdmg(),	// 12
-			};
+			return itemStats.getEquipment();
 		}
 
 		// when combining multiple items' stats, null stats will just be skipped, without affecting
@@ -733,65 +714,57 @@ public class PvpDamageCalc
 
 	// this is used to calculate bonuses including the currently used ring, in case we're in LMS but the config ring
 	// is different.
-	private int[] calculateBonusesWithRing(int[] itemIds)
+	private ItemEquipmentStats calculateBonusesWithRing(int[] itemIds)
 	{
 		return calculateBonuses(itemIds, this.ringUsed);
 	}
 
-	public static int[] calculateBonuses(int[] itemIds)
+	public static ItemEquipmentStats calculateBonuses(int[] itemIds)
 	{
 		return calculateBonuses(itemIds, CONFIG.ringChoice());
 	}
 	// Calculate total equipment bonuses for all given items
-	public static int[] calculateBonuses(int[] itemIds, RingData ringUsed)
+	public static ItemEquipmentStats calculateBonuses(int[] itemIds, RingData ringUsed)
 	{
-		int[] equipmentBonuses = ringUsed == null || ringUsed == RingData.NONE ?
-			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
-			getItemStats(ringUsed.getItemId());
+		ItemEquipmentStats equipmentBonuses = ringUsed == null || ringUsed == RingData.NONE ?
+				ItemEquipmentStats.builder().build() : getItemStats(ringUsed.getItemId());
 
 		if (equipmentBonuses == null) // shouldn't happen, but as a failsafe if the ring lookup fails
 		{
-			equipmentBonuses = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			equipmentBonuses = ItemEquipmentStats.builder().build();
 		}
 
 		for (int item : itemIds)
 		{
 			if (item > PlayerComposition.ITEM_OFFSET)
 			{
-				int[] bonuses = getItemStats(item - PlayerComposition.ITEM_OFFSET);
+				ItemEquipmentStats bonuses = getItemStats(item - PlayerComposition.ITEM_OFFSET);
 
 				if (bonuses == null)
 				{
 					continue;
 				}
 
-				for (int id = 0; id < bonuses.length; id++)
-				{
-					equipmentBonuses[id] += bonuses[id];
-				}
+				equipmentBonuses = ItemEquipmentStats.builder()
+					.astab(equipmentBonuses.getAstab() + bonuses.getAstab())
+					.aslash(equipmentBonuses.getAslash() + bonuses.getAslash())
+					.acrush(equipmentBonuses.getAcrush() + bonuses.getAcrush())
+					.amagic(equipmentBonuses.getAmagic() + bonuses.getAmagic())
+					.arange(equipmentBonuses.getArange() + bonuses.getArange())
+	
+					.dstab(equipmentBonuses.getDstab() + bonuses.getDstab())
+					.dslash(equipmentBonuses.getDslash() + bonuses.getDslash())
+					.dcrush(equipmentBonuses.getDcrush() + bonuses.getDcrush())
+					.dmagic(equipmentBonuses.getDmagic() + bonuses.getDmagic())
+					.drange(equipmentBonuses.getDrange() + bonuses.getDrange())
+					
+					.str(equipmentBonuses.getStr() + bonuses.getStr())
+					.rstr(equipmentBonuses.getRstr() + bonuses.getRstr())
+					.mdmg(equipmentBonuses.getMdmg() + bonuses.getMdmg())
+					.build();
 			}
 		}
 
 		return equipmentBonuses;
-	}
-
-	public static ItemEquipmentStats calculateBonusesToStats(int[] itemIds)
-	{
-		int[] bonuses = calculateBonuses(itemIds);
-		return ItemEquipmentStats.builder()
-			.astab(bonuses[STAB_ATTACK])	// 0
-			.aslash(bonuses[SLASH_ATTACK])	// 1
-			.acrush(bonuses[CRUSH_ATTACK])	// 2
-			.amagic(bonuses[MAGIC_ATTACK])	// 3
-			.arange(bonuses[RANGE_ATTACK])	// 4
-			.dstab(bonuses[STAB_DEF])		// 5
-			.dslash(bonuses[SLASH_DEF])		// 6
-			.dcrush(bonuses[CRUSH_DEF])		// 7
-			.dmagic(bonuses[MAGIC_DEF])		// 8
-			.drange(bonuses[RANGE_DEF])		// 9
-			.str(bonuses[STRENGTH_BONUS])	// 10
-			.rstr(bonuses[RANGE_STRENGTH]) 	// 11
-			.mdmg(bonuses[MAGIC_DAMAGE])	// 12
-			.build();
 	}
 }

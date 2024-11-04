@@ -51,7 +51,7 @@ import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
-import net.runelite.http.api.item.ItemEquipmentStats;
+import net.runelite.client.game.ItemEquipmentStats;
 
 @Slf4j
 class FightLogDetailFrame extends JFrame
@@ -407,7 +407,7 @@ class FightLogDetailFrame extends JFrame
 	//
 	String getItemEquipmentStatsString(int[] equipment)
 	{
-		ItemEquipmentStats stats = PvpDamageCalc.calculateBonusesToStats(equipment);
+		ItemEquipmentStats stats = PvpDamageCalc.calculateBonuses(equipment);
 		// ammo: get config's ammo for current weapon
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])));
 		int ammoRangeStr = 0;
@@ -435,7 +435,7 @@ class FightLogDetailFrame extends JFrame
 			"</html>";
 	}
 
-	String prependPlusIfPositive(int number)
+	String prependPlusIfPositive(float number)
 	{
 		if (number >= 0)
 		{
