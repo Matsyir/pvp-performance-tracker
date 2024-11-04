@@ -51,7 +51,7 @@ import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
-import net.runelite.http.api.item.ItemEquipmentStats;
+import net.runelite.client.game.ItemEquipmentStats;
 
 @Slf4j
 class FightLogDetailFrame extends JFrame
@@ -431,7 +431,7 @@ class FightLogDetailFrame extends JFrame
 			"<br/><strong>Other bonuses</strong>" + sep +
 			"Melee strength: " + prependPlusIfPositive(stats.getStr()) + sep +
 			"Ranged strength: " + prependPlusIfPositive(stats.getRstr() + ammoRangeStr) + sep +
-			"Magic damage: " + prependPlusIfPositive(stats.getMdmg()) + "%" + sep +
+			"Magic damage: " + prependPlusIfPositive((int)stats.getMdmg()) + "%" + sep +
 			"</html>";
 	}
 
