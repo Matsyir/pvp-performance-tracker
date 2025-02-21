@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 import lombok.Getter;
@@ -53,6 +54,11 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public class FightPerformance implements Comparable<FightPerformance>
 {
+	private static final int[] DEATH_ANIMATIONS = {
+		AnimationID.DEATH,	// Default
+		10629,	// League IV
+		11902,	// League V
+	};
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
@@ -292,12 +298,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 	{
 		boolean isOver = false;
 		// if either competitor died, end the fight.
-		if (opponent.getPlayer().getAnimation() == AnimationID.DEATH)
+		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == opponent.getPlayer().getAnimation()))
 		{
 			opponent.died();
 			isOver = true;
 		}
-		if (competitor.getPlayer().getAnimation() == AnimationID.DEATH)
+		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == competitor.getPlayer().getAnimation()))
 		{
 			competitor.died();
 			isOver = true;

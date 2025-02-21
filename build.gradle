@@ -24,7 +24,7 @@ dependencies {
 }
 
 group = 'matsyir.pvpperformancetracker'
-version = '1.5.10'
+version = '1.5.11'
 
 tasks.withType(JavaCompile) {
 	options.encoding = 'UTF-8'
