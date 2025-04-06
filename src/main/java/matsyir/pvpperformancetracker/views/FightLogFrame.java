@@ -53,15 +53,18 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_I
 import net.runelite.api.SpriteID;
 
 @Slf4j
-public class FightLogFrame extends JFrame
-{
+public class FightLogFrame extends JFrame {
 	private static final NumberFormat nf = NumberFormat.getInstance();
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
 
-	static
-	{
+	static {
 		// initialize number format
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
+
+		// initialize percent format
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
 	private FightLogDetailFrame fightLogDetailFrame;
@@ -69,35 +72,34 @@ public class FightLogFrame extends JFrame
 	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
-	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
-	FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
-	{
-		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
+	// expects logEntries composing of only "full" log entries, that contain full
+	// attack data, not defender entries.
+	FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane) {
+		// String title = fight.getCompetitor().getName() + " vs " +
+		// fight.getOpponent().getName();
 		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName());
 
 		fightLogEntries = logEntries;
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
 
-		// if always on top is supported, and the core RL plugin has "always on top" set, make the frame always
+		// if always on top is supported, and the core RL plugin has "always on top"
+		// set, make the frame always
 		// on top as well so it can be above the client.
-		if (isAlwaysOnTopSupported())
-		{
+		if (isAlwaysOnTopSupported()) {
 			setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
 		}
 
 		setIconImage(PLUGIN_ICON);
-		setSize(765, 503); // default to same as osrs on fixed
+		setSize(820, 503); // Increased width slightly for new column
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][11];
+		Object[][] stats = new Object[fightLogEntries.size()][12]; // Increased column count
 		int i = 0;
 		int initialTick = 0;
 
-		for (FightLogEntry fightEntry : fightLogEntries)
-		{
-			if (i == 0)
-			{
+		for (FightLogEntry fightEntry : fightLogEntries) {
+			if (i == 0) {
 				initialTick = fightEntry.getTick();
 			}
 
@@ -111,83 +113,84 @@ public class FightLogFrame extends JFrame
 			stats[i][2] = fightEntry.getHitRange();
 			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
 			stats[i][4] = nf.format(fightEntry.getDeservedDamage());
-			stats[i][5] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
-			stats[i][6] = fightEntry.success() ? "✔" : "";
+
+			// KO Chance column (Index 5)
+			Double koChance = fightEntry.getKoChance();
+			stats[i][5] = koChance != null ? nfPercent.format(koChance) : "-";
+
+			// Shifted original columns
+			stats[i][6] = fightEntry.getAnimationData().isSpecial ? "✔" : ""; // Was 5
+			stats[i][7] = fightEntry.success() ? "✔" : ""; // Was 6
 
 			int prayIcon = PLUGIN.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
-			if (prayIcon > 0)
-			{
+			if (prayIcon > 0) { // Index 8 (Was 7)
 				JLabel prayIconLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(prayIconLabel, prayIcon, this::repaint);
-				stats[i][7] = prayIconLabel;
-			}
-			else
-			{
-				stats[i][7] = "";
+				stats[i][8] = prayIconLabel; // Was 7
+			} else {
+				stats[i][8] = ""; // Was 7
 			}
 
-			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-			{
-				int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
+			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC) { // Index 9 (Was 8)
+				int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED
+						: SpriteID.SPELL_ICE_BARRAGE;
 				JLabel freezeIconLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(freezeIconLabel, freezeIcon, this::repaint);
-				stats[i][8] = freezeIconLabel;
-			}
-			else
-			{
-				stats[i][8] = "";
+				stats[i][9] = freezeIconLabel; // Was 8
+			} else {
+				stats[i][9] = ""; // Was 8
 			}
 
-			// offensive pray shown as icon or blank if none(0)
+			// offensive pray shown as icon or blank if none(0) // Index 10 (Was 9)
 			JLabel attackerOffensivePrayLabel = new JLabel();
-			if (fightEntry.getAttackerOffensivePray() > 0)
-			{
-				PLUGIN.addSpriteToLabelIfValid(attackerOffensivePrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-				stats[i][9] = attackerOffensivePrayLabel;
-			}
-			else
-			{
-				stats[i][9] = "";
+			if (fightEntry.getAttackerOffensivePray() > 0) {
+				PLUGIN.addSpriteToLabelIfValid(attackerOffensivePrayLabel, fightEntry.getAttackerOffensivePray(),
+						this::repaint);
+				stats[i][10] = attackerOffensivePrayLabel; // Was 9
+			} else {
+				stats[i][10] = ""; // Was 9
 			}
 
-			int tickDuration = fightEntry.getTick() - initialTick;
+			int tickDuration = fightEntry.getTick() - initialTick; // Index 11 (Was 10)
 			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
 			Duration duration = Duration.ofMillis(durationMillis);
 			String time = String.format("%02d:%02d.%01d",
-				duration.toMinutes(),
-				duration.getSeconds() % 60,
-				durationMillis % 1000 / 100) + " (" + tickDuration + ")";
-			stats[i][10] = time;
+					duration.toMinutes(),
+					duration.getSeconds() % 60,
+					durationMillis % 1000 / 100) + " (" + tickDuration + ")";
+			stats[i][11] = time; // Was 10
 
 			i++;
 		}
 
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Special?", "Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" };
+		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "KO Chance", "Special?",
+				"Off-Pray?",
+				"Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" }; // Added KO Chance header
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
 
-		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(7).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer());
+		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
+		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer (was 7)
+		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer()); // Splash (was 8)
+		table.getColumnModel().getColumn(10).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray (was 9)
 
 		onRowSelected = e -> {
 			int row = table.getSelectedRow();
 
-			if (fightLogDetailFrame != null)
-			{
-				if (fightLogDetailFrame.rowIdx == row) { return; }
+			if (fightLogDetailFrame != null) {
+				if (fightLogDetailFrame.rowIdx == row) {
+					return;
+				}
 
 				fightLogDetailFrame.dispose();
 				fightLogDetailFrame = null;
 			}
 
 			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), row,
-				new Point( // place the new detail frame roughly to the right of the fight log window.
-					this.getLocation().x + this.getSize().width,
-					this.getLocation().y)
-				);
+					new Point( // place the new detail frame roughly to the right of the fight log window.
+							this.getLocation().x + this.getSize().width,
+							this.getLocation().y));
 		};
 
 		table.getSelectionModel().addListSelectionListener(onRowSelected);
@@ -198,26 +201,20 @@ public class FightLogFrame extends JFrame
 		setVisible(true);
 	}
 
-	static class BufferedImageCellRenderer extends DefaultTableCellRenderer
-	{
+	static class BufferedImageCellRenderer extends DefaultTableCellRenderer {
 		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
-		{
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+				int row, int column) {
 			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			if (value instanceof BufferedImage)
-			{
+			if (value instanceof BufferedImage) {
 				setText("");
-				setIcon(new ImageIcon((BufferedImage)value));
-			}
-			else if (value instanceof JLabel)
-			{
-				JLabel val = (JLabel)value;
+				setIcon(new ImageIcon((BufferedImage) value));
+			} else if (value instanceof JLabel) {
+				JLabel val = (JLabel) value;
 				setIcon(val.getIcon());
 				setText(val.getText());
 				setToolTipText(val.getToolTipText());
-			}
-			else
-			{
+			} else {
 				setText("");
 				setIcon(null);
 			}
@@ -226,41 +223,44 @@ public class FightLogFrame extends JFrame
 		}
 	}
 
-	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
+	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight
+	// data
 	// to the detailed frame.
-	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
-	{
+	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane) {
 		this(fight,
-			new ArrayList(fight.getAllFightLogEntries().stream()
-				.filter(FightLogEntry::isFullEntry) // send only attacker logs, and don't use the matching logs since
-				.collect(Collectors.toList())),	// those have old 'dps' values, they're only used for defender lvls/pray/etc client data
-			rootPane);
+				new ArrayList(fight.getAllFightLogEntries().stream()
+						.filter(FightLogEntry::isFullEntry) // send only attacker logs, and don't use the matching logs
+															// since
+						.collect(Collectors.toList())), // those have old 'dps' values, they're only used for defender
+														// lvls/pray/etc client data
+				rootPane);
 
 		// test
 		if (new ArrayList(fight.getAllFightLogEntries().stream()
-			.filter(FightLogEntry::isFullEntry) // send only attacker logs
-			.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size())
-		{
-			 log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
+				.filter(FightLogEntry::isFullEntry) // send only attacker logs
+				.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size()) {
+			log.info(
+					"FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
 		}
 
 		table.getSelectionModel().removeListSelectionListener(onRowSelected);
 		onRowSelected = e -> {
 			int row = table.getSelectedRow();
 
-			if (fightLogDetailFrame != null)
-			{
-				if (fightLogDetailFrame.rowIdx == row) { return; }
+			if (fightLogDetailFrame != null) {
+				if (fightLogDetailFrame.rowIdx == row) {
+					return;
+				}
 
 				fightLogDetailFrame.dispose();
 				fightLogDetailFrame = null;
 			}
 
-			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), fight.getAnalyzedMatchingLogs().get(row)[1], row,
-				new Point( // place the new detail frame roughly to the right of the fight log window.
-					this.getLocationOnScreen().x + (this.getSize().width),
-					this.getLocationOnScreen().y)
-			);
+			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row),
+					fight.getAnalyzedMatchingLogs().get(row)[1], row,
+					new Point( // place the new detail frame roughly to the right of the fight log window.
+							this.getLocationOnScreen().x + (this.getSize().width),
+							this.getLocationOnScreen().y));
 		};
 
 		table.getSelectionModel().addListSelectionListener(onRowSelected);

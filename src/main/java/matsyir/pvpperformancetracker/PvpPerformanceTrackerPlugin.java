@@ -58,6 +58,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.Fighter; // Added missing import
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
@@ -82,14 +83,19 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils; // Added import
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
+// Removed HiscoreClient import
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
+// Removed HiscoreResult import
+// Removed HiscoreSkill import
+// Removed HiscoreEndpoint import
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -100,11 +106,8 @@ import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 
 @Slf4j
-@PluginDescriptor(
-	name = "PvP Performance Tracker"
-)
-public class PvpPerformanceTrackerPlugin extends Plugin
-{
+@PluginDescriptor(name = "PvP Performance Tracker")
+public class PvpPerformanceTrackerPlugin extends Plugin {
 	// static fields
 	public static final String PLUGIN_VERSION = "1.5.11";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
@@ -117,14 +120,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
 	public static Image PLUGIN_ICON;
-	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A state.
+	public static AsyncBufferedImage DEFAULT_NONE_SYMBOL; // save bank filler image to display a generic "None" or N/A
+															// state.
 	public static Gson GSON;
 
 	// Last man standing map regions, including ferox enclave
-	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12344, 12600, 13658, 13659, 13660, 13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
+	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12344, 12600, 13658, 13659, 13660,
+			13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
 
-	static
-	{
+	static {
 		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER);
 		FIGHT_HISTORY_DATA_DIR.mkdirs();
 	}
@@ -180,39 +184,51 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private Gson injectedGson;
 
+	// Removed HiscoreClient injection
+
 	// custom fields/props
 	public ArrayList<FightPerformance> fightHistory;
 	@Getter
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
-	// do not cache items in the same way since we could potentially cache a very large amount of them.
+	// do not cache items in the same way since we could potentially cache a very
+	// large amount of them.
 
 	// #################################################################################################################
-	// ##################################### Core RL plugin functions & RL Events ######################################
+	// ##################################### Core RL plugin functions & RL Events
+	// ######################################
 	// #################################################################################################################
 
 	@Provides
-	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager)
-	{
+	PvpPerformanceTrackerConfig getConfig(ConfigManager configManager) {
 		return configManager.getConfig(PvpPerformanceTrackerConfig.class);
 	}
 
 	@Override
-	protected void startUp() throws Exception
-	{
+	protected void startUp() throws Exception {
 		CONFIG = config; // save static instances of config/plugin to easily use in
-		PLUGIN = this;   // other contexts without passing them all the way down or injecting
+		PLUGIN = this; // other contexts without passing them all the way down or injecting
 		fightHistory = new ArrayList<>();
 
 		GSON = injectedGson.newBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
-			.registerTypeAdapter(Double.class, (JsonSerializer<Double>) (value, theType, context) ->
-				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
-					: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
-			).create();
+				.excludeFieldsWithoutExposeAnnotation()
+				.registerTypeAdapter(Double.class,
+						(JsonSerializer<Double>) (value, theType, context) -> value.isNaN() ? new JsonPrimitive(0) // Convert
+																													// NaN
+																													// to
+																													// zero,
+																													// otherwise,
+																													// return
+																													// as
+																													// BigDecimal
+																													// with
+																													// scale
+																													// of
+																													// 3.
+								: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP)))
+				.create();
 
-		if (!config.pluginVersion().equals(PLUGIN_VERSION))
-		{
+		if (!config.pluginVersion().equals(PLUGIN_VERSION)) {
 			this.update(config.pluginVersion());
 		}
 
@@ -220,18 +236,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
 		PLUGIN_ICON = new ImageIcon(icon).getImage();
 		navButton = NavigationButton.builder()
-			.tooltip("PvP Fight History")
-			.icon(icon)
-			.priority(6)
-			.panel(panel)
-			.build();
+				.tooltip("PvP Fight History")
+				.icon(icon)
+				.priority(6)
+				.panel(panel)
+				.build();
 
 		importFightHistoryData();
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
-			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS())))
-		{
+				(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS()))) {
 			navButtonShown = true;
 			clientToolbar.addNavigation(navButton);
 		}
@@ -245,8 +260,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Override
-	protected void shutDown() throws Exception
-	{
+	protected void shutDown() throws Exception {
 		saveFightHistoryData();
 
 		clientToolbar.removeNavigation(navButton);
@@ -254,29 +268,29 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onConfigChanged(ConfigChanged event)
-	{
-		if (!event.getGroup().equals(CONFIG_KEY)) { return; }
+	public void onConfigChanged(ConfigChanged event) {
+		if (!event.getGroup().equals(CONFIG_KEY)) {
+			return;
+		}
 
-		switch(event.getKey())
-		{
-			// if a user enables the panel or restricts/unrestricts the location to LMS, hide/show the panel accordingly
+		switch (event.getKey()) {
+			// if a user enables the panel or restricts/unrestricts the location to LMS,
+			// hide/show the panel accordingly
 			case "showFightHistoryPanel":
 			case "restrictToLms":
 				boolean isAtLms = isAtLMS();
 				if (!navButtonShown && config.showFightHistoryPanel() &&
-					(!config.restrictToLms() || isAtLms))
-				{
+						(!config.restrictToLms() || isAtLms)) {
 					SwingUtilities.invokeLater(() -> clientToolbar.addNavigation(navButton));
 					navButtonShown = true;
-				}
-				else if (navButtonShown && (!config.showFightHistoryPanel() || (config.restrictToLms() && !isAtLms)))
-				{
+				} else if (navButtonShown
+						&& (!config.showFightHistoryPanel() || (config.restrictToLms() && !isAtLms))) {
 					SwingUtilities.invokeLater(() -> clientToolbar.removeNavigation(navButton));
 					navButtonShown = false;
 				}
 				break;
-			// If a user makes any changes to the overlay configuration, reset the shown lines accordingly
+			// If a user makes any changes to the overlay configuration, reset the shown
+			// lines accordingly
 			case "showOverlayTitle":
 			case "showOverlayNames":
 			case "showOverlayOffPray":
@@ -291,8 +305,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// If the user updates the fight history limit, remove fights as necessary
 			case "fightHistoryLimit":
 			case "fightHistoryRenderLimit":
-				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
-				{
+				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit()) {
 					int numToRemove = fightHistory.size() - config.fightHistoryLimit();
 					// Remove oldest fightHistory until the size is smaller than the limit.
 					// Should only remove one fight in most cases.
@@ -307,47 +320,52 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				boolean enableConfigWarning = !config.settingsConfigured();
 				panel.setConfigWarning(enableConfigWarning);
 				break;
-				// potential future code for level presets/dynamic config if RL ever supports it.
-//			case "attackLevel":
-//			case "strengthLevel":
-//			case "defenceLevel":
-//			case "rangedLevel":
-//			case "magicLevel":
-//				log.info("TEST-just set a level");
-//				configManager.setConfiguration(CONFIG_KEY, "levelPresetChoice", LevelConfigPreset.CUSTOM);
-//				break;
-//			case "levelPresetChoice":
-//				log.info("TEST- just chose level preset choice");
-//				LevelConfigPreset p = config.levelPresetChoice();
-//				switch (p)
-//				{
-//					case CUSTOM:
-//						break;
-//					case LMS_STATS:
-//					case NH_STAKE:
-//						configManager.setConfiguration(CONFIG_KEY, "attackLevel", p.getAtk());
-//						configManager.setConfiguration(CONFIG_KEY, "strengthLevel", p.getStr());
-//						configManager.setConfiguration(CONFIG_KEY, "defenceLevel", p.getDef());
-//						configManager.setConfiguration(CONFIG_KEY, "rangedLevel", p.getRange());
-//						configManager.setConfiguration(CONFIG_KEY, "magicLevel", p.getMage());
-//						break;
-//
-//				}
-//				break;
+			// potential future code for level presets/dynamic config if RL ever supports
+			// it.
+			// case "attackLevel":
+			// case "strengthLevel":
+			// case "defenceLevel":
+			// case "rangedLevel":
+			// case "magicLevel":
+			// log.info("TEST-just set a level");
+			// configManager.setConfiguration(CONFIG_KEY, "levelPresetChoice",
+			// LevelConfigPreset.CUSTOM);
+			// break;
+			// case "levelPresetChoice":
+			// log.info("TEST- just chose level preset choice");
+			// LevelConfigPreset p = config.levelPresetChoice();
+			// switch (p)
+			// {
+			// case CUSTOM:
+			// break;
+			// case LMS_STATS:
+			// case NH_STAKE:
+			// configManager.setConfiguration(CONFIG_KEY, "attackLevel", p.getAtk());
+			// configManager.setConfiguration(CONFIG_KEY, "strengthLevel", p.getStr());
+			// configManager.setConfiguration(CONFIG_KEY, "defenceLevel", p.getDef());
+			// configManager.setConfiguration(CONFIG_KEY, "rangedLevel", p.getRange());
+			// configManager.setConfiguration(CONFIG_KEY, "magicLevel", p.getMage());
+			// break;
+			//
+			// }
+			// break;
 		}
 	}
 
 	// Keep track of a player's new target using this event.
-	// It's worth noting that if you aren't in a fight, all player interactions including
-	// trading & following will trigger a new fight and a new opponent. Due to this, set the lastFightTime
-	// (in FightPerformance) in the past to only be 5 seconds before the time NEW_FIGHT_DELAY would trigger
-	// and unset the opponent, in case the player follows a different player before actually starting
-	// a fight or getting attacked. In other words, remain skeptical of the validity of this event.
+	// It's worth noting that if you aren't in a fight, all player interactions
+	// including
+	// trading & following will trigger a new fight and a new opponent. Due to this,
+	// set the lastFightTime
+	// (in FightPerformance) in the past to only be 5 seconds before the time
+	// NEW_FIGHT_DELAY would trigger
+	// and unset the opponent, in case the player follows a different player before
+	// actually starting
+	// a fight or getting attacked. In other words, remain skeptical of the validity
+	// of this event.
 	@Subscribe
-	public void onInteractingChanged(InteractingChanged event)
-	{
-		if (config.restrictToLms() && !isAtLMS())
-		{
+	public void onInteractingChanged(InteractingChanged event) {
+		if (config.restrictToLms() && !isAtLMS()) {
 			return;
 		}
 
@@ -356,59 +374,51 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// if the client player already has a valid opponent,
 		// or the event source/target aren't players, skip any processing.
 		if ((hasOpponent() && currentFight.fightStarted())
-			|| !(event.getSource() instanceof Player)
-			|| !(event.getTarget() instanceof Player))
-		{
+				|| !(event.getSource() instanceof Player)
+				|| !(event.getTarget() instanceof Player)) {
 			return;
 		}
 
 		Actor opponent;
 
-		// If the event source is the player, then it is the player interacting with their potential opponent.
-		if (event.getSource().equals(client.getLocalPlayer()))
-		{
+		// If the event source is the player, then it is the player interacting with
+		// their potential opponent.
+		if (event.getSource().equals(client.getLocalPlayer())) {
 			opponent = event.getTarget();
-		}
-		else if (event.getTarget().equals(client.getLocalPlayer()))
-		{
+		} else if (event.getTarget().equals(client.getLocalPlayer())) {
 			opponent = event.getSource();
-		}
-		else // if neither source or target was the player, skip
+		} else // if neither source or target was the player, skip
 		{
 			return;
 		}
 
-		// start a new fight with the new found opponent, if a new one.
-		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
-		{
-			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
+		// Start a new fight if there isn't one currently active.
+		// This ensures a Hiscores lookup happens even if fighting the same opponent
+		// consecutively.
+		if (!hasOpponent()) {
+			currentFight = new FightPerformance(client.getLocalPlayer(), (Player) opponent);
 			overlay.setFight(currentFight);
+
+			// --- Hiscores Lookup REMOVED ---
 		}
 	}
 
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		if (gameStateChanged.getGameState() != GameState.LOGGED_IN)
-		{
+	public void onGameStateChanged(GameStateChanged gameStateChanged) {
+		if (gameStateChanged.getGameState() != GameState.LOGGED_IN) {
 			return;
 		}
 
-		// hide or show panel depending if config is restricted to LMS and if player is at LMS
-		if (config.restrictToLms())
-		{
-			if (isAtLMS())
-			{
-				if (!navButtonShown && config.showFightHistoryPanel())
-				{
+		// hide or show panel depending if config is restricted to LMS and if player is
+		// at LMS
+		if (config.restrictToLms()) {
+			if (isAtLMS()) {
+				if (!navButtonShown && config.showFightHistoryPanel()) {
 					clientToolbar.addNavigation(navButton);
 					navButtonShown = true;
 				}
-			}
-			else
-			{
-				if (navButtonShown)
-				{
+			} else {
+				if (navButtonShown) {
 					clientToolbar.removeNavigation(navButton);
 					navButtonShown = false;
 				}
@@ -417,58 +427,127 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onAnimationChanged(AnimationChanged event)
-	{
+	public void onAnimationChanged(AnimationChanged event) {
 		stopFightIfOver();
 
-		// delay the animation processing, since we will also want to use equipment data for deserved
+		// delay the animation processing, since we will also want to use equipment data
+		// for deserved
 		// damage, and equipment updates are loaded after the animation updates.
-		clientThread.invokeLater(() ->
-		{
-			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
-			{
-				currentFight.checkForAttackAnimations((Player)event.getActor(), new CombatLevels(client));
+		clientThread.invokeLater(() -> {
+			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null) {
+				currentFight.checkForAttackAnimations((Player) event.getActor(), new CombatLevels(client));
 			}
 		});
 	}
 
 	@Subscribe
 	// track damage dealt/taken
-	public void onHitsplatApplied(HitsplatApplied event)
-	{
+	public void onHitsplatApplied(HitsplatApplied event) {
 		int hitType = event.getHitsplat().getHitsplatType();
 
-		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
-		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
+		// if there's no opponent, the target is not a player, or the hitsplat is not
+		// relevant to pvp damage,
+		// skip the hitsplat. Otherwise, add it to the fight, which will only include it
+		// if it is one of the
 		// Fighters in the fight being hit.
 		if (!hasOpponent() || !(event.getActor() instanceof Player) ||
-			!(hitType == HitsplatID.DAMAGE_ME || hitType == HitsplatID.DAMAGE_ME_ORANGE || hitType == HitsplatID.DAMAGE_OTHER_ORANGE || hitType == HitsplatID.DAMAGE_OTHER || hitType == HitsplatID.DAMAGE_MAX_ME || hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE ||
-				hitType == HitsplatID.POISON || hitType == HitsplatID.VENOM))
-		{
+				!(hitType == HitsplatID.DAMAGE_ME || hitType == HitsplatID.DAMAGE_ME_ORANGE
+						|| hitType == HitsplatID.DAMAGE_OTHER_ORANGE || hitType == HitsplatID.DAMAGE_OTHER
+						|| hitType == HitsplatID.DAMAGE_MAX_ME || hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE ||
+						hitType == HitsplatID.POISON || hitType == HitsplatID.VENOM)) {
 			return;
 		}
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
+
+		// --- KO Chance Calculation START ---
+		// Calculate KO chance here, after damage is applied, to get accurate pre-hit HP
+		clientThread.invokeLater(() -> {
+			if (!hasOpponent())
+				return; // Fight might have ended between event and invokeLater
+
+			Actor opponent = event.getActor(); // The one receiving the hitsplat
+			int damage = event.getHitsplat().getAmount();
+			Fighter attacker = null;
+			Fighter defender = null;
+
+			// Determine attacker/defender based on who received the hitsplat
+			if (opponent.getName() != null) {
+				if (opponent.getName().equals(currentFight.getOpponent().getName())) {
+					attacker = currentFight.getCompetitor();
+					defender = currentFight.getOpponent();
+				} else if (opponent.getName().equals(currentFight.getCompetitor().getName())) {
+					attacker = currentFight.getOpponent();
+					defender = currentFight.getCompetitor();
+				}
+			}
+
+			// If we couldn't identify attacker/defender, or the hitsplat wasn't on a
+			// tracked fighter, exit.
+			if (attacker == null || defender == null)
+				return;
+
+			// Find the last attack log entry from the attacker that hasn't had its KO
+			// chance calculated yet.
+			FightLogEntry lastEntry = null;
+			ArrayList<FightLogEntry> attackerLogs = attacker.getFightLogEntries();
+			for (int i = attackerLogs.size() - 1; i >= 0; i--) {
+				FightLogEntry entry = attackerLogs.get(i);
+				if (entry.isFullEntry() && !entry.isKoChanceCalculated()) {
+					lastEntry = entry;
+					break;
+				}
+			}
+
+			if (lastEntry != null) {
+				// Use the current health ratio/scale from the opponent actor receiving the
+				// hitsplat
+				int healthRatio = opponent.getHealthRatio();
+				int healthScale = opponent.getHealthScale();
+				int maxHpToUse = CONFIG.opponentHitpointsLevel(); // Use configured HP level
+
+				if (healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0) {
+					// Estimate HP *after* the hit was applied
+					int hpAfterHit = (int) Math.max(1, Math.ceil(((double) healthRatio / healthScale) * maxHpToUse));
+					// Calculate HP *before* the hit by adding the damage back
+					int hpBeforeHit = hpAfterHit + damage;
+
+					// Calculate KO chance using the estimated pre-hit HP
+					Double koChance = PvpPerformanceTrackerUtils.calculateKoChance(
+							lastEntry.getAccuracy(),
+							lastEntry.getMinHit(),
+							lastEntry.getMaxHit(),
+							hpBeforeHit);
+
+					// Update the log entry
+					lastEntry.setKoChance(koChance);
+					lastEntry.setKoChanceCalculated(true);
+				} else {
+					// Mark as calculated even if we couldn't get HP data, to avoid reprocessing
+					lastEntry.setKoChanceCalculated(true);
+				}
+			}
+		});
+		// --- KO Chance Calculation END ---
 	}
 
 	@Subscribe
 	// track hitpoints healed & ghost barrages for main competitor/client player
-	public void onStatChanged(StatChanged statChanged)
-	{
+	public void onStatChanged(StatChanged statChanged) {
 		Skill skill = statChanged.getSkill();
-		if (!hasOpponent()) { return; }
+		if (!hasOpponent()) {
+			return;
+		}
 
-		if (skill == Skill.HITPOINTS)
-		{
+		if (skill == Skill.HITPOINTS) {
 			currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
 		}
 
-		if (skill == Skill.MAGIC)
-		{
+		if (skill == Skill.MAGIC) {
 			int magicXp = client.getSkillExperience(Skill.MAGIC);
-			if (magicXp > currentFight.competitor.getLastGhostBarrageCheckedMageXp())
-			{
-				currentFight.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
+			if (magicXp > currentFight.competitor.getLastGhostBarrageCheckedMageXp()) {
+				currentFight.competitor
+						.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
 				clientThread.invokeLater(this::checkForGhostBarrage);
 			}
 		}
@@ -476,47 +555,49 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Subscribe
 	// track ghost barrages for main competitor/client player
-	public void onFakeXpDrop(FakeXpDrop fakeXpDrop)
-	{
-		if (!hasOpponent() || fakeXpDrop.getSkill() != Skill.MAGIC) { return; }
+	public void onFakeXpDrop(FakeXpDrop fakeXpDrop) {
+		if (!hasOpponent() || fakeXpDrop.getSkill() != Skill.MAGIC) {
+			return;
+		}
 
 		clientThread.invokeLater(this::checkForGhostBarrage);
 	}
 
-	// if the player gained magic xp but doesn't have a magic-attack animation, consider it as a ghost barrage.
-	// however this won't be added as a normal attack, it is for an extra ghost-barrage statistic as
+	// if the player gained magic xp but doesn't have a magic-attack animation,
+	// consider it as a ghost barrage.
+	// however this won't be added as a normal attack, it is for an extra
+	// ghost-barrage statistic as
 	// we can only detect this for the local player
-	private void checkForGhostBarrage()
-	{
-		if (!hasOpponent()) { return; }
+	private void checkForGhostBarrage() {
+		if (!hasOpponent()) {
+			return;
+		}
 
 		currentFight.checkForLocalGhostBarrage(new CombatLevels(client), client.getLocalPlayer());
 	}
 
-	// When the config is reset, also reset the fight history data, as a way to restart
+	// When the config is reset, also reset the fight history data, as a way to
+	// restart
 	// if the current data is causing problems.
 	@Override
-	public void resetConfiguration()
-	{
+	public void resetConfiguration() {
 		super.resetConfiguration();
 		resetFightHistory();
 	}
 
 	// when the client shuts down, save the fight history data locally.
 	@Subscribe
-	public void onClientShutdown(ClientShutdown event)
-	{
+	public void onClientShutdown(ClientShutdown event) {
 		event.waitFor(executor.submit(this::saveFightHistoryData));
 	}
 
 	// #################################################################################################################
-	// ################################## Plugin-specific functions & global helpers ###################################
+	// ################################## Plugin-specific functions & global helpers
+	// ###################################
 	// #################################################################################################################
 
-	private void update(String oldVersion)
-	{
-		switch (oldVersion)
-		{
+	private void update(String oldVersion) {
+		switch (oldVersion) {
 			case "1.4.0":
 			case "1.4.1":
 			case "1.4.2":
@@ -539,18 +620,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
 	}
 
-	private void updateFrom1_5_5to1_5_6()
-	{
-		try
-		{
+	private void updateFrom1_5_5to1_5_6() {
+		try {
 			log.info("Updating data from 1.5.5 (or earlier) to 1.5.6...");
 
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 
 			// if the fight history data file doesn't exist, create it with an empty array.
-			if (!fightHistoryData.exists())
-			{
+			if (!fightHistoryData.exists()) {
 				Writer writer = new FileWriter(fightHistoryData);
 				writer.write("[]");
 				writer.close();
@@ -559,98 +637,94 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			fightHistory.clear();
 
-			// read the old saved fights from the file into an array, and add them as an updated
+			// read the old saved fights from the file into an array, and add them as an
+			// updated
 			// fight to the fightHistory list.
 			Arrays.asList(GSON.fromJson(new FileReader(fightHistoryData), FightPerformance__1_5_5[].class))
-				.forEach((oldFight) -> fightHistory.add(new FightPerformance(oldFight)));
+					.forEach((oldFight) -> fightHistory.add(new FightPerformance(oldFight)));
 
-			// now that the fights were deserialized and updated to the newest version, simply save them.
-			// afterwards, they will be re-loaded normally. Bit inefficient but not a big deal
+			// now that the fights were deserialized and updated to the newest version,
+			// simply save them.
+			// afterwards, they will be re-loaded normally. Bit inefficient but not a big
+			// deal
 			saveFightHistoryData();
 			log.info("Successfully updated from 1.5.5 to 1.5.6");
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			log.warn("Error while updating fight history data from 1.5.5 to 1.5.6: " + e.getMessage());
-			// Display no modal for this error since it could happen on client load and that has odd behavior.
+			// Display no modal for this error since it could happen on client load and that
+			// has odd behavior.
 		}
 	}
+
 	// Returns true if the player has an opponent.
-	private boolean hasOpponent()
-	{
+	private boolean hasOpponent() {
 		return currentFight != null;
 	}
 
-	private void stopFightIfOver()
-	{
-		if (hasOpponent() && currentFight.isFightOver())
-		{
+	private void stopFightIfOver() {
+		if (hasOpponent() && currentFight.isFightOver()) {
 			// add fight to fight history if it actually started
-			if (currentFight.fightStarted())
-			{
+			if (currentFight.fightStarted()) {
 				addToFightHistory(currentFight);
 			}
 			currentFight = null;
 		}
 	}
 
-	// save the currently loaded fightHistory to the local json data so it is saved for the next client launch.
-	private void saveFightHistoryData()
-	{
-		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
+	// save the currently loaded fightHistory to the local json data so it is saved
+	// for the next client launch.
+	private void saveFightHistoryData() {
+		// silently ignore errors, which shouldn't really happen - but if they do, don't
+		// prevent the plugin
 		// from continuing to work, even if there are issues saving the data.
-		try
-		{
+		try {
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 			Writer writer = new FileWriter(fightHistoryData);
 			GSON.toJson(fightHistory, writer);
 			writer.flush();
 			writer.close();
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			log.warn("Error ignored while updating fight history data: " + e.getMessage());
 		}
 	}
 
 	// add fight to loaded fight history
-	void addToFightHistory(FightPerformance fight)
-	{
-		if (fight == null) { return; }
+	void addToFightHistory(FightPerformance fight) {
+		if (fight == null) {
+			return;
+		}
 		fightHistory.add(fight);
-		// no need to sort, since they sort chronologically, but they should automatically be added that way.
+		// no need to sort, since they sort chronologically, but they should
+		// automatically be added that way.
 
 		// remove fights as necessary to respect the fightHistoryLimit.
-		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
-		{
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit()) {
 			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
 			// Remove oldest fightHistory until the size is equal to the limit.
 			// Should only remove one fight in most cases.
 			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
 			panel.rebuild();
-		}
-		else
-		{
+		} else {
 			panel.addFight(fight);
 		}
 	}
 
 	// import complete fight history data from the saved json data file
-	// this function only handles the direct file processing and json deserialization.
+	// this function only handles the direct file processing and json
+	// deserialization.
 	// more specific FightPerformance processing is done in importFights()
-	void importFightHistoryData()
-	{
-		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
-		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
+	void importFightHistoryData() {
+		// catch and ignore any errors we may have forgotten to handle - the import will
+		// fail but at least the plugin
+		// will continue to function. This should only happen if their fight history
+		// data is corrupted/outdated.
 		// The user will be notified by a modal if this happens.
-		try
-		{
+		try {
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
 			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 
 			// if the fight history data file doesn't exist, create it with an empty array.
-			if (!fightHistoryData.exists())
-			{
+			if (!fightHistoryData.exists()) {
 				Writer writer = new FileWriter(fightHistoryData);
 				writer.write("[]");
 				writer.close();
@@ -658,15 +732,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			// read the saved fights from the file
 			List<FightPerformance> savedFights = Arrays.asList(
-				GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
+					GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
 
 			fightHistory.clear();
 			importFights(savedFights);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			log.warn("Error while deserializing fight history data: " + e.getMessage());
-			// Display no modal for this error since it could happen on client load and that has odd behavior.
+			// Display no modal for this error since it could happen on client load and that
+			// has odd behavior.
 			return;
 		}
 
@@ -676,19 +749,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// import additional/extra fight history data supplied by the user
 	// this only does the direct json deserialization and success response (modals)
 	// more specific FightPerformance processing is done in importFights()
-	public void importUserFightHistoryData(String data)
-	{
-		try
-		{
+	public void importUserFightHistoryData(String data) {
+		try {
 			// read saved fights from the data string and import them
 			List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
 			createConfirmationModal(true, "Fight history data was successfully imported.");
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			log.warn("Error while importing user's fight history data: " + e.getMessage());
-			// If an error was detected while deserializing fights, display that as a message dialog.
+			// If an error was detected while deserializing fights, display that as a
+			// message dialog.
 			createConfirmationModal(false, "Fight history data was invalid, and could not be imported.");
 			return;
 		}
@@ -696,35 +766,34 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		panel.rebuild();
 	}
 
-	// set fight log names after importing since they aren't serialized but are on the parent class
-	public void initializeImportedFight(FightPerformance f)
-	{
+	// set fight log names after importing since they aren't serialized but are on
+	// the parent class
+	public void initializeImportedFight(FightPerformance f) {
 		// check for nulls in case the data was corrupted and entries are corrupted.
 		if (f.getCompetitor() == null || f.getOpponent() == null ||
-			f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null)
-		{
+				f.getCompetitor().getFightLogEntries() == null || f.getOpponent().getFightLogEntries() == null) {
 			return;
 		}
 
-		f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
-			l.attackerName = f.getCompetitor().getName());
-		f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
-			l.attackerName = f.getOpponent().getName());
+		f.getCompetitor().getFightLogEntries()
+				.forEach((FightLogEntry l) -> l.attackerName = f.getCompetitor().getName());
+		f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) -> l.attackerName = f.getOpponent().getName());
 	}
 
-	// process and add a list of deserialized json fights to the currently loaded fights
+	// process and add a list of deserialized json fights to the currently loaded
+	// fights
 	// can throw NullPointerException if some of the serialized data is corrupted
-	void importFights(List<FightPerformance> fights) throws NullPointerException
-	{
-		if (fights == null || fights.size() < 1) { return; }
+	void importFights(List<FightPerformance> fights) throws NullPointerException {
+		if (fights == null || fights.size() < 1) {
+			return;
+		}
 
 		fights.removeIf(Objects::isNull);
 		fightHistory.addAll(fights);
 		fightHistory.sort(FightPerformance::compareTo);
 
 		// remove fights to respect the fightHistoryLimit.
-		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
-		{
+		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit()) {
 			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
 			// Remove oldest fightHistory until the size is equal to the limit.
 			// Should only remove one fight in most cases.
@@ -732,35 +801,29 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// set fight log names since they aren't serialized but are on the parent class
-		for (FightPerformance f : fightHistory)
-		{
+		for (FightPerformance f : fightHistory) {
 			initializeImportedFight(f);
 		}
 	}
 
 	// reset the loaded fight history as well as the saved json data
-	public void resetFightHistory()
-	{
+	public void resetFightHistory() {
 		fightHistory.clear();
 		saveFightHistoryData();
 		panel.rebuild();
 	}
 
 	// remove a fight from the loaded fight history
-	public void removeFight(FightPerformance fight)
-	{
+	public void removeFight(FightPerformance fight) {
 		fightHistory.remove(fight);
 		panel.rebuild();
 	}
 
-	public boolean isAtLMS()
-	{
+	public boolean isAtLMS() {
 		final int[] mapRegions = client.getMapRegions();
 
-		for (int region : LAST_MAN_STANDING_REGIONS)
-		{
-			if (ArrayUtils.contains(mapRegions, region))
-			{
+		for (int region : LAST_MAN_STANDING_REGIONS) {
+			if (ArrayUtils.contains(mapRegions, region)) {
 				return true;
 			}
 		}
@@ -768,29 +831,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		return false;
 	}
 
-	// Send a message to the chat. Send them messages to the trade chat since it is uncommonly
-	// used while fighting, but game, public, private, and clan chat all have their uses.
-	public void sendChatMessage(String chatMessage)
-	{
+	// Send a message to the chat. Send them messages to the trade chat since it is
+	// uncommonly
+	// used while fighting, but game, public, private, and clan chat all have their
+	// uses.
+	public void sendChatMessage(String chatMessage) {
 		chatMessageManager
-			.queue(QueuedMessage.builder()
-				.type(ChatMessageType.TRADE)
-				.runeLiteFormattedMessage(chatMessage)
-				.build());
+				.queue(QueuedMessage.builder()
+						.type(ChatMessageType.TRADE)
+						.runeLiteFormattedMessage(chatMessage)
+						.build());
 	}
 
 	// create a simple confirmation modal, using a custom dialog so it can be always
 	// on top (if the client is, to prevent being stuck under the client).
-	public void createConfirmationModal(boolean success, String message)
-	{
-		SwingUtilities.invokeLater(() ->
-		{
+	public void createConfirmationModal(boolean success, String message) {
+		SwingUtilities.invokeLater(() -> {
 			JOptionPane optionPane = new JOptionPane();
 			optionPane.setMessage(message);
 			optionPane.setOptionType(JOptionPane.DEFAULT_OPTION);
 			JDialog dialog = optionPane.createDialog(panel, "PvP Tracker: " + (success ? "Success" : "Error"));
-			if (dialog.isAlwaysOnTopSupported())
-			{
+			if (dialog.isAlwaysOnTopSupported()) {
 				dialog.setAlwaysOnTop(runeliteConfig.gameAlwaysOnTop());
 			}
 			dialog.setIconImage(PLUGIN_ICON);
@@ -799,18 +860,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 
 	// save the complete fight history data to the clipboard.
-	public void exportFightHistory()
-	{
-		String fightHistoryDataJson = GSON.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
+	public void exportFightHistory() {
+		String fightHistoryDataJson = GSON.toJson(fightHistory.toArray(new FightPerformance[0]),
+				FightPerformance[].class);
 		final StringSelection contents = new StringSelection(fightHistoryDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
 
 		createConfirmationModal(true, "Fight history data was copied to the clipboard.");
 	}
 
-	public void exportFight(FightPerformance fight)
-	{
-		if (fight == null) { return; }
+	public void exportFight(FightPerformance fight) {
+		if (fight == null) {
+			return;
+		}
 		String fightDataJson = GSON.toJson(fight, FightPerformance.class);
 		final StringSelection contents = new StringSelection(fightDataJson);
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
@@ -818,22 +880,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		boolean success = false;
 		String confirmMessage;
 		if (fight.getCompetitor() != null && fight.getCompetitor().getName() != null &&
-			fight.getOpponent() != null && fight.getOpponent().getName() != null)
-		{
+				fight.getOpponent() != null && fight.getOpponent().getName() != null) {
 			success = true;
 			confirmMessage = "Fight data of " + fight.getCompetitor().getName() + " vs " +
-				fight.getOpponent().getName() + " was copied to the clipboard.";
-		}
-		else
-		{
+					fight.getOpponent().getName() + " was copied to the clipboard.";
+		} else {
 			confirmMessage = "Warning: Fight data was copied to the clipboard, but it's likely corrupted.";
 		}
 		createConfirmationModal(success, confirmMessage);
 	}
 
-	public void copyFightAsDiscordMsg(FightPerformance fight)
-	{
-		if (fight == null) { return; }
+	public void copyFightAsDiscordMsg(FightPerformance fight) {
+		if (fight == null) {
+			return;
+		}
 
 		String fightMsg = fight.getAsDiscordMessage();
 
@@ -843,178 +903,164 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		createConfirmationModal(true, "Discord message of fight data was copied to the clipboard.");
 	}
 
-	// retrieve offensive pray as SpriteID since that's all we will directly use it for,
+	// retrieve offensive pray as SpriteID since that's all we will directly use it
+	// for,
 	// aside from comparison/equality checks, so we save an extra mapping this way
-	public int currentlyUsedOffensivePray()
-	{
-		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
-				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
-				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
-				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
-				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
-				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
-				0;
+	public int currentlyUsedOffensivePray() {
+		return client.isPrayerActive(Prayer.PIETY) ? SpriteID.PRAYER_PIETY
+				: client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH
+						: client.isPrayerActive(Prayer.RIGOUR) ? SpriteID.PRAYER_RIGOUR
+								: client.isPrayerActive(Prayer.EAGLE_EYE) ? SpriteID.PRAYER_EAGLE_EYE
+										: client.isPrayerActive(Prayer.AUGURY) ? SpriteID.PRAYER_AUGURY
+												: client.isPrayerActive(Prayer.MYSTIC_MIGHT)
+														? SpriteID.PRAYER_MYSTIC_MIGHT
+														: 0;
 	}
 
 	// returns SpriteID for a given HeadIcon. returns -1 if not found
-	public int getSpriteForHeadIcon(HeadIcon icon)
-	{
-		if (icon == null) { return -1; }
-		switch (icon)
-		{
-			case MELEE: return SpriteID.PRAYER_PROTECT_FROM_MELEE;
-			case RANGED: return SpriteID.PRAYER_PROTECT_FROM_MISSILES;
-			case MAGIC: return SpriteID.PRAYER_PROTECT_FROM_MAGIC;
-			case SMITE: return SpriteID.PRAYER_SMITE;
-			case RETRIBUTION: return SpriteID.PRAYER_RETRIBUTION;
-			case REDEMPTION: return SpriteID.PRAYER_REDEMPTION;
-			default: return -1;
+	public int getSpriteForHeadIcon(HeadIcon icon) {
+		if (icon == null) {
+			return -1;
+		}
+		switch (icon) {
+			case MELEE:
+				return SpriteID.PRAYER_PROTECT_FROM_MELEE;
+			case RANGED:
+				return SpriteID.PRAYER_PROTECT_FROM_MISSILES;
+			case MAGIC:
+				return SpriteID.PRAYER_PROTECT_FROM_MAGIC;
+			case SMITE:
+				return SpriteID.PRAYER_SMITE;
+			case RETRIBUTION:
+				return SpriteID.PRAYER_RETRIBUTION;
+			case REDEMPTION:
+				return SpriteID.PRAYER_REDEMPTION;
+			default:
+				return -1;
 		}
 	}
 
-	public int getSpriteForSkill(Skill skill)
-	{
-		switch (skill)
-		{
-			case ATTACK: return SpriteID.SKILL_ATTACK;
-			case STRENGTH: return SpriteID.SKILL_STRENGTH;
-			case DEFENCE: return SpriteID.SKILL_DEFENCE;
-			case RANGED: return SpriteID.SKILL_RANGED;
-			case MAGIC: return SpriteID.SKILL_MAGIC;
-			case HITPOINTS: return SpriteID.SKILL_HITPOINTS;
-			default: return -1;
+	public int getSpriteForSkill(Skill skill) {
+		switch (skill) {
+			case ATTACK:
+				return SpriteID.SKILL_ATTACK;
+			case STRENGTH:
+				return SpriteID.SKILL_STRENGTH;
+			case DEFENCE:
+				return SpriteID.SKILL_DEFENCE;
+			case RANGED:
+				return SpriteID.SKILL_RANGED;
+			case MAGIC:
+				return SpriteID.SKILL_MAGIC;
+			case HITPOINTS:
+				return SpriteID.SKILL_HITPOINTS;
+			default:
+				return -1;
 		}
 	}
 
-	public void addSpriteToLabelIfValid(JLabel label, int spriteId, Runnable swingCallback)
-	{
+	public void addSpriteToLabelIfValid(JLabel label, int spriteId, Runnable swingCallback) {
 		// Invalid sprite: set icon to bank filler and tooltip to N/A
-		if (spriteId <= 0)
-		{
+		if (spriteId <= 0) {
 			DEFAULT_NONE_SYMBOL.addTo(label);
 			label.setToolTipText("N/A");
 
-			if (swingCallback != null)
-			{
+			if (swingCallback != null) {
 				SwingUtilities.invokeLater(swingCallback);
 			}
 			return;
 		}
 
 		// if sprite id found in sprite cache: use it.
-		if (spriteCache.containsKey(spriteId))
-		{
+		if (spriteCache.containsKey(spriteId)) {
 			label.setIcon(spriteCache.get(spriteId));
-			if (swingCallback != null)
-			{
+			if (swingCallback != null) {
 				SwingUtilities.invokeLater(swingCallback);
 			}
 			return;
 		}
 
 		// if sprite id wasn't in sprite cache: get it, use it and add it to the cache
-		clientThread.invokeLater(() ->
-		{
+		clientThread.invokeLater(() -> {
 			BufferedImage sprite = spriteManager.getSprite(spriteId, 0);
-			if (sprite != null)
-			{
+			if (sprite != null) {
 				ImageIcon icon = new ImageIcon(sprite);
 				spriteCache.put(spriteId, icon);
 				label.setIcon(icon);
-			}
-			else
-			{
+			} else {
 				DEFAULT_NONE_SYMBOL.addTo(label);
 				label.setToolTipText("N/A");
 			}
 
-			if (swingCallback != null)
-			{
+			if (swingCallback != null) {
 				SwingUtilities.invokeLater(swingCallback);
 			}
 		});
 	}
 
-	public void addSpriteToLabelIfValid(JLabel label, int spriteId)
-	{
+	public void addSpriteToLabelIfValid(JLabel label, int spriteId) {
 		addSpriteToLabelIfValid(label, spriteId, null);
 	}
 
 	// if verifyId is true, takes in itemId directly from PlayerComposition
 	// otherwise, assume valid itemId
-	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
-	{
-		if (itemId > PlayerComposition.ITEM_OFFSET || !verifyId)
-		{
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback,
+			String tooltipOverride) {
+		if (itemId > PlayerComposition.ITEM_OFFSET || !verifyId) {
 			final int finalItemId = itemId - (verifyId ? PlayerComposition.ITEM_OFFSET : 0);
 			clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
-				if (tooltipOverride != null && tooltipOverride.length() > 0)
-				{
+				if (tooltipOverride != null && tooltipOverride.length() > 0) {
 					label.setToolTipText(tooltipOverride);
-				}
-				else
-				{
+				} else {
 					String name = itemManager.getItemComposition(finalItemId).getName();
 					label.setToolTipText(name != null ? name : "Item Name Not Found");
 				}
 
-				if (swingCallback != null)
-				{
+				if (swingCallback != null) {
 					SwingUtilities.invokeLater(swingCallback);
 				}
 			});
-		}
-		else
-		{
+		} else {
 			DEFAULT_NONE_SYMBOL.addTo(label);
 			label.setToolTipText("N/A: empty slot or invalid item");
-			if (swingCallback != null)
-			{
+			if (swingCallback != null) {
 				SwingUtilities.invokeLater(swingCallback);
 			}
 		}
 	}
 
-	public void addItemToLabelIfValid(JLabel label, RangeAmmoData data, boolean verifyId, Runnable swingCallback)
-	{
+	public void addItemToLabelIfValid(JLabel label, RangeAmmoData data, boolean verifyId, Runnable swingCallback) {
 		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString());
 	}
 
-	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
-	{
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback) {
 		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null);
 	}
 
-	public void addItemToLabelIfValid(JLabel label, int itemId)
-	{
+	public void addItemToLabelIfValid(JLabel label, int itemId) {
 		addItemToLabelIfValid(label, itemId, true, null);
 	}
 
 	// fix an itemId that came from getPlayerComposition().getEquipmentIds()
-	public static int fixItemId(int itemId)
-	{
+	public static int fixItemId(int itemId) {
 		return itemId > PlayerComposition.ITEM_OFFSET ? itemId - PlayerComposition.ITEM_OFFSET : itemId;
 	}
 
 	// create new array so we don't modify original array
-	public static int[] fixItemIds(int[] itemIds)
-	{
-		if (itemIds == null || itemIds.length < 1)
-		{
+	public static int[] fixItemIds(int[] itemIds) {
+		if (itemIds == null || itemIds.length < 1) {
 			return new int[] { 0 };
 		}
 		int[] fixedItemIds = new int[itemIds.length];
-		for (int i = 0; i < itemIds.length; i++)
-		{
+		for (int i = 0; i < itemIds.length; i++) {
 			fixedItemIds[i] = fixItemId(itemIds[i]);
 		}
 
 		return fixedItemIds;
 	}
 
-	public void updateNameFilterConfig(String newFilterName)
-	{
+	public void updateNameFilterConfig(String newFilterName) {
 		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
 	}
 }

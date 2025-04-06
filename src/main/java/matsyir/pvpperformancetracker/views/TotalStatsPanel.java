@@ -32,6 +32,7 @@ import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List; // Added import
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -42,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
@@ -49,8 +51,7 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
-public class TotalStatsPanel extends JPanel
-{
+public class TotalStatsPanel extends JPanel {
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker";
 	// number format for 0 decimal digit (mostly for commas in large numbers)
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -74,9 +75,15 @@ public class TotalStatsPanel extends JPanel
 		nf2.setMaximumFractionDigits(2);
 		nf2.setRoundingMode(RoundingMode.HALF_UP);
 	}
+	// number format for percentages
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance();
+	static {
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
+	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 10;
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 9;
+	private static final int LAYOUT_ROWS_WITH_WARNING = 11; // Increased count
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 10; // Increased count
 
 	// labels to be updated
 	private JLabel killsLabel;
@@ -88,6 +95,7 @@ public class TotalStatsPanel extends JPanel
 	private JLabel offensivePrayCountStatsLabel;
 	private JLabel hpHealedStatsLabel;
 	private JLabel ghostBarrageStatsLabel;
+	private JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
 
@@ -133,11 +141,22 @@ public class TotalStatsPanel extends JPanel
 	private double avgGhostBarrageCount = 0;
 	private double avgGhostBarrageDeservedDamage = 0;
 
-	public TotalStatsPanel()
-	{
+	// KO Chance totals/averages
+	private double totalCompetitorKoChances = 0;
+	private double totalOpponentKoChances = 0;
+	private double totalCompetitorKoChanceSum = 0; // Sum of KO chance sums from each fight
+	private double totalOpponentKoChanceSum = 0; // Sum of KO chance sums from each fight
+	private double avgCompetitorKoChances = 0;
+	private double avgOpponentKoChances = 0;
+	private double avgCompetitorKoChanceSum = 0; // Average KO chance sum per fight
+	private double avgOpponentKoChanceSum = 0; // Average KO chance sum per fight
+	private int numFightsWithKoChance = 0; // Counter for fights that have KO chance data
+
+	public TotalStatsPanel() {
 		totalStats = new Fighter("Player");
 
-		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
+		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING,
+				1));
 		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
@@ -150,19 +169,20 @@ public class TotalStatsPanel extends JPanel
 
 		// Create "Reset All" popup menu/context menu item
 		final JMenuItem removeAllFights = new JMenuItem("Remove All Fights");
-		removeAllFights.addActionListener(e ->
-		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
-			if (dialogResult == JOptionPane.YES_OPTION)
-			{
+		removeAllFights.addActionListener(e -> {
+			int dialogResult = JOptionPane.showConfirmDialog(this,
+					"Are you sure you want to reset all fight history data? This cannot be undone.", "Warning",
+					JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION) {
 				PLUGIN.resetFightHistory();
 			}
 		});
 
 		// Create "Configure Settings" popup menu/context menu item
-		// TODO? Can't figure out how but would like to in the future. Esp. since there is a warning to setup config.
-		//final JMenuItem configureSettings = new JMenuItem("Configure Settings");
-		//configureSettings.addActionListener(e -> );
+		// TODO? Can't figure out how but would like to in the future. Esp. since there
+		// is a warning to setup config.
+		// final JMenuItem configureSettings = new JMenuItem("Configure Settings");
+		// configureSettings.addActionListener(e -> );
 
 		// Create "Copy Fight History Data" popup menu/context menu item
 		final JMenuItem exportFightHistory = new JMenuItem("Copy Fight History Data");
@@ -170,13 +190,17 @@ public class TotalStatsPanel extends JPanel
 
 		// Create "Import Fight History Data" popup menu/context menu item
 		final JMenuItem importFightHistory = new JMenuItem("Import Fight History Data");
-		importFightHistory.addActionListener(e ->
-		{
+		importFightHistory.addActionListener(e -> {
 			// display a simple input dialog to request json data to import.
-			String fightHistoryData = JOptionPane.showInputDialog(this, "Enter the fight history data you wish to import:", "Import Fight History", JOptionPane.INFORMATION_MESSAGE);
+			String fightHistoryData = JOptionPane.showInputDialog(this,
+					"Enter the fight history data you wish to import:", "Import Fight History",
+					JOptionPane.INFORMATION_MESSAGE);
 
-			// if the string is less than 2 chars, it is definitely invalid (or they pressed Cancel), so skip.
-			if (fightHistoryData == null || fightHistoryData.length() < 2) { return; }
+			// if the string is less than 2 chars, it is definitely invalid (or they pressed
+			// Cancel), so skip.
+			if (fightHistoryData == null || fightHistoryData.length() < 2) {
+				return;
+			}
 
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
@@ -202,9 +226,9 @@ public class TotalStatsPanel extends JPanel
 		titleLabel.setForeground(Color.WHITE);
 		add(titleLabel);
 
-		// if settings haven't been configured, add a red label to display that they should be.
-		if (!CONFIG.settingsConfigured())
-		{
+		// if settings haven't been configured, add a red label to display that they
+		// should be.
+		if (!CONFIG.settingsConfigured()) {
 			initializeSettingsWarningLabel();
 			add(settingsWarningLabel);
 		}
@@ -249,7 +273,8 @@ public class TotalStatsPanel extends JPanel
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
-		// panel to show the average deserved damage stats (average damage & average diff)
+		// panel to show the average deserved damage stats (average damage & average
+		// diff)
 		JPanel deservedDmgStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's deserved dmg stats
@@ -360,118 +385,158 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
 		add(ghostBarrageStatsPanel);
 
+		// TENTH LINE (NEW)
+		// panel to show the avg KO chance stats
+		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
+
+		// left label
+		JLabel avgKoChanceStatsLeftLabel = new JLabel();
+		avgKoChanceStatsLeftLabel.setText("Avg KO Chances:");
+		avgKoChanceStatsLeftLabel.setForeground(Color.WHITE);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLeftLabel, BorderLayout.WEST);
+
+		// right label (value)
+		avgKoChanceStatsLabel = new JLabel();
+		avgKoChanceStatsLabel.setForeground(Color.WHITE);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
+
+		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		avgKoChanceStatsPanel.setComponentPopupMenu(popupMenu);
+		add(avgKoChanceStatsPanel);
+
 		setLabels();
 
-		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int)getPreferredSize().getHeight()));
+		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 	}
 
-	private void setLabels()
-	{
+	private void setLabels() {
 		String avgDeservedDmgDiffOneDecimal = nf1.format(avgDeservedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
 		killsLabel.setText(nf.format(numKills) + " Kill" + (numKills != 1 ? "s" : ""));
 		killsLabel.setToolTipText("From a total of " + numFights + " fights, you got " + nf.format(numKills)
-			+ " kill" + (numKills != 1 ? "s" : ""));
+				+ " kill" + (numKills != 1 ? "s" : ""));
 		deathsLabel.setText(nf.format(numDeaths) + " Death" + (numDeaths != 1 ? "s" : ""));
 		deathsLabel.setToolTipText("From a total of " + numFights + " fights, you died "
-			+ (numDeaths != 1 ? (nf.format(numDeaths) + " times") : "once"));
+				+ (numDeaths != 1 ? (nf.format(numDeaths) + " times") : "once"));
 
-		if (totalStats.getAttackCount() >= 10000)
-		{
+		if (totalStats.getAttackCount() >= 10000) {
 			offPrayStatsLabel.setText(nfWithK(totalStats.getOffPraySuccessCount()) + "/" +
-				nfWithK(totalStats.getAttackCount()) + " (" +
-				Math.round(totalStats.calculateOffPraySuccessPercentage()) + "%)");
-		}
-		else
-		{
+					nfWithK(totalStats.getAttackCount()) + " (" +
+					Math.round(totalStats.calculateOffPraySuccessPercentage()) + "%)");
+		} else {
 			offPrayStatsLabel.setText(totalStats.getOffPrayStats());
 		}
 
-		// put tooltip on parent JPanel so that you can hover anywhere on the line to get the tooltip,
+		// put tooltip on parent JPanel so that you can hover anywhere on the line to
+		// get the tooltip,
 		// rather than having to hover exactly on the statistic label
-		((JPanel)offPrayStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
-			nf.format(totalStats.getAttackCount()) + " total attacks (" +
-			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
+		((JPanel) offPrayStatsLabel.getParent())
+				.setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
+						nf.format(totalStats.getAttackCount()) + " total attacks (" +
+						nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 
 		deservedDmgStatsLabel.setText(nf.format(avgDeservedDmg) + " (" +
-			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
-		((JPanel)deservedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDeservedDmg) +
-			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
-			avgDeservedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDeservedDmg) +
-			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
-			"), on deaths: " + nf1.format(deathAvgDeservedDmg) +
-			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")</html>");
+				(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
+		((JPanel) deservedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDeservedDmg) +
+				" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
+				avgDeservedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDeservedDmg) +
+				" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
+				"), on deaths: " + nf1.format(deathAvgDeservedDmg) +
+				" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")</html>");
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
-			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
-		((JPanel)dmgDealtStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDmgDealt) +
-			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
-			avgDmgDealtDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDmgDealt) +
-			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
-			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
-			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")</html>");
+				(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
+		((JPanel) dmgDealtStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDmgDealt) +
+				" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
+				avgDmgDealtDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDmgDealt) +
+				" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
+				"), on deaths: " + nf1.format(deathAvgDmgDealt) +
+				" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")</html>");
 
-		if (totalStats.getMagicHitCountDeserved() >= 10000)
-		{
+		if (totalStats.getMagicHitCountDeserved() >= 10000) {
 			magicHitCountStatsLabel.setText(nfWithK(totalStats.getMagicHitCount()) + "/" +
-				nfWithK((int)totalStats.getMagicHitCountDeserved()));
-		}
-		else
-		{
+					nfWithK((int) totalStats.getMagicHitCountDeserved()));
+		} else {
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
-		((JPanel)magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
-			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-		nf1.format(totalStats.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
+		((JPanel) magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
+				totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount()
+				+ " magic attacks, but deserved to hit " +
+				nf1.format(totalStats.getMagicHitCountDeserved())
+				+ ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
 
-		if (totalStats.getAttackCount() >= 10000)
-		{
+		if (totalStats.getAttackCount() >= 10000) {
 			offensivePrayCountStatsLabel.setText(nfWithK(totalStats.getOffensivePraySuccessCount()) + "/" +
-				nfWithK(totalStats.getAttackCount()) + " (" +
-				Math.round(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
-		}
-		else
-		{
+					nfWithK(totalStats.getAttackCount()) + " (" +
+					Math.round(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
+		} else {
 			offensivePrayCountStatsLabel.setText(totalStats.getOffensivePrayStats());
 		}
-		((JPanel)offensivePrayCountStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
-			nf.format(totalStats.getAttackCount()) + " total attacks (" +
-			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
+		((JPanel) offensivePrayCountStatsLabel.getParent()).setToolTipText(
+				nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
+						nf.format(totalStats.getAttackCount()) + " total attacks (" +
+						nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
 
 		hpHealedStatsLabel.setText(nf.format(avgHpHealed));
-		((JPanel)hpHealedStatsLabel.getParent()).setToolTipText("A total of " + nf.format(totalStats.getHpHealed())
-			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight.");
+		((JPanel) hpHealedStatsLabel.getParent()).setToolTipText("A total of " + nf.format(totalStats.getHpHealed())
+				+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight.");
 
-		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
-		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
-			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
-			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
-			+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
+		ghostBarrageStatsLabel
+				.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
+		((JPanel) ghostBarrageStatsLabel.getParent())
+				.setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
+						+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
+						+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
+						+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
+
+		// Set Avg KO Chance label
+		if (numFightsWithKoChance > 0) {
+			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " ("
+					+ nfPercent.format(avgCompetitorKoChanceSum) + ") / " // Changed from
+																			// avgCompetitorCumulativeKoChance
+					+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) + ")"); // Changed
+																													// from
+																													// avgOpponentCumulativeKoChance
+			((JPanel) avgKoChanceStatsLabel.getParent())
+					.setToolTipText("<html>Average KO Chances per fight (Avg Sum %):<br>Player: " // Changed tooltip
+																									// text
+							+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoChanceSum) // Changed
+																														// from
+																														// avgCompetitorCumulativeKoChance
+							+ ")<br>Opponent: "
+							+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) // Changed
+																													// from
+																													// avgOpponentCumulativeKoChance
+							+ ")<br>Total KO Chances: Player: "
+							+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
+							+ "</html>");
+		} else {
+			avgKoChanceStatsLabel.setText("- / -");
+			((JPanel) avgKoChanceStatsLabel.getParent()).setToolTipText("No KO chance data available for calculation.");
+		}
 	}
 
-	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
+	// number format which adds K (representing 1,000) if the given number is over
+	// the threshold (10k),
 	// with 1 decimal.
 	// Ex. could turn 172,308 into 172.3k
-	private String nfWithK(int number)
-	{
+	private String nfWithK(int number) {
 		return nf1.format(number / 1000.0) + "k";
 	}
 
-	public void addFight(FightPerformance fight)
-	{
+	public void addFight(FightPerformance fight) {
 		numFights++;
 
 		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-			fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
-			fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
-			fight.getCompetitor().getGhostBarrageDeservedDamage());
+				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+				fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
+				fight.getCompetitor().getGhostBarrageDeservedDamage());
 
 		// add kill-specific or death-specific stats
-		if (fight.getCompetitor().isDead())
-		{
+		if (fight.getCompetitor().isDead()) {
 			numDeaths++;
 
 			deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
@@ -480,15 +545,15 @@ public class TotalStatsPanel extends JPanel
 			deathTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 			deathTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
-			deathAvgDeservedDmg = deathTotalDeservedDmg / numDeaths;
-			deathAvgDeservedDmgDiff = deathTotalDeservedDmgDiff / numDeaths;
+			deathAvgDeservedDmg = numDeaths > 0 ? deathTotalDeservedDmg / numDeaths : 0; // Avoid division by zero
+			deathAvgDeservedDmgDiff = numDeaths > 0 ? deathTotalDeservedDmgDiff / numDeaths : 0; // Avoid division by
+																									// zero
 
-			deathAvgDmgDealt = deathTotalDmgDealt / numDeaths;
-			deathAvgDmgDealtDiff = deathTotalDmgDealtDiff / numDeaths;
+			deathAvgDmgDealt = numDeaths > 0 ? deathTotalDmgDealt / numDeaths : 0; // Avoid division by zero
+			deathAvgDmgDealtDiff = numDeaths > 0 ? deathTotalDmgDealtDiff / numDeaths : 0; // Avoid division by zero
 		}
 
-		if (fight.getOpponent().isDead())
-		{
+		if (fight.getOpponent().isDead()) {
 			numKills++;
 
 			killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
@@ -497,11 +562,11 @@ public class TotalStatsPanel extends JPanel
 			killTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 			killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
-			killAvgDeservedDmg = killTotalDeservedDmg / numKills;
-			killAvgDeservedDmgDiff = killTotalDeservedDmgDiff / numKills;
+			killAvgDeservedDmg = numKills > 0 ? killTotalDeservedDmg / numKills : 0; // Avoid division by zero
+			killAvgDeservedDmgDiff = numKills > 0 ? killTotalDeservedDmgDiff / numKills : 0; // Avoid division by zero
 
-			killAvgDmgDealt = killTotalDmgDealt / numKills;
-			killAvgDmgDealtDiff = killTotalDmgDealtDiff / numKills;
+			killAvgDmgDealt = numKills > 0 ? killTotalDmgDealt / numKills : 0; // Avoid division by zero
+			killAvgDmgDealtDiff = numKills > 0 ? killTotalDmgDealtDiff / numKills : 0; // Avoid division by zero
 		}
 
 		totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
@@ -511,37 +576,83 @@ public class TotalStatsPanel extends JPanel
 		totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
 		// calculate avg stats based on total/numFights
-		avgDeservedDmg = totalDeservedDmg / numFights;
-		avgDeservedDmgDiff = totalDeservedDmgDiff / numFights;
+		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
+		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights : 0;
 
-		avgDmgDealt = totalDmgDealt / numFights;
-		avgDmgDealtDiff = totalDmgDealtDiff / numFights;
+		avgDmgDealt = numFights != 0 ? totalDmgDealt / numFights : 0;
+		avgDmgDealtDiff = numFights != 0 ? totalDmgDealtDiff / numFights : 0;
 
-		avgHpHealed = (double)totalStats.getHpHealed() / numFights;
+		avgHpHealed = numFights != 0 ? (double) totalStats.getHpHealed() / numFights : 0;
 
-		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+		avgGhostBarrageCount = numFights != 0 ? (double) totalStats.getGhostBarrageCount() / numFights : 0;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0
+				? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount()
+				: 0;
+
+		// Calculate KO chances & sum % for this fight and add to totals
+		int fightCompetitorKoChances = 0;
+		double fightCompetitorKoChanceSum = 0.0;
+		int fightOpponentKoChances = 0;
+		double fightOpponentKoChanceSum = 0.0;
+		boolean fightHasKoData = false;
+		List<FightLogEntry> logs = fight.getAllFightLogEntries();
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				fightHasKoData = true; // Mark that this fight has KO data
+				if (log.attackerName.equals(fight.getCompetitor().getName())) {
+					fightCompetitorKoChances++;
+					fightCompetitorKoChanceSum += koChance;
+				} else {
+					fightOpponentKoChances++;
+					fightOpponentKoChanceSum += koChance;
+				}
+			}
+		}
+
+		// Only include this fight in KO averages if it had KO data
+		if (fightHasKoData) {
+			numFightsWithKoChance++;
+			totalCompetitorKoChances += fightCompetitorKoChances;
+			totalOpponentKoChances += fightOpponentKoChances;
+			totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
+			totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+		}
+
+		// Recalculate averages using the count of fights with data
+		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
+		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
+		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
+		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
-	public void addFights(ArrayList<FightPerformance> fights)
-	{
-		if (fights == null || fights.size() < 1) { return; }
+	public void addFights(ArrayList<FightPerformance> fights) {
+		if (fights == null || fights.size() < 1) {
+			return;
+		}
 
 		numFights += fights.size();
 
-		for (FightPerformance fight : fights)
-		{
-			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
-				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
-				fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
-				fight.getCompetitor().getGhostBarrageDeservedDamage());
+		// Reset KO chance totals before recalculating for all fights
+		totalCompetitorKoChances = 0;
+		totalOpponentKoChances = 0;
+		totalCompetitorKoChanceSum = 0;
+		totalOpponentKoChanceSum = 0;
+		numFightsWithKoChance = 0;
 
-			if (fight.getCompetitor().isDead())
-			{
+		for (FightPerformance fight : fights) {
+			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(),
+					fight.getCompetitor().getAttackCount(),
+					fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+					fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
+					fight.getCompetitor().getMagicHitCountDeserved(),
+					fight.getCompetitor().getOffensivePraySuccessCount(),
+					fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
+					fight.getCompetitor().getGhostBarrageDeservedDamage());
+
+			if (fight.getCompetitor().isDead()) {
 				numDeaths++;
 
 				deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
@@ -550,8 +661,7 @@ public class TotalStatsPanel extends JPanel
 				deathTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 				deathTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 			}
-			if (fight.getOpponent().isDead())
-			{
+			if (fight.getOpponent().isDead()) {
 				numKills++;
 
 				killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
@@ -566,10 +676,39 @@ public class TotalStatsPanel extends JPanel
 
 			totalDmgDealt += fight.getCompetitor().getDamageDealt();
 			totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
+
+			// Calculate KO chances & sum % for this fight and add to totals if applicable
+			int fightCompetitorKoChances = 0;
+			double fightCompetitorKoChanceSum = 0.0;
+			int fightOpponentKoChances = 0;
+			double fightOpponentKoChanceSum = 0.0;
+			boolean fightHasKoData = false;
+			List<FightLogEntry> logs = fight.getAllFightLogEntries();
+			for (FightLogEntry log : logs) {
+				Double koChance = log.getKoChance();
+				if (koChance != null) {
+					fightHasKoData = true;
+					if (log.attackerName.equals(fight.getCompetitor().getName())) {
+						fightCompetitorKoChances++;
+						fightCompetitorKoChanceSum += koChance;
+					} else {
+						fightOpponentKoChances++;
+						fightOpponentKoChanceSum += koChance;
+					}
+				}
+			}
+			if (fightHasKoData) {
+				numFightsWithKoChance++;
+				totalCompetitorKoChances += fightCompetitorKoChances;
+				totalOpponentKoChances += fightOpponentKoChances;
+				totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
+				totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+			}
 		}
 
+		// Recalculate averages for all stats
 		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
-		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights: 0;
+		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights : 0;
 
 		avgDmgDealt = numFights != 0 ? totalDmgDealt / numFights : 0;
 		avgDmgDealtDiff = numFights != 0 ? totalDmgDealtDiff / numFights : 0;
@@ -586,16 +725,23 @@ public class TotalStatsPanel extends JPanel
 		deathAvgDmgDealt = numDeaths != 0 ? deathTotalDmgDealt / numDeaths : 0;
 		deathAvgDmgDealtDiff = numDeaths != 0 ? deathTotalDmgDealtDiff / numDeaths : 0;
 
-		avgHpHealed = numFights != 0 ? (double)totalStats.getHpHealed() / numFights : 0;
+		avgHpHealed = numFights != 0 ? (double) totalStats.getHpHealed() / numFights : 0;
 
-		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+		avgGhostBarrageCount = numFights != 0 ? (double) totalStats.getGhostBarrageCount() / numFights : 0;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0
+				? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount()
+				: 0;
+
+		// Recalculate KO averages using the count of fights with data
+		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
+		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
+		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
+		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
-	public void reset()
-	{
+	public void reset() {
 		numFights = 0;
 		numDeaths = 0;
 		numKills = 0;
@@ -631,26 +777,31 @@ public class TotalStatsPanel extends JPanel
 		avgGhostBarrageCount = 0;
 		avgGhostBarrageDeservedDamage = 0;
 
+		// Reset KO chance stats
+		totalCompetitorKoChances = 0;
+		totalOpponentKoChances = 0;
+		totalCompetitorKoChanceSum = 0; // Renamed from totalCompetitorCumulativeKoChance
+		totalOpponentKoChanceSum = 0; // Renamed from totalOpponentCumulativeKoChance
+		avgCompetitorKoChances = 0;
+		avgOpponentKoChances = 0;
+		avgCompetitorKoChanceSum = 0; // Renamed from avgCompetitorCumulativeKoChance
+		avgOpponentKoChanceSum = 0; // Renamed from avgOpponentCumulativeKoChance
+		numFightsWithKoChance = 0; // Reset new counter
+
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
-	public void setConfigWarning(boolean enable)
-	{
-		if (enable)
-		{
+	public void setConfigWarning(boolean enable) {
+		if (enable) {
 			setLayout(new GridLayout(LAYOUT_ROWS_WITH_WARNING, 1));
 
-			if (settingsWarningLabel == null)
-			{
+			if (settingsWarningLabel == null) {
 				initializeSettingsWarningLabel();
 			}
 			add(settingsWarningLabel, 1);
-		}
-		else
-		{
-			if (getComponentCount() > LAYOUT_ROWS_WITHOUT_WARNING)
-			{
+		} else {
+			if (getComponentCount() > LAYOUT_ROWS_WITHOUT_WARNING) {
 				remove(settingsWarningLabel);
 				settingsWarningLabel = null;
 			}
@@ -660,11 +811,11 @@ public class TotalStatsPanel extends JPanel
 		validate();
 	}
 
-	private void initializeSettingsWarningLabel()
-	{
+	private void initializeSettingsWarningLabel() {
 		settingsWarningLabel = new JLabel();
 		settingsWarningLabel.setText("Check plugin config for setup options!");
-		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
+		settingsWarningLabel.setToolTipText(
+				"Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
 
 		// make the warning font bold & smaller font size so we can fit more text.

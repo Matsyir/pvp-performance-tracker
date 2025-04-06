@@ -43,18 +43,17 @@ import org.apache.commons.text.WordUtils;
 
 // A fight log entry for a single Fighter. Will be saved in a List of FightLogEntries in the Fighter class.
 @Getter
-public class FightLogEntry implements Comparable<FightLogEntry>
-{
+public class FightLogEntry implements Comparable<FightLogEntry> {
 	public static final NumberFormat nf;
-	static
-	{
+	static {
 		nf = NumberFormat.getInstance();
 		nf.setRoundingMode(RoundingMode.HALF_UP);
 		nf.setMaximumFractionDigits(2);
 	}
 
 	// general data
-	// don't expose attacker name since it is present in the parent class (Fighter), so it is
+	// don't expose attacker name since it is present in the parent class (Fighter),
+	// so it is
 	// redundant use of storage
 	public String attackerName;
 	@Expose
@@ -68,13 +67,13 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 	// this boolean represents if this is a "complete" fight log entry or not.
 	// if a fight log entry is full/complete, then it has all attack data.
-	// an "incomplete" fight log entry means it's only holding the current attacker's defensive stats to be used with
+	// an "incomplete" fight log entry means it's only holding the current
+	// attacker's defensive stats to be used with
 	// an opposing attack, to be matched up with fight analysis/data merging
 	// very rough way to do this but itll work
 	@Expose
 	@SerializedName("f")
 	private boolean isFullEntry;
-
 
 	// attacker data
 	@Expose
@@ -108,6 +107,15 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("C")
 	private CombatLevels attackerLevels; // CAN BE NULL
 
+	@Getter
+	@Setter
+	@Expose
+	@SerializedName("k") // k for ko chance
+	private Double koChance = null;
+
+	@Getter // Added Getter for isKoChanceCalculated
+	@Setter
+	private transient boolean koChanceCalculated = false; // Flag to track if KO chance was processed for this entry
 
 	// defender data
 	@Expose
@@ -121,8 +129,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
-	{
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray,
+			CombatLevels levels, AnimationData animationData) {
 		this.isFullEntry = true;
 
 		// general
@@ -140,7 +148,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.accuracy = pvpDamageCalc.getAccuracy();
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
-		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
+		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC
+				&& defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
 
 		// defender data
@@ -149,10 +158,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
-	// create incomplete entry to save competitor's defensive stats which are only client side
+	// create incomplete entry to save competitor's defensive stats which are only
+	// client side
 	// in this context, the "attacker" is not attacking, only defending.
-	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray)
-	{
+	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray) {
 		this.isFullEntry = false;
 
 		this.attackerName = attackerName;
@@ -163,9 +172,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerOffensivePray = attackerOffensivePray;
 	}
 
-	// create new fightlogentry based on existing entry but new damage calcs (for fight analysis/stat merging)
-	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc)
-	{
+	// create new fightlogentry based on existing entry but new damage calcs (for
+	// fight analysis/stat merging)
+	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc) {
 		this.isFullEntry = true;
 
 		// general
@@ -191,12 +200,13 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	}
 
 	// randomized entry used for testing
-	public FightLogEntry(int [] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)
-	{
+	public FightLogEntry(int[] attackerGear, int deservedDamage, double accuracy, int minHit, int maxHit,
+			int[] defenderGear, String attackerName) {
 		this.attackerName = attackerName;
 		this.attackerGear = attackerGear;
 		this.attackerOverhead = HeadIcon.MAGIC;
-		this.animationData = Math.random() <= 0.5 ? AnimationData.MELEE_DAGGER_SLASH : AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
+		this.animationData = Math.random() <= 0.5 ? AnimationData.MELEE_DAGGER_SLASH
+				: AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
 		this.deservedDamage = deservedDamage;
 		this.accuracy = accuracy;
 		this.minHit = minHit;
@@ -207,46 +217,42 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.defenderOverhead = HeadIcon.MAGIC;
 	}
 
-
-	public boolean success()
-	{
+	public boolean success() {
 		return animationData.attackStyle.getProtection() != defenderOverhead;
 	}
 
-	public String toChatMessage()
-	{
+	public String toChatMessage() {
 		Color darkRed = new Color(127, 0, 0); // same color as default clan chat color
 		return new ChatMessageBuilder()
-			.append(darkRed, attackerName + ": ")
-			.append(Color.BLACK, "Style: ")
-			.append(darkRed, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
-			.append(Color.BLACK, "  Hit: ")
-			.append(darkRed, getHitRange())
-			.append(Color.BLACK, "  Acc: ")
-			.append(darkRed, nf.format(accuracy))
-			.append(Color.BLACK, "  AvgHit: ")
-			.append(darkRed, nf.format(deservedDamage))
-			.append(Color.BLACK, " Spec?: ")
-			.append(darkRed, animationData.isSpecial ? "Y" : "N")
-			.append(Color.BLACK, " OffP?:")
-			.append(darkRed, success() ? "Y" : "N")
-			.build();
+				.append(darkRed, attackerName + ": ")
+				.append(Color.BLACK, "Style: ")
+				.append(darkRed, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
+				.append(Color.BLACK, "  Hit: ")
+				.append(darkRed, getHitRange())
+				.append(Color.BLACK, "  Acc: ")
+				.append(darkRed, nf.format(accuracy))
+				.append(Color.BLACK, "  AvgHit: ")
+				.append(darkRed, nf.format(deservedDamage))
+				.append(Color.BLACK, " Spec?: ")
+				.append(darkRed, animationData.isSpecial ? "Y" : "N")
+				.append(Color.BLACK, " OffP?:")
+				.append(darkRed, success() ? "Y" : "N")
+				.build();
 	}
 
-	public String getHitRange()
-	{
+	public String getHitRange() {
 		return minHit + "-" + maxHit;
 	}
 
 	// use to sort by last fight time, to sort fights by date/time.
 	@Override
-	public int compareTo(FightLogEntry o)
-	{
+	public int compareTo(FightLogEntry o) {
 		long diff = tick - o.tick;
 
-		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
-		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
-		return diff == 0 ? 0 :
-			(int)(diff / Math.abs(diff));
+		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This
+		// will result in
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a
+		// safely small int.
+		return diff == 0 ? 0 : (int) (diff / Math.abs(diff));
 	}
 }

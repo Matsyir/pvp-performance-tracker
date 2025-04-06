@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 import lombok.Getter;
+import lombok.Setter; // Added import
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -52,15 +53,16 @@ import org.apache.commons.lang3.StringUtils;
 // add to the fight, display stats or check the status of the fight.
 @Slf4j
 @Getter
-public class FightPerformance implements Comparable<FightPerformance>
-{
+public class FightPerformance implements Comparable<FightPerformance> {
 	private static final int[] DEATH_ANIMATIONS = {
-		AnimationID.DEATH,	// Default
-		10629,	// League IV
-		11902,	// League V
+			AnimationID.DEATH, // Default
+			10629, // League IV
+			11902, // League V
 	};
-	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
-	// stand under for a while to eat. Fights will automatically end when either competitor dies.
+	// Delay to assume a fight is over. May seem long, but sometimes people barrage
+	// &
+	// stand under for a while to eat. Fights will automatically end when either
+	// competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
 	private static final NumberFormat nf = NumberFormat.getInstance();
 	static // initialize number format
@@ -77,29 +79,33 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public Fighter opponent;
 	@Expose
 	@SerializedName("t")
-	public long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
+	public long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a
+								// bad time)
 	@Expose
 	@SerializedName("l")
-	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
+	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those
+								// stats/rings/ammo are used.
 
-	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
+	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp
+									// healed.
+	// Removed opponentMaxHp field
 
 	// shouldn't be used, just here so we can make a subclass, weird java thing
-	public FightPerformance()
-	{
+	public FightPerformance() {
 
 	}
 
-	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
-	public FightPerformance(Player competitor, Player opponent)
-	{
+	// constructor which initializes a fight from the 2 Players, starting stats at
+	// 0. Regular use constructor.
+	public FightPerformance(Player competitor, Player opponent) {
 		int defLvl = PLUGIN.getClient().getBoostedSkillLevel(Skill.DEFENCE);
 
-		// determine fight type based on being at LMS areas & use def level to check for LMS builds.
-		this.fightType = !PLUGIN.isAtLMS() ? FightType.NORMAL :
-			defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
-			defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
-			FightType.LMS_MAXMED;
+		// determine fight type based on being at LMS areas & use def level to check for
+		// LMS builds.
+		this.fightType = !PLUGIN.isAtLMS() ? FightType.NORMAL
+				: defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF
+						: defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK
+								: FightType.LMS_MAXMED;
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
@@ -113,50 +119,41 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// create a FightPerformance using an old 1.5.5 or earlier version.
-	public FightPerformance(FightPerformance__1_5_5 old)
-	{
+	public FightPerformance(FightPerformance__1_5_5 old) {
 		this.competitor = old.competitor;
 		this.opponent = old.opponent;
 		this.lastFightTime = old.lastFightTime;
-		if (old.isLmsFight)
-		{
-			if (competitor.getFightLogEntries().size() > 0)
-			{
+		if (old.isLmsFight) {
+			if (competitor.getFightLogEntries().size() > 0) {
 				int defLvl = competitor.getFightLogEntries().get(0).getAttackerLevels().def;
-				this.fightType =
-					defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
-					defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
-					FightType.LMS_MAXMED;
-			}
-			else
-			{
+				this.fightType = defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF
+						: defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK
+								: FightType.LMS_MAXMED;
+			} else {
 				this.fightType = FightType.LMS_MAXMED;
 			}
-		}
-		else
-		{
+		} else {
 			this.fightType = FightType.NORMAL;
 		}
 	}
 
 	// return a random fightPerformance used for testing UI
-	static FightPerformance getTestInstance()
-	{
-		int cTotal = (int)(Math.random() * 60) + 8;
-		int cSuccess = (int)(Math.random() * (cTotal - 4)) + 4;
+	static FightPerformance getTestInstance() {
+		int cTotal = (int) (Math.random() * 60) + 8;
+		int cSuccess = (int) (Math.random() * (cTotal - 4)) + 4;
 		double cDamage = (Math.random() * (cSuccess * 25));
 
-		int oTotal = (int)(Math.random() * 60) + 8;
-		int oSuccess = (int)(Math.random() * (oTotal - 4)) + 4;
+		int oTotal = (int) (Math.random() * 60) + 8;
+		int oSuccess = (int) (Math.random() * (oTotal - 4)) + 4;
 		double oDamage = (Math.random() * (oSuccess * 25));
 
-		int secOffset = (int)(Math.random() * 57600) - 28800;
+		int secOffset = (int) (Math.random() * 57600) - 28800;
 
 		boolean cDead = Math.random() >= 0.5;
 
 		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>();
-		int [] attackerItems = {0, 0, 0};
-		int [] defenderItems = {0, 0, 0};
+		int[] attackerItems = { 0, 0, 0 };
+		int[] defenderItems = { 0, 0, 0 };
 		String attackerName = "testname";
 		FightLogEntry fightLogEntry = new FightLogEntry(attackerItems, 21, 0.5, 1, 12, defenderItems, attackerName);
 		FightLogEntry fightLogEntry2 = new FightLogEntry(attackerItems, 11, 0.2, 1, 41, defenderItems, attackerName);
@@ -166,69 +163,65 @@ public class FightPerformance implements Comparable<FightPerformance>
 		fightLogEntries.add(fightLogEntry2);
 		fightLogEntries.add(fightLogEntry3);
 		fightLogEntries.add(fightLogEntry4);
-		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset, fightLogEntries);
+		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead,
+				secOffset, fightLogEntries);
 	}
 
 	// Used for testing purposes
-	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset, ArrayList<FightLogEntry> fightLogs)
-	{
+	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess,
+			int oTotal, double oDamage, boolean cDead, int secondOffset, ArrayList<FightLogEntry> fightLogs) {
 		this.competitor = new Fighter(this, cName, fightLogs);
 		this.opponent = new Fighter(this, oName, fightLogs);
 
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22, 25, 26);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22, 25, 26);
+		competitor.addAttacks(cSuccess, cTotal, cDamage, (int) cDamage, 20, 12, 13, 11, 22, 25, 26);
+		opponent.addAttacks(oSuccess, oTotal, oDamage, (int) oDamage, 20, 14, 13, 11, 22, 25, 26);
 
-		if (cDead)
-		{
+		if (cDead) {
 			competitor.died();
-		}
-		else
-		{
+		} else {
 			opponent.died();
 		}
 
 		lastFightTime = Instant.now().minusSeconds(secondOffset).toEpochMilli();
 	}
 
-	// If the given playerName is in this fight, check the Fighter's current animation,
-	// add an attack if attacking, and compare attack style used with the opponent's overhead
+	// If the given playerName is in this fight, check the Fighter's current
+	// animation,
+	// add an attack if attacking, and compare attack style used with the opponent's
+	// overhead
 	// to determine if successful.
-	public void checkForAttackAnimations(Player eventSource, CombatLevels competitorLevels)
-	{
-		if (eventSource == null || eventSource.getName() == null || eventSource.getInteracting() == null || eventSource.getInteracting().getName() == null)
-		{
+	public void checkForAttackAnimations(Player eventSource, CombatLevels competitorLevels) {
+		if (eventSource == null || eventSource.getName() == null || eventSource.getInteracting() == null
+				|| eventSource.getInteracting().getName() == null) {
 			return;
 		}
 
 		String eName = eventSource.getName(); // event source name
 		String interactingName = eventSource.getInteracting().getName();
 
-		// verify that the player is interacting with their tracked opponent before adding attacks
-		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
-		{
+		// verify that the player is interacting with their tracked opponent before
+		// adding attacks
+		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName())) {
 			competitor.setPlayer(eventSource);
 			AnimationData animationData = competitor.getAnimationData();
-			if (animationData != null)
-			{
+			if (animationData != null) {
 				int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
-					opponent.getPlayer(),
-					animationData,
-					offensivePray,
-					competitorLevels);
+						opponent.getPlayer(),
+						animationData,
+						offensivePray,
+						competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
 			}
-		}
-		else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName()))
-		{
+		} else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName())) {
 			opponent.setPlayer(eventSource);
 			AnimationData animationData = opponent.getAnimationData();
-			if (animationData != null)
-			{
+			if (animationData != null) {
 				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer(), animationData, 0);
 
-				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
+				// add a defensive log for the competitor while the opponent is attacking, to be
+				// used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}
@@ -236,55 +229,49 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// this only gets called when the local client player receives a magic xp drop.
-	public void checkForLocalGhostBarrage(CombatLevels competitorLevels, Player localPlayer)
-	{
-		if (localPlayer == null)
-		{
+	public void checkForLocalGhostBarrage(CombatLevels competitorLevels, Player localPlayer) {
+		if (localPlayer == null) {
 			log.info("Client player null while checking for ghost barrage - shouldn't happen");
 			return;
 		}
 
 		competitor.setPlayer(localPlayer);
-		if (localPlayer.getInteracting() instanceof Player && localPlayer.getInteracting().getName().equals(opponent.getName()))
-		{
-			opponent.setPlayer((Player)localPlayer.getInteracting());
+		if (localPlayer.getInteracting() instanceof Player
+				&& localPlayer.getInteracting().getName().equals(opponent.getName())) {
+			opponent.setPlayer((Player) localPlayer.getInteracting());
 		}
 
 		AnimationData animationData = competitor.getAnimationData();
 
-		if (animationData == null || animationData.attackStyle != AnimationData.AttackStyle.MAGIC)
-		{
+		if (animationData == null || animationData.attackStyle != AnimationData.AttackStyle.MAGIC) {
 			animationData = AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
 
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
-			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-				opponent.getPlayer(),
-				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
-				offensivePray,
-				competitorLevels);
+			competitor.addGhostBarrage(
+					opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+					opponent.getPlayer(),
+					AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
+					offensivePray,
+					competitorLevels);
 		}
 	}
 
 	// add damage dealt to the opposite player.
 	// the player name being passed in is the one who has the hitsplat on them.
-	public void addDamageDealt(String playerName, int damage)
-	{
-		if (playerName == null) { return; }
-
-		if (playerName.equals(competitor.getName()))
-		{
-			opponent.addDamageDealt(damage);
+	public void addDamageDealt(String playerName, int damage) {
+		if (playerName == null) {
+			return;
 		}
-		else if (playerName.equals(opponent.getName()))
-		{
+
+		if (playerName.equals(competitor.getName())) {
+			opponent.addDamageDealt(damage);
+		} else if (playerName.equals(opponent.getName())) {
 			competitor.addDamageDealt(damage);
 		}
 	}
 
-	public void updateCompetitorHp(int currentHp)
-	{
-		if (currentHp > competitorPrevHp)
-		{
+	public void updateCompetitorHp(int currentHp) {
+		if (currentHp > competitorPrevHp) {
 			int hpHealed = currentHp - competitorPrevHp;
 			competitor.addHpHealed(hpHealed);
 		}
@@ -292,40 +279,34 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// Will return true and stop the fight if the fight should be over.
-	// if either competitor hasn't fought in NEW_FIGHT_DELAY, or either competitor died.
+	// if either competitor hasn't fought in NEW_FIGHT_DELAY, or either competitor
+	// died.
 	// Will also add the currentFight to fightHistory if the fight ended.
-	public boolean isFightOver()
-	{
+	public boolean isFightOver() {
 		boolean isOver = false;
 		// if either competitor died, end the fight.
-		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == opponent.getPlayer().getAnimation()))
-		{
+		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == opponent.getPlayer().getAnimation())) {
 			opponent.died();
 			isOver = true;
 		}
-		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == competitor.getPlayer().getAnimation()))
-		{
+		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == competitor.getPlayer().getAnimation())) {
 			competitor.died();
 			isOver = true;
 		}
 		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds
-		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
-		{
+		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0) {
 			isOver = true;
 		}
 
-		if (isOver)
-		{
+		if (isOver) {
 			lastFightTime = Instant.now().toEpochMilli();
 		}
 
 		return isOver;
 	}
 
-	public ArrayList<FightLogEntry> getAllFightLogEntries()
-	{
-		if (competitor.getFightLogEntries() == null || opponent.getFightLogEntries() == null)
-		{
+	public ArrayList<FightLogEntry> getAllFightLogEntries() {
+		if (competitor.getFightLogEntries() == null || opponent.getFightLogEntries() == null) {
 			return new ArrayList<>();
 		}
 
@@ -336,84 +317,75 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return combinedList;
 	}
 
-	// only count the fight as started if the competitor attacked, not the enemy because
+	// only count the fight as started if the competitor attacked, not the enemy
+	// because
 	// the person the competitor clicked on might be attacking someone else
-	public boolean fightStarted()
-	{
+	public boolean fightStarted() {
 		return competitor.getAttackCount() > 0;
 	}
 
 	// returns true if competitor off-pray hit success rate > opponent success rate.
 	// the following functions have similar behaviour.
-	public boolean competitorOffPraySuccessIsGreater()
-	{
+	public boolean competitorOffPraySuccessIsGreater() {
 		return competitor.calculateOffPraySuccessPercentage() > opponent.calculateOffPraySuccessPercentage();
 	}
 
-	public boolean opponentOffPraySuccessIsGreater()
-	{
+	public boolean opponentOffPraySuccessIsGreater() {
 		return opponent.calculateOffPraySuccessPercentage() > competitor.calculateOffPraySuccessPercentage();
 	}
 
-	public boolean competitorDeservedDmgIsGreater()
-	{
+	public boolean competitorDeservedDmgIsGreater() {
 		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
 	}
 
-	public boolean opponentDeservedDmgIsGreater()
-	{
+	public boolean opponentDeservedDmgIsGreater() {
 		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
 	}
 
-	public boolean competitorDmgDealtIsGreater()
-	{
+	public boolean competitorDmgDealtIsGreater() {
 		return competitor.getDamageDealt() > opponent.getDamageDealt();
 	}
 
-	public boolean opponentDmgDealtIsGreater()
-	{
+	public boolean opponentDmgDealtIsGreater() {
 		return opponent.getDamageDealt() > competitor.getDamageDealt();
 	}
 
-	public boolean competitorMagicHitsLuckier()
-	{
-		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
-		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+	public boolean competitorMagicHitsLuckier() {
+		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0
+				: (competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0
+				: (opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
 
 		return competitorRate > opponentRate;
 	}
 
-	public boolean opponentMagicHitsLuckier()
-	{
-		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
-		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+	public boolean opponentMagicHitsLuckier() {
+		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0
+				: (competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0
+				: (opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
 
 		return opponentRate > competitorRate;
 	}
 
-	public double getCompetitorDeservedDmgDiff()
-	{
+	public double getCompetitorDeservedDmgDiff() {
 		return competitor.getDeservedDamage() - opponent.getDeservedDamage();
 	}
 
-	public double getCompetitorDmgDealtDiff()
-	{
+	public double getCompetitorDmgDealtDiff() {
 		return competitor.getDamageDealt() - opponent.getDamageDealt();
 	}
 
 	// get nicely formatted stats for a discord message
-	// uses ``` for monospaced fonts, and bash syntax highlighting for basic "success" highlighting.
+	// uses ``` for monospaced fonts, and bash syntax highlighting for basic
+	// "success" highlighting.
 	// "success entries" must be in double quotes.
 	// pad non-success entries with a string, since they aren't in double quotes.
-	public String getAsDiscordMessage()
-	{
+	public String getAsDiscordMessage() {
 		String msg = "```bash\n";
 		final int minLineLength = 36;
-		final int lineLength = Math.max(minLineLength, this.competitor.getName().length() + this.opponent.getName().length() + 8);
+		final int lineLength = Math.max(minLineLength,
+				this.competitor.getName().length() + this.opponent.getName().length() + 8);
 
 		// name line
 		String competitorName = competitor.getName() + (competitor.isDead() ? "(died)" : "");
@@ -434,7 +406,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		String deservedDmgRight = opponent.getDeservedDmgString(competitor);
 		deservedDmgRight = surroundStrIfTrue(deservedDmgRight, opponentDeservedDmgIsGreater());
-		msg += StringUtils.rightPad(deservedDmgLeft, lineLength - deservedDmgRight.length(), ' ') + deservedDmgRight + "\n";
+		msg += StringUtils.rightPad(deservedDmgLeft, lineLength - deservedDmgRight.length(), ' ') + deservedDmgRight
+				+ "\n";
 
 		// dmg dealt line
 		String dmgDealtLeft = competitor.getDmgDealtString(opponent);
@@ -450,12 +423,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		String magicHitStatsRight = opponent.getMagicHitStats();
 		magicHitStatsRight = surroundStrIfTrue(magicHitStatsRight, opponentMagicHitsLuckier());
-		msg += StringUtils.rightPad(magicHitStatsLeft, lineLength - magicHitStatsRight.length(), ' ') + magicHitStatsRight + "\n";
+		msg += StringUtils.rightPad(magicHitStatsLeft, lineLength - magicHitStatsRight.length(), ' ')
+				+ magicHitStatsRight + "\n";
 
 		// offensive pray line
 		String offensivePrayLeft = surroundStrIfTrue(competitor.getOffensivePrayStats(), false);
 		String offensivePrayRight = "N/A ";
-		msg += StringUtils.rightPad(offensivePrayLeft, lineLength - offensivePrayRight.length(), ' ') + offensivePrayRight + "\n";
+		msg += StringUtils.rightPad(offensivePrayLeft, lineLength - offensivePrayRight.length(), ' ')
+				+ offensivePrayRight + "\n";
 
 		// hp healed line
 		String hpHealedLeft = surroundStrIfTrue(String.valueOf(competitor.getHpHealed()), false);
@@ -463,30 +438,29 @@ public class FightPerformance implements Comparable<FightPerformance>
 		msg += StringUtils.rightPad(hpHealedLeft, lineLength - hpHealedRight.length(), ' ') + hpHealedRight + "\n";
 
 		msg += "Ended at " + new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd")
-			.format(Date.from(Instant.ofEpochMilli(lastFightTime))) + "\n";
+				.format(Date.from(Instant.ofEpochMilli(lastFightTime))) + "\n";
 		return msg + "```";
 	}
 
-	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare)
-	{
+	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare) {
 		return surroundStrIfTrue(strToSurround, boolToCompare, "'", " ");
 	}
-	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare, String trueSurround, String falseSurround)
-	{
-		return boolToCompare ?
-			trueSurround + strToSurround + trueSurround :
-			falseSurround  + strToSurround + falseSurround;
+
+	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare, String trueSurround,
+			String falseSurround) {
+		return boolToCompare ? trueSurround + strToSurround + trueSurround
+				: falseSurround + strToSurround + falseSurround;
 	}
 
 	// use to sort by last fight time, to sort fights by date/time.
 	@Override
-	public int compareTo(FightPerformance o)
-	{
+	public int compareTo(FightPerformance o) {
 		long diff = lastFightTime - o.lastFightTime;
 
-		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
-		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
-		return diff == 0 ? 0 :
-			(int)(diff / Math.abs(diff));
+		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This
+		// will result in
+		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a
+		// safely small int.
+		return diff == 0 ? 0 : (int) (diff / Math.abs(diff));
 	}
 }

@@ -27,8 +27,10 @@ package matsyir.pvpperformancetracker;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.util.ArrayList; // Added import
 import javax.inject.Inject;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
@@ -37,12 +39,19 @@ import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.components.ComponentConstants;
+import java.math.RoundingMode; // Added import
+import java.text.NumberFormat; // Added import
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
-public class PvpPerformanceTrackerOverlay extends Overlay
-{
+public class PvpPerformanceTrackerOverlay extends Overlay {
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
+	static {
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
+	}
+
 	private final PanelComponent panelComponent = new PanelComponent();
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -54,20 +63,25 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlaySecondLine; // left: player's off-pray stats, right: opponent's off-pray stats
 	private LineComponent overlayThirdLine; // left: player's deserved dps stats, right: opponent's deserved dps stats
 	private LineComponent overlayFourthLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
-	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
-	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
+	private LineComponent overlayFifthLine; // left: player's magic attacks hit stats, right: opponent's magic attacks
+											// hit stats
+	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray
+											// stats
 	private LineComponent overlaySeventhLine; // left: player's hp healed pray stats, right: opponent's hp healed
-	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
+	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage
+												// stats
+	private LineComponent overlayTotalKoChanceLine; // Combined total/cumulative KO chance
+	private LineComponent overlayLastKoChanceLine; // Combined last KO chance
 
 	@Inject
-	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
-	{
+	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config) {
 		super(plugin);
 		this.plugin = plugin;
 		this.config = config;
 		setPosition(OverlayPosition.BOTTOM_RIGHT);
 		setPriority(OverlayPriority.LOW);
-		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "PvP Performance Tracker"));
+		getMenuEntries()
+				.add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "PvP Performance Tracker"));
 		panelComponent.setPreferredSize(new Dimension(ComponentConstants.STANDARD_WIDTH, 0));
 
 		overlayTitle = TitleComponent.builder().text("PvP Performance").build();
@@ -90,17 +104,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayEighthLine.setLeftColor(ColorScheme.BRAND_ORANGE); // static
 		overlayEighthLine.setRight("N/A"); // static
 		overlayEighthLine.setRightColor(ColorScheme.BRAND_ORANGE); // static
+		overlayTotalKoChanceLine = LineComponent.builder().build(); // Initialize new lines
+		overlayLastKoChanceLine = LineComponent.builder().build(); // Initialize new lines
 
 		setLines();
 	}
 
 	@Override
-	public Dimension render(Graphics2D graphics)
-	{
+	public Dimension render(Graphics2D graphics) {
 		FightPerformance fight = plugin.getCurrentFight();
 		if (!config.showFightOverlay() || fight == null || !fight.fightStarted() ||
-			(config.restrictToLms() && !plugin.isAtLMS()))
-		{
+				(config.restrictToLms() && !plugin.isAtLMS())) {
 			return null;
 		}
 
@@ -111,12 +125,13 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlaySecondLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
 
 		// Third line: Deserved damage stats
-		// only show deserved damage difference on the competitor, since space is restricted here and having both
+		// only show deserved damage difference on the competitor, since space is
+		// restricted here and having both
 		// differences is redundant since the sign is simply flipped.
 		overlayThirdLine.setLeft(fight.getCompetitor().getDeservedDmgString(fight.getOpponent()));
 		overlayThirdLine.setLeftColor(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
-		overlayThirdLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage())));
+		overlayThirdLine.setRight(String.valueOf((int) Math.round(fight.getOpponent().getDeservedDamage())));
 		overlayThirdLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
 
 		// Fouth line: Damage dealt stats
@@ -140,56 +155,110 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 		overlayEighthLine.setLeft(fight.getCompetitor().getGhostBarrageStats());
 
+		// --- KO Chance Calculation START ---
+		int competitorKoChances = 0;
+		double competitorCumulativeChanceProduct = 1.0; // Product of (1 - chance)
+		Double lastCompetitorKoChance = null;
+
+		int opponentKoChances = 0;
+		double opponentCumulativeChanceProduct = 1.0; // Product of (1 - chance)
+		Double lastOpponentKoChance = null;
+
+		String competitorName = fight.getCompetitor().getName();
+
+		ArrayList<FightLogEntry> logs = fight.getAllFightLogEntries();
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				if (log.attackerName.equals(competitorName)) {
+					competitorKoChances++;
+					competitorCumulativeChanceProduct *= (1.0 - koChance);
+					lastCompetitorKoChance = koChance;
+				} else { // Opponent's attack
+					opponentKoChances++;
+					opponentCumulativeChanceProduct *= (1.0 - koChance);
+					lastOpponentKoChance = koChance;
+				}
+			}
+		}
+
+		// Calculate sum of percentages
+		double competitorKoChanceSum = 0.0;
+		double opponentKoChanceSum = 0.0;
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				if (log.attackerName.equals(competitorName)) {
+					competitorKoChanceSum += koChance;
+				} else {
+					opponentKoChanceSum += koChance;
+				}
+			}
+		}
+
+		// Format Total KO Chance Line (Using Sum)
+		String totalCompStr = competitorKoChances
+				+ (competitorKoChances > 0 ? " (" + nfPercent.format(competitorKoChanceSum) + ")" : "");
+		String totalOppStr = opponentKoChances
+				+ (opponentKoChances > 0 ? " (" + nfPercent.format(opponentKoChanceSum) + ")" : "");
+		overlayTotalKoChanceLine.setLeft(totalCompStr);
+		overlayTotalKoChanceLine.setRight(totalOppStr);
+
+		// Format Last KO Chance Line (Removed P:/O: prefixes)
+		String lastCompStr = (lastCompetitorKoChance != null ? nfPercent.format(lastCompetitorKoChance) : "-");
+		String lastOppStr = (lastOpponentKoChance != null ? nfPercent.format(lastOpponentKoChance) : "-");
+		overlayLastKoChanceLine.setLeft(lastCompStr);
+		overlayLastKoChanceLine.setRight(lastOppStr);
+		// --- KO Chance Calculation END ---
+
 		return panelComponent.render(graphics);
 	}
 
-	void setLines()
-	{
+	void setLines() {
 		panelComponent.getChildren().clear();
 
-		// Only display the title if it's enabled (pointless in my opinion, since you can just see
-		// what the panel is displaying, but I can see it being useful if you have lots of overlays)
-		if (config.showOverlayTitle())
-		{
+		// Only display the title if it's enabled (pointless in my opinion, since you
+		// can just see
+		// what the panel is displaying, but I can see it being useful if you have lots
+		// of overlays)
+		if (config.showOverlayTitle()) {
 			panelComponent.getChildren().add(overlayTitle);
 		}
 
-		if (config.showOverlayNames())
-		{
+		if (config.showOverlayNames()) {
 			panelComponent.getChildren().add(overlayFirstLine);
 		}
-		if (config.showOverlayOffPray())
-		{
+		if (config.showOverlayOffPray()) {
 			panelComponent.getChildren().add(overlaySecondLine);
 		}
-		if (config.showOverlayDeservedDmg())
-		{
+		if (config.showOverlayDeservedDmg()) {
 			panelComponent.getChildren().add(overlayThirdLine);
 		}
-		if (config.showOverlayDmgDealt())
-		{
+		if (config.showOverlayDmgDealt()) {
 			panelComponent.getChildren().add(overlayFourthLine);
 		}
-		if (config.showOverlayMagicHits())
-		{
+		if (config.showOverlayMagicHits()) {
 			panelComponent.getChildren().add(overlayFifthLine);
 		}
-		if (config.showOverlayOffensivePray())
-		{
+		if (config.showOverlayOffensivePray()) {
 			panelComponent.getChildren().add(overlaySixthLine);
 		}
-		if (config.showOverlayHpHealed())
-		{
+		if (config.showOverlayHpHealed()) {
 			panelComponent.getChildren().add(overlaySeventhLine);
 		}
-		if (config.showOverlayGhostBarrage())
-		{
+		if (config.showOverlayGhostBarrage()) {
 			panelComponent.getChildren().add(overlayEighthLine);
+		}
+		// Add new KO chance lines based on config
+		if (config.showOverlayTotalKoChance()) {
+			panelComponent.getChildren().add(overlayTotalKoChanceLine);
+		}
+		if (config.showOverlayLastKoChance()) {
+			panelComponent.getChildren().add(overlayLastKoChanceLine);
 		}
 	}
 
-	void setFight(FightPerformance fight)
-	{
+	void setFight(FightPerformance fight) {
 		String cName = fight.getCompetitor().getName();
 		overlayFirstLine.setLeft(cName.substring(0, Math.min(6, cName.length())));
 		String oName = fight.getOpponent().getName();
