@@ -27,8 +27,12 @@ package matsyir.pvpperformancetracker;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.math.RoundingMode; // Added import
+import java.text.NumberFormat; // Added import
+import java.util.ArrayList; // Added import
 import javax.inject.Inject;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
@@ -43,6 +47,12 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
+	static {
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
+	}
+
 	private final PanelComponent panelComponent = new PanelComponent();
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -58,6 +68,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
 	private LineComponent overlaySeventhLine; // left: player's hp healed pray stats, right: opponent's hp healed
 	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
+	private LineComponent overlayTotalKoChanceLine; // Combined total/sum KO chance
+	private LineComponent overlayLastKoChanceLine; // Combined last KO chance
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -90,6 +102,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayEighthLine.setLeftColor(ColorScheme.BRAND_ORANGE); // static
 		overlayEighthLine.setRight("N/A"); // static
 		overlayEighthLine.setRightColor(ColorScheme.BRAND_ORANGE); // static
+		overlayTotalKoChanceLine = LineComponent.builder().build(); // Initialize new lines
+		overlayLastKoChanceLine = LineComponent.builder().build(); // Initialize new lines
 
 		setLines();
 	}
@@ -140,6 +154,48 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 		overlayEighthLine.setLeft(fight.getCompetitor().getGhostBarrageStats());
 
+		// --- KO Chance Calculation START ---
+		int competitorKoChances = 0;
+		Double lastCompetitorKoChance = null;
+		double competitorKoChanceSum = 0.0;
+
+		int opponentKoChances = 0;
+		Double lastOpponentKoChance = null;
+		double opponentKoChanceSum = 0.0;
+
+		String competitorName = fight.getCompetitor().getName();
+
+		ArrayList<FightLogEntry> logs = fight.getAllFightLogEntries();
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				if (log.attackerName.equals(competitorName)) {
+					competitorKoChances++;
+					competitorKoChanceSum += koChance;
+					lastCompetitorKoChance = koChance;
+				} else { // Opponent's attack
+					opponentKoChances++;
+					opponentKoChanceSum += koChance;
+					lastOpponentKoChance = koChance;
+				}
+			}
+		}
+
+		// Format Total KO Chance Line (Using Sum)
+		String totalCompStr = competitorKoChances
+				+ (competitorKoChances > 0 ? " (" + nfPercent.format(competitorKoChanceSum) + ")" : "");
+		String totalOppStr = opponentKoChances
+				+ (opponentKoChances > 0 ? " (" + nfPercent.format(opponentKoChanceSum) + ")" : "");
+		overlayTotalKoChanceLine.setLeft(totalCompStr);
+		overlayTotalKoChanceLine.setRight(totalOppStr);
+
+		// Format Last KO Chance Line
+		String lastCompStr = (lastCompetitorKoChance != null ? nfPercent.format(lastCompetitorKoChance) : "-");
+		String lastOppStr = (lastOpponentKoChance != null ? nfPercent.format(lastOpponentKoChance) : "-");
+		overlayLastKoChanceLine.setLeft(lastCompStr);
+		overlayLastKoChanceLine.setRight(lastOppStr);
+		// --- KO Chance Calculation END ---
+
 		return panelComponent.render(graphics);
 	}
 
@@ -185,6 +241,13 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		if (config.showOverlayGhostBarrage())
 		{
 			panelComponent.getChildren().add(overlayEighthLine);
+		}
+		// Add new KO chance lines based on config
+		if (config.showOverlayTotalKoChance()) {
+			panelComponent.getChildren().add(overlayTotalKoChanceLine);
+		}
+		if (config.showOverlayLastKoChance()) {
+			panelComponent.getChildren().add(overlayLastKoChanceLine);
 		}
 	}
 
