@@ -58,10 +58,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -449,6 +451,71 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
+
+		// --- KO Chance Calculation START ---
+		// Calculate KO chance here, after damage is applied, to get accurate pre-hit HP
+		clientThread.invokeLater(() -> {
+			if (!hasOpponent()) return; // Fight might have ended between event and invokeLater
+
+			Actor opponent = event.getActor(); // The one receiving the hitsplat
+			int damage = event.getHitsplat().getAmount();
+			Fighter attacker = null;
+			Fighter defender = null;
+
+			// Determine attacker/defender based on who received the hitsplat
+			if (opponent.getName() != null) {
+				if (opponent.getName().equals(currentFight.getOpponent().getName())) {
+					attacker = currentFight.getCompetitor();
+					defender = currentFight.getOpponent();
+				} else if (opponent.getName().equals(currentFight.getCompetitor().getName())) {
+					attacker = currentFight.getOpponent();
+					defender = currentFight.getCompetitor();
+				}
+			}
+
+			// If we couldn't identify attacker/defender, or the hitsplat wasn't on a tracked fighter, exit.
+			if (attacker == null || defender == null) return;
+
+			// Find the last attack log entry from the attacker that hasn't had its KO chance calculated yet.
+			FightLogEntry lastEntry = null;
+			ArrayList<FightLogEntry> attackerLogs = attacker.getFightLogEntries();
+			for (int i = attackerLogs.size() - 1; i >= 0; i--) {
+				FightLogEntry entry = attackerLogs.get(i);
+				if (entry.isFullEntry() && !entry.isKoChanceCalculated()) {
+					lastEntry = entry;
+					break;
+				}
+			}
+
+			if (lastEntry != null) {
+				// Use the current health ratio/scale from the opponent actor receiving the hitsplat
+				int healthRatio = opponent.getHealthRatio();
+				int healthScale = opponent.getHealthScale();
+				int maxHpToUse = CONFIG.opponentHitpointsLevel(); // Use configured HP level
+
+				if (healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0) {
+					// Estimate HP *after* the hit was applied
+					int hpAfterHit = (int) Math.max(1, Math.ceil(((double) healthRatio / healthScale) * maxHpToUse));
+					// Calculate HP *before* the hit by adding the damage back
+					int hpBeforeHit = hpAfterHit + damage;
+
+					// Calculate KO chance using the estimated pre-hit HP
+					Double koChance = PvpPerformanceTrackerUtils.calculateKoChance(
+						lastEntry.getAccuracy(),
+						lastEntry.getMinHit(),
+						lastEntry.getMaxHit(),
+						hpBeforeHit);
+
+					// Update the log entry
+					lastEntry.setKoChance(koChance);
+					lastEntry.setKoChanceCalculated(true);
+				} else {
+					// Mark as calculated even if we couldn't get HP data, to avoid reprocessing
+					lastEntry.setKoChanceCalculated(true);
+				}
+			}
+		});
+		// --- KO Chance Calculation END ---
 	}
 
 	@Subscribe

@@ -32,6 +32,7 @@ import java.awt.GridLayout;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List; // Added import
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -42,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
@@ -74,9 +76,15 @@ public class TotalStatsPanel extends JPanel
 		nf2.setMaximumFractionDigits(2);
 		nf2.setRoundingMode(RoundingMode.HALF_UP);
 	}
+	// number format for percentages
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance();
+	static {
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
+	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 10;
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 9;
+	private static final int LAYOUT_ROWS_WITH_WARNING = 11; // Increased count
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 10; // Increased count
 
 	// labels to be updated
 	private JLabel killsLabel;
@@ -88,6 +96,7 @@ public class TotalStatsPanel extends JPanel
 	private JLabel offensivePrayCountStatsLabel;
 	private JLabel hpHealedStatsLabel;
 	private JLabel ghostBarrageStatsLabel;
+	private JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
 
@@ -132,6 +141,18 @@ public class TotalStatsPanel extends JPanel
 
 	private double avgGhostBarrageCount = 0;
 	private double avgGhostBarrageDeservedDamage = 0;
+
+	// KO Chance totals/averages
+	private double totalCompetitorKoChances = 0;
+	private double totalOpponentKoChances = 0;
+	private double totalCompetitorKoChanceSum = 0; // Sum of KO chance sums from each fight
+	private double totalOpponentKoChanceSum = 0; // Sum of KO chance sums from each fight
+	private double avgCompetitorKoChances = 0;
+	private double avgOpponentKoChances = 0;
+	private double avgCompetitorKoChanceSum = 0; // Average KO chance sum per fight
+	private double avgOpponentKoChanceSum = 0; // Average KO chance sum per fight
+	private int numFightsWithKoChance = 0; // Counter for fights that have KO chance data
+
 
 	public TotalStatsPanel()
 	{
@@ -360,6 +381,26 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
 		add(ghostBarrageStatsPanel);
 
+		// TENTH LINE (NEW)
+		// panel to show the avg KO chance stats
+		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
+
+		// left label
+		JLabel avgKoChanceStatsLeftLabel = new JLabel();
+		avgKoChanceStatsLeftLabel.setText("Avg KO Chances:");
+		avgKoChanceStatsLeftLabel.setForeground(Color.WHITE);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLeftLabel, BorderLayout.WEST);
+
+		// right label (value)
+		avgKoChanceStatsLabel = new JLabel();
+		avgKoChanceStatsLabel.setForeground(Color.WHITE);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
+
+		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		avgKoChanceStatsPanel.setComponentPopupMenu(popupMenu);
+		add(avgKoChanceStatsPanel);
+
+
 		setLabels();
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int)getPreferredSize().getHeight()));
@@ -448,6 +489,27 @@ public class TotalStatsPanel extends JPanel
 			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
 			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 			+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
+
+		// Set Avg KO Chance label
+		if (numFightsWithKoChance > 0)
+		{
+			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " ("
+				+ nfPercent.format(avgCompetitorKoChanceSum) + ") / " // Changed from avgCompetitorCumulativeKoChance
+				+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) + ")"); // Changed from avgOpponentCumulativeKoChance
+			((JPanel)avgKoChanceStatsLabel.getParent())
+				.setToolTipText("<html>Average KO Chances per fight (Avg Sum %):<br>Player: " // Changed tooltip text
+						+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoChanceSum) // Changed from avgCompetitorCumulativeKoChance
+						+ ")<br>Opponent: "
+						+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) // Changed from avgOpponentCumulativeKoChance
+						+ ")<br>Total KO Chances: Player: "
+						+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
+						+ "</html>");
+		}
+		else
+		{
+			avgKoChanceStatsLabel.setText("- / -");
+			((JPanel) avgKoChanceStatsLabel.getParent()).setToolTipText("No KO chance data available for calculation.");
+		}
 	}
 
 	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
@@ -522,6 +584,43 @@ public class TotalStatsPanel extends JPanel
 		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
 		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
 
+		// Calculate KO chances & sum % for this fight and add to totals
+		int fightCompetitorKoChances = 0;
+		double fightCompetitorKoChanceSum = 0.0;
+		int fightOpponentKoChances = 0;
+		double fightOpponentKoChanceSum = 0.0;
+		boolean fightHasKoData = false;
+		List<FightLogEntry> logs = fight.getAllFightLogEntries();
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				fightHasKoData = true; // Mark that this fight has KO data
+				if (log.attackerName.equals(fight.getCompetitor().getName())) {
+					fightCompetitorKoChances++;
+					fightCompetitorKoChanceSum += koChance;
+				} else {
+					fightOpponentKoChances++;
+					fightOpponentKoChanceSum += koChance;
+				}
+			}
+		}
+
+		// Only include this fight in KO averages if it had KO data
+		if (fightHasKoData) {
+			numFightsWithKoChance++;
+			totalCompetitorKoChances += fightCompetitorKoChances;
+			totalOpponentKoChances += fightOpponentKoChances;
+			totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
+			totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+		}
+
+		// Recalculate averages using the count of fights with data
+		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
+		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
+		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
+		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
+
+
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
@@ -530,6 +629,13 @@ public class TotalStatsPanel extends JPanel
 		if (fights == null || fights.size() < 1) { return; }
 
 		numFights += fights.size();
+
+		// Reset KO chance totals before recalculating for all fights
+		totalCompetitorKoChances = 0;
+		totalOpponentKoChances = 0;
+		totalCompetitorKoChanceSum = 0;
+		totalOpponentKoChanceSum = 0;
+		numFightsWithKoChance = 0;
 
 		for (FightPerformance fight : fights)
 		{
@@ -566,8 +672,37 @@ public class TotalStatsPanel extends JPanel
 
 			totalDmgDealt += fight.getCompetitor().getDamageDealt();
 			totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
+
+			// Calculate KO chances & sum % for this fight and add to totals if applicable
+			int fightCompetitorKoChances = 0;
+			double fightCompetitorKoChanceSum = 0.0;
+			int fightOpponentKoChances = 0;
+			double fightOpponentKoChanceSum = 0.0;
+			boolean fightHasKoData = false;
+			List<FightLogEntry> logs = fight.getAllFightLogEntries();
+			for (FightLogEntry log : logs) {
+				Double koChance = log.getKoChance();
+				if (koChance != null) {
+					fightHasKoData = true;
+					if (log.attackerName.equals(fight.getCompetitor().getName())) {
+						fightCompetitorKoChances++;
+						fightCompetitorKoChanceSum += koChance;
+					} else {
+						fightOpponentKoChances++;
+						fightOpponentKoChanceSum += koChance;
+					}
+				}
+			}
+			if (fightHasKoData) {
+				numFightsWithKoChance++;
+				totalCompetitorKoChances += fightCompetitorKoChances;
+				totalOpponentKoChances += fightOpponentKoChances;
+				totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
+				totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+			}
 		}
 
+		// Recalculate averages for all stats
 		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
 		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights: 0;
 
@@ -590,6 +725,12 @@ public class TotalStatsPanel extends JPanel
 
 		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
 		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+
+		// Recalculate KO averages using the count of fights with data
+		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
+		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
+		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
+		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -630,6 +771,17 @@ public class TotalStatsPanel extends JPanel
 
 		avgGhostBarrageCount = 0;
 		avgGhostBarrageDeservedDamage = 0;
+
+		// Reset KO chance stats
+		totalCompetitorKoChances = 0;
+		totalOpponentKoChances = 0;
+		totalCompetitorKoChanceSum = 0; // Renamed from totalCompetitorCumulativeKoChance
+		totalOpponentKoChanceSum = 0; // Renamed from totalOpponentCumulativeKoChance
+		avgCompetitorKoChances = 0;
+		avgOpponentKoChances = 0;
+		avgCompetitorKoChanceSum = 0; // Renamed from avgCompetitorCumulativeKoChance
+		avgOpponentKoChanceSum = 0; // Renamed from avgOpponentCumulativeKoChance
+		numFightsWithKoChance = 0; // Reset new counter
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);
