@@ -234,7 +234,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayTotalKoChance",
 		name = "Overlay: Show Total KO Chance",
-		description = "Display total KO chances and sum percentage on the Fight Widget.<br>Max. of 5 lines on the overlay",
+		description = "The overlay will display total KO chances and sum percentage.<br>Max. of 5 lines on the overlay",
 		position = 107,
 		section = overlay
 	)
@@ -246,13 +246,13 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayLastKoChance",
 		name = "Overlay: Show Last KO Chance",
-		description = "Display the last KO chance percentage on the Fight Widget.<br>Max. of 5 lines on the overlay",
+		description = "The overlay will display the last KO chance percentage.<br>Max. of 5 lines on the overlay",
 		position = 108,
 		section = overlay
 	)
 	default boolean showOverlayLastKoChance()
 	{
-		return true;
+		return false;
 	}
 
 	// ================================= Gear/Ammo =================================
