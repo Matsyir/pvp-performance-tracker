@@ -108,6 +108,16 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("C")
 	private CombatLevels attackerLevels; // CAN BE NULL
 
+	@Getter
+	@Setter
+	@Expose
+	@SerializedName("k") // k for ko chance
+	private Double koChance = null;
+
+	@Getter // Added Getter for isKoChanceCalculated
+	@Setter
+	private transient boolean koChanceCalculated = false; // Flag to track if KO chance was processed for this entry
+
 
 	// defender data
 	@Expose

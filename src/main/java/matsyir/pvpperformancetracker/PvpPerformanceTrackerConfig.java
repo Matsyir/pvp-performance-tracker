@@ -231,6 +231,30 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+		keyName = "showOverlayTotalKoChance",
+		name = "Overlay: Show Total KO Chance",
+		description = "Display total KO chances and sum percentage on the Fight Widget.<br>Max. of 5 lines on the overlay",
+		position = 107,
+		section = overlay
+	)
+	default boolean showOverlayTotalKoChance()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showOverlayLastKoChance",
+		name = "Overlay: Show Last KO Chance",
+		description = "Display the last KO chance percentage on the Fight Widget.<br>Max. of 5 lines on the overlay",
+		position = 108,
+		section = overlay
+	)
+	default boolean showOverlayLastKoChance()
+	{
+		return true;
+	}
+
 	// ================================= Gear/Ammo =================================
 
 	@ConfigItem(
@@ -363,6 +387,22 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default int magicLevel()
 	{
 		return 99;
+	}
+
+	@Range(
+		min = LEVEL_MIN,
+		max = LEVEL_MAX
+	)
+	@ConfigItem(
+		keyName = "opponentHitpointsLevel",
+		name = "Opponent HP Level",
+		description = "Assumed Hitpoints level for opponents when calculating KO chance.",
+		position = 201, // Place it after other levels
+		section = levels
+	)
+	default int opponentHitpointsLevel()
+	{
+		return 99; // Default to 99 HP
 	}
 
 	// ================================= Misc/Less-Used-General =================================

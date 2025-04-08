@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List; // Added import
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -68,6 +69,7 @@ public class FightPerformancePanel extends JPanel
 	private static ImageIcon deathIcon;
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final NumberFormat nf = NumberFormat.getInstance();
+	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
 	static
@@ -75,6 +77,10 @@ public class FightPerformancePanel extends JPanel
 		// initialize number format
 		nf.setMaximumFractionDigits(2);
 		nf.setRoundingMode(RoundingMode.HALF_UP);
+
+		// initialize percent format
+		nfPercent.setMaximumFractionDigits(1);
+		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 
 		// main border used when not hovering:
 		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
@@ -109,6 +115,7 @@ public class FightPerformancePanel extends JPanel
 	// Line 6: Player offensive pray stats ; 					N/A (no data, client only)
 	// Line 7: Player hp healed ; 								N/A (no data, client only)
 	// Line 8: Player Ghost barrages & extra deserved damage ; 	N/A (no data, client only)
+	// Line 9: Player Total KO Chances ;						Opponent Total KO Chances
 	// The greater stats will be highlighted green. In this example, the player would have all the green highlights.
 	// example:
 	//
@@ -120,6 +127,7 @@ public class FightPerformancePanel extends JPanel
 	//     27/55 (49%)              N/A
 	//     100                      N/A
 	//     4 G.B. (37)				N/A
+	//     2 (110.0%)           1 (65.0%)
 	//
 	// these are the params to use for a normal panel.
 	public FightPerformancePanel(FightPerformance fight)
@@ -392,6 +400,47 @@ public class FightPerformancePanel extends JPanel
 		}
 		ghostBarragesLine.add(opponentGhostBarrages, BorderLayout.EAST);
 
+		// NINTH LINE: Total KO Chances
+		JPanel totalKoChanceLine = new JPanel();
+		totalKoChanceLine.setLayout(new BorderLayout());
+		totalKoChanceLine.setBackground(null);
+
+		// Calculate total/sum KO chances
+		int competitorKoChances = 0;
+		double competitorKoChanceSum = 0.0;
+		int opponentKoChances = 0;
+		double opponentKoChanceSum = 0.0;
+		List<FightLogEntry> logs = fight.getAllFightLogEntries();
+		for (FightLogEntry log : logs) {
+			Double koChance = log.getKoChance();
+			if (koChance != null) {
+				if (log.attackerName.equals(competitor.getName())) {
+					competitorKoChances++;
+					competitorKoChanceSum += koChance;
+				} else {
+					opponentKoChances++;
+					opponentKoChanceSum += koChance;
+				}
+			}
+		}
+
+		// NINTH LINE LEFT: Competitor Total KO Chance (Using Sum)
+		JLabel playerTotalKoChance = new JLabel();
+		String compTotalKoChanceText = competitorKoChances + (competitorKoChances > 0 ? " (" + nfPercent.format(competitorKoChanceSum) + ")" : "");
+		playerTotalKoChance.setText(compTotalKoChanceText);
+		playerTotalKoChance.setToolTipText(competitor.getName() + " got " + competitorKoChances + " KO chances with a total KO chance percentage of " + nfPercent.format(competitorKoChanceSum));
+		playerTotalKoChance.setForeground(Color.WHITE); // No specific highlighting for this line yet
+		totalKoChanceLine.add(playerTotalKoChance, BorderLayout.WEST);
+
+		// NINTH LINE RIGHT: Opponent Total KO Chance (Using Sum)
+		JLabel opponentTotalKoChance = new JLabel();
+		String oppTotalKoChanceText = opponentKoChances + (opponentKoChances > 0 ? " (" + nfPercent.format(opponentKoChanceSum) + ")" : "");
+		opponentTotalKoChance.setText(oppTotalKoChanceText);
+		opponentTotalKoChance.setToolTipText(opponent.getName() + " got " + opponentKoChances + " KO chances with a total KO chance percentage of " + nfPercent.format(opponentKoChanceSum));
+		opponentTotalKoChance.setForeground(Color.WHITE); // No specific highlighting for this line yet
+		totalKoChanceLine.add(opponentTotalKoChance, BorderLayout.EAST);
+
+
 		fightPanel.add(playerNamesLine);
 		fightPanel.add(offPrayStatsLine);
 		fightPanel.add(deservedDpsStatsLine);
@@ -400,6 +449,7 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.add(offensivePrayStatsLine);
 		fightPanel.add(hpHealedLine);
 		fightPanel.add(ghostBarragesLine);
+		fightPanel.add(totalKoChanceLine); // Add the new line
 
 		add(fightPanel, BorderLayout.NORTH);
 
