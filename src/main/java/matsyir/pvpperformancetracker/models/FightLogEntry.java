@@ -118,6 +118,14 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Setter
 	private transient boolean koChanceCalculated = false; // Flag to track if KO chance was processed for this entry
 
+	@Getter
+	@Setter
+	private transient Integer estimatedHpBeforeHit = null; // Estimated opponent HP before this hit landed
+
+	@Getter
+	@Setter
+	private transient Integer opponentMaxHp = null; // Max HP used for this entry's calculation
+
 
 	// defender data
 	@Expose

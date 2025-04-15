@@ -91,11 +91,11 @@ public class FightLogFrame extends JFrame
 		}
 
 		setIconImage(PLUGIN_ICON);
-		setSize(820, 503); // Increased width slightly for new column
+		setSize(860, 503); // Reverted width increase, removed debug columns
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][12]; // Increased column count
+		Object[][] stats = new Object[fightLogEntries.size()][13]; // Reverted column count
 		int i = 0;
 		int initialTick = 0;
 
@@ -117,24 +117,29 @@ public class FightLogFrame extends JFrame
 			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
 			stats[i][4] = nf.format(fightEntry.getDeservedDamage());
 
-			// KO Chance column (Index 5)
+			// HP column (Index 5) - Display as Current/Max
+			Integer hp = fightEntry.getEstimatedHpBeforeHit();
+			Integer maxHp = fightEntry.getOpponentMaxHp();
+			stats[i][5] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
+
+			// KO Chance column (Index 6)
 			Double koChance = fightEntry.getKoChance();
-			stats[i][5] = koChance != null ? nfPercent.format(koChance) : "-";
+			stats[i][6] = koChance != null ? nfPercent.format(koChance) : "-";
 
 			// Shifted original columns
-			stats[i][6] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
-			stats[i][7] = fightEntry.success() ? "✔" : "";
+			stats[i][7] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
+			stats[i][8] = fightEntry.success() ? "✔" : "";
 
 			int prayIcon = PLUGIN.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			if (prayIcon > 0)
 			{
 				JLabel prayIconLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(prayIconLabel, prayIcon, this::repaint);
-				stats[i][8] = prayIconLabel;
+				stats[i][9] = prayIconLabel;
 			}
 			else
 			{
-				stats[i][8] = "";
+				stats[i][9] = "";
 			}
 
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -142,11 +147,11 @@ public class FightLogFrame extends JFrame
 				int freezeIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
 				JLabel freezeIconLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(freezeIconLabel, freezeIcon, this::repaint);
-				stats[i][9] = freezeIconLabel;
+				stats[i][10] = freezeIconLabel;
 			}
 			else
 			{
-				stats[i][9] = "";
+				stats[i][10] = "";
 			}
 
 			// offensive pray shown as icon or blank if none(0)
@@ -154,11 +159,11 @@ public class FightLogFrame extends JFrame
 			if (fightEntry.getAttackerOffensivePray() > 0)
 			{
 				PLUGIN.addSpriteToLabelIfValid(attackerOffensivePrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-				stats[i][10] = attackerOffensivePrayLabel;
+				stats[i][11] = attackerOffensivePrayLabel;
 			}
 			else
 			{
-				stats[i][10] = "";
+				stats[i][11] = "";
 			}
 
 			int tickDuration = fightEntry.getTick() - initialTick;
@@ -168,21 +173,21 @@ public class FightLogFrame extends JFrame
 				duration.toMinutes(),
 				duration.getSeconds() % 60,
 				durationMillis % 1000 / 100) + " (" + tickDuration + ")";
-			stats[i][11] = time;
+			stats[i][12] = time;
 
 			i++;
 		}
 
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "KO Chance", "Special?", "Off-Pray?",
-				"Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" }; // Added KO Chance header
+		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "HP", "KO Chance", "Special?", "Off-Pray?",
+				"Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" }; // Removed debug headers
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
 
 		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
-		table.getColumnModel().getColumn(8).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
-		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer()); // Splash
-		table.getColumnModel().getColumn(10).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
+		table.getColumnModel().getColumn(9).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
+		table.getColumnModel().getColumn(10).setCellRenderer(new BufferedImageCellRenderer()); // Splash
+		table.getColumnModel().getColumn(11).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
 
 		onRowSelected = e -> {
 			int row = table.getSelectedRow();
