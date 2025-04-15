@@ -120,11 +120,15 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 	@Getter
 	@Setter
-	private transient Integer estimatedHpBeforeHit = null; // Estimated opponent HP before this hit landed
+	@Expose
+	@SerializedName("eH") // Estimated Hp before hit
+	private Integer estimatedHpBeforeHit = null;
 
 	@Getter
 	@Setter
-	private transient Integer opponentMaxHp = null; // Max HP used for this entry's calculation
+	@Expose
+	@SerializedName("oH") // Opponent max Hp used for calc
+	private Integer opponentMaxHp = null;
 
 
 	// defender data
