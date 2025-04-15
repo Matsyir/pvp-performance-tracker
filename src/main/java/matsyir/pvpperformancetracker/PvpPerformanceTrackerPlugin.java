@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors; // Added import
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -77,6 +78,7 @@ import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.FakeXpDrop;
+import net.runelite.api.events.GameTick; // Added import
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
@@ -92,6 +94,10 @@ import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.hiscore.HiscoreEndpoint; // Added import
+import net.runelite.client.hiscore.HiscoreManager; // Added import
+import net.runelite.client.hiscore.HiscoreResult; // Added import
+import net.runelite.client.hiscore.HiscoreSkill; // Added import
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -182,12 +188,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private Gson injectedGson;
 
+	@Inject
+	private HiscoreManager hiscoreManager; // Added injection
+
 	// custom fields/props
 	public ArrayList<FightPerformance> fightHistory;
 	@Getter
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
+	private Map<Integer, List<HitsplatApplied>> hitsplatBuffer = new HashMap<>(); // Buffer for hitsplats per tick
+	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 
 	// #################################################################################################################
 	// ##################################### Core RL plugin functions & RL Events ######################################
@@ -396,6 +407,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
+		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
+
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
 		if (config.restrictToLms())
 		{
@@ -452,70 +465,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
 
-		// --- KO Chance Calculation START ---
-		// Calculate KO chance here, after damage is applied, to get accurate pre-hit HP
-		clientThread.invokeLater(() -> {
-			if (!hasOpponent()) return; // Fight might have ended between event and invokeLater
-
-			Actor opponent = event.getActor(); // The one receiving the hitsplat
-			int damage = event.getHitsplat().getAmount();
-			Fighter attacker = null;
-			Fighter defender = null;
-
-			// Determine attacker/defender based on who received the hitsplat
-			if (opponent.getName() != null) {
-				if (opponent.getName().equals(currentFight.getOpponent().getName())) {
-					attacker = currentFight.getCompetitor();
-					defender = currentFight.getOpponent();
-				} else if (opponent.getName().equals(currentFight.getCompetitor().getName())) {
-					attacker = currentFight.getOpponent();
-					defender = currentFight.getCompetitor();
-				}
-			}
-
-			// If we couldn't identify attacker/defender, or the hitsplat wasn't on a tracked fighter, exit.
-			if (attacker == null || defender == null) return;
-
-			// Find the last attack log entry from the attacker that hasn't had its KO chance calculated yet.
-			FightLogEntry lastEntry = null;
-			ArrayList<FightLogEntry> attackerLogs = attacker.getFightLogEntries();
-			for (int i = attackerLogs.size() - 1; i >= 0; i--) {
-				FightLogEntry entry = attackerLogs.get(i);
-				if (entry.isFullEntry() && !entry.isKoChanceCalculated()) {
-					lastEntry = entry;
-					break;
-				}
-			}
-
-			if (lastEntry != null) {
-				// Use the current health ratio/scale from the opponent actor receiving the hitsplat
-				int healthRatio = opponent.getHealthRatio();
-				int healthScale = opponent.getHealthScale();
-				int maxHpToUse = CONFIG.opponentHitpointsLevel(); // Use configured HP level
-
-				if (healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0) {
-					// Estimate HP *after* the hit was applied
-					int hpAfterHit = (int) Math.max(1, Math.ceil(((double) healthRatio / healthScale) * maxHpToUse));
-					// Calculate HP *before* the hit by adding the damage back
-					int hpBeforeHit = hpAfterHit + damage;
-
-					// Calculate KO chance using the estimated pre-hit HP
-					Double koChance = PvpPerformanceTrackerUtils.calculateKoChance(
-						lastEntry.getAccuracy(),
-						lastEntry.getMinHit(),
-						lastEntry.getMaxHit(),
-						hpBeforeHit);
-
-					// Update the log entry
-					lastEntry.setKoChance(koChance);
-					lastEntry.setKoChanceCalculated(true);
-				} else {
-					// Mark as calculated even if we couldn't get HP data, to avoid reprocessing
-					lastEntry.setKoChanceCalculated(true);
-				}
-			}
-		});
-		// --- KO Chance Calculation END ---
+		// Buffer the hitsplat event instead of processing immediately
+		int tick = client.getTickCount();
+		hitsplatBuffer.computeIfAbsent(tick, k -> new ArrayList<>()).add(event);
 	}
 
 	@Subscribe
@@ -579,6 +531,157 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// #################################################################################################################
 	// ################################## Plugin-specific functions & global helpers ###################################
 	// #################################################################################################################
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		// Process hitsplats from the previous tick
+		int previousTick = client.getTickCount() - 1;
+		List<HitsplatApplied> hitsplatsToProcess = hitsplatBuffer.remove(previousTick);
+
+		if (hitsplatsToProcess == null || !hasOpponent())
+		{
+			return;
+		}
+
+		// Group hitsplats by the actor receiving them
+		Map<Actor, List<HitsplatApplied>> hitsByActor = hitsplatsToProcess.stream()
+			.collect(Collectors.groupingBy(HitsplatApplied::getActor));
+
+		hitsByActor.forEach((opponent, hits) -> {
+			if (!(opponent instanceof Player)) return; // Only process hits on players
+
+			// Calculate total damage dealt to this opponent in this tick
+			int totalDamageThisTick = hits.stream().mapToInt(h -> h.getHitsplat().getAmount()).sum();
+
+			// Estimate HP before this tick's damage
+			int healthRatio = opponent.getHealthRatio();
+			int healthScale = opponent.getHealthScale();
+			int maxHpToUse = CONFIG.opponentHitpointsLevel(); // Default to configured max HP
+
+			// If opponent is a player, try to get max HP from Hiscores
+			if (opponent instanceof Player && opponent.getName() != null)
+			{
+				final HiscoreResult hiscoreResult = hiscoreManager.lookupAsync(opponent.getName(), hiscoreEndpoint);
+				if (hiscoreResult != null)
+				{
+					final int hp = hiscoreResult.getSkill(HiscoreSkill.HITPOINTS).getLevel();
+					if (hp > 0)
+					{
+						maxHpToUse = hp; // Use Hiscores HP if available
+					}
+				}
+			}
+
+			int hpBeforeTick = -1;
+			int hpAfterTick = -1;
+
+			// Try to calculate exact HP after tick using the OpponentInfoPlugin's reverse calculation method
+			if (healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0)
+			{
+				if (healthRatio > 0) // Use the local healthRatio variable
+				{
+					int minHealth = 1;
+					int maxHealth;
+					if (healthScale > 1) // Use the local healthScale variable
+					{
+						if (healthRatio > 1)
+						{
+							minHealth = (maxHpToUse * (healthRatio - 1) + healthScale - 2) / (healthScale - 1);
+						}
+						maxHealth = (maxHpToUse * healthRatio - 1) / (healthScale - 1);
+						if (maxHealth > maxHpToUse)
+						{
+							maxHealth = maxHpToUse;
+						}
+					}
+					else
+					{
+						maxHealth = maxHpToUse;
+					}
+					hpAfterTick = (minHealth + maxHealth + 1) / 2;
+				}
+				else // healthRatio is 0, so HP is 0
+				{
+					hpAfterTick = 0;
+				}
+
+				// If exact calculation worked, estimate HP before tick
+				if (hpAfterTick >= 0)
+				{
+					hpBeforeTick = hpAfterTick + totalDamageThisTick;
+				}
+			}
+
+			// If exact calculation failed (e.g., ratio/scale invalid), fall back to simple ratio estimation for hpAfterTick
+			if (hpAfterTick < 0 && healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0)
+			{
+				hpAfterTick = (int) Math.max(1, Math.ceil(((double) healthRatio / healthScale) * maxHpToUse));
+				hpBeforeTick = hpAfterTick + totalDamageThisTick;
+			}
+
+
+			// Process each hitsplat for KO chance, using the calculated hpBeforeTick
+			// Note: This simplified version uses hpBeforeTick for all hitsplats in the tick.
+			// A more complex version could try to subtract damage iteratively, but ordering isn't guaranteed.
+			for (HitsplatApplied hitsplat : hits)
+			{
+				Fighter attacker = null;
+				Fighter defender = null;
+
+				// Determine attacker/defender
+				if (opponent.getName() != null) {
+					if (opponent.getName().equals(currentFight.getOpponent().getName())) {
+						attacker = currentFight.getCompetitor();
+						defender = currentFight.getOpponent();
+					} else if (opponent.getName().equals(currentFight.getCompetitor().getName())) {
+						attacker = currentFight.getOpponent();
+						defender = currentFight.getCompetitor();
+					}
+				}
+
+				if (attacker == null || defender == null) continue; // Skip if we can't identify fighters
+
+				// Find the last uncalculated log entry for this attacker
+				FightLogEntry lastEntry = null;
+				ArrayList<FightLogEntry> attackerLogs = attacker.getFightLogEntries();
+				for (int i = attackerLogs.size() - 1; i >= 0; i--) {
+					FightLogEntry entry = attackerLogs.get(i);
+					// Match based on tick proximity as well, maybe within 1-2 ticks?
+					// For now, just using the last uncalculated one.
+					if (entry.isFullEntry() && !entry.isKoChanceCalculated()) {
+						lastEntry = entry;
+						break;
+					}
+				}
+
+				if (lastEntry != null)
+				{
+					if (hpBeforeTick > 0)
+					{
+						// Set the estimated HP & max HP used before calculating KO chance
+						lastEntry.setEstimatedHpBeforeHit(hpBeforeTick);
+						lastEntry.setOpponentMaxHp(maxHpToUse); // Store the max HP used
+
+						Double koChance = PvpPerformanceTrackerUtils.calculateKoChance(
+							lastEntry.getAccuracy(),
+							lastEntry.getMinHit(),
+							lastEntry.getMaxHit(),
+							hpBeforeTick); // Use HP before *any* damage this tick
+
+						lastEntry.setKoChance(koChance);
+					}
+					lastEntry.setKoChanceCalculated(true); // Mark as calculated even if HP was unknown
+				}
+			}
+		});
+
+		// Simple buffer cleanup: remove entries older than a few ticks to prevent memory leak
+		// A more robust solution might be needed if ticks are skipped or client lags heavily.
+		int currentTick = client.getTickCount();
+		hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - 5);
+	}
+
 
 	private void update(String oldVersion)
 	{
