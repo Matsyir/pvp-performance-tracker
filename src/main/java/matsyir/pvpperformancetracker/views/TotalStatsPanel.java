@@ -493,11 +493,10 @@ public class TotalStatsPanel extends JPanel
 		// Set Avg KO Chance label
 		if (numFightsWithKoChance > 0)
 		{
-			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " ("
-				+ nfPercent.format(avgCompetitorKoChanceSum) + ") / " // Changed from avgCompetitorCumulativeKoChance
-				+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) + ")"); // Changed from avgOpponentCumulativeKoChance
+			// too long of a line to include both chances & percent/sum, so only include those in tooltip
+			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " / " + nf1.format(avgOpponentKoChances));
 			((JPanel)avgKoChanceStatsLabel.getParent())
-				.setToolTipText("<html>Average KO Chances per fight (Avg Sum %):<br>Player: " // Changed tooltip text
+				.setToolTipText("<html>Average KO Chances per fight:<br>Player: " // Changed tooltip text
 						+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoChanceSum) // Changed from avgCompetitorCumulativeKoChance
 						+ ")<br>Opponent: "
 						+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) // Changed from avgOpponentCumulativeKoChance
