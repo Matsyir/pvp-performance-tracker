@@ -42,14 +42,14 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils; // Added import
-import net.runelite.api.Client; // Added import
-import net.runelite.api.GraphicID;
+import net.runelite.api.Actor;
+import net.runelite.api.AnimationID;
+import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
-import net.runelite.api.Skill; // Added import
+import net.runelite.api.Skill;
 import net.runelite.api.kit.KitType;
-import net.runelite.api.AnimationID;
+import net.runelite.api.GraphicID;
 
 @Slf4j
 @Getter

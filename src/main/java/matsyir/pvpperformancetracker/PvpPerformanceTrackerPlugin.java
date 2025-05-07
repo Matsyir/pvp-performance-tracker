@@ -88,7 +88,7 @@ import net.runelite.api.events.GameTick; // Added import
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
-import net.runelite.api.events.OverheadTextChanged;
+
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
@@ -113,7 +113,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
-import matsyir.pvpperformancetracker.models.AnimationData;
+
 
 @Slf4j
 @PluginDescriptor(
@@ -224,7 +224,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down or injecting
-
 		fightHistory = new ArrayList<>();
 
 		GSON = injectedGson.newBuilder()
@@ -419,10 +418,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		if (!config.updateNoteMay72025Shown_v2())
 		{
-			String updateMessage = "PvP Performance Tracker Update (May 7 2025): " +
-				"Granite maul & other damage stack KO chance fixed. " +
-				"Blocked hits, veng/recoil damage, and LMS KO chance HP calcs improved. " +
-				"Added double gmaul support, fixed eclipse atlatl damage, and added abyssal dagger spec.";
+			String updateMessage = "PvP Performance Tracker Update: " +
+				"Improved KO chance accuracy, added double gmaul support, " +
+				"fixed eclipse atlatl damage, added abyssal dagger spec.";
 
 			chatMessageManager.queue(QueuedMessage.builder()
 				.type(ChatMessageType.GAMEMESSAGE)
@@ -723,7 +721,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						}
 
 						// Burn Check (Lower priority, only if not already identified as Veng/Recoil)
-						// Note: This is still unreliable and might remove low regular hits.
 						if (!isCandidate && hitAmount >= 1 && hitAmount <= 3)
 						{
 							log.debug("Tick {}: Found potential Burn hit ({} damage) on {}", tickToProcess, hitAmount, target.getName());
@@ -1094,7 +1091,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		if (hasOpponent() && currentFight.isFightOver())
 		{
-			// Add fight to history only if the competitor actually attacked.
+			// add fight to fight history if it actually started
 			if (currentFight.fightStarted())
 			{
 				addToFightHistory(currentFight);
