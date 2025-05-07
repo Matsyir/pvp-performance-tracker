@@ -40,6 +40,7 @@ import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 
 // A fight log entry for a single Fighter. Will be saved in a List of FightLogEntries in the Fighter class.
 @Getter
@@ -130,6 +131,17 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("oH") // Opponent max Hp used for calc
 	private Integer opponentMaxHp = null;
 
+	@Expose
+	@Getter
+	@Setter
+	@SerializedName("mC") // matched hits count so far
+	private int matchedHitsCount;
+
+	@Expose
+	@Getter
+	@Setter
+	@SerializedName("aD") // actual Damage Sum
+	private Integer actualDamageSum;
 
 	// defender data
 	@Expose
@@ -142,6 +154,44 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
+
+	@Expose
+	@Getter
+	private int expectedHits; // Declare expectedHits field
+
+	@Expose
+	@SerializedName("GMS")
+	@Getter
+	@Setter
+	private boolean isGmaulSpecial = false;
+
+	// Recorded opponent health ratio and scale at the moment of the hitsplat
+	private int recordedHealthRatio = -1;
+	private int recordedHealthScale = -1;
+	// The tick at which the first hitsplat for this entry landed
+	private int hitsplatTick = -1;
+
+	// Display/Transient fields calculated during post-processing in onGameTick
+	@Expose
+	@Getter @Setter
+	private Integer displayHpBefore = null;
+	@Expose
+	@Getter @Setter
+	private Integer displayHpAfter = null;
+	@Expose
+	@Getter @Setter
+	private Double displayKoChance = null;
+	@Expose
+	@Getter @Setter
+	private boolean isPartOfTickGroup = false;
+
+	// Explicit Getters/Setters for transient fields
+	public Integer getDisplayHpBefore() { return displayHpBefore; }
+	public Integer getDisplayHpAfter() { return displayHpAfter; }
+	public Double getDisplayKoChance() { return displayKoChance; }
+	public boolean isPartOfTickGroup() { return isPartOfTickGroup; } 
+	public boolean getIsPartOfTickGroup() { return isPartOfTickGroup; }
+	public void setIsPartOfTickGroup(boolean isPartOfTickGroup) { this.isPartOfTickGroup = isPartOfTickGroup; }
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
@@ -169,6 +219,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
 		this.defenderOverhead = defender.getOverheadIcon();
 		this.attackerOffensivePray = attackerOffensivePray;
+		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(animationData);
+		this.matchedHitsCount = 0;
+		this.actualDamageSum = 0;
 	}
 
 	// create incomplete entry to save competitor's defensive stats which are only client side
@@ -183,6 +236,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;
+		this.actualDamageSum = 0;
 	}
 
 	// create new fightlogentry based on existing entry but new damage calcs (for fight analysis/stat merging)
@@ -210,6 +264,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.defenderGear = e.defenderGear;
 		this.defenderOverhead = e.defenderOverhead;
 		this.attackerOffensivePray = e.attackerOffensivePray;
+		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(e.animationData);
+		this.matchedHitsCount = 0;
+		this.actualDamageSum = 0;
 	}
 
 	// randomized entry used for testing
@@ -227,6 +284,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.time = Instant.now().toEpochMilli();
 		this.defenderGear = defenderGear;
 		this.defenderOverhead = HeadIcon.MAGIC;
+		this.actualDamageSum = 0;
 	}
 
 
@@ -271,4 +329,46 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		return diff == 0 ? 0 :
 			(int)(diff / Math.abs(diff));
 	}
+
+	/**
+	 * Record the opponent's health ratio and scale when this hitsplat is applied.
+	 */
+	public void recordHealth(int ratio, int scale)
+	{
+		this.recordedHealthRatio = ratio;
+		this.recordedHealthScale = scale;
+		// hitsplatTick should be set externally when this is called
+	}
+
+	/**
+	 * Get the recorded health ratio (0-?), or -1 if not recorded.
+	 */
+	public int getRecordedHealthRatio()
+	{
+		return recordedHealthRatio;
+	}
+
+	/**
+	 * Get the recorded health scale, or -1 if not recorded.
+	 */
+	public int getRecordedHealthScale()
+	{
+		return recordedHealthScale;
+	}
+
+	// Set the tick when the hitsplat landed
+	public void setHitsplatTick(int tick)
+	{
+		this.hitsplatTick = tick;
+	}
+
+	// Get the recorded hitsplat landing tick, or -1 if not recorded
+	public int getHitsplatTick()
+	{
+		return this.hitsplatTick;
+	}
+
+	public void setDeservedDamage(double deservedDamage) { this.deservedDamage = deservedDamage; }
+	public void setMaxHit(int maxHit) { this.maxHit = maxHit; }
+	public void setMinHit(int minHit) { this.minHit = minHit; }
 }

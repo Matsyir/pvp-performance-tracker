@@ -68,7 +68,7 @@ public enum AnimationData
 	MELEE_BLUE_MOON_SWIPE(1712, AttackStyle.SLASH), // Note: the animation is identical between normal/special attacks
 	MELEE_DLONG_SPEC(1058, AttackStyle.SLASH, true), // tested w/ d long spec, also thammaron's sceptre crush (????)...
 	MELEE_DRAGON_MACE_SPEC(1060, AttackStyle.CRUSH, true),
-	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true),
+	MELEE_DRAGON_DAGGER_SPEC(1062, AttackStyle.STAB, true, 2),
 	MELEE_DRAGON_WARHAMMER_SPEC(1378, AttackStyle.CRUSH, true), // tested w/ dwh, statius warhammer spec
 	MELEE_VOIDWAKER_SPEC(11275, AttackStyle.MAGIC, true),
 	MELEE_ABYSSAL_WHIP(1658, AttackStyle.SLASH), // tested w/ whip, tent whip
@@ -80,13 +80,14 @@ public enum AnimationData
 	MELEE_OBBY_MAUL_CRUSH(2661, AttackStyle.CRUSH),
 	MELEE_ABYSSAL_DAGGER_STAB(3297, AttackStyle.STAB),
 	MELEE_ABYSSAL_BLUDGEON_CRUSH(3298, AttackStyle.CRUSH),
+		MELEE_ABYSSAL_DAGGER_SPEC(3300, AttackStyle.SLASH, true, 2),
 	MELEE_LEAF_BLADED_BATTLEAXE_CRUSH(3852, AttackStyle.CRUSH),
 	MELEE_INQUISITORS_MACE(4503, AttackStyle.CRUSH),
 	MELEE_BARRELCHEST_ANCHOR_CRUSH(5865, AttackStyle.CRUSH),
 	MELEE_LEAF_BLADED_BATTLEAXE_SLASH(7004, AttackStyle.SLASH),
 	MELEE_GODSWORD_SLASH(7045, AttackStyle.SLASH), // tested w/ AGS, BGS, ZGS, SGS, AGS(or) sara sword
 	MELEE_GODSWORD_CRUSH(7054, AttackStyle.CRUSH), // tested w/ AGS, BGS, ZGS, SGS, sara sword
-	MELEE_DRAGON_CLAWS_SPEC(7514, AttackStyle.SLASH, true),
+	MELEE_DRAGON_CLAWS_SPEC(7514, AttackStyle.SLASH, true, 2, 2),
 	MELEE_VLS_SPEC(7515, AttackStyle.SLASH, true), // both VLS and dragon sword spec
 	MELEE_ELDER_MAUL(7516, AttackStyle.CRUSH),
 	MELEE_ZAMORAK_GODSWORD_SPEC(7638, AttackStyle.SLASH, true), // tested zgs spec
@@ -141,6 +142,8 @@ public enum AnimationData
 	public boolean isSpecial;
 	public AttackStyle attackStyle;
 	public int baseSpellDamage;
+	@Getter
+	private final int[] hitsplatGroupPattern;
 
 	// Simple animation data constructor for all melee and range attacks
 	AnimationData(int animationId, AttackStyle attackStyle)
@@ -153,6 +156,7 @@ public enum AnimationData
 		this.attackStyle = attackStyle;
 		this.isSpecial = false;
 		this.baseSpellDamage = 0;
+		this.hitsplatGroupPattern = new int[] {1};
 	}
 	// Simple animation data constructor for all melee and range attacks w/ special
 	AnimationData(int animationId, AttackStyle attackStyle, boolean isSpecial)
@@ -165,6 +169,7 @@ public enum AnimationData
 		this.attackStyle = attackStyle;
 		this.isSpecial = isSpecial;
 		this.baseSpellDamage = 0;
+		this.hitsplatGroupPattern = new int[] {1};
 	}
 	// Magic spell animation data constructor including base spell damage
 	AnimationData(int animationId, AttackStyle attackStyle, int baseSpellDamage)
@@ -177,6 +182,22 @@ public enum AnimationData
 		this.attackStyle = attackStyle;
 		this.isSpecial = false;
 		this.baseSpellDamage = baseSpellDamage;
+		this.hitsplatGroupPattern = new int[] {1};
+	}
+	// Constructor for special multi-hit patterns
+	AnimationData(int animationId, AttackStyle attackStyle, boolean isSpecial, int... hitsplatGroupPattern)
+	{
+		if (attackStyle == null)
+		{
+			throw new InvalidParameterException("Attack Style must be valid for AnimationData");
+		}
+		this.animationId = animationId;
+		this.attackStyle = attackStyle;
+		this.isSpecial = isSpecial;
+		this.baseSpellDamage = 0;
+		this.hitsplatGroupPattern = hitsplatGroupPattern.length > 0
+			? hitsplatGroupPattern
+			: new int[] {1};
 	}
 
 	static

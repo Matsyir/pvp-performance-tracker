@@ -145,12 +145,12 @@ public class TotalStatsPanel extends JPanel
 	// KO Chance totals/averages
 	private double totalCompetitorKoChances = 0;
 	private double totalOpponentKoChances = 0;
-	private double totalCompetitorKoChanceSum = 0; // Sum of KO chance sums from each fight
-	private double totalOpponentKoChanceSum = 0; // Sum of KO chance sums from each fight
+	private double totalCompetitorKoProbSum = 0; // Sum of overall KO probabilities from each fight
+	private double totalOpponentKoProbSum = 0; // Sum of overall KO probabilities from each fight
 	private double avgCompetitorKoChances = 0;
 	private double avgOpponentKoChances = 0;
-	private double avgCompetitorKoChanceSum = 0; // Average KO chance sum per fight
-	private double avgOpponentKoChanceSum = 0; // Average KO chance sum per fight
+	private double avgCompetitorKoProb = 0; // Average overall KO probability per fight
+	private double avgOpponentKoProb = 0; // Average overall KO probability per fight
 	private int numFightsWithKoChance = 0; // Counter for fights that have KO chance data
 
 
@@ -493,13 +493,18 @@ public class TotalStatsPanel extends JPanel
 		// Set Avg KO Chance label
 		if (numFightsWithKoChance > 0)
 		{
+			avgCompetitorKoChances = totalCompetitorKoChances / numFightsWithKoChance;
+			avgOpponentKoChances = totalOpponentKoChances / numFightsWithKoChance;
+			avgCompetitorKoProb = totalCompetitorKoProbSum / numFightsWithKoChance;
+			avgOpponentKoProb = totalOpponentKoProbSum / numFightsWithKoChance;
+
 			// too long of a line to include both chances & percent/sum, so only include those in tooltip
 			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " / " + nf1.format(avgOpponentKoChances));
 			((JPanel)avgKoChanceStatsLabel.getParent())
-				.setToolTipText("<html>Average KO Chances per fight:<br>Player: " // Changed tooltip text
-						+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoChanceSum) // Changed from avgCompetitorCumulativeKoChance
+				.setToolTipText("<html>Average KO Chances per fight:<br>Player: "
+						+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoProb)
 						+ ")<br>Opponent: "
-						+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoChanceSum) // Changed from avgOpponentCumulativeKoChance
+						+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoProb)
 						+ ")<br>Total KO Chances: Player: "
 						+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
 						+ "</html>");
@@ -585,9 +590,9 @@ public class TotalStatsPanel extends JPanel
 
 		// Calculate KO chances & sum % for this fight and add to totals
 		int fightCompetitorKoChances = 0;
-		double fightCompetitorKoChanceSum = 0.0;
+		double fightCompetitorSurvivalProb = 1.0;
 		int fightOpponentKoChances = 0;
-		double fightOpponentKoChanceSum = 0.0;
+		double fightOpponentSurvivalProb = 1.0;
 		boolean fightHasKoData = false;
 		List<FightLogEntry> logs = fight.getAllFightLogEntries();
 		for (FightLogEntry log : logs) {
@@ -596,10 +601,10 @@ public class TotalStatsPanel extends JPanel
 				fightHasKoData = true; // Mark that this fight has KO data
 				if (log.attackerName.equals(fight.getCompetitor().getName())) {
 					fightCompetitorKoChances++;
-					fightCompetitorKoChanceSum += koChance;
+					fightCompetitorSurvivalProb *= (1.0 - koChance);
 				} else {
 					fightOpponentKoChances++;
-					fightOpponentKoChanceSum += koChance;
+					fightOpponentSurvivalProb *= (1.0 - koChance);
 				}
 			}
 		}
@@ -609,15 +614,17 @@ public class TotalStatsPanel extends JPanel
 			numFightsWithKoChance++;
 			totalCompetitorKoChances += fightCompetitorKoChances;
 			totalOpponentKoChances += fightOpponentKoChances;
-			totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
-			totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+			Double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
+			Double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
+			totalCompetitorKoProbSum += fightCompetitorKoProb;
+			totalOpponentKoProbSum += fightOpponentKoProb;
 		}
 
 		// Recalculate averages using the count of fights with data
 		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
 		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
-		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
-		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
+		avgCompetitorKoProb = numFightsWithKoChance != 0 ? totalCompetitorKoProbSum / numFightsWithKoChance : 0;
+		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
 
 
 		SwingUtilities.invokeLater(this::setLabels);
@@ -632,8 +639,8 @@ public class TotalStatsPanel extends JPanel
 		// Reset KO chance totals before recalculating for all fights
 		totalCompetitorKoChances = 0;
 		totalOpponentKoChances = 0;
-		totalCompetitorKoChanceSum = 0;
-		totalOpponentKoChanceSum = 0;
+		totalCompetitorKoProbSum = 0;
+		totalOpponentKoProbSum = 0;
 		numFightsWithKoChance = 0;
 
 		for (FightPerformance fight : fights)
@@ -674,9 +681,9 @@ public class TotalStatsPanel extends JPanel
 
 			// Calculate KO chances & sum % for this fight and add to totals if applicable
 			int fightCompetitorKoChances = 0;
-			double fightCompetitorKoChanceSum = 0.0;
+			double fightCompetitorSurvivalProb = 1.0;
 			int fightOpponentKoChances = 0;
-			double fightOpponentKoChanceSum = 0.0;
+			double fightOpponentSurvivalProb = 1.0;
 			boolean fightHasKoData = false;
 			List<FightLogEntry> logs = fight.getAllFightLogEntries();
 			for (FightLogEntry log : logs) {
@@ -685,10 +692,10 @@ public class TotalStatsPanel extends JPanel
 					fightHasKoData = true;
 					if (log.attackerName.equals(fight.getCompetitor().getName())) {
 						fightCompetitorKoChances++;
-						fightCompetitorKoChanceSum += koChance;
+						fightCompetitorSurvivalProb *= (1.0 - koChance);
 					} else {
 						fightOpponentKoChances++;
-						fightOpponentKoChanceSum += koChance;
+						fightOpponentSurvivalProb *= (1.0 - koChance);
 					}
 				}
 			}
@@ -696,8 +703,10 @@ public class TotalStatsPanel extends JPanel
 				numFightsWithKoChance++;
 				totalCompetitorKoChances += fightCompetitorKoChances;
 				totalOpponentKoChances += fightOpponentKoChances;
-				totalCompetitorKoChanceSum += fightCompetitorKoChanceSum;
-				totalOpponentKoChanceSum += fightOpponentKoChanceSum;
+				Double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
+				Double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
+				totalCompetitorKoProbSum += fightCompetitorKoProb;
+				totalOpponentKoProbSum += fightOpponentKoProb;
 			}
 		}
 
@@ -728,8 +737,8 @@ public class TotalStatsPanel extends JPanel
 		// Recalculate KO averages using the count of fights with data
 		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
 		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
-		avgCompetitorKoChanceSum = numFightsWithKoChance != 0 ? totalCompetitorKoChanceSum / numFightsWithKoChance : 0;
-		avgOpponentKoChanceSum = numFightsWithKoChance != 0 ? totalOpponentKoChanceSum / numFightsWithKoChance : 0;
+		avgCompetitorKoProb = numFightsWithKoChance != 0 ? totalCompetitorKoProbSum / numFightsWithKoChance : 0;
+		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -774,12 +783,12 @@ public class TotalStatsPanel extends JPanel
 		// Reset KO chance stats
 		totalCompetitorKoChances = 0;
 		totalOpponentKoChances = 0;
-		totalCompetitorKoChanceSum = 0; // Renamed from totalCompetitorCumulativeKoChance
-		totalOpponentKoChanceSum = 0; // Renamed from totalOpponentCumulativeKoChance
+		totalCompetitorKoProbSum = 0;
+		totalOpponentKoProbSum = 0;
 		avgCompetitorKoChances = 0;
 		avgOpponentKoChances = 0;
-		avgCompetitorKoChanceSum = 0; // Renamed from avgCompetitorCumulativeKoChance
-		avgOpponentKoChanceSum = 0; // Renamed from avgOpponentCumulativeKoChance
+		avgCompetitorKoProb = 0;
+		avgOpponentKoProb = 0;
 		numFightsWithKoChance = 0; // Reset new counter
 
 		totalStats = new Fighter("Player");
