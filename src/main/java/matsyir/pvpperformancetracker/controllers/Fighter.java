@@ -47,7 +47,7 @@ import net.runelite.api.AnimationID;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
-import net.runelite.api.Skill;
+import net.runelite.api.Skill; // Added import
 import net.runelite.api.kit.KitType;
 import net.runelite.api.GraphicID;
 

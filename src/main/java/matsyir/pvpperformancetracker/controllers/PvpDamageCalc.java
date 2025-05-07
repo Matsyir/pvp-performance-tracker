@@ -366,7 +366,7 @@ public class PvpDamageCalc
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 
-		double effectiveLevel = Math.floor(((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -407,7 +407,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		double effectiveLevel = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		int effectiveLevel = (int) Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
