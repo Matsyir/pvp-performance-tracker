@@ -407,7 +407,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		int effectiveLevel = (int) Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
+		double effectiveLevel = Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
