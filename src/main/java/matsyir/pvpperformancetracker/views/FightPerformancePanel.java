@@ -405,39 +405,43 @@ public class FightPerformancePanel extends JPanel
 		totalKoChanceLine.setLayout(new BorderLayout());
 		totalKoChanceLine.setBackground(null);
 
-		// Calculate total/sum KO chances
+		// Calculate total KO chances and overall probability // MODIFIED Calculation
 		int competitorKoChances = 0;
-		double competitorKoChanceSum = 0.0;
+		double competitorSurvivalProb = 1.0; // Start with 100% survival chance
 		int opponentKoChances = 0;
-		double opponentKoChanceSum = 0.0;
+		double opponentSurvivalProb = 1.0; // Start with 100% survival chance
 		List<FightLogEntry> logs = fight.getAllFightLogEntries();
 		for (FightLogEntry log : logs) {
 			Double koChance = log.getKoChance();
 			if (koChance != null) {
 				if (log.attackerName.equals(competitor.getName())) {
 					competitorKoChances++;
-					competitorKoChanceSum += koChance;
+					competitorSurvivalProb *= (1.0 - koChance); // Calculate survival prob
 				} else {
 					opponentKoChances++;
-					opponentKoChanceSum += koChance;
+					opponentSurvivalProb *= (1.0 - koChance); // Calculate survival prob
 				}
 			}
 		}
 
-		// NINTH LINE LEFT: Competitor Total KO Chance (Using Sum)
+		// Calculate overall KO probability
+		Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : null;
+		Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : null;
+
+		// NINTH LINE LEFT: Competitor Total KO Chance (Using Overall Probability)
 		JLabel playerTotalKoChance = new JLabel();
-		String compTotalKoChanceText = competitorKoChances + (competitorKoChances > 0 ? " (" + nfPercent.format(competitorKoChanceSum) + ")" : "");
+		String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb != null ? " (" + nfPercent.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
 		playerTotalKoChance.setText(compTotalKoChanceText);
-		playerTotalKoChance.setToolTipText(competitor.getName() + " got " + competitorKoChances + " KO chances with a total KO chance percentage of " + nfPercent.format(competitorKoChanceSum));
-		playerTotalKoChance.setForeground(Color.WHITE); // No specific highlighting for this line yet
+		playerTotalKoChance.setToolTipText(competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + (competitorOverallKoProb != null ? nfPercent.format(competitorOverallKoProb) : "0%")); // Updated tooltip
+		playerTotalKoChance.setForeground(Color.WHITE);
 		totalKoChanceLine.add(playerTotalKoChance, BorderLayout.WEST);
 
-		// NINTH LINE RIGHT: Opponent Total KO Chance (Using Sum)
+		// NINTH LINE RIGHT: Opponent Total KO Chance (Using Overall Probability)
 		JLabel opponentTotalKoChance = new JLabel();
-		String oppTotalKoChanceText = opponentKoChances + (opponentKoChances > 0 ? " (" + nfPercent.format(opponentKoChanceSum) + ")" : "");
+		String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb != null ? " (" + nfPercent.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
 		opponentTotalKoChance.setText(oppTotalKoChanceText);
-		opponentTotalKoChance.setToolTipText(opponent.getName() + " got " + opponentKoChances + " KO chances with a total KO chance percentage of " + nfPercent.format(opponentKoChanceSum));
-		opponentTotalKoChance.setForeground(Color.WHITE); // No specific highlighting for this line yet
+		opponentTotalKoChance.setToolTipText(opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + (opponentOverallKoProb != null ? nfPercent.format(opponentOverallKoProb) : "0%")); // Updated tooltip
+		opponentTotalKoChance.setForeground(Color.WHITE);
 		totalKoChanceLine.add(opponentTotalKoChance, BorderLayout.EAST);
 
 

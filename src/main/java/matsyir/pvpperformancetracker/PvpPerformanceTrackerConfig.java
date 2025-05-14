@@ -75,6 +75,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "updateNoteMay72025Shown_v2",
+		name = "Update Note May 7 2025 Shown v2",
+		description = "Tracks if the update note for May 7 2025 (v2) has been shown.",
+		hidden = true
+	)
+	default boolean updateNoteMay72025Shown_v2()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
 		description = "Some settings affect damage calculations, and every player should set them based on how they're pking." +

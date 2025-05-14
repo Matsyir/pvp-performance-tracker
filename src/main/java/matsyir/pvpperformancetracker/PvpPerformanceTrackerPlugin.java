@@ -42,13 +42,18 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors; // Added import
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -62,6 +67,7 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
@@ -82,6 +88,7 @@ import net.runelite.api.events.GameTick; // Added import
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
+
 import net.runelite.api.events.StatChanged;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
@@ -106,6 +113,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
+
 
 @Slf4j
 @PluginDescriptor(
@@ -197,7 +205,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
-	private Map<Integer, List<HitsplatApplied>> hitsplatBuffer = new HashMap<>(); // Buffer for hitsplats per tick
+	private Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>(); // MODIFIED: Use HitsplatInfo
+	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 
 	// #################################################################################################################
@@ -407,6 +416,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
+		if (!config.updateNoteMay72025Shown_v2())
+		{
+			String updateMessage = "PvP Performance Tracker Update: " +
+				"Improved KO chance accuracy, added double gmaul support, " +
+				"fixed eclipse atlatl damage, added abyssal dagger spec.";
+
+			chatMessageManager.queue(QueuedMessage.builder()
+				.type(ChatMessageType.GAMEMESSAGE)
+				.runeLiteFormattedMessage(updateMessage)
+				.build());
+			configManager.setConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2", true);
+		}
+
 		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
 
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
@@ -452,22 +474,86 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
 		int hitType = event.getHitsplat().getHitsplatType();
+		int amount = event.getHitsplat().getAmount();
+		Actor target = event.getActor();
 
 		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
 		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
 		// Fighters in the fight being hit.
-		if (!hasOpponent() || !(event.getActor() instanceof Player) ||
-			!(hitType == HitsplatID.DAMAGE_ME || hitType == HitsplatID.DAMAGE_ME_ORANGE || hitType == HitsplatID.DAMAGE_OTHER_ORANGE || hitType == HitsplatID.DAMAGE_OTHER || hitType == HitsplatID.DAMAGE_MAX_ME || hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE ||
-				hitType == HitsplatID.POISON || hitType == HitsplatID.VENOM))
+		if (!hasOpponent() || !(target instanceof Player))
 		{
 			return;
 		}
 
-		currentFight.addDamageDealt(event.getActor().getName(), event.getHitsplat().getAmount());
+		// for non-zero hits, only process relevant hitsplat types
+		if (amount > 0)
+		{
+			if (!(hitType == HitsplatID.DAMAGE_ME
+				|| hitType == HitsplatID.DAMAGE_ME_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER
+				|| hitType == HitsplatID.DAMAGE_MAX_ME
+				|| hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE
+				|| hitType == HitsplatID.POISON
+				|| hitType == HitsplatID.VENOM))
+			{
+				return;
+			}
+		}
 
-		// Buffer the hitsplat event instead of processing immediately
+		currentFight.addDamageDealt(target.getName(), amount);
+
+		// Exclude certain hitsplat types (like heal, poison, venom, disease)
+		// from the buffer used for HP-before-hit calculations.
+		boolean isExcludedType = hitType == HitsplatID.HEAL ||
+								 hitType == HitsplatID.POISON ||
+								 hitType == HitsplatID.VENOM ||
+								 hitType == HitsplatID.DISEASE;
+
+		if (isExcludedType)
+		{
+			return; // Don't buffer these types for HP calc / matching
+		}
+
+		// Store hitsplats received by competitor or opponent for potential vengeance trigger lookup
+		Player player = client.getLocalPlayer();
+		if (target == player || (hasOpponent() && target == currentFight.getOpponent().getPlayer()))
+		{
+			int currentTick = client.getTickCount();
+			incomingHitsplatsBuffer.computeIfAbsent(currentTick, k -> new CopyOnWriteArrayList<>()).add(new HitsplatInfo(event));
+		}
+
+		// Buffer the hitsplat event instead of processing immediately (unless excluded earlier)
+		// Vengeance damage hitsplats WILL be included here initially.
+		HitsplatInfo info = new HitsplatInfo(event);
 		int tick = client.getTickCount();
-		hitsplatBuffer.computeIfAbsent(tick, k -> new ArrayList<>()).add(event);
+		List<HitsplatInfo> tickEvents = hitsplatBuffer.computeIfAbsent(tick, k -> new ArrayList<>());
+		tickEvents.add(info);
+
+		// Schedule task to poll HP after a short delay of 100ms (reduces missing HP values)
+		try
+		{
+			executor.schedule(() -> updatePolledHp(info), 100, TimeUnit.MILLISECONDS);
+		}
+		catch (Exception e)
+		{
+			log.warn("Failed to schedule HP poll task: {}", e.getMessage());
+		}
+	}
+
+	// updatePolledHp method
+	// Method called by the scheduled task to poll and store HP
+	private void updatePolledHp(HitsplatInfo info)
+	{
+		if (info == null || info.getEvent() == null) return;
+		Actor target = info.getEvent().getActor();
+		if (target != null && !target.isDead())
+		{
+			int ratio = target.getHealthRatio();
+			int scale = target.getHealthScale();
+			info.setPolledHp(ratio, scale);
+		}
+		// If target is dead or null, polled HP remains -1
 	}
 
 	@Subscribe
@@ -532,30 +618,169 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void onGameTick(GameTick event)
 	{
 		// Process hitsplats from the previous tick
-		int previousTick = client.getTickCount() - 1;
-		List<HitsplatApplied> hitsplatsToProcess = hitsplatBuffer.remove(previousTick);
+		int currentTick = client.getTickCount();
+		int tickToProcess = currentTick - 1;
+		int maxWindow = 5;
+		List<HitsplatInfo> hitsplatsToProcess = hitsplatBuffer.remove(tickToProcess);
 
-		if (hitsplatsToProcess == null || !hasOpponent())
+		// --- START: New Pre-processing Logic ---
+		if (hitsplatsToProcess != null && !hitsplatsToProcess.isEmpty() && hasOpponent())
 		{
+			// 1. Calculate total expected hits from pending attacks for this tick
+			int totalExpectedAttackHits = 0;
+			Player player = client.getLocalPlayer();
+			// Assuming getOpponentName() and getOpponentActor() exist or accessing opponent/competitor directly
+			Actor opponentActor = currentFight.getOpponent().getPlayer();
+
+			// Sum expected hits from opponent's pending attacks targeting player
+			if (currentFight.getOpponent() != null)
+			{
+				totalExpectedAttackHits += currentFight.getOpponent().getPendingAttacks().stream()
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.mapToInt(FightLogEntry::getExpectedHits)
+					.sum();
+			}
+			// Sum expected hits from competitor's pending attacks targeting opponent
+			if (currentFight.getCompetitor() != null)
+			{
+				totalExpectedAttackHits += currentFight.getCompetitor().getPendingAttacks().stream()
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.mapToInt(FightLogEntry::getExpectedHits)
+					.sum();
+			}
+
+			// 2. Compare observed vs expected
+			if (hitsplatsToProcess.size() > totalExpectedAttackHits)
+			{
+				log.debug("Tick {}: Observed hits ({}) > Expected attack hits ({}). Checking for special hits...",
+					tickToProcess, hitsplatsToProcess.size(), totalExpectedAttackHits);
+
+				boolean removedHitInIteration;
+				int safetyBreakCounter = 0;
+				int maxIterations = hitsplatsToProcess.size() * 2; // Allow more iterations to be safe
+
+				// 3. Loop while observed > expected (or until no more candidates found)
+				while (hitsplatsToProcess.size() > totalExpectedAttackHits && safetyBreakCounter++ < maxIterations)
+				{
+					removedHitInIteration = false;
+					Iterator<HitsplatInfo> iterator = hitsplatsToProcess.iterator();
+
+					while (iterator.hasNext())
+					{
+						HitsplatInfo potentialSpecialHit = iterator.next();
+						Actor target = potentialSpecialHit.getEvent().getActor();
+						int hitAmount = potentialSpecialHit.getEvent().getHitsplat().getAmount();
+						boolean isCandidate = false;
+
+						// Determine who the 'other' player is (the one who might have *caused* veng/recoil)
+						Actor otherPlayer = null;
+						if (target == player)
+						{
+							otherPlayer = opponentActor;
+						}
+						else if (target == opponentActor)
+						{
+							otherPlayer = player;
+						}
+
+						// 4. Check Candidates (Vengeance/Recoil/Burn)
+						if (otherPlayer != null)
+						{
+							List<HitsplatInfo> incomingHitsOnOther = incomingHitsplatsBuffer.get(tickToProcess);
+							if (incomingHitsOnOther != null)
+							{
+								for (HitsplatInfo incomingHit : incomingHitsOnOther)
+								{
+									// Only check hits *received* by the other player
+									if (incomingHit.getEvent().getActor() == otherPlayer)
+									{
+										int incomingDamage = incomingHit.getEvent().getHitsplat().getAmount();
+
+										// Vengeance Check
+										int expectedVengeance = Math.max(1, (int) Math.floor(incomingDamage * 0.75));
+										if (hitAmount == expectedVengeance)
+										{
+											log.debug("Tick {}: Found potential Vengeance hit ({} damage) on {} based on {} incoming damage on {}",
+												tickToProcess, hitAmount, target.getName(), incomingDamage, otherPlayer.getName());
+											isCandidate = true;
+											break; // Found a reason, no need to check other incoming hits for this potentialSpecialHit
+										}
+
+										// Recoil Check
+										int expectedRecoil = Math.max(1, (int) Math.floor(incomingDamage * 0.10) + 1);
+										if (hitAmount == expectedRecoil)
+										{
+											log.debug("Tick {}: Found potential Recoil hit ({} damage) on {} based on {} incoming damage on {}",
+												tickToProcess, hitAmount, target.getName(), incomingDamage, otherPlayer.getName());
+											isCandidate = true;
+											break;
+										}
+									}
+								}
+							}
+						}
+
+						// Burn Check (Lower priority, only if not already identified as Veng/Recoil)
+						if (!isCandidate && hitAmount >= 1 && hitAmount <= 3)
+						{
+							log.debug("Tick {}: Found potential Burn hit ({} damage) on {}", tickToProcess, hitAmount, target.getName());
+							isCandidate = true;
+						}
+
+						// 5. Remove if Candidate Found
+						if (isCandidate)
+						{
+							iterator.remove();
+							removedHitInIteration = true;
+							break; // Exit inner loop, re-check outer while condition
+						}
+					} // End inner iterator loop
+
+					// Safety break if no hits were removed in a full pass
+					if (!removedHitInIteration)
+					{
+						log.debug("Tick {}: No special hit candidates removed in iteration. Breaking pre-emptive removal.", tickToProcess);
+						break;
+					}
+				} // End outer while loop
+			} // End if (observed > expected)
+		}
+		// --- END: New Pre-processing Logic ---
+
+
+		// Cleanup happens regardless of whether hitsplats were processed this tick
+		// Check if hitsplatsToProcess became null or empty after pre-processing
+		if (hitsplatsToProcess == null || hitsplatsToProcess.isEmpty()) // Modified condition
+		{
+			// Cleanup old entries from buffers
+			hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
+			incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
 			return;
 		}
 
-		// Group hitsplats by the actor receiving them
-		Map<Actor, List<HitsplatApplied>> hitsByActor = hitsplatsToProcess.stream()
-			.collect(Collectors.groupingBy(HitsplatApplied::getActor));
+		// --- Proceed with Regular Matching using the potentially modified hitsplatsToProcess ---
+
+		// Group hitsplats by the actor receiving them (remaining hitsplats after special removal)
+		final List<HitsplatInfo> finalHitsplatsToProcess = hitsplatsToProcess; // Create effectively final list
+		Map<Actor, List<HitsplatInfo>> hitsByActor = finalHitsplatsToProcess.stream()
+			.collect(Collectors.groupingBy((HitsplatInfo info) -> info.getEvent().getActor()));
+
+		List<FightLogEntry> processedEntriesThisTick = new ArrayList<>();
 
 		hitsByActor.forEach((opponent, hits) -> {
 			if (!(opponent instanceof Player)) return; // Only process hits on players
 
-			// Calculate total damage dealt to this opponent in this tick
-			int totalDamageThisTick = hits.stream().mapToInt(h -> h.getHitsplat().getAmount()).sum();
+			// Determine max HP to use (config, Hiscores, or LMS override)
+			int maxHpToUse;
+			if (isAtLMS())
+			{
+				maxHpToUse = 99;
+			}
+			else
+			{
+				maxHpToUse = CONFIG.opponentHitpointsLevel();
 
-			// Estimate HP before this tick's damage
-			int healthRatio = opponent.getHealthRatio();
-			int healthScale = opponent.getHealthScale();
-			int maxHpToUse = CONFIG.opponentHitpointsLevel(); // Default to configured max HP
-
-			// If opponent is a player, try to get max HP from Hiscores
+				// Hiscores lookup should only happen if not in LMS
 			if (opponent instanceof Player && opponent.getName() != null)
 			{
 				final HiscoreResult hiscoreResult = hiscoreManager.lookupAsync(opponent.getName(), hiscoreEndpoint);
@@ -568,114 +793,226 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					}
 				}
 			}
+			}
 
-			int hpBeforeTick = -1;
-			int hpAfterTick = -1;
-
-			// Try to calculate exact HP after tick using the OpponentInfoPlugin's reverse calculation method
-			if (healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0)
+			// Determine attacker
+			String actorName = ((Player) opponent).getName();
+			Fighter attacker = null;
+			if (actorName.equals(currentFight.getOpponent().getName()))
 			{
-				if (healthRatio > 0) // Use the local healthRatio variable
-				{
-					int minHealth = 1;
-					int maxHealth;
-					if (healthScale > 1) // Use the local healthScale variable
-					{
-						if (healthRatio > 1)
+				attacker = currentFight.getCompetitor();
+			}
+			else if (actorName.equals(currentFight.getCompetitor().getName()))
 						{
-							minHealth = (maxHpToUse * (healthRatio - 1) + healthScale - 2) / (healthScale - 1);
-						}
-						maxHealth = (maxHpToUse * healthRatio - 1) / (healthScale - 1);
-						if (maxHealth > maxHpToUse)
-						{
-							maxHealth = maxHpToUse;
-						}
+				attacker = currentFight.getOpponent();
 					}
 					else
 					{
-						maxHealth = maxHpToUse;
-					}
-					hpAfterTick = (minHealth + maxHealth + 1) / 2;
-				}
-				else // healthRatio is 0, so HP is 0
-				{
-					hpAfterTick = 0;
-				}
-
-				// If exact calculation worked, estimate HP before tick
-				if (hpAfterTick >= 0)
-				{
-					hpBeforeTick = hpAfterTick + totalDamageThisTick;
-				}
+				return;
 			}
 
-			// If exact calculation failed (e.g., ratio/scale invalid), fall back to simple ratio estimation for hpAfterTick
-			if (hpAfterTick < 0 && healthRatio >= 0 && healthScale > 0 && maxHpToUse > 0)
+			// Get all potentially relevant, unprocessed entries sorted by animation tick
+			List<FightLogEntry> candidateEntries = attacker.getPendingAttacks().stream()
+				.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash())
+				.filter(e -> (client.getTickCount() - e.getTick()) <= 5)
+				.sorted(Comparator.comparingInt(FightLogEntry::getTick))
+				.collect(Collectors.toList());
+
+			List<FightLogEntry> gmaulsMatchedThisTick = new ArrayList<>();
+			int totalGmaulHitsMatchedThisTick = 0;
+
+			// Iterate through candidate entries chronologically
+			for (FightLogEntry entry : candidateEntries)
 			{
-				hpAfterTick = (int) Math.max(1, Math.ceil(((double) healthRatio / healthScale) * maxHpToUse));
-				hpBeforeTick = hpAfterTick + totalDamageThisTick;
-			}
 
-
-			// Process each hitsplat for KO chance, using the calculated hpBeforeTick
-			// Note: This simplified version uses hpBeforeTick for all hitsplats in the tick.
-			// A more complex version could try to subtract damage iteratively, but ordering isn't guaranteed.
-			for (HitsplatApplied hitsplat : hits)
-			{
-				Fighter attacker = null;
-				Fighter defender = null;
-
-				// Determine attacker/defender
-				if (opponent.getName() != null) {
-					if (opponent.getName().equals(currentFight.getOpponent().getName())) {
-						attacker = currentFight.getCompetitor();
-						defender = currentFight.getOpponent();
-					} else if (opponent.getName().equals(currentFight.getCompetitor().getName())) {
-						attacker = currentFight.getOpponent();
-						defender = currentFight.getCompetitor();
-					}
-				}
-
-				if (attacker == null || defender == null) continue; // Skip if we can't identify fighters
-
-				// Find the last uncalculated log entry for this attacker
-				FightLogEntry lastEntry = null;
-				ArrayList<FightLogEntry> attackerLogs = attacker.getFightLogEntries();
-				for (int i = attackerLogs.size() - 1; i >= 0; i--) {
-					FightLogEntry entry = attackerLogs.get(i);
-					// Match based on tick proximity as well, maybe within 1-2 ticks?
-					// For now, just using the last uncalculated one.
-					if (entry.isFullEntry() && !entry.isKoChanceCalculated()) {
-						lastEntry = entry;
-						break;
-					}
-				}
-
-				if (lastEntry != null)
+				// Apply specific lookback for the entry's style
+				int lookback;
+				switch (entry.getAnimationData().attackStyle)
 				{
-					if (hpBeforeTick > 0)
+					case STAB: case SLASH: case CRUSH: lookback = 3; break;
+					case MAGIC: lookback = 5; break;
+					case RANGED: default: lookback = 3; break;
+				}
+				if (client.getTickCount() - entry.getTick() > lookback)
+				{
+					entry.setKoChanceCalculated(true);
+					attacker.getPendingAttacks().remove(entry);
+					continue;
+				}
+
+				int toMatch = entry.getExpectedHits() - entry.getMatchedHitsCount();
+				if (toMatch <= 0)
+				{
+					entry.setKoChanceCalculated(true);
+					attacker.getPendingAttacks().remove(entry);
+					continue;
+				}
+
+				boolean isInstantGmaulCheck = entry.isGmaulSpecial() && entry.getTick() == tickToProcess;
+				boolean isDelayedAttack = !isInstantGmaulCheck;
+
+				// Only try to match if it's either an instant GMaul or a delayed attack landing now
+				if (isInstantGmaulCheck || isDelayedAttack)
+				{
+					int matchedThisCycle = 0;
+					int damageThisCycle = 0;
+					HitsplatInfo lastMatchedInfo = null;
+					Iterator<HitsplatInfo> hitsIter = hits.iterator();
+
+					// Gmaul can hit twice, others match expected hits
+					int hitsToFind = entry.isGmaulSpecial() ? 2 : toMatch;
+
+					while (matchedThisCycle < hitsToFind && hitsIter.hasNext())
 					{
-						// Set the estimated HP & max HP used before calculating KO chance
-						lastEntry.setEstimatedHpBeforeHit(hpBeforeTick);
-						lastEntry.setOpponentMaxHp(maxHpToUse); // Store the max HP used
-
-						Double koChance = PvpPerformanceTrackerUtils.calculateKoChance(
-							lastEntry.getAccuracy(),
-							lastEntry.getMinHit(),
-							lastEntry.getMaxHit(),
-							hpBeforeTick); // Use HP before *any* damage this tick
-
-						lastEntry.setKoChance(koChance);
+						HitsplatInfo hInfo = hitsIter.next();
+						int amt = hInfo.getEvent().getHitsplat().getAmount();
+						damageThisCycle += amt;
+						matchedThisCycle++;
+						lastMatchedInfo = hInfo;
+						hitsIter.remove();
 					}
-					lastEntry.setKoChanceCalculated(true); // Mark as calculated even if HP was unknown
+
+					if (matchedThisCycle > 0)
+					{
+						entry.setActualDamageSum(entry.getActualDamageSum() + damageThisCycle);
+						entry.setMatchedHitsCount(entry.getMatchedHitsCount() + matchedThisCycle);
+						processedEntriesThisTick.add(entry);
+
+						if (entry.isGmaulSpecial())
+						{
+							gmaulsMatchedThisTick.add(entry);
+							totalGmaulHitsMatchedThisTick += matchedThisCycle;
+						}
+
+						if (entry.getHitsplatTick() < 0 && lastMatchedInfo != null)
+						{
+							entry.setHitsplatTick(tickToProcess);
+						}
+
+						// Calculate and set estimated HP Before using polled HP
+						int ratio = -1, scale = -1;
+						if (lastMatchedInfo != null)
+						{
+							ratio = lastMatchedInfo.getPolledHealthRatio();
+							scale = lastMatchedInfo.getPolledHealthScale();
+						}
+						// Fallback to current ratio/scale if polled is unavailable
+						if (ratio < 0 || scale <= 0) { ratio = opponent.getHealthRatio(); scale = opponent.getHealthScale(); }
+						int hpBefore = -1;
+						if (ratio >= 0 && scale > 0 && maxHpToUse > 0)
+						{
+							hpBefore = PvpPerformanceTrackerUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, entry.getActualDamageSum());
+						}
+						if (hpBefore > 0)
+						{
+							entry.setEstimatedHpBeforeHit(hpBefore);
+							entry.setOpponentMaxHp(maxHpToUse);
+						}
+					}
+				}
+
+				// Mark entry as fully processed if all expected hits are matched OR if it's an instant Gmaul (even if only 1 hit matched)
+				if (entry.getMatchedHitsCount() >= entry.getExpectedHits() || isInstantGmaulCheck)
+				{
+					entry.setKoChanceCalculated(true);
+					attacker.getPendingAttacks().remove(entry);
+				}
+			}
+
+			// Gmaul Damage Scaling (Applied after all matching for the tick)
+			boolean isMultiHitGmaul = totalGmaulHitsMatchedThisTick >= 2;
+			if (isMultiHitGmaul)
+			{
+				for (FightLogEntry gmaulEntry : gmaulsMatchedThisTick)
+				{
+					int originalMin = gmaulEntry.getMinHit();
+					int originalMax = gmaulEntry.getMaxHit();
+					double originalDeserved = gmaulEntry.getDeservedDamage();
+					gmaulEntry.setMaxHit(originalMax * totalGmaulHitsMatchedThisTick);
+					gmaulEntry.setMinHit(originalMin * totalGmaulHitsMatchedThisTick);
+					gmaulEntry.setDeservedDamage(originalDeserved * totalGmaulHitsMatchedThisTick);
 				}
 			}
 		});
 
-		// Simple buffer cleanup: remove entries older than a few ticks to prevent memory leak
-		// A more robust solution might be needed if ticks are skipped or client lags heavily.
-		int currentTick = client.getTickCount();
-		hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - 5);
+		// Post-processing for Display HP/KO Chance
+		if (!processedEntriesThisTick.isEmpty())
+		{
+			// Group processed entries by the tick they landed and the attacker
+			Map<Integer, Map<String, List<FightLogEntry>>> groupedByTickAndAttacker = processedEntriesThisTick.stream()
+				.filter(e -> e.getHitsplatTick() >= 0)
+				.collect(Collectors.groupingBy(
+					FightLogEntry::getHitsplatTick,
+					Collectors.groupingBy(
+						FightLogEntry::getAttackerName,
+						Collectors.toList()
+					)
+				));
+
+			groupedByTickAndAttacker.forEach((tick, attackerMap) -> {
+				attackerMap.forEach((attackerName, entries) -> {
+					if (entries.isEmpty()) return;
+
+					// Sort entries within the tick group by their original animation tick
+					entries.sort(Comparator.comparingInt(FightLogEntry::getTick));
+
+					boolean isGroup = entries.size() > 1;
+
+					// Calculate Correct Starting HP for Forward Cascade
+					Integer hpBeforeSequence = null;
+					FightLogEntry lastEntry = entries.get(entries.size() - 1);
+					Integer hpBeforeLastHit = lastEntry.getEstimatedHpBeforeHit();
+					Integer lastHitDamage = lastEntry.getActualDamageSum();
+
+					// Ensure we have the necessary values from the last hit to calculate final HP
+					if (hpBeforeLastHit != null && lastHitDamage != null)
+					{
+						Integer hpAfterSequence = hpBeforeLastHit - lastHitDamage;
+
+						// Calculate total damage for the sequence
+						int totalDamageInSequence = entries.stream()
+							.mapToInt((FightLogEntry e) -> e.getActualDamageSum() != null ? e.getActualDamageSum() : 0)
+							.sum();
+
+						// Calculate HP Before the entire sequence
+						hpBeforeSequence = hpAfterSequence + totalDamageInSequence;
+					}
+
+					// If hpBeforeSequence is still null (calculation failed), try fallback using first entry's estimate
+					if (hpBeforeSequence == null)
+					{
+						hpBeforeSequence = entries.get(0).getEstimatedHpBeforeHit();
+					}
+
+					// Forward Cascade for Display
+					Integer currentHp = hpBeforeSequence;
+					for (FightLogEntry entry : entries)
+					{
+						Integer hpBeforeCurrent = currentHp;
+						int damageCurrent = entry.getActualDamageSum() != null ? entry.getActualDamageSum() : 0;
+						Integer hpAfterCurrent = (hpBeforeCurrent != null) ? hpBeforeCurrent - damageCurrent : null;
+
+						entry.setDisplayHpBefore(hpBeforeCurrent);
+						entry.setDisplayHpAfter(hpAfterCurrent);
+
+						Double koChanceCurrent = (hpBeforeCurrent != null)
+							? PvpPerformanceTrackerUtils.calculateKoChance(entry.getAccuracy(), entry.getMinHit(), entry.getMaxHit(), hpBeforeCurrent)
+							: null;
+						entry.setDisplayKoChance(koChanceCurrent);
+						entry.setKoChance(koChanceCurrent);
+
+						entry.setIsPartOfTickGroup(isGroup);
+
+						// Update HP for the next iteration
+						currentHp = hpAfterCurrent;
+				}
+				});
+			});
+		}
+
+		// Cleanup old entries from buffers at the end of the tick processing
+		hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
+		incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
 	}
 
 	// #################################################################################################################

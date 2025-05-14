@@ -29,6 +29,8 @@ import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,13 +42,14 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils; // Added import
-import net.runelite.api.Client; // Added import
-import net.runelite.api.GraphicID;
+import net.runelite.api.Actor;
+import net.runelite.api.AnimationID;
+import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.Skill; // Added import
 import net.runelite.api.kit.KitType;
+import net.runelite.api.GraphicID;
 
 @Slf4j
 @Getter
@@ -117,6 +120,9 @@ class Fighter
 	@Setter
 	private int lastGhostBarrageCheckedMageXp = -1;
 
+	@Getter
+	private transient Queue<FightLogEntry> pendingAttacks;
+
 	// fighter that is bound to a player and gets updated during a fight
 	Fighter(FightPerformance fight, Player player)
 	{
@@ -133,6 +139,7 @@ class Fighter
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = new ArrayList<>();
+		pendingAttacks = new LinkedList<>();
 	}
 
 	// fighter for merging fight logs together for detailed data (fight analysis)
@@ -150,6 +157,7 @@ class Fighter
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = logs;
+		pendingAttacks = new LinkedList<>();
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -168,6 +176,7 @@ class Fighter
 		dead = false;
 		pvpDamageCalc = null;
 		fightLogEntries = new ArrayList<>();
+		pendingAttacks = new LinkedList<>();
 	}
 
 	// Fighter for AnalyzedFightPerformance
@@ -195,6 +204,9 @@ class Fighter
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
 		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
+
+		// Granite Maul specific handling
+		boolean isGmaulSpec = animationData.animationId == 1667;
 
 		attackCount++;
 		if (successful)
@@ -232,11 +244,13 @@ class Fighter
 		}
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
+		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
 			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
 		}
 		fightLogEntries.add(fightLogEntry);
+		pendingAttacks.add(fightLogEntry);
 	}
 
 	// add an attack from fight log, without player references, for merging fight logs (fight analysis)

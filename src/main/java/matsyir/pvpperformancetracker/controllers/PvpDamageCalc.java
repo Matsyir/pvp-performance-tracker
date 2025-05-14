@@ -108,6 +108,8 @@ public class PvpDamageCalc
 	private static final double VOIDWAKER_SPEC_MIN_DMG_MODIFIER = .5;
 	private static final double VOIDWAKER_FIXED_ACCURACY = 1;
 
+	private static final double ABYSSAL_DAGGER_SPEC_ACCURACY_MODIFIER = 1.25;
+	private static final double ABYSSAL_DAGGER_SPEC_DMG_MODIFIER = 0.85;
 
 	// 0.975x is a simplified average brimstone mage def formula, where x = opponent's mage def
 	// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
@@ -329,6 +331,15 @@ public class PvpDamageCalc
 			// If reaching this part of the code, the minHit should always be 0, but include it anyways
 			// just in case.
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
+
+			// Abyssal Dagger Spec: Hits twice, adjust average and double displayed max hit.
+			boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
+			if (abyssalDagger && usingSpec)
+			{
+				averageSuccessfulHit *= 2; // Account for two hits in average
+				maxHit *= 2; // Double the max hit for display
+			}
+
 			if (minHit > 0)
 			{
 				log.info("PvpDamageCalc:getAverageHit: Fell into default avg hit calculation with a minHit > 0 (" +
@@ -353,6 +364,7 @@ public class PvpDamageCalc
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 		boolean dwh = weapon == EquipmentData.DRAGON_WARHAMMER;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
+		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 
 		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
 		// apply void bonus if applicable
@@ -369,6 +381,7 @@ public class PvpDamageCalc
 			(vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER :
 			(dwh && usingSpec) ? DWH_SPEC_DMG_MODIFIER :
 			(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
+			(abyssalDagger && usingSpec) ? ABYSSAL_DAGGER_SPEC_DMG_MODIFIER :
 			1;
 		maxHit = (int) (damageModifier * baseDamage);
 	}
@@ -394,7 +407,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		int effectiveLevel = (int) Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
+		double effectiveLevel = Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
@@ -407,9 +420,29 @@ public class PvpDamageCalc
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
 		modifier = dbow && !usingSpec ? DBOW_DMG_MODIFIER : modifier;
 		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
+
+		// Eclipse Atlatl uses Melee Str for max hit but Ranged prayers/void
+		if (weapon == EquipmentData.ECLIPSE_ATLATL)
+		{
+			int[] playerStats = calculateBonusesWithRing(attackerComposition);
+			// Recalculate effective level using Strength level but Ranged prayer modifier
+			effectiveLevel = Math.floor(((attackerLevels.str * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + STANCE_BONUS) + 8);
+
+			// Apply Ranged void bonus if applicable
+			if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
+			{
+				effectiveLevel *= voidStyle.dmgModifier;
+			}
+
+			baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (playerStats[STRENGTH_BONUS] + 64) / 640));
+			maxHit = baseDamage;
+		}
+		else // Standard Ranged Max Hit Calc
+		{
 		maxHit = weaponAmmo == null ?
 			(int) (modifier * baseDamage) :
 			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
+		}
 
 		// apply crystal armor bonus if using bow
 		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
@@ -457,6 +490,7 @@ public class PvpDamageCalc
 		boolean dds = weapon == EquipmentData.DRAGON_DAGGER;
 		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
+		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 
 		if (voidwaker && usingSpec)
 		{
@@ -506,7 +540,15 @@ public class PvpDamageCalc
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));
 		if (usingSpec)
 		{
+			// Don't apply the generic modifier if it's the Abyssal Dagger (handled separately below)
+			if (weapon != EquipmentData.ABYSSAL_DAGGER) {
 			baseChance = baseChance * accuracyModifier;
+			}
+		}
+
+		// Apply Abyssal Dagger spec modifier specifically here
+		if (abyssalDagger && usingSpec) {
+			baseChance *= ABYSSAL_DAGGER_SPEC_ACCURACY_MODIFIER;
 		}
 
 		attackerChance = baseChance;

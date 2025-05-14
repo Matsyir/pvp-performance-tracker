@@ -157,35 +157,45 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		// --- KO Chance Calculation START ---
 		int competitorKoChances = 0;
 		Double lastCompetitorKoChance = null;
-		double competitorKoChanceSum = 0.0;
+		double competitorSurvivalProb = 1.0; // Start with 100% survival chance
 
 		int opponentKoChances = 0;
 		Double lastOpponentKoChance = null;
-		double opponentKoChanceSum = 0.0;
+		double opponentSurvivalProb = 1.0; // Start with 100% survival chance
 
 		String competitorName = fight.getCompetitor().getName();
 
 		ArrayList<FightLogEntry> logs = fight.getAllFightLogEntries();
-		for (FightLogEntry log : logs) {
-			Double koChance = log.getKoChance();
-			if (koChance != null) {
-				if (log.attackerName.equals(competitorName)) {
+		for (FightLogEntry log : logs)
+		{
+			// Use the display KO chance calculated in post-processing
+			Double koChance = log.getDisplayKoChance();
+			if (koChance != null)
+			{
+				if (log.attackerName.equals(competitorName))
+				{
 					competitorKoChances++;
-					competitorKoChanceSum += koChance;
+					competitorSurvivalProb *= (1.0 - koChance); // Multiply by chance of *not* KOing
 					lastCompetitorKoChance = koChance;
-				} else { // Opponent's attack
+				}
+				else // Opponent's attack
+				{
 					opponentKoChances++;
-					opponentKoChanceSum += koChance;
+					opponentSurvivalProb *= (1.0 - koChance); // Multiply by chance of *not* KOing
 					lastOpponentKoChance = koChance;
 				}
 			}
 		}
 
-		// Format Total KO Chance Line (Using Sum)
+		// Calculate overall KO probability (1 - overall survival probability)
+		Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : null;
+		Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : null;
+
+		// Format Total KO Chance Line (Using Overall Probability)
 		String totalCompStr = competitorKoChances
-				+ (competitorKoChances > 0 ? " (" + nfPercent.format(competitorKoChanceSum) + ")" : "");
+				+ (competitorOverallKoProb != null ? " (" + nfPercent.format(competitorOverallKoProb) + ")" : "");
 		String totalOppStr = opponentKoChances
-				+ (opponentKoChances > 0 ? " (" + nfPercent.format(opponentKoChanceSum) + ")" : "");
+				+ (opponentOverallKoProb != null ? " (" + nfPercent.format(opponentOverallKoProb) + ")" : "");
 		overlayTotalKoChanceLine.setLeft(totalCompStr);
 		overlayTotalKoChanceLine.setRight(totalOppStr);
 
