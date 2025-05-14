@@ -75,7 +75,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "updateNoteMay72025Shown_v2",
+		keyName = "updateNoteMay72025Shown_v2", // for 1.6.1 -> 1.6.2
 		name = "Update Note May 7 2025 Shown v2",
 		description = "Tracks if the update note for May 7 2025 (v2) has been shown.",
 		hidden = true

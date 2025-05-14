@@ -206,7 +206,7 @@ class Fighter
 		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
 
 		// Granite Maul specific handling
-		boolean isGmaulSpec = animationData.animationId == 1667;
+		boolean isGmaulSpec = animationData == AnimationData.MELEE_GRANITE_MAUL_SPEC;
 
 		attackCount++;
 		if (successful)
