@@ -44,6 +44,8 @@ import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
@@ -70,6 +72,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
 	private LineComponent overlayTotalKoChanceLine; // Combined total/sum KO chance
 	private LineComponent overlayLastKoChanceLine; // Combined last KO chance
+	private LineComponent overlayRobeHitsLine; // Line for hits on robes
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -104,6 +107,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayEighthLine.setRightColor(ColorScheme.BRAND_ORANGE); // static
 		overlayTotalKoChanceLine = LineComponent.builder().build(); // Initialize new lines
 		overlayLastKoChanceLine = LineComponent.builder().build(); // Initialize new lines
+		overlayRobeHitsLine = LineComponent.builder().build(); // Initialize robes hits line
 
 		setLines();
 	}
@@ -111,11 +115,19 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		// Rebuild overlay lines in case config toggles have changed
+		setLines();
 		FightPerformance fight = plugin.getCurrentFight();
 		if (!config.showFightOverlay() || fight == null || !fight.fightStarted() ||
 			(config.restrictToLms() && !plugin.isAtLMS()))
 		{
 			return null;
+		}
+
+		// Ensure robe hits are calculated for the live overlay when enabled
+		if (config.showOverlayRobeHits())
+		{
+			fight.calculateRobeHits(config.robeHitFilter());
 		}
 
 		// Second line: off-pray hit success stats
@@ -153,6 +165,23 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlaySeventhLine.setLeft(String.valueOf(fight.getCompetitor().getHpHealed()));
 
 		overlayEighthLine.setLeft(fight.getCompetitor().getGhostBarrageStats());
+
+		// Update Hits on Robes overlay line
+		if (config.showOverlayRobeHits()) {
+			int compHits = fight.getCompetitorRobeHits();
+			int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
+			double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
+			String compStr = compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")";
+			overlayRobeHitsLine.setLeft(compStr);
+			overlayRobeHitsLine.setLeftColor(compRatio < ((double) fight.getOpponentRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
+
+			int oppHits = fight.getOpponentRobeHits();
+			int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
+			double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
+			String oppStr = oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")";
+			overlayRobeHitsLine.setRight(oppStr);
+			overlayRobeHitsLine.setRightColor(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
+		}
 
 		// --- KO Chance Calculation START ---
 		int competitorKoChances = 0;
@@ -258,6 +287,9 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		if (config.showOverlayLastKoChance()) {
 			panelComponent.getChildren().add(overlayLastKoChanceLine);
+		}
+		if (config.showOverlayRobeHits()) {
+			panelComponent.getChildren().add(overlayRobeHitsLine);
 		}
 	}
 

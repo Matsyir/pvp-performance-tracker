@@ -35,6 +35,17 @@ import net.runelite.client.config.Range;
 @ConfigGroup("pvpperformancetracker")
 public interface PvpPerformanceTrackerConfig extends Config
 {
+	/**
+	 * Filter for hits on robes statistic.
+	 */
+	enum RobeHitFilter
+	{
+		BOTTOM,
+		TOP,
+		BOTH,
+		EITHER
+	}
+
 	int LEVEL_MIN = 1;
 	int LEVEL_MAX = 120;
 
@@ -118,6 +129,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default boolean showFightHistoryPanel()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "robeHitFilter",
+		name = "Hits on Robes Filter",
+		description = "Which part of the robe to count hits on: bottom, top, both, or either.",
+		position = 11
+	)
+	default RobeHitFilter robeHitFilter()
+	{
+		return RobeHitFilter.EITHER;
 	}
 
 	// ================================= Overlay =================================
@@ -243,10 +265,22 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showOverlayRobeHits",
+		name = "Overlay: Show Hits on Robes",
+		description = "The overlay will display hits on robes ratio (melee & ranged attacks).<br>Max. of 5 lines on the overlay",
+		position = 107,
+		section = overlay
+	)
+	default boolean showOverlayRobeHits()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showOverlayTotalKoChance",
 		name = "Overlay: Show Total KO Chance",
 		description = "The overlay will display total KO chances and sum percentage.<br>Max. of 5 lines on the overlay",
-		position = 107,
+		position = 108,
 		section = overlay
 	)
 	default boolean showOverlayTotalKoChance()
@@ -258,7 +292,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "showOverlayLastKoChance",
 		name = "Overlay: Show Last KO Chance",
 		description = "The overlay will display the last KO chance percentage.<br>Max. of 5 lines on the overlay",
-		position = 108,
+		position = 109,
 		section = overlay
 	)
 	default boolean showOverlayLastKoChance()

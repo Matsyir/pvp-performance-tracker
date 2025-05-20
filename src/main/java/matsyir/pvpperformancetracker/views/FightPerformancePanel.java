@@ -400,6 +400,36 @@ public class FightPerformancePanel extends JPanel
 		}
 		ghostBarragesLine.add(opponentGhostBarrages, BorderLayout.EAST);
 
+		// Hits on Robes line (count/total and percentage)
+		JPanel robeHitsLine = new JPanel(new BorderLayout());
+		robeHitsLine.setBackground(null);
+		// Competitor's hits on robes
+		int compHits = fight.getCompetitorRobeHits();
+		int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
+		double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
+		JLabel playerRobeHitsLabel = new JLabel(compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
+		playerRobeHitsLabel.setToolTipText(fight.getCompetitor().getName() + " hit on robes: " + compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
+		playerRobeHitsLabel.setForeground(compRatio < ((double)(fight.getOpponentRobeHits()) / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
+		robeHitsLine.add(playerRobeHitsLabel, BorderLayout.WEST);
+		// Opponent's hits on robes
+		int oppHits = fight.getOpponentRobeHits();
+		int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
+		double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
+		JLabel opponentRobeHitsLabel = new JLabel(oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
+		opponentRobeHitsLabel.setToolTipText(fight.getOpponent().getName() + " hit on robes: " + oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
+		opponentRobeHitsLabel.setForeground(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
+		robeHitsLine.add(opponentRobeHitsLabel, BorderLayout.EAST);
+
+		fightPanel.add(playerNamesLine);
+		fightPanel.add(offPrayStatsLine);
+		fightPanel.add(deservedDpsStatsLine);
+		fightPanel.add(dmgDealtStatsLine);
+		fightPanel.add(magicHitStatsLine);
+		fightPanel.add(offensivePrayStatsLine);
+		fightPanel.add(hpHealedLine);
+		fightPanel.add(ghostBarragesLine);
+		fightPanel.add(robeHitsLine);
+
 		// NINTH LINE: Total KO Chances
 		JPanel totalKoChanceLine = new JPanel();
 		totalKoChanceLine.setLayout(new BorderLayout());
@@ -444,16 +474,7 @@ public class FightPerformancePanel extends JPanel
 		opponentTotalKoChance.setForeground(Color.WHITE);
 		totalKoChanceLine.add(opponentTotalKoChance, BorderLayout.EAST);
 
-
-		fightPanel.add(playerNamesLine);
-		fightPanel.add(offPrayStatsLine);
-		fightPanel.add(deservedDpsStatsLine);
-		fightPanel.add(dmgDealtStatsLine);
-		fightPanel.add(magicHitStatsLine);
-		fightPanel.add(offensivePrayStatsLine);
-		fightPanel.add(hpHealedLine);
-		fightPanel.add(ghostBarragesLine);
-		fightPanel.add(totalKoChanceLine); // Add the new line
+		fightPanel.add(totalKoChanceLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 

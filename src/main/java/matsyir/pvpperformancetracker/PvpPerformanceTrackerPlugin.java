@@ -264,6 +264,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
+		
+		// Explicitly rebuild panel after all setup and import.
+        SwingUtilities.invokeLater(() -> {
+            if (panel != null) {
+                panel.rebuild();
+            }
+        });
 	}
 
 	@Override
@@ -328,6 +335,23 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "settingsConfigured":
 				boolean enableConfigWarning = !config.settingsConfigured();
 				panel.setConfigWarning(enableConfigWarning);
+				break;
+			case "robeHitFilter":
+				// Recalculate robe hits for all fights based on the new filter and refresh UI
+				for (FightPerformance f : fightHistory)
+				{
+					f.calculateRobeHits(config.robeHitFilter());
+				}
+				if (currentFight != null)
+				{
+					currentFight.calculateRobeHits(config.robeHitFilter());
+				}
+				// Explicitly rebuild panel after recalculation.
+                SwingUtilities.invokeLater(() -> {
+                    if (panel != null) {
+                        panel.rebuild();
+                    }
+                });
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -1125,6 +1149,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (fight == null) { return; }
 		fightHistory.add(fight);
 		// no need to sort, since they sort chronologically, but they should automatically be added that way.
+		try {
+			fight.calculateRobeHits(config.robeHitFilter());
+		}
+		catch (Exception e)
+		{
+			log.warn("Error calculating robe hits for new fight ({} vs {}): {}", 
+				fight.getCompetitor() != null ? fight.getCompetitor().getName() : "N/A", 
+				fight.getOpponent() != null ? fight.getOpponent().getName() : "N/A", 
+				e.getMessage());
+		}
 
 		// remove fights as necessary to respect the fightHistoryLimit.
 		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
@@ -1184,12 +1218,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// more specific FightPerformance processing is done in importFights()
 	public void importUserFightHistoryData(String data)
 	{
+		if (data == null || data.trim().isEmpty()) { return; }
 		try
 		{
 			// read saved fights from the data string and import them
 			List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
-			createConfirmationModal(true, "Fight history data was successfully imported.");
+			panel.rebuild();
+			createConfirmationModal(true, "Successfully imported " + savedFights.size() + " fights.");
 		}
 		catch (Exception e)
 		{
@@ -1198,8 +1234,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			createConfirmationModal(false, "Fight history data was invalid, and could not be imported.");
 			return;
 		}
-
-		panel.rebuild();
 	}
 
 	// set fight log names after importing since they aren't serialized but are on the parent class

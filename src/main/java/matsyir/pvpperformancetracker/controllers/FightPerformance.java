@@ -39,6 +39,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
@@ -47,6 +48,12 @@ import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import org.apache.commons.lang3.StringUtils;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
+import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
+import net.runelite.api.kit.KitType;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
+import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
 // add to the fight, display stats or check the status of the fight.
@@ -83,6 +90,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
+
+	@Expose
+	@SerializedName("rhC") // robe hits on competitor
+	private int competitorRobeHits = 0;
+	@Expose
+	@SerializedName("rhO") // robe hits on opponent
+	private int opponentRobeHits = 0;
 
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
@@ -488,5 +502,115 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
 			(int)(diff / Math.abs(diff));
+	}
+
+	/**
+	 * Calculates robe hits for both competitors based on defender gear in each log entry and the configured filter.
+	 */
+	public void calculateRobeHits(PvpPerformanceTrackerConfig.RobeHitFilter filter)
+	{
+		competitorRobeHits = 0;
+		opponentRobeHits = 0;
+		if (filter == null || getAllFightLogEntries() == null || getAllFightLogEntries().isEmpty())
+		{
+			return;
+		}
+
+		for (FightLogEntry entry : getAllFightLogEntries())
+		{
+			// Only consider melee and ranged attacks for robe hits
+			AnimationData ad = entry.getAnimationData();
+			if (ad == null)
+			{
+				continue;
+			}
+			AttackStyle style = ad.attackStyle;
+			if (style == AttackStyle.MAGIC)
+			{
+				continue;
+			}
+
+			if (entry == null)
+			{
+				continue;
+			}
+
+			// Determine who the defender is for this specific entry
+			Fighter defender = entry.getAttackerName().equals(getCompetitor().getName()) ? getOpponent() : getCompetitor();
+			if (defender == null)
+			{
+				continue;
+			}
+
+			int[] gear = entry.getDefenderGear();
+			if (gear == null || gear.length <= Math.max(KitType.LEGS.getIndex(), KitType.TORSO.getIndex()))
+			{
+				continue;
+			}
+
+			int defenderLegsItemId = fixItemId(gear[KitType.LEGS.getIndex()]);
+			int defenderBodyItemId = fixItemId(gear[KitType.TORSO.getIndex()]);
+
+			// Compute stats for robe bottom/top
+			boolean wearingRobeBottom = false;
+			if (defenderLegsItemId != 0)
+			{
+				int[] legStats = PvpDamageCalc.getItemStats(defenderLegsItemId);
+				if (legStats != null && legStats.length > RANGE_DEF)
+				{
+					wearingRobeBottom = legStats[RANGE_DEF] == 0;
+				}
+			}
+
+			boolean wearingRobeTop = false;
+			if (defenderBodyItemId != 0)
+			{
+				int[] bodyStats = PvpDamageCalc.getItemStats(defenderBodyItemId);
+				if (bodyStats != null && bodyStats.length > RANGE_DEF)
+				{
+					wearingRobeTop = bodyStats[RANGE_DEF] == 0;
+				}
+			}
+
+			boolean isHitOnRobes = false;
+			switch (filter)
+			{
+				case BOTTOM:
+					isHitOnRobes = wearingRobeBottom;
+					break;
+				case TOP:
+					isHitOnRobes = wearingRobeTop;
+					break;
+				case BOTH:
+					isHitOnRobes = wearingRobeBottom && wearingRobeTop;
+					break;
+				case EITHER:
+					isHitOnRobes = wearingRobeBottom || wearingRobeTop;
+					break;
+			}
+
+			if (isHitOnRobes)
+			{
+				if (defender == getCompetitor())
+				{
+					competitorRobeHits++;
+				}
+				else if (defender == getOpponent())
+				{
+					opponentRobeHits++;
+				}
+			}
+		}
+	}
+
+	// Getter for robe hit counts
+	public int getCompetitorRobeHits()
+	{
+		return competitorRobeHits;
+	}
+
+	public int getOpponentRobeHits()
+	{
+		return opponentRobeHits;
 	}
 }
