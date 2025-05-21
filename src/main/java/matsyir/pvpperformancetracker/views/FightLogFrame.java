@@ -78,7 +78,8 @@ public class FightLogFrame extends JFrame
 	FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
-		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName());
+		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
+			+ " on world " + fight.getWorld());
 
 		fightLogEntries = logEntries;
 		fightLogEntries.removeIf(e -> !e.isFullEntry());

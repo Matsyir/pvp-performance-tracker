@@ -485,6 +485,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showWorldInSummary",
+		name = "Show World in Summary",
+		description = "Display the world number between names in the summary panel.",
+		position = 510
+	)
+	default boolean showWorldInSummary()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "nameFilter",
 		name = "Name Filter",
 		description = "Hidden config used to save user's selected name/RSN filter for the panel views.",

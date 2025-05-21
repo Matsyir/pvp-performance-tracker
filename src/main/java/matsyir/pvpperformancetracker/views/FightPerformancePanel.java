@@ -48,9 +48,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -58,6 +60,8 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import java.awt.Graphics;
+import java.awt.FontMetrics;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
@@ -165,9 +169,24 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.setLayout(new BoxLayout(fightPanel, BoxLayout.Y_AXIS));
 		fightPanel.setBackground(null);
 
-		// FIRST LINE: both player names
-		JPanel playerNamesLine = new JPanel();
-		playerNamesLine.setLayout(new BorderLayout());
+		// FIRST LINE: both player names, with centered world label
+		JPanel playerNamesLine = new JPanel(new BorderLayout())
+		{
+			@Override
+			protected void paintComponent(Graphics g)
+			{
+				super.paintComponent(g);
+				if (CONFIG.showWorldInSummary())
+				{
+					String w = "W" + fight.getWorld();
+					FontMetrics fm = g.getFontMetrics(getFont());
+					int x = (getWidth() - fm.stringWidth(w)) / 2;
+					int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
+					g.setColor(Color.LIGHT_GRAY);
+					g.drawString(w, x, y);
+				}
+			}
+		};
 		playerNamesLine.setBackground(null);
 
 		// first line LEFT: player name
