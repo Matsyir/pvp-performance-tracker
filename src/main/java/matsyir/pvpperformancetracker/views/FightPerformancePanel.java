@@ -156,7 +156,7 @@ public class FightPerformancePanel extends JPanel
 		setLayout(new BorderLayout(5, 0));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		String tooltipText = "This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
+		String tooltipText = "This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime()))) + (fight.getWorld() > 0 ? ", on W" + fight.getWorld() : "");
 		setToolTipText(tooltipText);
 
 		if (showBorders)
@@ -176,7 +176,7 @@ public class FightPerformancePanel extends JPanel
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				if (CONFIG.showWorldInSummary())
+				if (CONFIG.showWorldInSummary() && fight.getWorld() > 0)
 				{
 					String w = "W" + fight.getWorld();
 					FontMetrics fm = g.getFontMetrics(getFont());
