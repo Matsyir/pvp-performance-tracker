@@ -156,9 +156,13 @@ public class TotalStatsPanel extends JPanel
 
 	// Accumulators for robe hits
 	private double totalCompetitorRobeHits = 0;
+	private double totalCompetitorRobeHitsAttempted = 0; // 'total attacks attempted', i.e the statistic shows totalCompetitorRobeHits / totalCompetitorRobeHitsAttempted
 	private double totalOpponentRobeHits = 0;
+	private double totalOpponentRobeHitsAttempted = 0;
 	private double avgCompetitorRobeHits = 0;
+	private double avgCompetitorRobeHitsPercentage = 0;
 	private double avgOpponentRobeHits = 0;
+	private double avgOpponentRobeHitsPercentage = 0;
 
 	public TotalStatsPanel()
 	{
@@ -512,8 +516,9 @@ public class TotalStatsPanel extends JPanel
 		if (numFights > 0)
 		{
 			avgRobeHitsStatsLabel.setText(nf1.format(avgCompetitorRobeHits) + " / " + nf1.format(avgOpponentRobeHits));
-			((JPanel)avgRobeHitsStatsLabel.getParent()).setToolTipText("Average hits on robes per fight: Player: "
-				+ nf1.format(avgCompetitorRobeHits) + ", Opponent: " + nf1.format(avgOpponentRobeHits));
+			((JPanel)avgRobeHitsStatsLabel.getParent()).setToolTipText("<html>Average melee/range hits taken while wearing robes per fight:<br>" +
+					"Player: " + nf1.format(avgCompetitorRobeHits) + " (" + nf1.format(avgCompetitorRobeHitsPercentage) + "% of melee/range hits taken were on robes)<br>" +
+					"Opponent: " + nf1.format(avgOpponentRobeHits) + " (" + nf1.format(avgOpponentRobeHitsPercentage) + "% of melee/range hits taken were on robes)");
 		}
 		else
 		{
@@ -568,9 +573,14 @@ public class TotalStatsPanel extends JPanel
 
 		// Accumulate robe hits
 		totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+		totalCompetitorRobeHitsAttempted += fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 		totalOpponentRobeHits += fight.getOpponentRobeHits();
+		totalOpponentRobeHitsAttempted += fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
+
 		avgCompetitorRobeHits = totalCompetitorRobeHits / numFights;
+		avgCompetitorRobeHitsPercentage = totalCompetitorRobeHitsAttempted != 0 ? (totalCompetitorRobeHits / totalCompetitorRobeHitsAttempted) * 100.0 : 0;
 		avgOpponentRobeHits = totalOpponentRobeHits / numFights;
+		avgOpponentRobeHitsPercentage = totalOpponentRobeHitsAttempted != 0 ? (totalOpponentRobeHits / totalOpponentRobeHitsAttempted) * 100.0 : 0;
 
 		// add kill-specific or death-specific stats
 		if (fight.getCompetitor().isDead())
@@ -675,7 +685,9 @@ public class TotalStatsPanel extends JPanel
 
 		// Reset robe hits totals
 		totalCompetitorRobeHits = 0;
+		totalCompetitorRobeHitsAttempted = 0;
 		totalOpponentRobeHits = 0;
+		totalOpponentRobeHitsAttempted = 0;
 
 		// Reset KO chance totals before recalculating for all fights
 		totalCompetitorKoChances = 0;
@@ -695,7 +707,9 @@ public class TotalStatsPanel extends JPanel
 
 			// Accumulate robe hits
 			totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+			totalCompetitorRobeHitsAttempted += fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 			totalOpponentRobeHits += fight.getOpponentRobeHits();
+			totalOpponentRobeHitsAttempted += fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 
 			if (fight.getCompetitor().isDead())
 			{
@@ -757,7 +771,9 @@ public class TotalStatsPanel extends JPanel
 
 		// Calculate average robe hits
 		avgCompetitorRobeHits = numFights != 0 ? totalCompetitorRobeHits / numFights : 0;
+		avgCompetitorRobeHitsPercentage = totalCompetitorRobeHitsAttempted != 0 ? (totalCompetitorRobeHits / totalCompetitorRobeHitsAttempted) * 100.0 : 0;
 		avgOpponentRobeHits = numFights != 0 ? totalOpponentRobeHits / numFights : 0;
+		avgOpponentRobeHitsPercentage = totalOpponentRobeHitsAttempted != 0 ? (totalOpponentRobeHits / totalOpponentRobeHitsAttempted) * 100.0 : 0;
 
 		// Recalculate averages for all stats
 		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;

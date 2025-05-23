@@ -86,17 +86,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "updateNoteMay72025Shown_v2", // for 1.6.1 -> 1.6.2
-		name = "Update Note May 7 2025 Shown v2",
-		description = "Tracks if the update note for May 7 2025 (v2) has been shown.",
-		hidden = true
-	)
-	default boolean updateNoteMay72025Shown_v2()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
 		description = "Some settings affect damage calculations, and every player should set them based on how they're pking." +
@@ -529,4 +518,33 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return "";
 	}
+
+
+	// ================================= On-update flags for chat message update summaries =================================
+	@ConfigItem(
+			keyName = "updateNoteMay72025Shown_v2", // for 1.6.1 -> 1.6.2
+			name = "Update Note May 7 2025 Shown v2",
+			description = "Tracks if the update note for May 7 2025 (v2) has been shown.",
+			hidden = true
+	)
+	default boolean updateNoteMay72025Shown_v2()
+	{
+		return false;
+	}
+	final String updateNoteMay72025Shown_v2_MESSAGE = "PvP Performance Tracker Update: " +
+			"Improved KO chance accuracy, added double gmaul support, " +
+			"fixed eclipse atlatl damage, added abyssal dagger spec.";
+
+	@ConfigItem(
+			keyName = "updateNote1_6_3", // for 1.6.2 -> 1.6.3
+			name = "Update Note 1.6.2->1.6.3 ~May23 2025",
+			description = "Tracks if the update note for 1.6.3 has been shown.",
+			hidden = true
+	)
+	default boolean updateNote1_6_3()
+	{
+		return false;
+	}
+	final String updateNote1_6_3_MESSAGE = "PvP Performance Tracker Update: " +
+			"New statistic - 'hit on robe' tracking, configurable.";
 }

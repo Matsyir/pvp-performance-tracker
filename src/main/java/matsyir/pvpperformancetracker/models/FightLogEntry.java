@@ -89,15 +89,18 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("m") // m because movement?
 	private AnimationData animationData;
+	@Setter
 	@Expose
 	@SerializedName("d")
 	private double deservedDamage;
 	@Expose
 	@SerializedName("a")
 	private double accuracy;
+	@Setter
 	@Expose
 	@SerializedName("h") // h for highest hit
 	private int maxHit;
+	@Setter
 	@Expose
 	@SerializedName("l") // l for lowest hit
 	private int minHit;
@@ -168,7 +171,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	// Recorded opponent health ratio and scale at the moment of the hitsplat
 	private int recordedHealthRatio = -1;
 	private int recordedHealthScale = -1;
+	// Get the recorded hitsplat landing tick, or -1 if not recorded
+	// Set the tick when the hitsplat landed
 	// The tick at which the first hitsplat for this entry landed
+	@Getter
+	@Setter
 	private int hitsplatTick = -1;
 
 	// Display/Transient fields calculated during post-processing in onGameTick
@@ -184,14 +191,6 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@Getter @Setter
 	private boolean isPartOfTickGroup = false;
-
-	// Explicit Getters/Setters for transient fields
-	public Integer getDisplayHpBefore() { return displayHpBefore; }
-	public Integer getDisplayHpAfter() { return displayHpAfter; }
-	public Double getDisplayKoChance() { return displayKoChance; }
-	public boolean isPartOfTickGroup() { return isPartOfTickGroup; } 
-	public boolean getIsPartOfTickGroup() { return isPartOfTickGroup; }
-	public void setIsPartOfTickGroup(boolean isPartOfTickGroup) { this.isPartOfTickGroup = isPartOfTickGroup; }
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
@@ -340,35 +339,4 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// hitsplatTick should be set externally when this is called
 	}
 
-	/**
-	 * Get the recorded health ratio (0-?), or -1 if not recorded.
-	 */
-	public int getRecordedHealthRatio()
-	{
-		return recordedHealthRatio;
-	}
-
-	/**
-	 * Get the recorded health scale, or -1 if not recorded.
-	 */
-	public int getRecordedHealthScale()
-	{
-		return recordedHealthScale;
-	}
-
-	// Set the tick when the hitsplat landed
-	public void setHitsplatTick(int tick)
-	{
-		this.hitsplatTick = tick;
-	}
-
-	// Get the recorded hitsplat landing tick, or -1 if not recorded
-	public int getHitsplatTick()
-	{
-		return this.hitsplatTick;
-	}
-
-	public void setDeservedDamage(double deservedDamage) { this.deservedDamage = deservedDamage; }
-	public void setMaxHit(int maxHit) { this.maxHit = maxHit; }
-	public void setMinHit(int minHit) { this.minHit = minHit; }
 }

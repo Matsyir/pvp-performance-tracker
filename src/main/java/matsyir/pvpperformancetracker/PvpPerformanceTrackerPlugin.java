@@ -426,18 +426,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (!config.updateNoteMay72025Shown_v2())
-		{
-			String updateMessage = "PvP Performance Tracker Update: " +
-				"Improved KO chance accuracy, added double gmaul support, " +
-				"fixed eclipse atlatl damage, added abyssal dagger spec.";
-
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.GAMEMESSAGE)
-				.runeLiteFormattedMessage(updateMessage)
-				.build());
-			configManager.setConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2", true);
-		}
+		sendUpdateChatMessages();
 
 		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
 
@@ -1011,7 +1000,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						entry.setDisplayKoChance(koChanceCurrent);
 						entry.setKoChance(koChanceCurrent);
 
-						entry.setIsPartOfTickGroup(isGroup);
+						entry.setPartOfTickGroup(isGroup);
 
 						// Update HP for the next iteration
 						currentHp = hpAfterCurrent;
@@ -1028,6 +1017,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// #################################################################################################################
 	// ################################## Plugin-specific functions & global helpers ###################################
 	// #################################################################################################################
+
+	private void sendUpdateChatMessages()
+	{
+		if (!config.updateNoteMay72025Shown_v2())
+		{
+			chatMessageManager.queue(QueuedMessage.builder()
+					.type(ChatMessageType.GAMEMESSAGE)
+					.runeLiteFormattedMessage(config.updateNoteMay72025Shown_v2_MESSAGE)
+					.build());
+			configManager.setConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2", true);
+		}
+		// TODO re-enable this after all merges done/new version in place/message completed
+		if (false && !config.updateNote1_6_3())
+		{
+			chatMessageManager.queue(QueuedMessage.builder()
+					.type(ChatMessageType.GAMEMESSAGE)
+					.runeLiteFormattedMessage(config.updateNote1_6_3_MESSAGE)
+					.build());
+			configManager.setConfiguration(CONFIG_KEY, "updateNote1_6_3", true);
+		}
+	}
 
 	private void update(String oldVersion)
 	{
