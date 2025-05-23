@@ -547,16 +547,16 @@ public interface PvpPerformanceTrackerConfig extends Config
 			"fixed eclipse atlatl damage, added abyssal dagger spec.";
 
 	@ConfigItem(
-			keyName = "updateNote1_6_3", // for 1.6.2 -> 1.6.3
-			name = "Update Note 1.6.2->1.6.3 ~May23 2025",
-			description = "Tracks if the update note for 1.6.3 has been shown.",
+			keyName = "updateNote1_7_0", // for 1.6.2 -> 1.7.0
+			name = "Update Note 1.6.2->1.7.0 ~May23 2025",
+			description = "Tracks if the update note for 1.7.0 has been shown.",
 			hidden = true
 	)
-	default boolean updateNote1_6_3()
+	default boolean updateNote1_7_0()
 	{
 		return false;
 	}
-	final String updateNote1_6_3_MESSAGE = "PvP Performance Tracker 1.6.3 Update: " +
+	final String updateNote1_7_0_MESSAGE = "PvP Performance Tracker 1.7.0 Update: " +
 			"New statistic - 'hit on robe' tracking, various calculation & detection improvements, " +
-			"display fight worlds.";
+			"display fight worlds, new attack summary window.";
 }

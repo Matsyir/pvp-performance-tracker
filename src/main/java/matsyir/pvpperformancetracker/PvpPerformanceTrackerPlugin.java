@@ -120,7 +120,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.6.2";
+	public static final String PLUGIN_VERSION = "1.7.0";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1026,14 +1026,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					.build());
 			configManager.setConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2", true);
 		}
-		// TODO re-enable this after all merges done/new version in place/message completed
-		if (false && !config.updateNote1_6_3())
+		if (!config.updateNote1_7_0())
 		{
 			chatMessageManager.queue(QueuedMessage.builder()
 					.type(ChatMessageType.GAMEMESSAGE)
-					.runeLiteFormattedMessage(config.updateNote1_6_3_MESSAGE)
+					.runeLiteFormattedMessage(config.updateNote1_7_0_MESSAGE)
 					.build());
-			configManager.setConfiguration(CONFIG_KEY, "updateNote1_6_3", true);
+			configManager.setConfiguration(CONFIG_KEY, "updateNote1_7_0", true);
 		}
 	}
 
@@ -1244,8 +1243,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// Display no modal for this error since it could happen on client load and that has odd behavior.
 			return;
 		}
-
-		panel.rebuild();
 	}
 
 	// import additional/extra fight history data supplied by the user
