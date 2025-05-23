@@ -193,6 +193,7 @@ public class PvpDamageCalc
 		getAverageHit(success, weapon, isSpecial);
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
 		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
 			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
@@ -249,6 +250,7 @@ public class PvpDamageCalc
 		getAverageHit(success, weapon, isSpecial);
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 	}
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
@@ -313,16 +315,16 @@ public class PvpDamageCalc
 			accuracy = 1 - chanceOfMissingTwice; // thus 64% chance of missing, or 36% accuracy
 			// max hit is 0.85% and min hit is 15%
 			// unlike VLS/SWH/Dbow I believe this rolls between min and max instead of raising hits between 0 - minHit to minHit
-			minHit = (int) (0.15 * maxHit);
-			maxHit = (int) (maxHitMultiplier * maxHit);
-
+			int base = maxHit;
+			minHit = (int) Math.ceil(base * 0.15);
+			maxHit = (int) Math.ceil(maxHitMultiplier * base); // Use ceil for the upper bound of fang's passive
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 		// average hit calculation for attacks with minimum hits that use a more 'intuitive' average hit, similar to osmuten's fang
 		else if (usingSpec && voidwaker)
 		{
-			minHit = (int) (maxHit * VOIDWAKER_SPEC_MIN_DMG_MODIFIER);
-
+			// back-calc base hit from floored spec-max, then apply 50% for correct rounding
+			minHit = (int) Math.floor((maxHit / VOIDWAKER_SPEC_DMG_MODIFIER) * VOIDWAKER_SPEC_MIN_DMG_MODIFIER);
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 		else
@@ -374,7 +376,7 @@ public class PvpDamageCalc
 			effectiveLevel *= voidStyle.dmgModifier;
 		}
 
-		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640);
+		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640.0);
 		double damageModifier = (ags && usingSpec) ? ARMA_GS_SPEC_DMG_MODIFIER :
 			(ancientGs && usingSpec) ? ANCIENT_GS_SPEC_DMG_MODIFIER :
 			(swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER :
@@ -415,7 +417,7 @@ public class PvpDamageCalc
 			effectiveLevel *= voidStyle.dmgModifier;
 		}
 
-		int baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (rangeStrength + 64) / 640));
+		int baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (rangeStrength + 64) / 640.0));
 
 		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
@@ -435,7 +437,7 @@ public class PvpDamageCalc
 				effectiveLevel *= voidStyle.dmgModifier;
 			}
 
-			baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (playerStats[STRENGTH_BONUS] + 64) / 640));
+			baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (playerStats[STRENGTH_BONUS] + 64) / 640.0));
 			maxHit = baseDamage;
 		}
 		else // Standard Ranged Max Hit Calc

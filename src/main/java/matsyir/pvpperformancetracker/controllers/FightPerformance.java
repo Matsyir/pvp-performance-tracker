@@ -88,6 +88,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	@SerializedName("l")
 	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
+	@Expose
+	@SerializedName("w")
+	private int world;
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -114,6 +117,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 			defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
 			defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
 			FightType.LMS_MAXMED;
+
+		// initialize world
+		this.world = PLUGIN.getClient().getWorld();
 
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
