@@ -356,11 +356,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return combinedList;
 	}
 
-	// only count the fight as started if the competitor attacked, not the enemy because
-	// the person the competitor clicked on might be attacking someone else
+	// Count the fight as started if either:
+	// 1. The competitor has attacked the opponent
+	// 2. The opponent has attacked the competitor
+	// Attacks are only counted when there is a confirmed interaction between the two players
+	// Checking both makes sure that the very first interaction is counted/tracked
 	public boolean fightStarted()
 	{
-		return competitor.getAttackCount() > 0;
+		return competitor.getAttackCount() > 0 || opponent.getAttackCount() > 0;
 	}
 
 	// returns true if competitor off-pray hit success rate > opponent success rate.

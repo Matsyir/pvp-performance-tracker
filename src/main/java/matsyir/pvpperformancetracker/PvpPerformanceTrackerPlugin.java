@@ -385,7 +385,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		stopFightIfOver();
 
-		// if the client player already has a valid opponent,
+		// if the client player already has a valid opponent AND the fight has started,
 		// or the event source/target aren't players, skip any processing.
 		if ((hasOpponent() && currentFight.fightStarted())
 			|| !(event.getSource() instanceof Player)
