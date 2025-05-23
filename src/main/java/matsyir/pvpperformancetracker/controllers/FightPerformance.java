@@ -518,6 +518,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		for (FightLogEntry entry : getAllFightLogEntries())
 		{
+			if (entry == null)
+			{
+				continue;
+			}
+
 			// Only consider melee and ranged attacks for robe hits
 			AnimationData ad = entry.getAnimationData();
 			if (ad == null)
@@ -526,11 +531,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 			}
 			AttackStyle style = ad.attackStyle;
 			if (style == AttackStyle.MAGIC)
-			{
-				continue;
-			}
-
-			if (entry == null)
 			{
 				continue;
 			}
@@ -558,7 +558,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				int[] legStats = PvpDamageCalc.getItemStats(defenderLegsItemId);
 				if (legStats != null && legStats.length > RANGE_DEF)
 				{
-					wearingRobeBottom = legStats[RANGE_DEF] == 0;
+					wearingRobeBottom = legStats[RANGE_DEF] <= 0; // ==0 seems reliable but <=0 doesn't hurt
 				}
 			}
 
@@ -568,7 +568,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				int[] bodyStats = PvpDamageCalc.getItemStats(defenderBodyItemId);
 				if (bodyStats != null && bodyStats.length > RANGE_DEF)
 				{
-					wearingRobeTop = bodyStats[RANGE_DEF] == 0;
+					wearingRobeTop = bodyStats[RANGE_DEF] <= 0; // ==0 seems reliable but <=0 doesn't hurt
 				}
 			}
 

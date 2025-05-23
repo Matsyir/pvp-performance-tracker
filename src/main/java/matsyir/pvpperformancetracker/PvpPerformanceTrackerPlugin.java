@@ -337,21 +337,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				panel.setConfigWarning(enableConfigWarning);
 				break;
 			case "robeHitFilter":
-				// Recalculate robe hits for all fights based on the new filter and refresh UI
-				for (FightPerformance f : fightHistory)
-				{
-					f.calculateRobeHits(config.robeHitFilter());
-				}
-				if (currentFight != null)
-				{
-					currentFight.calculateRobeHits(config.robeHitFilter());
-				}
-				// Explicitly rebuild panel after recalculation.
-                SwingUtilities.invokeLater(() -> {
-                    if (panel != null) {
-                        panel.rebuild();
-                    }
-                });
+				recalculateAllRobeHits();
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -1064,9 +1050,25 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "1.5.5":
 				updateFrom1_5_5to1_5_6();
 				break;
+			case "1.6.2":
+				updateFrom1_6_2to1_6_3();
+				break;
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
+	}
+
+	// very basic update: We added the new hit on robe statistic, instantly recalculate it on launch,
+	// so that the statistic will be visible for new players (without having to change the config)
+	private void updateFrom1_6_2to1_6_3()
+	{
+		importFightHistoryData();
+
+		// don't rebuild the panel since it doesn't exist yet at this point, will be rebuilt after this update() call.
+		recalculateAllRobeHits(false);
+
+		// re-save the fights that were populated with robe hit statistics
+		saveFightHistoryData();
 	}
 
 	private void updateFrom1_5_5to1_5_6()
@@ -1173,6 +1175,32 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			panel.addFight(fight);
 		}
+	}
+
+	void recalculateAllRobeHits() { recalculateAllRobeHits(true); }
+	void recalculateAllRobeHits(boolean rebuildPanel)
+	{
+		clientThread.invokeLater(() ->
+		{
+			// Recalculate robe hits for all fights based on the new filter and refresh UI
+			for (FightPerformance f : fightHistory)
+			{
+				f.calculateRobeHits(config.robeHitFilter());
+			}
+			if (currentFight != null)
+			{
+				currentFight.calculateRobeHits(config.robeHitFilter());
+			}
+			if (rebuildPanel)
+			{
+				// Explicitly rebuild panel after recalculation.
+				SwingUtilities.invokeLater(() -> {
+					if (panel != null) {
+						panel.rebuild();
+					}
+				});
+			}
+		});
 	}
 
 	// import complete fight history data from the saved json data file

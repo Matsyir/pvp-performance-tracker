@@ -408,7 +408,7 @@ public class FightPerformancePanel extends JPanel
 		int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 		double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
 		JLabel playerRobeHitsLabel = new JLabel(compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
-		playerRobeHitsLabel.setToolTipText(fight.getCompetitor().getName() + " hit on robes: " + compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
+		playerRobeHitsLabel.setToolTipText(fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " + compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
 		playerRobeHitsLabel.setForeground(compRatio < ((double)(fight.getOpponentRobeHits()) / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
 		robeHitsLine.add(playerRobeHitsLabel, BorderLayout.WEST);
 		// Opponent's hits on robes
@@ -416,7 +416,7 @@ public class FightPerformancePanel extends JPanel
 		int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 		double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 		JLabel opponentRobeHitsLabel = new JLabel(oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
-		opponentRobeHitsLabel.setToolTipText(fight.getOpponent().getName() + " hit on robes: " + oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
+		opponentRobeHitsLabel.setToolTipText(fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " + oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
 		opponentRobeHitsLabel.setForeground(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
 		robeHitsLine.add(opponentRobeHitsLabel, BorderLayout.EAST);
 
