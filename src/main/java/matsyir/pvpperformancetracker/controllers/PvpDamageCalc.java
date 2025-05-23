@@ -35,7 +35,7 @@ import static matsyir.pvpperformancetracker.models.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;

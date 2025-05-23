@@ -2,6 +2,11 @@ package matsyir.pvpperformancetracker.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.models.AnimationData;
+import net.runelite.api.HeadIcon;
+import net.runelite.api.PlayerComposition;
+import net.runelite.api.Skill;
+import net.runelite.api.SpriteID;
+
 import java.util.Arrays;
 
 @Slf4j
@@ -110,5 +115,57 @@ public class PvpPerformanceTrackerUtils
 		}
 
 		return hpAfter + damageSum;
+	}
+
+    public static int getSpriteForSkill(Skill skill)
+    {
+        switch (skill)
+        {
+            case ATTACK: return SpriteID.SKILL_ATTACK;
+            case STRENGTH: return SpriteID.SKILL_STRENGTH;
+            case DEFENCE: return SpriteID.SKILL_DEFENCE;
+            case RANGED: return SpriteID.SKILL_RANGED;
+            case MAGIC: return SpriteID.SKILL_MAGIC;
+            case HITPOINTS: return SpriteID.SKILL_HITPOINTS;
+            default: return -1;
+        }
+    }
+
+	// returns SpriteID for a given HeadIcon. returns -1 if not found
+	public static int getSpriteForHeadIcon(HeadIcon icon)
+	{
+		if (icon == null) { return -1; }
+		switch (icon)
+		{
+			case MELEE: return SpriteID.PRAYER_PROTECT_FROM_MELEE;
+			case RANGED: return SpriteID.PRAYER_PROTECT_FROM_MISSILES;
+			case MAGIC: return SpriteID.PRAYER_PROTECT_FROM_MAGIC;
+			case SMITE: return SpriteID.PRAYER_SMITE;
+			case RETRIBUTION: return SpriteID.PRAYER_RETRIBUTION;
+			case REDEMPTION: return SpriteID.PRAYER_REDEMPTION;
+			default: return -1;
+		}
+	}
+
+	// fix an itemId that came from getPlayerComposition().getEquipmentIds()
+	public static int fixItemId(int itemId)
+	{
+		return itemId > PlayerComposition.ITEM_OFFSET ? itemId - PlayerComposition.ITEM_OFFSET : itemId;
+	}
+
+	// create new array so we don't modify original array
+	public static int[] fixItemIds(int[] itemIds)
+	{
+		if (itemIds == null || itemIds.length < 1)
+		{
+			return new int[] { 0 };
+		}
+		int[] fixedItemIds = new int[itemIds.length];
+		for (int i = 0; i < itemIds.length; i++)
+		{
+			fixedItemIds[i] = fixItemId(itemIds[i]);
+		}
+
+		return fixedItemIds;
 	}
 }

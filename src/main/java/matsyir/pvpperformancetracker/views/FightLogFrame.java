@@ -50,6 +50,8 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
+
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.SpriteID;
 
 @Slf4j
@@ -143,7 +145,7 @@ public class FightLogFrame extends JFrame
 			// Off-Pray? (Index 9)
 			stats[i][9] = fightEntry.success() ? "✔" : "";
 			// Def Prayer (Index 10)
-			int prayIcon = PLUGIN.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
+			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			if (prayIcon > 0)
 			{
 				JLabel defPrayLabel = new JLabel();
