@@ -37,17 +37,13 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
-import net.runelite.api.Actor;
-import net.runelite.api.AnimationID;
-import net.runelite.api.HeadIcon;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
-import net.runelite.api.Skill; // Added import
 import net.runelite.api.kit.KitType;
 import net.runelite.api.GraphicID;
 
@@ -247,7 +243,7 @@ class Fighter
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
-			PvpPerformanceTrackerPlugin.PLUGIN.sendChatMessage(fightLogEntry.toChatMessage());
+			PvpPerformanceTrackerPlugin.PLUGIN.sendTradeChatMessage(fightLogEntry.toChatMessage());
 		}
 		fightLogEntries.add(fightLogEntry);
 		pendingAttacks.add(fightLogEntry);

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.ItemID;
 import net.runelite.api.kit.KitType;
 import org.apache.commons.lang3.ArrayUtils;
@@ -268,7 +269,7 @@ public enum EquipmentData
 		public static VoidStyle getVoidStyleFor(int[] playerComposition)
 		{
 			if (playerComposition == null) { return NONE; }
-			playerComposition = PvpPerformanceTrackerPlugin.fixItemIds(playerComposition);
+			playerComposition = PvpPerformanceTrackerUtils.fixItemIds(playerComposition);
 
 			EquipmentData gloves = EquipmentData.fromId(playerComposition[KitType.HANDS.getIndex()]);
 

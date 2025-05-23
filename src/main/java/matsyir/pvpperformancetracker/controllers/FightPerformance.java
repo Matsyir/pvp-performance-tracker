@@ -49,11 +49,9 @@ import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import org.apache.commons.lang3.StringUtils;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
-import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import net.runelite.api.kit.KitType;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
-import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
 // add to the fight, display stats or check the status of the fight.

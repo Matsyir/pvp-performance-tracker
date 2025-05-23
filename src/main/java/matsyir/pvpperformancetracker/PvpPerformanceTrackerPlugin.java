@@ -26,7 +26,6 @@ package matsyir.pvpperformancetracker;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Provides;
@@ -75,7 +74,6 @@ import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.HeadIcon;
 import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
@@ -337,7 +335,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				panel.setConfigWarning(enableConfigWarning);
 				break;
 			case "robeHitFilter":
-				recalculateAllRobeHits();
+				recalculateAllRobeHits(true);
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -1187,7 +1185,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	void recalculateAllRobeHits() { recalculateAllRobeHits(true); }
 	void recalculateAllRobeHits(boolean rebuildPanel)
 	{
 		clientThread.invokeLater(() ->
@@ -1348,7 +1345,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// Send a message to the chat. Send them messages to the trade chat since it is uncommonly
 	// used while fighting, but game, public, private, and clan chat all have their uses.
-	public void sendChatMessage(String chatMessage)
+	public void sendTradeChatMessage(String chatMessage)
 	{
 		chatMessageManager
 			.queue(QueuedMessage.builder()
@@ -1432,36 +1429,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
 				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
 				0;
-	}
-
-	// returns SpriteID for a given HeadIcon. returns -1 if not found
-	public int getSpriteForHeadIcon(HeadIcon icon)
-	{
-		if (icon == null) { return -1; }
-		switch (icon)
-		{
-			case MELEE: return SpriteID.PRAYER_PROTECT_FROM_MELEE;
-			case RANGED: return SpriteID.PRAYER_PROTECT_FROM_MISSILES;
-			case MAGIC: return SpriteID.PRAYER_PROTECT_FROM_MAGIC;
-			case SMITE: return SpriteID.PRAYER_SMITE;
-			case RETRIBUTION: return SpriteID.PRAYER_RETRIBUTION;
-			case REDEMPTION: return SpriteID.PRAYER_REDEMPTION;
-			default: return -1;
-		}
-	}
-
-	public int getSpriteForSkill(Skill skill)
-	{
-		switch (skill)
-		{
-			case ATTACK: return SpriteID.SKILL_ATTACK;
-			case STRENGTH: return SpriteID.SKILL_STRENGTH;
-			case DEFENCE: return SpriteID.SKILL_DEFENCE;
-			case RANGED: return SpriteID.SKILL_RANGED;
-			case MAGIC: return SpriteID.SKILL_MAGIC;
-			case HITPOINTS: return SpriteID.SKILL_HITPOINTS;
-			default: return -1;
-		}
 	}
 
 	public void addSpriteToLabelIfValid(JLabel label, int spriteId, Runnable swingCallback)
@@ -1567,28 +1534,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void addItemToLabelIfValid(JLabel label, int itemId)
 	{
 		addItemToLabelIfValid(label, itemId, true, null);
-	}
-
-	// fix an itemId that came from getPlayerComposition().getEquipmentIds()
-	public static int fixItemId(int itemId)
-	{
-		return itemId > PlayerComposition.ITEM_OFFSET ? itemId - PlayerComposition.ITEM_OFFSET : itemId;
-	}
-
-	// create new array so we don't modify original array
-	public static int[] fixItemIds(int[] itemIds)
-	{
-		if (itemIds == null || itemIds.length < 1)
-		{
-			return new int[] { 0 };
-		}
-		int[] fixedItemIds = new int[itemIds.length];
-		for (int i = 0; i < itemIds.length; i++)
-		{
-			fixedItemIds[i] = fixItemId(itemIds[i]);
-		}
-
-		return fixedItemIds;
 	}
 
 	public void updateNameFilterConfig(String newFilterName)
