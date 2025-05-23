@@ -70,6 +70,7 @@ import java.awt.FontMetrics;
 public class FightPerformancePanel extends JPanel
 {
 	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
+	private static JFrame attackSummaryFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
 	private static ImageIcon deathIcon;
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -536,6 +537,14 @@ public class FightPerformancePanel extends JPanel
 
 		JPopupMenu popupMenu = new JPopupMenu();
 
+		// Create "Show fight log" menu (same action as left click)
+		final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
+		displayFightLog.addActionListener(e -> createFightLogFrame());
+
+		// Create "Show attack summary" menu
+		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
+		displayAttackSummary.addActionListener(e -> createAttackSummaryFrame());
+
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
 		removeFight.addActionListener(e ->
@@ -546,6 +555,8 @@ public class FightPerformancePanel extends JPanel
 				PLUGIN.removeFight(fight);
 			}
 		});
+
+
 
 		// Create "Copy as discord message" context menu
 		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
@@ -560,6 +571,8 @@ public class FightPerformancePanel extends JPanel
 		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
 		openFightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
 
+		popupMenu.add(displayFightLog);
+		popupMenu.add(displayAttackSummary);
 		popupMenu.add(removeFight);
 		popupMenu.add(copyDiscordMsg);
 		popupMenu.add(copyFight);
@@ -604,7 +617,7 @@ public class FightPerformancePanel extends JPanel
 		// show error modal if the fight has no log entries to display.
 		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
-		if (fightLogEntries.size() < 1)
+		if (fightLogEntries.isEmpty())
 		{
 			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
 		}
@@ -619,5 +632,24 @@ public class FightPerformancePanel extends JPanel
 				fightLogEntries,
 				getRootPane());
 		}
+	}
+
+	private void createAttackSummaryFrame()
+	{
+		// destroy current frame if it exists so we only have one at a time (static field)
+		if (attackSummaryFrame != null)
+		{
+			attackSummaryFrame.dispose();
+		}
+		// show error modal if the fight has no log entries to display.
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
+		fightLogEntries.removeIf(e -> !e.isFullEntry());
+		if (fightLogEntries.isEmpty())
+		{
+			PLUGIN.createConfirmationModal(false, "This fight has no attack summary to display, or the data is outdated.");
+			return;
+		}
+
+		attackSummaryFrame = new AttackSummaryFrame(fight, fightLogEntries, getRootPane());
 	}
 }
