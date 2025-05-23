@@ -70,9 +70,9 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private LineComponent overlaySixthLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
 	private LineComponent overlaySeventhLine; // left: player's hp healed pray stats, right: opponent's hp healed
 	private LineComponent overlayEighthLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
+	private LineComponent overlayRobeHitsLine; // Line for hits on robes
 	private LineComponent overlayTotalKoChanceLine; // Combined total/sum KO chance
 	private LineComponent overlayLastKoChanceLine; // Combined last KO chance
-	private LineComponent overlayRobeHitsLine; // Line for hits on robes
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -171,14 +171,14 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			int compHits = fight.getCompetitorRobeHits();
 			int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 			double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
-			String compStr = compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")";
+			String compStr = compHits + "/" + compTotal;
 			overlayRobeHitsLine.setLeft(compStr);
 			overlayRobeHitsLine.setLeftColor(compRatio < ((double) fight.getOpponentRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
 
 			int oppHits = fight.getOpponentRobeHits();
 			int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 			double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
-			String oppStr = oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")";
+			String oppStr = oppHits + "/" + oppTotal;
 			overlayRobeHitsLine.setRight(oppStr);
 			overlayRobeHitsLine.setRightColor(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
 		}
@@ -281,15 +281,18 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		{
 			panelComponent.getChildren().add(overlayEighthLine);
 		}
+		if (config.showOverlayRobeHits())
+		{
+			panelComponent.getChildren().add(overlayRobeHitsLine);
+		}
 		// Add new KO chance lines based on config
-		if (config.showOverlayTotalKoChance()) {
+		if (config.showOverlayTotalKoChance())
+		{
 			panelComponent.getChildren().add(overlayTotalKoChanceLine);
 		}
-		if (config.showOverlayLastKoChance()) {
+		if (config.showOverlayLastKoChance())
+		{
 			panelComponent.getChildren().add(overlayLastKoChanceLine);
-		}
-		if (config.showOverlayRobeHits()) {
-			panelComponent.getChildren().add(overlayRobeHitsLine);
 		}
 	}
 
