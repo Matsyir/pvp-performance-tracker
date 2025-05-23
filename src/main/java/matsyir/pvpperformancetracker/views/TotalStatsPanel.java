@@ -83,8 +83,8 @@ public class TotalStatsPanel extends JPanel
 		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 11; // Increased count
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 10; // Increased count
+	private static final int LAYOUT_ROWS_WITH_WARNING = 12; // Increased count to include Avg Robe Hits
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11; // Increased count to include Avg Robe Hits
 
 	// labels to be updated
 	private JLabel killsLabel;
@@ -96,6 +96,7 @@ public class TotalStatsPanel extends JPanel
 	private JLabel offensivePrayCountStatsLabel;
 	private JLabel hpHealedStatsLabel;
 	private JLabel ghostBarrageStatsLabel;
+	private JLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
 	private JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
@@ -153,6 +154,11 @@ public class TotalStatsPanel extends JPanel
 	private double avgOpponentKoProb = 0; // Average overall KO probability per fight
 	private int numFightsWithKoChance = 0; // Counter for fights that have KO chance data
 
+	// Accumulators for robe hits
+	private double totalCompetitorRobeHits = 0;
+	private double totalOpponentRobeHits = 0;
+	private double avgCompetitorRobeHits = 0;
+	private double avgOpponentRobeHits = 0;
 
 	public TotalStatsPanel()
 	{
@@ -381,6 +387,18 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
 		add(ghostBarrageStatsPanel);
 
+		// TENTH LINE: Avg Hits on Robes
+		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
+		JLabel robeHitsStatsLeftLabel = new JLabel("Avg Hits on Robes:");
+		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
+		robeHitsStatsPanel.add(robeHitsStatsLeftLabel, BorderLayout.WEST);
+		avgRobeHitsStatsLabel = new JLabel();
+		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
+		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
+		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		robeHitsStatsPanel.setComponentPopupMenu(popupMenu);
+		add(robeHitsStatsPanel);
+
 		// TENTH LINE (NEW)
 		// panel to show the avg KO chance stats
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
@@ -490,6 +508,19 @@ public class TotalStatsPanel extends JPanel
 			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 			+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
 
+		// Avg Hits on Robes label
+		if (numFights > 0)
+		{
+			avgRobeHitsStatsLabel.setText(nf1.format(avgCompetitorRobeHits) + " / " + nf1.format(avgOpponentRobeHits));
+			((JPanel)avgRobeHitsStatsLabel.getParent()).setToolTipText("Average hits on robes per fight: Player: "
+				+ nf1.format(avgCompetitorRobeHits) + ", Opponent: " + nf1.format(avgOpponentRobeHits));
+		}
+		else
+		{
+			avgRobeHitsStatsLabel.setText("- / -");
+			((JPanel)avgRobeHitsStatsLabel.getParent()).setToolTipText("No robe hits data available for calculation.");
+		}
+
 		// Set Avg KO Chance label
 		if (numFightsWithKoChance > 0)
 		{
@@ -534,6 +565,12 @@ public class TotalStatsPanel extends JPanel
 			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
 			fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
 			fight.getCompetitor().getGhostBarrageDeservedDamage());
+
+		// Accumulate robe hits
+		totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+		totalOpponentRobeHits += fight.getOpponentRobeHits();
+		avgCompetitorRobeHits = totalCompetitorRobeHits / numFights;
+		avgOpponentRobeHits = totalOpponentRobeHits / numFights;
 
 		// add kill-specific or death-specific stats
 		if (fight.getCompetitor().isDead())
@@ -636,6 +673,10 @@ public class TotalStatsPanel extends JPanel
 
 		numFights += fights.size();
 
+		// Reset robe hits totals
+		totalCompetitorRobeHits = 0;
+		totalOpponentRobeHits = 0;
+
 		// Reset KO chance totals before recalculating for all fights
 		totalCompetitorKoChances = 0;
 		totalOpponentKoChances = 0;
@@ -651,6 +692,10 @@ public class TotalStatsPanel extends JPanel
 				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
 				fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
 				fight.getCompetitor().getGhostBarrageDeservedDamage());
+
+			// Accumulate robe hits
+			totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+			totalOpponentRobeHits += fight.getOpponentRobeHits();
 
 			if (fight.getCompetitor().isDead())
 			{
@@ -709,6 +754,10 @@ public class TotalStatsPanel extends JPanel
 				totalOpponentKoProbSum += fightOpponentKoProb;
 			}
 		}
+
+		// Calculate average robe hits
+		avgCompetitorRobeHits = numFights != 0 ? totalCompetitorRobeHits / numFights : 0;
+		avgOpponentRobeHits = numFights != 0 ? totalOpponentRobeHits / numFights : 0;
 
 		// Recalculate averages for all stats
 		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
