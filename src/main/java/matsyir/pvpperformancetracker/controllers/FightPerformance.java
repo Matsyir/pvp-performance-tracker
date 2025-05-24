@@ -426,68 +426,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return competitor.getDamageDealt() - opponent.getDamageDealt();
 	}
 
-	// get nicely formatted stats for a discord message
-	// uses ``` for monospaced fonts, and bash syntax highlighting for basic "success" highlighting.
-	// "success entries" must be in double quotes.
-	// pad non-success entries with a string, since they aren't in double quotes.
-	public String getAsDiscordMessage()
-	{
-		String msg = "```bash\n";
-		final int minLineLength = 36;
-		final int lineLength = Math.max(minLineLength, this.competitor.getName().length() + this.opponent.getName().length() + 8);
-
-		// name line
-		String competitorName = competitor.getName() + (competitor.isDead() ? "(died)" : "");
-		String opponentName = opponent.getName() + (opponent.isDead() ? "(died)" : "");
-		msg += StringUtils.rightPad(competitorName, lineLength - opponentName.length(), ' ') + opponentName + "\n";
-
-		// off-pray line
-		String offPrayLeft = competitor.getOffPrayStats();
-		offPrayLeft = surroundStrIfTrue(offPrayLeft, competitorOffPraySuccessIsGreater());
-
-		String offPrayRight = opponent.getOffPrayStats();
-		offPrayRight = surroundStrIfTrue(offPrayRight, opponentOffPraySuccessIsGreater());
-		msg += StringUtils.rightPad(offPrayLeft, lineLength - offPrayRight.length(), ' ') + offPrayRight + "\n";
-
-		// deserved dmg line
-		String deservedDmgLeft = competitor.getDeservedDmgString(opponent);
-		deservedDmgLeft = surroundStrIfTrue(deservedDmgLeft, competitorDeservedDmgIsGreater());
-
-		String deservedDmgRight = opponent.getDeservedDmgString(competitor);
-		deservedDmgRight = surroundStrIfTrue(deservedDmgRight, opponentDeservedDmgIsGreater());
-		msg += StringUtils.rightPad(deservedDmgLeft, lineLength - deservedDmgRight.length(), ' ') + deservedDmgRight + "\n";
-
-		// dmg dealt line
-		String dmgDealtLeft = competitor.getDmgDealtString(opponent);
-		dmgDealtLeft = surroundStrIfTrue(dmgDealtLeft, competitorDmgDealtIsGreater());
-
-		String dmgDealtRight = opponent.getDmgDealtString(competitor);
-		dmgDealtRight = surroundStrIfTrue(dmgDealtRight, opponentDmgDealtIsGreater());
-		msg += StringUtils.rightPad(dmgDealtLeft, lineLength - dmgDealtRight.length(), ' ') + dmgDealtRight + "\n";
-
-		// magic hit stats line
-		String magicHitStatsLeft = competitor.getMagicHitStats();
-		magicHitStatsLeft = surroundStrIfTrue(magicHitStatsLeft, competitorMagicHitsLuckier());
-
-		String magicHitStatsRight = opponent.getMagicHitStats();
-		magicHitStatsRight = surroundStrIfTrue(magicHitStatsRight, opponentMagicHitsLuckier());
-		msg += StringUtils.rightPad(magicHitStatsLeft, lineLength - magicHitStatsRight.length(), ' ') + magicHitStatsRight + "\n";
-
-		// offensive pray line
-		String offensivePrayLeft = surroundStrIfTrue(competitor.getOffensivePrayStats(), false);
-		String offensivePrayRight = "N/A ";
-		msg += StringUtils.rightPad(offensivePrayLeft, lineLength - offensivePrayRight.length(), ' ') + offensivePrayRight + "\n";
-
-		// hp healed line
-		String hpHealedLeft = surroundStrIfTrue(String.valueOf(competitor.getHpHealed()), false);
-		String hpHealedRight = "N/A ";
-		msg += StringUtils.rightPad(hpHealedLeft, lineLength - hpHealedRight.length(), ' ') + hpHealedRight + "\n";
-
-		msg += "Ended at " + new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd")
-			.format(Date.from(Instant.ofEpochMilli(lastFightTime))) + "\n";
-		return msg + "```";
-	}
-
 	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare)
 	{
 		return surroundStrIfTrue(strToSurround, boolToCompare, "'", " ");

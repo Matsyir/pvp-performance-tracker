@@ -1403,18 +1403,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		createConfirmationModal(success, confirmMessage);
 	}
 
-	public void copyFightAsDiscordMsg(FightPerformance fight)
-	{
-		if (fight == null) { return; }
-
-		String fightMsg = fight.getAsDiscordMessage();
-
-		final StringSelection contents = new StringSelection(fightMsg);
-		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
-
-		createConfirmationModal(true, "Discord message of fight data was copied to the clipboard.");
-	}
-
 	// retrieve offensive pray as SpriteID since that's all we will directly use it for,
 	// aside from comparison/equality checks, so we save an extra mapping this way
 	public int currentlyUsedOffensivePray()

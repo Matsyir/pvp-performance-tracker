@@ -553,10 +553,6 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> createAttackSummaryFrame());
 
-		// Create "Copy as discord message" context menu
-		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
-		copyDiscordMsg.addActionListener(e -> PLUGIN.copyFightAsDiscordMsg(fight));
-
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
 		removeFight.addActionListener(e ->
@@ -580,7 +576,6 @@ public class FightPerformancePanel extends JPanel
 
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
-		popupMenu.add(copyDiscordMsg);
 		popupMenu.add(removeFight);
 		popupMenu.add(copyFight);
 		popupMenu.add(openFightAnalysis);
