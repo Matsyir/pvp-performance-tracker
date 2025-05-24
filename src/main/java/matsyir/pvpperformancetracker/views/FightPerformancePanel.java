@@ -553,6 +553,15 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> createAttackSummaryFrame());
 
+		// Create "Copy Fight Data" popup menu/context menu
+		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
+		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
+		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
+
+		final JMenuItem openFightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
+		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
+		openFightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
+
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
 		removeFight.addActionListener(e ->
@@ -565,20 +574,11 @@ public class FightPerformancePanel extends JPanel
 		});
 		removeFight.setForeground(Color.RED);
 
-		// Create "Copy Fight Data" popup menu/context menu
-		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
-		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
-		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
-
-		final JMenuItem openFightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
-		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
-		openFightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
-
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
-		popupMenu.add(removeFight);
 		popupMenu.add(copyFight);
 		popupMenu.add(openFightAnalysis);
+		popupMenu.add(removeFight);
 		setComponentPopupMenu(popupMenu);
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int)getPreferredSize().getHeight()));
