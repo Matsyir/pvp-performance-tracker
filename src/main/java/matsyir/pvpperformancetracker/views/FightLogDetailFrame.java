@@ -86,9 +86,8 @@ class FightLogDetailFrame extends JFrame
 	// this is a regular fightLogDetailFrame, for a normal non-merged fight.
 	FightLogDetailFrame(FightPerformance fight, FightLogEntry log, int rowIdx, Point location)
 	{
-		super(fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
-			+ " on world " + fight.getWorld()
-			+ " - Log Details");
+		super("Fight Log Details - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
+			+ " on world " + fight.getWorld());
 
 		this.rowIdx = rowIdx;
 

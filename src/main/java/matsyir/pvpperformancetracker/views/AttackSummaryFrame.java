@@ -57,7 +57,7 @@ public class AttackSummaryFrame extends JFrame
     int opponentMageCount = 0;
     public AttackSummaryFrame(FightPerformance fight, ArrayList<FightLogEntry> fightLogEntries, JRootPane rootPane)
     {
-        super("Attack Summary: " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
+        super("Attack Summary - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
                 + " on world " + fight.getWorld());
 
         // if always on top is supported, and the core RL plugin has "always on top" set, make the frame always

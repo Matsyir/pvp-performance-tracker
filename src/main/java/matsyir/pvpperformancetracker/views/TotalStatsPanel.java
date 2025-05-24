@@ -486,7 +486,7 @@ public class TotalStatsPanel extends JPanel
 		}
 		((JPanel)magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
 			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-		nf1.format(totalStats.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
+		nf1.format(totalStats.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -510,7 +510,7 @@ public class TotalStatsPanel extends JPanel
 		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
 			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
 			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
-			+ "Unless fighting in Duel Arena, your opponents likely had a similar value.");
+			+ "Unless fighting in PvP Arena, your opponents likely had a similar value.");
 
 		// Avg Hits on Robes label
 		if (numFights > 0)

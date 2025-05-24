@@ -289,7 +289,7 @@ public class FightPerformancePanel extends JPanel
 		playerMagicHitStats.setText(String.valueOf(competitor.getMagicHitStats()));
 		playerMagicHitStats.setToolTipText("<html>" + competitor.getName() + " successfully hit " +
 			competitor.getMagicHitCount() + " of " + competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(competitor.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
+			nf.format(competitor.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
 		playerMagicHitStats.setForeground(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(playerMagicHitStats, BorderLayout.WEST);
 
@@ -298,7 +298,7 @@ public class FightPerformancePanel extends JPanel
 		opponentMagicHitStats.setText(String.valueOf(opponent.getMagicHitStats()));
 		opponentMagicHitStats.setToolTipText("<html>" + opponent.getName() + " successfully hit " +
 			opponent.getMagicHitCount() + " of " + opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-			nf.format(opponent.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, >100% = lucky, <100% = unlucky</html>");
+			nf.format(opponent.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
 		opponentMagicHitStats.setForeground(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
 		magicHitStatsLine.add(opponentMagicHitStats, BorderLayout.EAST);
 
@@ -389,7 +389,7 @@ public class FightPerformancePanel extends JPanel
 		playerGhostBarrages.setText(competitor.getGhostBarrageStats());
 		playerGhostBarrages.setToolTipText("<html>(Advanced): " + competitor.getName() + " hit " + competitor.getGhostBarrageCount()
 			+ " ghost barrages during the fight, worth an extra " + nf.format(competitor.getGhostBarrageDeservedDamage())
-			+ " deserved damage.<br>Unless fighting in Duel Arena, your opponent likely had a similar value.</html>");
+			+ " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.</html>");
 
 		playerGhostBarrages.setForeground(
 			(showOpponentClientStats
@@ -407,7 +407,7 @@ public class FightPerformancePanel extends JPanel
 			opponentGhostBarrages.setText(oppComp.getGhostBarrageStats());
 			opponentGhostBarrages.setToolTipText("<html>(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
 				+ " ghost barrages during the fight, worth an extra " + nf.format(oppComp.getGhostBarrageDeservedDamage())
-				+ " deserved damage.<br>Unless fighting in Duel Arena, your opponent likely had a similar value.</html>");
+				+ " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.</html>");
 			opponentGhostBarrages.setForeground(
 				oppFight.getCompetitor().getGhostBarrageDeservedDamage() > competitor.getGhostBarrageDeservedDamage()
 				? Color.GREEN : ColorScheme.BRAND_ORANGE);
@@ -428,7 +428,11 @@ public class FightPerformancePanel extends JPanel
 		int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 		double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
 		JLabel playerRobeHitsLabel = new JLabel(compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
-		playerRobeHitsLabel.setToolTipText(fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " + compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")");
+		playerRobeHitsLabel.setToolTipText("<html>" + fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " +
+				compHits + "/" + compTotal + " (" + nfPercent.format(compRatio) + ")<br>" +
+				"In other words, of his opponent's " + compTotal + " range/melee attacks, " +
+				fight.getCompetitor().getName() + " tanked " + compHits + " of them with robes."
+		);
 		playerRobeHitsLabel.setForeground(compRatio < ((double)(fight.getOpponentRobeHits()) / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
 		robeHitsLine.add(playerRobeHitsLabel, BorderLayout.WEST);
 		// Opponent's hits on robes
@@ -436,7 +440,11 @@ public class FightPerformancePanel extends JPanel
 		int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 		double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 		JLabel opponentRobeHitsLabel = new JLabel(oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
-		opponentRobeHitsLabel.setToolTipText(fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " + oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")");
+		opponentRobeHitsLabel.setToolTipText("<html>" + fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
+				oppHits + "/" + oppTotal + " (" + nfPercent.format(oppRatio) + ")<br>" +
+				"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
+				fight.getOpponent().getName() + " tanked " + oppHits + " of them with robes."
+		);
 		opponentRobeHitsLabel.setForeground(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
 		robeHitsLine.add(opponentRobeHitsLabel, BorderLayout.EAST);
 
@@ -545,6 +553,10 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> createAttackSummaryFrame());
 
+		// Create "Copy as discord message" context menu
+		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
+		copyDiscordMsg.addActionListener(e -> PLUGIN.copyFightAsDiscordMsg(fight));
+
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
 		removeFight.addActionListener(e ->
@@ -555,12 +567,7 @@ public class FightPerformancePanel extends JPanel
 				PLUGIN.removeFight(fight);
 			}
 		});
-
-
-
-		// Create "Copy as discord message" context menu
-		final JMenuItem copyDiscordMsg = new JMenuItem("Copy As Discord Msg");
-		copyDiscordMsg.addActionListener(e -> PLUGIN.copyFightAsDiscordMsg(fight));
+		removeFight.setForeground(Color.RED);
 
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
@@ -573,8 +580,8 @@ public class FightPerformancePanel extends JPanel
 
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
-		popupMenu.add(removeFight);
 		popupMenu.add(copyDiscordMsg);
+		popupMenu.add(removeFight);
 		popupMenu.add(copyFight);
 		popupMenu.add(openFightAnalysis);
 		setComponentPopupMenu(popupMenu);
