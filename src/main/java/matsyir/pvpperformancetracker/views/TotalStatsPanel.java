@@ -140,9 +140,6 @@ public class TotalStatsPanel extends JPanel
 
 	private double avgHpHealed = 0;
 
-	private double avgGhostBarrageCount = 0;
-	private double avgGhostBarrageDeservedDamage = 0;
-
 	// KO Chance totals/averages
 	private double totalCompetitorKoChances = 0;
 	private double totalOpponentKoChances = 0;
@@ -163,6 +160,12 @@ public class TotalStatsPanel extends JPanel
 	private double avgCompetitorRobeHitsPercentage = 0;
 	private double avgOpponentRobeHits = 0;
 	private double avgOpponentRobeHitsPercentage = 0;
+
+	// let's keep ghost barrage as the bottom-most statistic:
+	// It's only relevant to people fighting in PvP Arena, and it's mostly only relevant
+	// to people who can share their tracker with each-other - so pretty rarely useful.
+	private double avgGhostBarrageCount = 0;
+	private double avgGhostBarrageDeservedDamage = 0;
 
 	public TotalStatsPanel()
 	{
@@ -374,23 +377,6 @@ public class TotalStatsPanel extends JPanel
 		hpHealedPanel.setComponentPopupMenu(popupMenu);
 		add(hpHealedPanel);
 
-		// NINTH LINE
-		// panel to show the avg ghost barrage stats
-		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
-
-		// left label with a label to say it's avg ghost barrage stats
-		JLabel ghostBarrageStatsLeftLabel = new JLabel();
-		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
-		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
-		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
-
-		ghostBarrageStatsLabel = new JLabel();
-		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
-		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
-		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
-		add(ghostBarrageStatsPanel);
-
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
 		JLabel robeHitsStatsLeftLabel = new JLabel("Avg Hits on Robes:");
@@ -421,6 +407,22 @@ public class TotalStatsPanel extends JPanel
 		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		avgKoChanceStatsPanel.setComponentPopupMenu(popupMenu);
 		add(avgKoChanceStatsPanel);
+
+		// panel to show the avg ghost barrage stats
+		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
+
+		// left label with a label to say it's avg ghost barrage stats
+		JLabel ghostBarrageStatsLeftLabel = new JLabel();
+		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
+		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
+		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
+
+		ghostBarrageStatsLabel = new JLabel();
+		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
+		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
+		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
+		add(ghostBarrageStatsPanel);
 
 
 		setLabels();
@@ -506,12 +508,6 @@ public class TotalStatsPanel extends JPanel
 		((JPanel)hpHealedStatsLabel.getParent()).setToolTipText("A total of " + nf.format(totalStats.getHpHealed())
 			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight.");
 
-		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
-		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
-			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
-			+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
-			+ "Unless fighting in PvP Arena, your opponents likely had a similar value.");
-
 		// Avg Hits on Robes label
 		if (numFights > 0)
 		{
@@ -550,6 +546,12 @@ public class TotalStatsPanel extends JPanel
 			avgKoChanceStatsLabel.setText("- / -");
 			((JPanel) avgKoChanceStatsLabel.getParent()).setToolTipText("No KO chance data available for calculation.");
 		}
+
+		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
+		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
+				+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
+				+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
+				+ "Unless fighting in PvP Arena, your opponents likely had a similar value.");
 	}
 
 	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
@@ -632,9 +634,6 @@ public class TotalStatsPanel extends JPanel
 
 		avgHpHealed = (double)totalStats.getHpHealed() / numFights;
 
-		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
-
 		// Calculate KO chances & sum % for this fight and add to totals
 		int fightCompetitorKoChances = 0;
 		double fightCompetitorSurvivalProb = 1.0;
@@ -673,6 +672,8 @@ public class TotalStatsPanel extends JPanel
 		avgCompetitorKoProb = numFightsWithKoChance != 0 ? totalCompetitorKoProbSum / numFightsWithKoChance : 0;
 		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
 
+		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -796,14 +797,23 @@ public class TotalStatsPanel extends JPanel
 
 		avgHpHealed = numFights != 0 ? (double)totalStats.getHpHealed() / numFights : 0;
 
-		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+		totalCompetitorRobeHits = 0;
+		totalCompetitorRobeHitsAttempted = 0;
+		totalOpponentRobeHits = 0;
+		totalOpponentRobeHitsAttempted = 0;
+		avgCompetitorRobeHits = 0;
+		avgCompetitorRobeHitsPercentage = 0;
+		avgOpponentRobeHits = 0;
+		avgOpponentRobeHitsPercentage = 0;
 
 		// Recalculate KO averages using the count of fights with data
 		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
 		avgOpponentKoChances = numFightsWithKoChance != 0 ? totalOpponentKoChances / numFightsWithKoChance : 0;
 		avgCompetitorKoProb = numFightsWithKoChance != 0 ? totalCompetitorKoProbSum / numFightsWithKoChance : 0;
 		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
+
+		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
+		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -842,9 +852,6 @@ public class TotalStatsPanel extends JPanel
 
 		avgHpHealed = 0;
 
-		avgGhostBarrageCount = 0;
-		avgGhostBarrageDeservedDamage = 0;
-
 		// Reset KO chance stats
 		totalCompetitorKoChances = 0;
 		totalOpponentKoChances = 0;
@@ -855,6 +862,9 @@ public class TotalStatsPanel extends JPanel
 		avgCompetitorKoProb = 0;
 		avgOpponentKoProb = 0;
 		numFightsWithKoChance = 0; // Reset new counter
+
+		avgGhostBarrageCount = 0;
+		avgGhostBarrageDeservedDamage = 0;
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);

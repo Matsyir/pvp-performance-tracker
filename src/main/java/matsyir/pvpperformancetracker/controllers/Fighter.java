@@ -354,10 +354,10 @@ class Fighter
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
 	public String getOffPrayStats(boolean shortString)
 	{
-		nf.setMaximumFractionDigits(0);
+		nf.setMaximumFractionDigits(1);
 		return shortString ?
 			offPraySuccessCount + "/" + attackCount :
-			nf.format(offPraySuccessCount) + "/" + nf.format(attackCount) + " (" + Math.round(calculateOffPraySuccessPercentage()) + "%)";
+			offPraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffPraySuccessPercentage()) + "%)";
 	}
 
 	public String getOffPrayStats()
@@ -371,7 +371,7 @@ class Fighter
 		String stats = nf.format(magicHitCount);
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
-		nf.setMaximumFractionDigits(2);
+		nf.setMaximumFractionDigits(1);
 		String luckPercentage = magicHitCountDeserved != 0 ?
 			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) :
 			"0";
@@ -381,7 +381,7 @@ class Fighter
 
 	public String getShortMagicHitStats()
 	{
-		nf.setMaximumFractionDigits(2);
+		nf.setMaximumFractionDigits(1);
 		return magicHitCountDeserved != 0 ?
 			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) + "%" :
 			"0%";
@@ -433,10 +433,10 @@ class Fighter
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
 	public String getOffensivePrayStats(boolean shortString)
 	{
-		nf.setMaximumFractionDigits(0);
+		nf.setMaximumFractionDigits(1);
 		return shortString ?
 			offensivePraySuccessCount + "/" + attackCount :
-			nf.format(offensivePraySuccessCount) + "/" + nf.format(attackCount) + " (" + Math.round(calculateOffensivePraySuccessPercentage()) + "%)";
+			offensivePraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffensivePraySuccessPercentage()) + "%)";
 	}
 
 	public String getOffensivePrayStats()
