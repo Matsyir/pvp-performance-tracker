@@ -40,6 +40,7 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -54,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.time.temporal.ChronoUnit;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -84,7 +86,7 @@ import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.FakeXpDrop;
-import net.runelite.api.events.GameTick; // Added import
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
@@ -101,18 +103,20 @@ import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
-import net.runelite.client.hiscore.HiscoreEndpoint; // Added import
-import net.runelite.client.hiscore.HiscoreManager; // Added import
-import net.runelite.client.hiscore.HiscoreResult; // Added import
-import net.runelite.client.hiscore.HiscoreSkill; // Added import
+import net.runelite.client.hiscore.HiscoreEndpoint;
+import net.runelite.client.hiscore.HiscoreManager;
+import net.runelite.client.hiscore.HiscoreResult;
+import net.runelite.client.hiscore.HiscoreSkill;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 
 @Slf4j
@@ -205,8 +209,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
-	private Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>(); // MODIFIED: Use HitsplatInfo
+	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
+	private final List<Pair<Long, HitsplatInfo>> hitsplatsForPolling = new ArrayList<>(); // hitsplats we need to poll, along with the time we want to consume them
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 
 	// #################################################################################################################
@@ -405,6 +410,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
 			overlay.setFight(currentFight);
+			hitsplatBuffer.clear();
+			incomingHitsplatsBuffer.clear();
+			hitsplatsForPolling.clear();
 		}
 	}
 
@@ -533,7 +541,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// Schedule task to poll HP after a short delay of 100ms (reduces missing HP values)
 		try
 		{
-			executor.schedule(() -> updatePolledHp(info), 100, TimeUnit.MILLISECONDS);
+
+			hitsplatsForPolling.add(Pair.of(Instant.now().toEpochMilli() + 100, info));
 		}
 		catch (Exception e)
 		{
@@ -541,19 +550,36 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// updatePolledHp method
-	// Method called by the scheduled task to poll and store HP
-	private void updatePolledHp(HitsplatInfo info)
+	// updatePolledHp method:
+	// Method constantly called by the @Scheduled task to poll and store HP
+	@Schedule(period = 100L, unit = ChronoUnit.MILLIS, asynchronous = false)
+	private void updatePolledHp()
 	{
-		if (info == null || info.getEvent() == null) return;
-		Actor target = info.getEvent().getActor();
-		if (target != null && !target.isDead())
+		if (!hasOpponent() || !currentFight.fightStarted())
 		{
-			int ratio = target.getHealthRatio();
-			int scale = target.getHealthScale();
-			info.setPolledHp(ratio, scale);
+			hitsplatsForPolling.clear();
+			return;
 		}
-		// If target is dead or null, polled HP remains -1
+		if (hitsplatsForPolling.isEmpty()) { return; }
+
+		clientThread.invokeLater(() ->
+		{
+			for (Pair<Long, HitsplatInfo> pair : hitsplatsForPolling)
+			{
+				// only consume the hitsplat if we are at/passed the time we want to.
+				if (Instant.now().toEpochMilli() < pair.getLeft()) { continue; }
+
+				Actor target = pair.getRight().getEvent().getActor();
+				if (target != null && !target.isDead())
+				{
+					int ratio = target.getHealthRatio();
+					int scale = target.getHealthScale();
+					pair.getRight().setPolledHp(ratio, scale);
+				}
+				// If target is dead or null, polled HP remains -1
+			}
+			hitsplatsForPolling.removeIf((Pair<Long, HitsplatInfo> pair) -> Instant.now().toEpochMilli() >= pair.getLeft());
+		});
 	}
 
 	@Subscribe
