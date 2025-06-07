@@ -50,7 +50,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -547,9 +546,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// updatePolledHp method:
-	// Method constantly called by the @Scheduled task to poll and store HP
-	@Schedule(period = 100L, unit = ChronoUnit.MILLIS, asynchronous = false)
+	// constantly called by the @Schedule task to poll and store HP
+	@Schedule(period = 30L, unit = ChronoUnit.MILLIS, asynchronous = false)
 	private void updatePolledHp()
 	{
 		if (!hasOpponent() || !currentFight.fightStarted())
@@ -820,7 +818,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			// Determine attacker
 			String actorName = ((Player) opponent).getName();
-			Fighter attacker = null;
+			Fighter attacker;
 			if (actorName.equals(currentFight.getOpponent().getName()))
 			{
 				attacker = currentFight.getCompetitor();
@@ -1314,7 +1312,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// can throw NullPointerException if some of the serialized data is corrupted
 	void importFights(List<FightPerformance> fights) throws NullPointerException
 	{
-		if (fights == null || fights.size() < 1) { return; }
+		if (fights == null || fights.isEmpty()) { return; }
 
 		fights.removeIf(Objects::isNull);
 		fightHistory.addAll(fights);
@@ -1505,7 +1503,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			final int finalItemId = itemId - (verifyId ? PlayerComposition.ITEM_OFFSET : 0);
 			clientThread.invokeLater(() -> {
 				itemManager.getImage(finalItemId).addTo(label);
-				if (tooltipOverride != null && tooltipOverride.length() > 0)
+				if (tooltipOverride != null && !tooltipOverride.isEmpty())
 				{
 					label.setToolTipText(tooltipOverride);
 				}

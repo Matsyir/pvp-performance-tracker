@@ -515,7 +515,7 @@ public class PvpDamageCalc
 
 		double baseChance;
 		double attackerChance;
-		double defenderChance = 0;
+		double defenderChance;
 
 		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER :
 			ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :

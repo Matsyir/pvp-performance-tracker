@@ -28,12 +28,10 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +45,6 @@ import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
-import org.apache.commons.lang3.StringUtils;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import net.runelite.api.kit.KitType;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
@@ -138,7 +135,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.lastFightTime = old.lastFightTime;
 		if (old.isLmsFight)
 		{
-			if (competitor.getFightLogEntries().size() > 0)
+			if (!competitor.getFightLogEntries().isEmpty())
 			{
 				int defLvl = competitor.getFightLogEntries().get(0).getAttackerLevels().def;
 				this.fightType =
@@ -424,17 +421,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public double getCompetitorDmgDealtDiff()
 	{
 		return competitor.getDamageDealt() - opponent.getDamageDealt();
-	}
-
-	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare)
-	{
-		return surroundStrIfTrue(strToSurround, boolToCompare, "'", " ");
-	}
-	private String surroundStrIfTrue(String strToSurround, boolean boolToCompare, String trueSurround, String falseSurround)
-	{
-		return boolToCompare ?
-			trueSurround + strToSurround + trueSurround :
-			falseSurround  + strToSurround + falseSurround;
 	}
 
 	// use to sort by last fight time, to sort fights by date/time.

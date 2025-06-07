@@ -542,7 +542,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return false;
 	}
-	final String updateNoteMay72025Shown_v2_MESSAGE = "PvP Performance Tracker 1.6.2 Update: " +
+	String updateNoteMay72025Shown_v2_MESSAGE = "PvP Performance Tracker 1.6.2 Update: " +
 			"Improved KO chance accuracy, added double gmaul support, " +
 			"fixed eclipse atlatl damage, added abyssal dagger spec.";
 
@@ -556,7 +556,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return false;
 	}
-	final String updateNote1_7_0_MESSAGE = "PvP Performance Tracker 1.7.0 Update: " +
+	String updateNote1_7_0_MESSAGE = "PvP Performance Tracker 1.7.0 Update: " +
 			"New statistic - 'hit on robe' tracking, various calculation & detection improvements, " +
-			"display fight worlds, new attack summary window, crash hotfix.";
+			"display fight worlds, new attack summary window.";
 }

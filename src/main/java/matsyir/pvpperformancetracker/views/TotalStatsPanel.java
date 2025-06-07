@@ -41,6 +41,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
@@ -87,17 +89,17 @@ public class TotalStatsPanel extends JPanel
 	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11; // Increased count to include Avg Robe Hits
 
 	// labels to be updated
-	private JLabel killsLabel;
-	private JLabel deathsLabel;
-	private JLabel offPrayStatsLabel;
-	private JLabel deservedDmgStatsLabel;
-	private JLabel dmgDealtStatsLabel;
-	private JLabel magicHitCountStatsLabel;
-	private JLabel offensivePrayCountStatsLabel;
-	private JLabel hpHealedStatsLabel;
-	private JLabel ghostBarrageStatsLabel;
-	private JLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
-	private JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
+	private final JLabel killsLabel;
+	private final JLabel deathsLabel;
+	private final JLabel offPrayStatsLabel;
+	private final JLabel deservedDmgStatsLabel;
+	private final JLabel dmgDealtStatsLabel;
+	private final JLabel magicHitCountStatsLabel;
+	private final JLabel offensivePrayCountStatsLabel;
+	private final JLabel hpHealedStatsLabel;
+	private final JLabel ghostBarrageStatsLabel;
+	private final JLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
+	private final JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
 
 	private JLabel settingsWarningLabel; // to be hidden/shown
 
@@ -175,8 +177,8 @@ public class TotalStatsPanel extends JPanel
 		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		// Create popupMenu with various general actions
-		JPopupMenu popupMenu = new JPopupMenu();
+		// Create contextMenu/popupMenu with various general actions
+		JPopupMenu contextMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
 		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
@@ -220,18 +222,18 @@ public class TotalStatsPanel extends JPanel
 		fightAnalysis.addActionListener(e -> new FightAnalysisFrame(TotalStatsPanel.this.getRootPane()));
 		fightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
 
-		popupMenu.add(viewWiki);
-		popupMenu.add(removeAllFights);
-		popupMenu.add(exportFightHistory);
-		popupMenu.add(importFightHistory);
-		popupMenu.add(fightAnalysis);
-		setComponentPopupMenu(popupMenu);
+		contextMenu.add(viewWiki);
+		contextMenu.add(removeAllFights);
+		contextMenu.add(exportFightHistory);
+		contextMenu.add(importFightHistory);
+		contextMenu.add(fightAnalysis);
+		setComponentPopupMenu(contextMenu);
 
 		// Now initializing all lines:
 		// FIRST LINE
 		// basic label to display a title.
 		JLabel titleLabel = new JLabel();
-		titleLabel.setText("PvP Performance Tracker v" + PLUGIN.PLUGIN_VERSION);
+		titleLabel.setText("PvP Performance Tracker v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
 		add(titleLabel);
@@ -260,7 +262,7 @@ public class TotalStatsPanel extends JPanel
 		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
 
 		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		killDeathPanel.setComponentPopupMenu(popupMenu);
+		killDeathPanel.setComponentPopupMenu(contextMenu);
 		add(killDeathPanel);
 
 		// THIRD LINE
@@ -279,7 +281,7 @@ public class TotalStatsPanel extends JPanel
 		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
 
 		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offPrayStatsPanel.setComponentPopupMenu(popupMenu);
+		offPrayStatsPanel.setComponentPopupMenu(contextMenu);
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
@@ -298,7 +300,7 @@ public class TotalStatsPanel extends JPanel
 		deservedDmgStatsPanel.add(deservedDmgStatsLabel, BorderLayout.EAST);
 
 		deservedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		deservedDmgStatsPanel.setComponentPopupMenu(popupMenu);
+		deservedDmgStatsPanel.setComponentPopupMenu(contextMenu);
 		add(deservedDmgStatsPanel);
 
 		// FIFTH LINE
@@ -317,7 +319,7 @@ public class TotalStatsPanel extends JPanel
 		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
 		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		dmgDealtStatsPanel.setComponentPopupMenu(popupMenu);
+		dmgDealtStatsPanel.setComponentPopupMenu(contextMenu);
 		add(dmgDealtStatsPanel);
 
 		// SIXTH LINE
@@ -336,7 +338,7 @@ public class TotalStatsPanel extends JPanel
 		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 
 		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		magicHitStatsPanel.setComponentPopupMenu(popupMenu);
+		magicHitStatsPanel.setComponentPopupMenu(contextMenu);
 		add(magicHitStatsPanel);
 
 		// SEVENTH LINE
@@ -355,7 +357,7 @@ public class TotalStatsPanel extends JPanel
 		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 
 		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offensivePrayStatsPanel.setComponentPopupMenu(popupMenu);
+		offensivePrayStatsPanel.setComponentPopupMenu(contextMenu);
 		add(offensivePrayStatsPanel);
 
 		// EIGTH LINE
@@ -374,7 +376,7 @@ public class TotalStatsPanel extends JPanel
 		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 
 		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		hpHealedPanel.setComponentPopupMenu(popupMenu);
+		hpHealedPanel.setComponentPopupMenu(contextMenu);
 		add(hpHealedPanel);
 
 		// TENTH LINE: Avg Hits on Robes
@@ -386,7 +388,7 @@ public class TotalStatsPanel extends JPanel
 		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
 		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
 		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		robeHitsStatsPanel.setComponentPopupMenu(popupMenu);
+		robeHitsStatsPanel.setComponentPopupMenu(contextMenu);
 		add(robeHitsStatsPanel);
 
 		// TENTH LINE (NEW)
@@ -405,7 +407,7 @@ public class TotalStatsPanel extends JPanel
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 
 		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		avgKoChanceStatsPanel.setComponentPopupMenu(popupMenu);
+		avgKoChanceStatsPanel.setComponentPopupMenu(contextMenu);
 		add(avgKoChanceStatsPanel);
 
 		// panel to show the avg ghost barrage stats
@@ -421,7 +423,7 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
 		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		ghostBarrageStatsPanel.setComponentPopupMenu(popupMenu);
+		ghostBarrageStatsPanel.setComponentPopupMenu(contextMenu);
 		add(ghostBarrageStatsPanel);
 
 
@@ -660,8 +662,8 @@ public class TotalStatsPanel extends JPanel
 			numFightsWithKoChance++;
 			totalCompetitorKoChances += fightCompetitorKoChances;
 			totalOpponentKoChances += fightOpponentKoChances;
-			Double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
-			Double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
+			double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
+			double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
 			totalCompetitorKoProbSum += fightCompetitorKoProb;
 			totalOpponentKoProbSum += fightOpponentKoProb;
 		}
@@ -680,7 +682,7 @@ public class TotalStatsPanel extends JPanel
 
 	public void addFights(ArrayList<FightPerformance> fights)
 	{
-		if (fights == null || fights.size() < 1) { return; }
+		if (fights == null || fights.isEmpty()) { return; }
 
 		numFights += fights.size();
 
@@ -763,8 +765,8 @@ public class TotalStatsPanel extends JPanel
 				numFightsWithKoChance++;
 				totalCompetitorKoChances += fightCompetitorKoChances;
 				totalOpponentKoChances += fightOpponentKoChances;
-				Double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
-				Double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
+				double fightCompetitorKoProb = (fightCompetitorKoChances > 0) ? (1.0 - fightCompetitorSurvivalProb) : 0.0;
+				double fightOpponentKoProb = (fightOpponentKoChances > 0) ? (1.0 - fightOpponentSurvivalProb) : 0.0;
 				totalCompetitorKoProbSum += fightCompetitorKoProb;
 				totalOpponentKoProbSum += fightOpponentKoProb;
 			}
@@ -796,15 +798,6 @@ public class TotalStatsPanel extends JPanel
 		deathAvgDmgDealtDiff = numDeaths != 0 ? deathTotalDmgDealtDiff / numDeaths : 0;
 
 		avgHpHealed = numFights != 0 ? (double)totalStats.getHpHealed() / numFights : 0;
-
-		totalCompetitorRobeHits = 0;
-		totalCompetitorRobeHitsAttempted = 0;
-		totalOpponentRobeHits = 0;
-		totalOpponentRobeHitsAttempted = 0;
-		avgCompetitorRobeHits = 0;
-		avgCompetitorRobeHitsPercentage = 0;
-		avgOpponentRobeHits = 0;
-		avgOpponentRobeHitsPercentage = 0;
 
 		// Recalculate KO averages using the count of fights with data
 		avgCompetitorKoChances = numFightsWithKoChance != 0 ? totalCompetitorKoChances / numFightsWithKoChance : 0;
@@ -851,6 +844,15 @@ public class TotalStatsPanel extends JPanel
 		deathAvgDmgDealtDiff = 0;
 
 		avgHpHealed = 0;
+
+		totalCompetitorRobeHits = 0;
+		totalCompetitorRobeHitsAttempted = 0;
+		totalOpponentRobeHits = 0;
+		totalOpponentRobeHitsAttempted = 0;
+		avgCompetitorRobeHits = 0;
+		avgCompetitorRobeHitsPercentage = 0;
+		avgOpponentRobeHits = 0;
+		avgOpponentRobeHitsPercentage = 0;
 
 		// Reset KO chance stats
 		totalCompetitorKoChances = 0;

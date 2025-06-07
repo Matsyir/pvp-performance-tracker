@@ -329,14 +329,4 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 			(int)(diff / Math.abs(diff));
 	}
 
-	/**
-	 * Record the opponent's health ratio and scale when this hitsplat is applied.
-	 */
-	public void recordHealth(int ratio, int scale)
-	{
-		this.recordedHealthRatio = ratio;
-		this.recordedHealthScale = scale;
-		// hitsplatTick should be set externally when this is called
-	}
-
 }
