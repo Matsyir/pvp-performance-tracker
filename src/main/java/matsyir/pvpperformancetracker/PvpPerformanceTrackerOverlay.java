@@ -127,12 +127,6 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			return null;
 		}
 
-		// Ensure robe hits are calculated for the live overlay when enabled
-		if (config.showOverlayRobeHits())
-		{
-			fight.calculateRobeHits(config.robeHitFilter());
-		}
-
 		// off-pray hit success stats
 		ovlOffPrayLine.setLeft(fight.getCompetitor().getOffPrayStats(true));
 		ovlOffPrayLine.setLeftColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);

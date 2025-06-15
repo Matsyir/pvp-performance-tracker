@@ -35,6 +35,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
@@ -217,6 +219,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		String eName = eventSource.getName(); // event source name
 		String interactingName = eventSource.getInteracting().getName();
+		boolean addedAttack = false;
 
 		// verify that the player is interacting with their tracked opponent before adding attacks
 		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
@@ -232,6 +235,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 					offensivePray,
 					competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
+				addedAttack = true;
+
 			}
 		}
 		else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName()))
@@ -242,11 +247,20 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				// there is no offensive prayer data for the opponent so hardcode 0
 				opponent.addAttack(competitor.getPlayer(), animationData, 0);
-
+				addedAttack = true;
 				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
 			}
+		}
+
+		// Ensure robe hits are calculated for the live overlay when enabled (otherwise, just calc'd once at the end)
+		// ideally should be refactored into Fighter, using ongoing counters like most other stats, instead of a loop.
+		// However, I think it's mostly negligible due to how fight logs are limited to not becoming too large, due
+		// to how long fights last.
+		if (addedAttack && CONFIG.showOverlayRobeHits())
+		{
+			calculateRobeHits(CONFIG.robeHitFilter());
 		}
 	}
 
