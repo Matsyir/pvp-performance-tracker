@@ -12,21 +12,21 @@ public class HitsplatInfo
 	@Getter
 	private final HitsplatApplied event;
 
-	// Use volatile as these will be updated by a scheduled executor thread
+	// health ratio/scale at the time of the hitsplat
 	@Getter
-	private volatile int polledHealthRatio = -1;
+	private int healthRatio = -1;
 	@Getter
-	private volatile int polledHealthScale = -1;
+	private int healthScale = -1;
 
 	public HitsplatInfo(HitsplatApplied event)
 	{
 		this.event = event;
 	}
 
-	// Called by the delayed task to store the polled HP state
-	public void setPolledHp(int ratio, int scale)
+	// Called to store the HP state
+	public void setHp(int ratio, int scale)
 	{
-		this.polledHealthRatio = ratio;
-		this.polledHealthScale = scale;
+		this.healthRatio = ratio;
+		this.healthScale = scale;
 	}
 } 
