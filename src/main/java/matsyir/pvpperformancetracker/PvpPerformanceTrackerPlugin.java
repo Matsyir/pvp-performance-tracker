@@ -1022,6 +1022,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						entry.setDisplayKoChance(koChanceCurrent);
 						entry.setKoChance(koChanceCurrent);
 
+						currentFight.updateKoChanceStats(entry);
+
 						entry.setPartOfTickGroup(isGroup);
 
 						// Update HP for the next iteration

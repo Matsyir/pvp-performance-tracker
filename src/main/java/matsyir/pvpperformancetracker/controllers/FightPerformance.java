@@ -98,6 +98,16 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@SerializedName("rhO") // robe hits on opponent
 	private int opponentRobeHits = 0;
 
+	// KO Chance stats, updated per-attack. Not serialized.
+	private transient double competitorTotalKoChance = 0;
+	private transient double opponentTotalKoChance = 0;
+	private transient Double competitorLastKoChance = null;
+	private transient Double opponentLastKoChance = null;
+	private transient int competitorKoChanceCount = 0;
+	private transient int opponentKoChanceCount = 0;
+	private transient double competitorSurvivalProb = 1.0;
+	private transient double opponentSurvivalProb = 1.0;
+
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
 	{
@@ -557,5 +567,57 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public int getOpponentRobeHits()
 	{
 		return opponentRobeHits;
+	}
+
+	public void updateKoChanceStats(FightLogEntry entry)
+	{
+		if (entry.getDisplayKoChance() == null) { return; }
+
+		double koChance = entry.getDisplayKoChance();
+
+		if (entry.getAttackerName().equals(competitor.getName()))
+		{
+			competitorKoChanceCount++;
+			competitorLastKoChance = koChance;
+			competitorSurvivalProb *= (1.0 - koChance);
+			competitorTotalKoChance = 1.0 - competitorSurvivalProb;
+		}
+		else
+		{
+			opponentKoChanceCount++;
+			opponentLastKoChance = koChance;
+			opponentSurvivalProb *= (1.0 - koChance);
+			opponentTotalKoChance = 1.0 - opponentSurvivalProb;
+		}
+	}
+
+	public double getCompetitorTotalKoChance()
+	{
+		return competitorTotalKoChance;
+	}
+
+	public double getOpponentTotalKoChance()
+	{
+		return opponentTotalKoChance;
+	}
+
+	public Double getCompetitorLastKoChance()
+	{
+		return competitorLastKoChance;
+	}
+
+	public Double getOpponentLastKoChance()
+	{
+		return opponentLastKoChance;
+	}
+
+	public int getCompetitorKoChanceCount()
+	{
+		return competitorKoChanceCount;
+	}
+
+	public int getOpponentKoChanceCount()
+	{
+		return opponentKoChanceCount;
 	}
 }
