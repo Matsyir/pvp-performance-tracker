@@ -179,53 +179,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 
 		// --- KO Chance Calculation START ---
-		int competitorKoChances = 0;
-		Double lastCompetitorKoChance = null;
-		double competitorSurvivalProb = 1.0; // Start with 100% survival chance
-
-		int opponentKoChances = 0;
-		Double lastOpponentKoChance = null;
-		double opponentSurvivalProb = 1.0; // Start with 100% survival chance
-
-		String competitorName = fight.getCompetitor().getName();
-
-		ArrayList<FightLogEntry> logs = fight.getAllFightLogEntries();
-		for (FightLogEntry log : logs)
-		{
-			// Use the display KO chance calculated in post-processing
-			Double koChance = log.getDisplayKoChance();
-			if (koChance != null)
-			{
-				if (log.attackerName.equals(competitorName))
-				{
-					competitorKoChances++;
-					competitorSurvivalProb *= (1.0 - koChance); // Multiply by chance of *not* KOing
-					lastCompetitorKoChance = koChance;
-				}
-				else // Opponent's attack
-				{
-					opponentKoChances++;
-					opponentSurvivalProb *= (1.0 - koChance); // Multiply by chance of *not* KOing
-					lastOpponentKoChance = koChance;
-				}
-			}
-		}
-
-		// Calculate overall KO probability (1 - overall survival probability)
-		Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : null;
-		Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : null;
-
 		// Format Total KO Chance Line (Using Overall Probability)
-		String totalCompStr = competitorKoChances
-				+ (competitorOverallKoProb != null ? " (" + nfPercent.format(competitorOverallKoProb) + ")" : "");
-		String totalOppStr = opponentKoChances
-				+ (opponentOverallKoProb != null ? " (" + nfPercent.format(opponentOverallKoProb) + ")" : "");
+		String totalCompStr = fight.getCompetitorKoChanceCount()
+				+ (fight.getCompetitorTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getCompetitorTotalKoChance()) + ")" : "");
+		String totalOppStr = fight.getOpponentKoChanceCount()
+				+ (fight.getOpponentTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getOpponentTotalKoChance()) + ")" : "");
 		ovlTotalKoChanceLine.setLeft(totalCompStr);
 		ovlTotalKoChanceLine.setRight(totalOppStr);
 
 		// Format Last KO Chance Line
-		String lastCompStr = (lastCompetitorKoChance != null ? nfPercent.format(lastCompetitorKoChance) : "-");
-		String lastOppStr = (lastOpponentKoChance != null ? nfPercent.format(lastOpponentKoChance) : "-");
+		String lastCompStr = (fight.getCompetitorLastKoChance() != null ? nfPercent.format(fight.getCompetitorLastKoChance()) : "-");
+		String lastOppStr = (fight.getOpponentLastKoChance() != null ? nfPercent.format(fight.getOpponentLastKoChance()) : "-");
 		ovlLastKoChanceLine.setLeft(lastCompStr);
 		ovlLastKoChanceLine.setRight(lastOppStr);
 		// --- KO Chance Calculation END ---
