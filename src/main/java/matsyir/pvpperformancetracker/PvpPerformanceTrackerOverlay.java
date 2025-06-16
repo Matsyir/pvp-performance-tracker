@@ -48,7 +48,8 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
 	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
-	static {
+	static
+	{
 		nfPercent.setMaximumFractionDigits(1);
 		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 	}
@@ -162,7 +163,8 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		ovlHpHealedLine.setLeft(String.valueOf(fight.getCompetitor().getHpHealed()));
 
 		// Update Hits on Robes overlay line
-		if (config.showOverlayRobeHits()) {
+		if (config.showOverlayRobeHits())
+		{
 			int compHits = fight.getCompetitorRobeHits();
 			int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 			double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
