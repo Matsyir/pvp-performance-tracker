@@ -208,7 +208,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
-	private final List<Pair<Long, HitsplatInfo>> hitsplatsForPolling = new ArrayList<>(); // hitsplats we need to poll, along with the time we want to consume them
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 
 	// #################################################################################################################
@@ -419,7 +418,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			overlay.setFight(currentFight);
 			hitsplatBuffer.clear();
 			incomingHitsplatsBuffer.clear();
-			hitsplatsForPolling.clear();
 		}
 	}
 
@@ -534,46 +532,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		List<HitsplatInfo> tickEvents = hitsplatBuffer.computeIfAbsent(tick, k -> new ArrayList<>());
 		tickEvents.add(info);
 
-		// Schedule task to poll HP after a short delay of 100ms (reduces missing HP values)
-		try
-		{
-
-			hitsplatsForPolling.add(Pair.of(Instant.now().toEpochMilli() + 100, info));
-		}
-		catch (Exception e)
-		{
-			log.warn("Failed to schedule HP poll task: {}", e.getMessage());
-		}
-	}
-
-	// constantly called by the @Schedule task to poll and store HP
-	@Schedule(period = 30L, unit = ChronoUnit.MILLIS, asynchronous = false)
-	private void updatePolledHp()
-	{
-		if (!hasOpponent() || !currentFight.fightStarted())
-		{
-			hitsplatsForPolling.clear();
-			return;
-		}
-		if (hitsplatsForPolling.isEmpty()) { return; }
-
+		// Get the HP of the actor on the client thread, after the hitsplat has been applied.
 		clientThread.invokeLater(() ->
 		{
-			for (Pair<Long, HitsplatInfo> pair : hitsplatsForPolling)
+			Actor hitActor = info.getEvent().getActor();
+			if (hitActor != null)
 			{
-				// only consume the hitsplat if we are at/passed the time we want to.
-				if (Instant.now().toEpochMilli() < pair.getLeft()) { continue; }
-
-				Actor target = pair.getRight().getEvent().getActor();
-				if (target != null && !target.isDead())
-				{
-					int ratio = target.getHealthRatio();
-					int scale = target.getHealthScale();
-					pair.getRight().setPolledHp(ratio, scale);
-				}
-				// If target is dead or null, polled HP remains -1
+				info.setHp(hitActor.getHealthRatio(), hitActor.getHealthScale());
 			}
-			hitsplatsForPolling.removeIf((Pair<Long, HitsplatInfo> pair) -> Instant.now().toEpochMilli() >= pair.getLeft());
 		});
 	}
 
@@ -914,8 +880,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						int ratio = -1, scale = -1;
 						if (lastMatchedInfo != null)
 						{
-							ratio = lastMatchedInfo.getPolledHealthRatio();
-							scale = lastMatchedInfo.getPolledHealthScale();
+							ratio = lastMatchedInfo.getHealthRatio();
+							scale = lastMatchedInfo.getHealthScale();
 						}
 						// Fallback to current ratio/scale if polled is unavailable
 						if (ratio < 0 || scale <= 0) { ratio = opponent.getHealthRatio(); scale = opponent.getHealthScale(); }

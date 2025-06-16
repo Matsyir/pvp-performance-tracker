@@ -134,7 +134,7 @@ public class FightLogFrame extends JFrame
 			}
 			stats[i][5] = dmgLabel;
 			// HP column (Index 6) - Display as Current/Max
-			Integer hp = fightEntry.getEstimatedHpBeforeHit();
+			Integer hp = fightEntry.getDisplayHpBefore();
 			Integer maxHp = fightEntry.getOpponentMaxHp();
 			stats[i][6] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
 			// KO Chance column (Index 7)
