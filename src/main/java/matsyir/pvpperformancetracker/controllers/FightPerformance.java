@@ -91,19 +91,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
-	@Expose
-	@SerializedName("rhC") // robe hits on competitor
-	private int competitorRobeHits = 0;
-	@Expose
-	@SerializedName("rhO") // robe hits on opponent
-	private int opponentRobeHits = 0;
-
 	// KO Chance stats, updated per-attack. Not serialized.
+	@Getter
 	private transient double competitorTotalKoChance = 0;
+	@Getter
 	private transient double opponentTotalKoChance = 0;
+	@Getter
 	private transient Double competitorLastKoChance = null;
+	@Getter
 	private transient Double opponentLastKoChance = null;
+	@Getter
 	private transient int competitorKoChanceCount = 0;
+	@Getter
 	private transient int opponentKoChanceCount = 0;
 	private transient double competitorSurvivalProb = 1.0;
 	private transient double opponentSurvivalProb = 1.0;
@@ -464,14 +463,15 @@ public class FightPerformance implements Comparable<FightPerformance>
 	 */
 	public void calculateRobeHits(PvpPerformanceTrackerConfig.RobeHitFilter filter)
 	{
-		competitorRobeHits = 0;
-		opponentRobeHits = 0;
-		if (filter == null || getAllFightLogEntries() == null || getAllFightLogEntries().isEmpty())
+		competitor.resetRobeHits();
+		opponent.resetRobeHits();
+		ArrayList<FightLogEntry> allFightLogEntries	= getAllFightLogEntries();
+		if (filter == null || allFightLogEntries == null || allFightLogEntries.isEmpty())
 		{
 			return;
 		}
 
-		for (FightLogEntry entry : getAllFightLogEntries())
+		for (FightLogEntry entry : allFightLogEntries)
 		{
 			if (entry == null)
 			{
@@ -491,7 +491,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			}
 
 			// Determine who the defender is for this specific entry
-			Fighter defender = entry.getAttackerName().equals(getCompetitor().getName()) ? getOpponent() : getCompetitor();
+			Fighter defender = entry.getAttackerName().equals(competitor.getName()) ? opponent : competitor;
 			if (defender == null)
 			{
 				continue;
@@ -546,30 +546,19 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 			if (isHitOnRobes)
 			{
-				if (defender == getCompetitor())
+				if (defender == competitor)
 				{
-					competitorRobeHits++;
+					competitor.addRobeHit();
 				}
-				else if (defender == getOpponent())
+				else if (defender == opponent)
 				{
-					opponentRobeHits++;
+					opponent.addRobeHit();
 				}
 			}
 		}
 	}
 
-	// Getter for robe hit counts
-	public int getCompetitorRobeHits()
-	{
-		return competitorRobeHits;
-	}
-
-	public int getOpponentRobeHits()
-	{
-		return opponentRobeHits;
-	}
-
-	public void updateKoChanceStats(FightLogEntry entry)
+    public void updateKoChanceStats(FightLogEntry entry)
 	{
 		if (entry.getDisplayKoChance() == null) { return; }
 
@@ -589,35 +578,5 @@ public class FightPerformance implements Comparable<FightPerformance>
 			opponentSurvivalProb *= (1.0 - koChance);
 			opponentTotalKoChance = 1.0 - opponentSurvivalProb;
 		}
-	}
-
-	public double getCompetitorTotalKoChance()
-	{
-		return competitorTotalKoChance;
-	}
-
-	public double getOpponentTotalKoChance()
-	{
-		return opponentTotalKoChance;
-	}
-
-	public Double getCompetitorLastKoChance()
-	{
-		return competitorLastKoChance;
-	}
-
-	public Double getOpponentLastKoChance()
-	{
-		return opponentLastKoChance;
-	}
-
-	public int getCompetitorKoChanceCount()
-	{
-		return competitorKoChanceCount;
-	}
-
-	public int getOpponentKoChanceCount()
-	{
-		return opponentKoChanceCount;
 	}
 }

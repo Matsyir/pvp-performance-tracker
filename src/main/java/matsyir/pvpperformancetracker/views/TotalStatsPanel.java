@@ -576,9 +576,9 @@ public class TotalStatsPanel extends JPanel
 			fight.getCompetitor().getGhostBarrageDeservedDamage());
 
 		// Accumulate robe hits
-		totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+		totalCompetitorRobeHits += fight.getCompetitor().getRobeHits();
 		totalCompetitorRobeHitsAttempted += fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
-		totalOpponentRobeHits += fight.getOpponentRobeHits();
+		totalOpponentRobeHits += fight.getOpponent().getRobeHits();
 		totalOpponentRobeHitsAttempted += fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 
 		avgCompetitorRobeHits = totalCompetitorRobeHits / numFights;
@@ -709,9 +709,9 @@ public class TotalStatsPanel extends JPanel
 				fight.getCompetitor().getGhostBarrageDeservedDamage());
 
 			// Accumulate robe hits
-			totalCompetitorRobeHits += fight.getCompetitorRobeHits();
+			totalCompetitorRobeHits += fight.getCompetitor().getRobeHits();
 			totalCompetitorRobeHitsAttempted += fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
-			totalOpponentRobeHits += fight.getOpponentRobeHits();
+			totalOpponentRobeHits += fight.getOpponent().getRobeHits();
 			totalOpponentRobeHitsAttempted += fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 
 			if (fight.getCompetitor().isDead())

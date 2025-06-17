@@ -104,6 +104,10 @@ class Fighter
 	private int hpHealed;
 
 	@Expose
+	@SerializedName("rh") // robe hits
+	private int robeHits = 0;
+
+	@Expose
 	@SerializedName("x") // x for X_X
 	private boolean dead; // will be true if the fighter died in the fight
 
@@ -447,5 +451,14 @@ class Fighter
 	public String getGhostBarrageStats()
 	{
 		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageDeservedDamage) + ")";
+	}
+
+	public void resetRobeHits()
+	{
+		this.robeHits = 0;
+	}
+	public void addRobeHit()
+	{
+		this.robeHits++;
 	}
 }

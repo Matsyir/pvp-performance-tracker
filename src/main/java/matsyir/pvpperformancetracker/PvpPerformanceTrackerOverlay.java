@@ -165,14 +165,14 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		// Update Hits on Robes overlay line
 		if (config.showOverlayRobeHits())
 		{
-			int compHits = fight.getCompetitorRobeHits();
+			int compHits = fight.getCompetitor().getRobeHits();
 			int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 			double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
 			String compStr = compHits + "/" + compTotal;
 			ovlRobeHitsLine.setLeft(compStr);
-			ovlRobeHitsLine.setLeftColor(compRatio < ((double) fight.getOpponentRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
+			ovlRobeHitsLine.setLeftColor(compRatio < ((double) fight.getOpponent().getRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
 
-			int oppHits = fight.getOpponentRobeHits();
+			int oppHits = fight.getOpponent().getRobeHits();
 			int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 			double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 			String oppStr = oppHits + "/" + oppTotal;

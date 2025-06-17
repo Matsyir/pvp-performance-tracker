@@ -751,29 +751,30 @@ public class PvpDamageCalc
 			}
 		}
 
-		if (itemStats != null)
+		if (itemStats == null)
 		{
-			final ItemEquipmentStats equipmentStats = itemStats.getEquipment();
-			return new int[] {
-				equipmentStats.getAstab(),	// 0
-				equipmentStats.getAslash(),	// 1
-				equipmentStats.getAcrush(),	// 2
-				equipmentStats.getAmagic(),	// 3
-				equipmentStats.getArange(),	// 4
-				equipmentStats.getDstab(),	// 5
-				equipmentStats.getDslash(),	// 6
-				equipmentStats.getDcrush(),	// 7
-				equipmentStats.getDmagic(),	// 8
-				equipmentStats.getDrange(),	// 9
-				equipmentStats.getStr(),	// 10
-				equipmentStats.getRstr(),	// 11
-				(int)equipmentStats.getMdmg(),	// 12
-			};
+			return null;
 		}
-
-		// when combining multiple items' stats, null stats will just be skipped, without affecting
-		// the total stats.
-		return null;
+		final ItemEquipmentStats equipmentStats = itemStats.getEquipment();
+		if (equipmentStats == null)
+		{
+			return null;
+		}
+		return new int[] {
+			equipmentStats.getAstab(),	// 0
+			equipmentStats.getAslash(),	// 1
+			equipmentStats.getAcrush(),	// 2
+			equipmentStats.getAmagic(),	// 3
+			equipmentStats.getArange(),	// 4
+			equipmentStats.getDstab(),	// 5
+			equipmentStats.getDslash(),	// 6
+			equipmentStats.getDcrush(),	// 7
+			equipmentStats.getDmagic(),	// 8
+			equipmentStats.getDrange(),	// 9
+			equipmentStats.getStr(),	// 10
+			equipmentStats.getRstr(),	// 11
+			(int)equipmentStats.getMdmg(),	// 12
+		};
 	}
 
 	// this is used to calculate bonuses including the currently used ring, in case we're in LMS but the config ring
