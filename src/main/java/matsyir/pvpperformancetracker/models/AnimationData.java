@@ -123,6 +123,9 @@ public enum AnimationData
 	RANGED_VENATOR(9858, AttackStyle.RANGED),
 	RANGED_ECLIPSE_ATLATL(11057, AttackStyle.RANGED),
 	RANGED_ECLIPSE_ATLATL_SPEC(11060, AttackStyle.RANGED, true),
+	RANGED_KARILS_CROSSBOW(2075, AttackStyle.RANGED),
+	RANGED_HUNTERS_SUNLIGHT_CROSSBOW(11465, AttackStyle.RANGED),
+	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
