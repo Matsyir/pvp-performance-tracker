@@ -195,7 +195,9 @@ public interface RangeAmmoData
 	{
 		AMETHYST_ARROWS(4770, 55),
 		DRAGON_ARROW(11216, 60),
-		DRAGON_JAVELIN(19484, 150);
+		DRAGON_JAVELIN(19484, 150),
+		BOLT_RACK(4740, 55),
+		MOONLIGHT_ANTLER_BOLTS(28878, 60);
 
 		private int rangeStr;
 		private int itemId;

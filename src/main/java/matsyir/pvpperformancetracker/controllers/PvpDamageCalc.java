@@ -262,6 +262,7 @@ public class PvpDamageCalc
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
+		boolean burningClaws = weapon == EquipmentData.BURNING_CLAWS;
 
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
@@ -304,6 +305,46 @@ public class PvpDamageCalc
 			accuracy = higherModifierChance + lowerModifierChance;
 			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
 			maxHit = maxHit * 2 + 1;
+			return;
+		}
+		else if (burningClaws && usingSpec)
+		{
+			double baseMaxHit = maxHit;
+			double acc = accuracy;
+			double miss = 1 - acc;
+
+			// Case 1: 1st roll success
+			int minD1 = (int)Math.floor(0.75 * baseMaxHit);
+			int maxD1 = (int)Math.floor(1.75 * baseMaxHit);
+			double avgTotalDmg1 = getAverageBurningClawDamage(minD1, maxD1);
+
+			// Case 2: 1st fail, 2nd success
+			int minD2 = (int)Math.floor(0.50 * baseMaxHit);
+			int maxD2 = (int)Math.floor(1.50 * baseMaxHit);
+			double avgTotalDmg2 = getAverageBurningClawDamage(minD2, maxD2);
+
+			// Case 3: 1st, 2nd fail, 3rd success
+			int minD3 = (int)Math.floor(0.25 * baseMaxHit);
+			int maxD3 = (int)Math.floor(1.25 * baseMaxHit);
+			double avgTotalDmg3 = getAverageBurningClawDamage(minD3, maxD3);
+
+			// Case 4: all 3 fail
+			int minD4 = 0;
+			int maxD4 = (int)Math.floor(baseMaxHit);
+			double avgTotalDmg4 = getAverageBurningClawDamage(minD4, maxD4);
+
+			double expectedDamage =
+				(acc) * avgTotalDmg1 +
+					(miss * acc) * avgTotalDmg2 +
+					(miss * miss * acc) * avgTotalDmg3 +
+					(miss * miss * miss) * avgTotalDmg4;
+
+			this.averageHit = expectedDamage * prayerModifier;
+
+			// Keep the original per-swing accuracy; do not override it here.
+			this.maxHit = calculateBurningClawTotalDamage(maxD1);
+			this.minHit = 0;
+
 			return;
 		}
 		else if (fang)
@@ -356,6 +397,25 @@ public class PvpDamageCalc
 		{
 			averageHit += ANCIENT_GS_FIXED_DAMAGE;
 		}
+	}
+
+	private int calculateBurningClawTotalDamage(int D)
+	{
+		return (int)Math.floor(0.25 * D) + (int)Math.floor(0.25 * D) + (int)Math.floor(0.5 * D);
+	}
+
+	private double getAverageBurningClawDamage(int minD, int maxD)
+	{
+		if (minD > maxD)
+		{
+			return 0;
+		}
+		double totalDamageSum = 0;
+		for (int D = minD; D <= maxD; D++)
+		{
+			totalDamageSum += calculateBurningClawTotalDamage(D);
+		}
+		return totalDamageSum / (maxD - minD + 1);
 	}
 
 	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
