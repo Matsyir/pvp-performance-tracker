@@ -1,0 +1,116 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# PvP Performance Tracker – RuneLite Plugin Coding Rules
+
+This document outlines the coding, architectural, and stylistic rules for the PvP Performance Tracker RuneLite plugin. The goal is to keep the codebase consistent, thread-safe, easy to navigate, and in-line with the broader RuneLite ecosystem.
+
+---
+
+## 1. Base Conventions – RuneLite
+
+This project **inherits** the official [RuneLite Code Conventions](mdc:https:/github.com/runelite/runelite/wiki/Code-Conventions). The most commonly encountered rules are copied here for convenience:
+
+• **Indentation** – use **tabs**, not spaces.  
+• **Brace placement** – an opening brace `{` **always** lives on the **next line** after the statement (class, method, `if`, loop, etc.). _Never_ use "cuddly" braces.
+
+```java
+// Correct
+if (condition)
+{
+    // …
+}
+
+// Incorrect
+if (condition) {
+    // …
+}
+```
+
+• **Else / Catch / Finally** – start on a **new line**:
+
+```java
+if (condition)
+{
+    // …
+}
+else // not cuddly
+{
+    // …
+}
+```
+
+• **Imports**  
+  – Keep a single logically-grouped block of imports at the top of the file.  
+  – Avoid wildcard class imports (`.*`). Set IntelliJ "Class count to use import with '*'" to something large (e.g. 999).  
+  – Static wildcard imports (e.g. `import static net.runelite.api.ItemID.*;`) are acceptable for large constant enums; set the corresponding IntelliJ value high as well.  
+  – Allowing the IDE to split static vs. non-static imports is fine **as long as logical grouping is preserved**.
+
+• **Spacing** – use a single blank line to separate logical blocks (between methods, before/after field groups, etc.).
+
+• **Copyright header** – every new `.java` file must include the standard RuneLite header.
+
+---
+
+## 2. Threading & Concurrency
+
+RuneLite plugins are **single-threaded by default** – nearly every event is raised on the _client thread_. Any additional background work must be done carefully to avoid race conditions.
+
+1. **Only read/write game state on the client thread.** Use `@Inject ClientThread clientThread;` and wrap work with `clientThread.invokeLater()` / `clientThread.invoke()` as required.
+2. **Off-thread work**  
+   • Heavy or blocking work (IO, HTTP, large calculations) must happen on a background `ScheduledExecutorService` or via RuneLite's `executor`.  
+   • Shared data structures accessed from multiple threads must be **thread-safe** (`ConcurrentHashMap`, `CopyOnWriteArrayList`, `AtomicInteger`, etc.) _or_ guarded by synchronization.
+3. **Overlay rendering must be lightweight.**  
+   All expensive calculations _must_ occur **before** `Overlay#render`. The overlay should merely read already-prepared values and paint them. This prevents dropped frames and race conditions.
+
+---
+
+## 3. Code Structure & Responsibilities
+
+• **Controllers & Models** – perform calculations, maintain state, and expose immutable views for the UI layers.  
+• **Plugin class** – wires everything together, subscribes to events, schedules background work, and keeps I/O concerns isolated.  
+• **Overlays / Swing views** – _only_ consume data. They should not mutate state or run heavy logic.
+
+---
+
+## 4. Comments & Documentation
+
+Well-placed comments improve readability, but comments that repeat obvious information create noise.
+
+1. **Describe intent, not history.** Avoid comments like:
+
+```java
+import net.runelite.client.hiscore.HiscoreEndpoint; // Added import ✗
+private Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>(); // MODIFIED ✗
+```
+
+   These belong in the Git commit, not the code. Instead, write a comment only when it adds context a first-time reader wouldn't know.
+2. **Don't restate the obvious.** A method named `updatePolledHp()` does **not** need a comment `// updatePolledHp method`. Focus on _why_ or _how_, not _what_.
+3. **Prefer Javadoc for public APIs** – parameters, behaviour, and side-effects.
+4. **Delete stale comments** – outdated documentation is worse than none.
+
+---
+
+## 5. Naming & Style Consistency
+
+• **Variables, fields, and methods** – `lowerCamelCase`.  
+• **Constants & `static final` fields** – `UPPER_SNAKE_CASE`.  
+• **Classes** – `UpperCamelCase`.  
+• Try to mirror terminology already found throughout the codebase. For example, use `hitsplatBuffer`, `fightHistory`, `currentFight`, etc., instead of introducing wholly different synonyms.
+
+When in doubt, search the project and align with the majority usage.
+
+---
+
+## 6. Miscellaneous Rules
+
+• Commit messages and PR descriptions should explain _why_ a change exists. The code itself should already document _what_ it does.  
+• Keep functions short and focused; if a method exceeds ~200 lines, look for logical splits.  
+• Avoid magic numbers; give them semantic names or pull them into configuration.  
+• Run `./gradlew check` before pushing to ensure formatting and tests pass.
+
+---
+
+Happy coding and thanks for contributing!

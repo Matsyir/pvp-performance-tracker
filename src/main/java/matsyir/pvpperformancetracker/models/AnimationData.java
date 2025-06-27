@@ -126,6 +126,9 @@ public enum AnimationData
 	RANGED_KARILS_CROSSBOW(2075, AttackStyle.RANGED),
 	RANGED_HUNTERS_SUNLIGHT_CROSSBOW(11465, AttackStyle.RANGED),
 	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
+	RANGED_DARK_BOW(0, AttackStyle.RANGED), // placeholder id, resolved dynamically
+	RANGED_DARK_BOW_SPEC(0, AttackStyle.RANGED, true, 2), // spec, double-hit pattern
+	RANGED_DRAGON_CROSSBOW_SPEC(0, AttackStyle.RANGED, true), // Annihilate spec
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
