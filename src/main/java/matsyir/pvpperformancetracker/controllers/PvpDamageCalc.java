@@ -632,7 +632,7 @@ public class PvpDamageCalc
 		{
 			defenderChance = Math.floor(effectiveLevelTarget * (targetDefenceBonus + 64));
 		}
-
+//        log.debug("MELEE ATTACK: " + defenderChance );
 		/**
 		 * Calculate Accuracy
 		 */

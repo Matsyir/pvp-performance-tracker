@@ -60,8 +60,8 @@ class Fighter
 	}
 
 	// Target graphics IDs indicating special attacks
-	private static final int GFX_TARGET_DBOW_SPEC = 1100;   // green dragon-arrow gfx on target
-	private static final int GFX_TARGET_DCBOW_SPEC = 157;    // Annihilate AOE gfx on main target
+	private static final int GFX_TARGET_DBOW_SPEC = 1100;   // dragon-arrow gfx on target
+	private static final int GFX_TARGET_DCBOW_SPEC = 157;    // Annihilate AOE gfx on target
 
 	@Setter
 	private Player player;
@@ -212,12 +212,10 @@ class Fighter
 		// Granite Maul specific handling
 		boolean isGmaulSpec = animationData == AnimationData.MELEE_GRANITE_MAUL_SPEC;
 
-		// --- Detect dark bow & dragon crossbow specials via projectiles ---
+		// --- Detect dark bow & dragon crossbow specials via GFX ---
 		if (weapon == EquipmentData.DARK_BOW && animationData == AnimationData.RANGED_SHORTBOW)
 		{
 			boolean spec = opponent.getGraphic() == GFX_TARGET_DBOW_SPEC;
-
-			// (logging removed for lightweight execution)
 
 			animationData = spec ? AnimationData.RANGED_DARK_BOW_SPEC : AnimationData.RANGED_DARK_BOW;
 		}
@@ -225,7 +223,6 @@ class Fighter
 				(animationData == AnimationData.RANGED_CROSSBOW_PVP || animationData == AnimationData.RANGED_RUNE_CROSSBOW))
 		{
 			boolean spec = opponent.getGraphic() == GFX_TARGET_DCBOW_SPEC;
-			// (logging removed)
 
 			if (spec)
 			{
