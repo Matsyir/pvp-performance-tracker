@@ -126,8 +126,8 @@ public enum AnimationData
 	RANGED_ECLIPSE_ATLATL_SPEC(11060, AttackStyle.RANGED, true),
 	RANGED_KARILS_CROSSBOW(2075, AttackStyle.RANGED),
 	RANGED_HUNTERS_SUNLIGHT_CROSSBOW(11465, AttackStyle.RANGED),
-	RANGED_DARK_BOW(0, AttackStyle.RANGED), // placeholder id, resolved dynamically
-	RANGED_DARK_BOW_SPEC(0, AttackStyle.RANGED, true, 2), // spec, double-hit pattern
+	RANGED_DARK_BOW(0, AttackStyle.RANGED, false, 1, 1), // double arrow hits (regular)
+	RANGED_DARK_BOW_SPEC(0, AttackStyle.RANGED, true, 1, 1), // spec, same double hitsplat pattern
 	RANGED_DRAGON_CROSSBOW_SPEC(0, AttackStyle.RANGED, true), // Annihilate spec
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
