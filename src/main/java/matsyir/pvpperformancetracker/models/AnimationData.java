@@ -98,6 +98,7 @@ public enum AnimationData
 	MELEE_BANDOS_GODSWORD_OR_SPEC(7643, AttackStyle.SLASH, true), // UNTESTED, assumed due to ags(or)
 	MELEE_ARMADYL_GODSWORD_SPEC(7644, AttackStyle.SLASH, true), // tested ags spec
 	MELEE_ARMADYL_GODSWORD_OR_SPEC(7645, AttackStyle.SLASH, true), // tested ags(or) spec
+	MELEE_ARMADYL_GODSWORD_LMS_SPEC(10427, AttackStyle.SLASH, true), // golden ags spec from LMS
 	MELEE_SCYTHE(8056, AttackStyle.SLASH), // tested w/ all scythe styles (so could be crush, but unlikely)
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
