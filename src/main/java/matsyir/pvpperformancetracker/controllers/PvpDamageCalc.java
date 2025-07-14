@@ -88,6 +88,7 @@ public class PvpDamageCalc
 	private static final int DBOW_DMG_MODIFIER = 2;
 	private static final int DBOW_SPEC_DMG_MODIFIER = 3;
 	private static final int DBOW_SPEC_MIN_HIT = 16;
+	private static final double DRAGON_CBOW_SPEC_DMG_MODIFIER = 1.2;
 
 	private static final double DDS_SPEC_ACCURACY_MODIFIER = 1.25;
 	private static final double DDS_SPEC_DMG_MODIFIER = 2.3;
@@ -465,6 +466,7 @@ public class PvpDamageCalc
 
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
+		boolean dragonCbow = weapon == EquipmentData.DRAGON_CROSSBOW;
 
 		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
 
@@ -483,6 +485,7 @@ public class PvpDamageCalc
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
 		modifier = dbow && !usingSpec ? DBOW_DMG_MODIFIER : modifier;
 		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
+		modifier = dragonCbow && usingSpec ? DRAGON_CBOW_SPEC_DMG_MODIFIER : modifier;
 
 		// Eclipse Atlatl uses Melee Str for max hit but Ranged prayers/void
 		if (weapon == EquipmentData.ECLIPSE_ATLATL)
@@ -725,7 +728,10 @@ public class PvpDamageCalc
 		// upon further testing this effect applies to opal dragon bolts as well
 		// diamond bolts and opal bolts accuracy: 5% of attacks are 100% accuracy, so apply avg accuracy as:
 		// (95% of normal accuracy) + (5% of 100% accuracy)
-		accuracy = (diamonds || opals) ? (accuracy * .95) + .05 : accuracy;
+		boolean dragonCbow = weapon == EquipmentData.DRAGON_CROSSBOW;
+		// Apply diamond/opal accuracy passive, but skip it during dragon crossbow special so that Annihilate's
+		// projectile-based accuracy is not unintentionally boosted.
+		accuracy = (diamonds || opals) && !(dragonCbow && usingSpec) ? (accuracy * .95) + .05 : accuracy;
 	}
 
 	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, boolean successfulOffensive, boolean defensiveAugurySuccess)

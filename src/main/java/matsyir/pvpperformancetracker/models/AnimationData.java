@@ -103,6 +103,7 @@ public enum AnimationData
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
 	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
+	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, craw's bow, dbow, dbow spec
@@ -126,7 +127,9 @@ public enum AnimationData
 	RANGED_ECLIPSE_ATLATL_SPEC(11060, AttackStyle.RANGED, true),
 	RANGED_KARILS_CROSSBOW(2075, AttackStyle.RANGED),
 	RANGED_HUNTERS_SUNLIGHT_CROSSBOW(11465, AttackStyle.RANGED),
-	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
+	RANGED_DARK_BOW(0, AttackStyle.RANGED, false, 1, 1), // double arrow hits (regular)
+	RANGED_DARK_BOW_SPEC(0, AttackStyle.RANGED, true, 1, 1), // spec, same double hitsplat pattern
+	RANGED_DRAGON_CROSSBOW_SPEC(0, AttackStyle.RANGED, true), // Annihilate spec
 
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
