@@ -229,6 +229,16 @@ class Fighter
 				animationData = AnimationData.RANGED_DRAGON_CROSSBOW_SPEC;
 			}
 		}
+		// --- Detect Arkan Blade special vs Dragon Scimitar special (both use animation 1872) ---
+		else if (animationData == AnimationData.MELEE_ARKAN_BLADE_SPEC)
+		{
+			// If the weapon is Arkan Blade, keep the Arkan Blade special animation
+			// If it's not Arkan Blade, it's likely Dragon Scimitar, so treat as regular scimitar slash
+			if (weapon != EquipmentData.ARKAN_BLADE)
+			{
+				animationData = AnimationData.MELEE_SCIM_SLASH;
+			}
+		}
 
 		attackCount++;
 		if (successful)

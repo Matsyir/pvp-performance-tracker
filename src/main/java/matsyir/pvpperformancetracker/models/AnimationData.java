@@ -104,6 +104,7 @@ public enum AnimationData
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
 	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
 	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
+	MELEE_ARKAN_BLADE_SPEC(1872, AttackStyle.SLASH, true),
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, craw's bow, dbow, dbow spec
