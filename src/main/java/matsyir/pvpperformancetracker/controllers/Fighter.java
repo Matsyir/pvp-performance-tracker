@@ -233,7 +233,7 @@ class Fighter
 		else if (animationData == AnimationData.MELEE_ARKAN_BLADE_SPEC)
 		{
 			// If the weapon is Arkan Blade, keep the Arkan Blade special animation
-			// If it's not Arkan Blade, it's likely Dragon Scimitar, so treat as regular scimitar slash
+			// If it's not Arkan Blade, it's Dragon Scimitar, so treat as regular scimitar slash
 			if (weapon != EquipmentData.ARKAN_BLADE)
 			{
 				animationData = AnimationData.MELEE_SCIM_SLASH;
