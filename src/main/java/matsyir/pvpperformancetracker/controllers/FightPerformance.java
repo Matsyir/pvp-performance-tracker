@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -45,10 +46,13 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import net.runelite.api.AnimationID;
+import net.runelite.api.Client;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import net.runelite.api.kit.KitType;
+import net.runelite.client.hiscore.HiscoreManager;
+
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
 
@@ -59,9 +63,9 @@ import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
 public class FightPerformance implements Comparable<FightPerformance>
 {
 	private static final int[] DEATH_ANIMATIONS = {
-		AnimationID.DEATH,	// Default
-		10629,	// League IV
-		11902,	// League V
+			AnimationID.DEATH,	// Default
+			10629,	// League IV
+			11902,	// League V
 	};
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
@@ -107,6 +111,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 	private transient double competitorSurvivalProb = 1.0;
 	private transient double opponentSurvivalProb = 1.0;
 
+	@Getter
+	private CombatLevels playersStats = new CombatLevels(PLUGIN.getClient());
+
+	@Getter
+	@Setter
+	private CombatLevels opponentsStats = CombatLevels.getConfigLevels();
+
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
 	{
@@ -114,15 +125,24 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
-	public FightPerformance(Player competitor, Player opponent)
+	public FightPerformance(Player competitor, Player opponent, HiscoreManager hiscoreManager)
 	{
 		int defLvl = PLUGIN.getClient().getBoostedSkillLevel(Skill.DEFENCE);
 
 		// determine fight type based on being at LMS areas & use def level to check for LMS builds.
-		this.fightType = !PLUGIN.isAtLMS() ? FightType.NORMAL :
-			defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
-			defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
-			FightType.LMS_MAXMED;
+		boolean fightIsAtLMS = PLUGIN.isAtLMS();
+		boolean fightIsAtArena = PLUGIN.isAtArena();
+		this.fightType = FightType.NORMAL;
+		if(fightIsAtLMS) {
+			this.fightType = defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
+					defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
+							FightType.LMS_MAXMED;
+		}
+		if(fightIsAtArena) {
+			this.fightType = defLvl <= FightType.ARENA_1DEF.getCombatLevelsForType().def ? FightType.ARENA_1DEF :
+					defLvl <= FightType.ARENA_ZERK.getCombatLevelsForType().def ? FightType.ARENA_ZERK :
+							FightType.ARENA_MAXMED;
+		}
 
 		// initialize world
 		this.world = PLUGIN.getClient().getWorld();
@@ -133,6 +153,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		this.competitor = new Fighter(this, competitor);
 		this.opponent = new Fighter(this, opponent);
+
+		if(!fightIsAtLMS && !fightIsAtArena) {
+			setOpponentsStats(new CombatLevels(opponent.getName(), hiscoreManager));
+		} else {
+			setOpponentsStats(fightType.getCombatLevelsForType());
+		}
 
 		this.competitorPrevHp = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
 		this.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
@@ -150,9 +176,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				int defLvl = competitor.getFightLogEntries().get(0).getAttackerLevels().def;
 				this.fightType =
-					defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
-					defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
-					FightType.LMS_MAXMED;
+						defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
+								defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
+										FightType.LMS_MAXMED;
 			}
 			else
 			{
@@ -239,10 +265,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 				competitor.addAttack(
-					opponent.getPlayer(),
-					animationData,
-					offensivePray,
-					competitorLevels);
+						opponent.getPlayer(),
+						animationData,
+						offensivePray,
+						competitorLevels, opponentsStats);
 				lastFightTime = Instant.now().toEpochMilli();
 				addedAttack = true;
 
@@ -255,7 +281,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			if (animationData != null)
 			{
 				// there is no offensive prayer data for the opponent so hardcode 0
-				opponent.addAttack(competitor.getPlayer(), animationData, 0);
+				opponent.addAttack(competitor.getPlayer(), animationData, 0, competitorLevels, opponentsStats);
 				addedAttack = true;
 				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
@@ -296,10 +322,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
-				opponent.getPlayer(),
-				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
-				offensivePray,
-				competitorLevels);
+					opponent.getPlayer(),
+					AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
+					offensivePray,
+					competitorLevels);
 		}
 	}
 
@@ -419,9 +445,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public boolean competitorMagicHitsLuckier()
 	{
 		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+				(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
 		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+				(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
 
 		return competitorRate > opponentRate;
 	}
@@ -429,9 +455,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public boolean opponentMagicHitsLuckier()
 	{
 		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
+				(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
 		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+				(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
 
 		return opponentRate > competitorRate;
 	}
@@ -455,7 +481,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
-			(int)(diff / Math.abs(diff));
+				(int)(diff / Math.abs(diff));
 	}
 
 	/**
@@ -558,7 +584,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 	}
 
-    public void updateKoChanceStats(FightLogEntry entry)
+	public void updateKoChanceStats(FightLogEntry entry)
 	{
 		if (entry.getDisplayKoChance() == null) { return; }
 

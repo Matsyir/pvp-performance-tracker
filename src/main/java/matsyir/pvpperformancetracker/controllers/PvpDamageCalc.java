@@ -41,13 +41,11 @@ import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
-import net.runelite.api.PlayerComposition;
-import net.runelite.api.SpriteID;
+import net.runelite.api.*;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.game.ItemEquipmentStats;
 import net.runelite.client.game.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
-import net.runelite.api.Player;
 
 // Pvp damage calculations
 // call updateDamageStats(...) with required parameters, and retrieve results by using the field getters
@@ -59,7 +57,7 @@ import net.runelite.api.Player;
 public class PvpDamageCalc
 {
 	private static final int STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3,
-		RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8;
+			RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8;
 	public static final int RANGE_DEF = 9;
 	private static final int STRENGTH_BONUS = 10, RANGE_STRENGTH = 11, MAGIC_DAMAGE = 12;
 
@@ -136,21 +134,38 @@ public class PvpDamageCalc
 
 	private RingData ringUsed;
 	boolean isLmsFight;
+	boolean isArenaFight;
 
 	public PvpDamageCalc(FightPerformance relatedFight)
 	{
 		isLmsFight = relatedFight.fightType.isLmsFight();
-		this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
-		this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
+		isArenaFight = relatedFight.fightType.isArenaFight();
+		if(isLmsFight || isArenaFight) {
+			this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
+			this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
+		} else {
+			this.attackerLevels = relatedFight.getPlayersStats();
+			this.defenderLevels = relatedFight.getOpponentsStats();
+		}
 
 		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING : CONFIG.ringChoice();
 	}
 
 	// main function used to update stats during an ongoing fight
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData)
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, CombatLevels competitorLevels, CombatLevels opponentLevels)
 	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
+
+		//Use appropriate stats based on who is the attacker or defender
+		String competitor = PLUGIN.getClient().getLocalPlayer().getName();
+		if(attacker.getName().equals(competitor)) {
+			this.attackerLevels = competitorLevels;
+			this.defenderLevels = opponentLevels;
+		} else {
+			this.attackerLevels = opponentLevels;
+			this.defenderLevels = competitorLevels;
+		}
 
 		averageHit = 0;
 		accuracy = 0;
@@ -197,15 +212,16 @@ public class PvpDamageCalc
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
 		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
-			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
-			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
+				"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
+				"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
 		this.attackerLevels = atkLog.getAttackerLevels();
-		this.defenderLevels = defenderLog.getAttackerLevels();
+		this.defenderLevels = defenderLog.getDefenderLevels();
+
 		int[] attackerItems = atkLog.getAttackerGear();
 		int[] defenderItems = atkLog.getDefenderGear();
 		boolean success = atkLog.success();
@@ -219,8 +235,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonuses(attackerItems);
-		int[] opponentStats = this.calculateBonuses(defenderItems);
+		int[] playerEquipStats = this.calculateBonuses(attackerItems);
+		int[] opponentEquipStats = this.calculateBonuses(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
@@ -231,21 +247,21 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee())
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
+			getMeleeMaxHit(playerEquipStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
+			getMeleeAccuracy(playerEquipStats, opponentEquipStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangedMaxHit(playerEquipStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangeAccuracy(playerEquipStats[RANGE_ATTACK], opponentEquipStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
-			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
+			getMagicMaxHit(shield, playerEquipStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
+			getMagicAccuracy(playerEquipStats[MAGIC_ATTACK], opponentEquipStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -335,10 +351,10 @@ public class PvpDamageCalc
 			double avgTotalDmg4 = getAverageBurningClawDamage(minD4, maxD4);
 
 			double expectedDamage =
-				(acc) * avgTotalDmg1 +
-					(miss * acc) * avgTotalDmg2 +
-					(miss * miss * acc) * avgTotalDmg3 +
-					(miss * miss * miss) * avgTotalDmg4;
+					(acc) * avgTotalDmg1 +
+							(miss * acc) * avgTotalDmg2 +
+							(miss * miss * acc) * avgTotalDmg3 +
+							(miss * miss * miss) * avgTotalDmg4;
 
 			this.averageHit = expectedDamage * prayerModifier;
 
@@ -388,7 +404,7 @@ public class PvpDamageCalc
 			if (minHit > 0)
 			{
 				log.info("PvpDamageCalc:getAverageHit: Fell into default avg hit calculation with a minHit > 0 (" +
-					minHit + "). Shouldn't happen. Weapon: " + weapon.toString());
+						minHit + "). Shouldn't happen. Weapon: " + weapon.toString());
 			}
 		}
 
@@ -439,14 +455,14 @@ public class PvpDamageCalc
 
 		int baseDamage = (int) Math.floor(0.5 + effectiveLevel * (meleeStrength + 64) / 640.0);
 		double damageModifier = (ags && usingSpec) ? ARMA_GS_SPEC_DMG_MODIFIER :
-			(ancientGs && usingSpec) ? ANCIENT_GS_SPEC_DMG_MODIFIER :
-			(swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER :
-			(dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER :
-			(vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER :
-			(dwh && usingSpec) ? DWH_SPEC_DMG_MODIFIER :
-			(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
-			(abyssalDagger && usingSpec) ? ABYSSAL_DAGGER_SPEC_DMG_MODIFIER :
-			1;
+				(ancientGs && usingSpec) ? ANCIENT_GS_SPEC_DMG_MODIFIER :
+						(swh && usingSpec) ? SWH_SPEC_DMG_MODIFIER :
+								(dds && usingSpec) ? DDS_SPEC_DMG_MODIFIER :
+										(vls && usingSpec) ? VLS_SPEC_DMG_MODIFIER :
+												(dwh && usingSpec) ? DWH_SPEC_DMG_MODIFIER :
+														(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
+																(abyssalDagger && usingSpec) ? ABYSSAL_DAGGER_SPEC_DMG_MODIFIER :
+																		1;
 		maxHit = (int) (damageModifier * baseDamage);
 	}
 
@@ -461,7 +477,7 @@ public class PvpDamageCalc
 		if (this.isLmsFight)
 		{
 			weaponAmmo = weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo ? RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E :
-				weaponAmmo instanceof RangeAmmoData.BoltAmmo ? RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E : weaponAmmo;
+					weaponAmmo instanceof RangeAmmoData.BoltAmmo ? RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E : weaponAmmo;
 		}
 
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
@@ -471,6 +487,8 @@ public class PvpDamageCalc
 		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
 
 		rangeStrength += ammoStrength;
+
+		System.out.println("getRangedMaxHit Range level: " + attackerLevels.range);
 
 		double effectiveLevel = Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
 		// apply void bonus if applicable
@@ -505,19 +523,19 @@ public class PvpDamageCalc
 		}
 		else // Standard Ranged Max Hit Calc
 		{
-		maxHit = weaponAmmo == null ?
-			(int) (modifier * baseDamage) :
-			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
+			maxHit = weaponAmmo == null ?
+					(int) (modifier * baseDamage) :
+					(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
 		}
 
 		// apply crystal armor bonus if using bow
 		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
-			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
+				(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
 		{
 			double dmgModifier = 1 +
-				(head == EquipmentData.CRYSTAL_HELM ? 0.025 : 0) +
-				(body == EquipmentData.CRYSTAL_BODY ? 0.075 : 0) +
-				(legs == EquipmentData.CRYSTAL_LEGS ? 0.05 : 0);
+					(head == EquipmentData.CRYSTAL_HELM ? 0.025 : 0) +
+					(body == EquipmentData.CRYSTAL_BODY ? 0.075 : 0) +
+					(legs == EquipmentData.CRYSTAL_LEGS ? 0.05 : 0);
 
 			maxHit *= dmgModifier;
 		}
@@ -581,14 +599,17 @@ public class PvpDamageCalc
 		double defenderChance;
 
 		double accuracyModifier = dds ? DDS_SPEC_ACCURACY_MODIFIER :
-			ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :
-			ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
-			fang ? FANG_SPEC_ACCURACY_MODIFIER :
-			1;
+				ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :
+						ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
+								fang ? FANG_SPEC_ACCURACY_MODIFIER :
+										1;
 
 		/**
 		 * Attacker Chance
 		 */
+
+		System.out.println("getMeleeAccuracy Attack Level: " + attackerLevels.atk);
+
 		effectiveLevelPlayer = Math.floor(((attackerLevels.atk * (successfulOffensive ? PIETY_ATK_PRAYER_MODIFIER : 1)) + STANCE_BONUS) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
@@ -597,10 +618,10 @@ public class PvpDamageCalc
 		}
 
 		final double attackBonus = attackStyle == AttackStyle.STAB ? stabBonusPlayer
-			: attackStyle == AttackStyle.SLASH ? slashBonusPlayer : crushBonusPlayer;
+				: attackStyle == AttackStyle.SLASH ? slashBonusPlayer : crushBonusPlayer;
 
 		final double targetDefenceBonus = attackStyle == AttackStyle.STAB ? stabBonusTarget
-			: attackStyle == AttackStyle.SLASH ? slashBonusTarget : crushBonusTarget;
+				: attackStyle == AttackStyle.SLASH ? slashBonusTarget : crushBonusTarget;
 
 
 		baseChance = Math.floor(effectiveLevelPlayer * (attackBonus + 64));
@@ -608,7 +629,7 @@ public class PvpDamageCalc
 		{
 			// Don't apply the generic modifier if it's the Abyssal Dagger (handled separately below)
 			if (weapon != EquipmentData.ABYSSAL_DAGGER) {
-			baseChance = baseChance * accuracyModifier;
+				baseChance = baseChance * accuracyModifier;
 			}
 		}
 
@@ -622,6 +643,8 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
+
+		System.out.println("getMeleeAccuracy Defender defense Level: " + defenderLevels.def);
 		effectiveLevelTarget = Math.floor(((defenderLevels.def * PIETY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
@@ -651,7 +674,7 @@ public class PvpDamageCalc
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
 		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
 		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
-			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
+				weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
 		{
 			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
 		}
@@ -667,6 +690,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
+		System.out.println("getRangeAccuracy range Level: " + attackerLevels.range);
 		effectiveLevelPlayer = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + STANCE_BONUS) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
@@ -680,12 +704,12 @@ public class PvpDamageCalc
 		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
 
 		if ((weapon == EquipmentData.BOW_OF_FAERDHINEN || weapon == EquipmentData.CRYSTAL_BOW || weapon == EquipmentData.CRYSTAL_BOW_I) &&
-			(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
+				(head == EquipmentData.CRYSTAL_HELM || body == EquipmentData.CRYSTAL_BODY || legs == EquipmentData.CRYSTAL_LEGS))
 		{
 			double accuracyModifier = 1 +
-				(head == EquipmentData.CRYSTAL_HELM ? 0.05 : 0) +
-				(body == EquipmentData.CRYSTAL_BODY ? 0.15 : 0) +
-				(legs == EquipmentData.CRYSTAL_LEGS ? 0.1 : 0);
+					(head == EquipmentData.CRYSTAL_HELM ? 0.05 : 0) +
+					(body == EquipmentData.CRYSTAL_BODY ? 0.15 : 0) +
+					(legs == EquipmentData.CRYSTAL_LEGS ? 0.1 : 0);
 
 			effectiveLevelPlayer *= accuracyModifier;
 		}
@@ -697,7 +721,7 @@ public class PvpDamageCalc
 			boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 
 			double specAccuracyModifier = acb ? ACB_SPEC_ACCURACY_MODIFIER :
-				ballista ? BALLISTA_SPEC_ACCURACY_MODIFIER : 1;
+					ballista ? BALLISTA_SPEC_ACCURACY_MODIFIER : 1;
 
 			attackerChance = Math.floor(rangeModifier * specAccuracyModifier);
 		}
@@ -709,6 +733,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
+		System.out.println("getRangeAccuracy defender Level: " + defenderLevels.def);
 		effectiveLevelTarget = Math.floor(((defenderLevels.def * RIGOUR_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
@@ -752,6 +777,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
+		System.out.println("getMagicAccuracy magic Level: " + attackerLevels.mage);
 		effectiveLevelPlayer = Math.floor(((attackerLevels.mage * (successfulOffensive ? AUGURY_OFFENSIVE_PRAYER_MODIFIER : 1))) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
@@ -765,6 +791,8 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
+		System.out.println("getMagicAccuracy defender defense Level: " + defenderLevels.def);
+		System.out.println("getMagicAccuracy defender magic Level: " + defenderLevels.mage);
 		effectiveLevelTarget = Math.floor(((defenderLevels.def * AUGURY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
 		effectiveMagicLevelTarget = Math.floor((defenderLevels.mage * (defensiveAugurySuccess ? AUGURY_MAGEDEF_PRAYER_MODIFIER : 1)) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
@@ -772,8 +800,8 @@ public class PvpDamageCalc
 
 		// 0.975x is a simplified brimstone accuracy formula, where x = mage def
 		defenderChance = ringUsed == RingData.BRIMSTONE_RING ?
-			Math.floor(effectiveMagicDefenceTarget * ((BRIMSTONE_RING_OPPONENT_DEF_MODIFIER * opponentMageDef) + 64)) :
-			Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
+				Math.floor(effectiveMagicDefenceTarget * ((BRIMSTONE_RING_OPPONENT_DEF_MODIFIER * opponentMageDef) + 64)) :
+				Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
 		/**
 		 * Calculate Accuracy
@@ -827,19 +855,19 @@ public class PvpDamageCalc
 			return null;
 		}
 		return new int[] {
-			equipmentStats.getAstab(),	// 0
-			equipmentStats.getAslash(),	// 1
-			equipmentStats.getAcrush(),	// 2
-			equipmentStats.getAmagic(),	// 3
-			equipmentStats.getArange(),	// 4
-			equipmentStats.getDstab(),	// 5
-			equipmentStats.getDslash(),	// 6
-			equipmentStats.getDcrush(),	// 7
-			equipmentStats.getDmagic(),	// 8
-			equipmentStats.getDrange(),	// 9
-			equipmentStats.getStr(),	// 10
-			equipmentStats.getRstr(),	// 11
-			(int)equipmentStats.getMdmg(),	// 12
+				equipmentStats.getAstab(),	// 0
+				equipmentStats.getAslash(),	// 1
+				equipmentStats.getAcrush(),	// 2
+				equipmentStats.getAmagic(),	// 3
+				equipmentStats.getArange(),	// 4
+				equipmentStats.getDstab(),	// 5
+				equipmentStats.getDslash(),	// 6
+				equipmentStats.getDcrush(),	// 7
+				equipmentStats.getDmagic(),	// 8
+				equipmentStats.getDrange(),	// 9
+				equipmentStats.getStr(),	// 10
+				equipmentStats.getRstr(),	// 11
+				(int)equipmentStats.getMdmg(),	// 12
 		};
 	}
 
@@ -858,8 +886,8 @@ public class PvpDamageCalc
 	public static int[] calculateBonuses(int[] itemIds, RingData ringUsed)
 	{
 		int[] equipmentBonuses = ringUsed == null || ringUsed == RingData.NONE ?
-			new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
-			getItemStats(ringUsed.getItemId());
+				new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } :
+				getItemStats(ringUsed.getItemId());
 
 		if (equipmentBonuses == null) // shouldn't happen, but as a failsafe if the ring lookup fails
 		{
@@ -891,19 +919,19 @@ public class PvpDamageCalc
 	{
 		int[] bonuses = calculateBonuses(itemIds);
 		return ItemEquipmentStats.builder()
-			.astab(bonuses[STAB_ATTACK])	// 0
-			.aslash(bonuses[SLASH_ATTACK])	// 1
-			.acrush(bonuses[CRUSH_ATTACK])	// 2
-			.amagic(bonuses[MAGIC_ATTACK])	// 3
-			.arange(bonuses[RANGE_ATTACK])	// 4
-			.dstab(bonuses[STAB_DEF])		// 5
-			.dslash(bonuses[SLASH_DEF])		// 6
-			.dcrush(bonuses[CRUSH_DEF])		// 7
-			.dmagic(bonuses[MAGIC_DEF])		// 8
-			.drange(bonuses[RANGE_DEF])		// 9
-			.str(bonuses[STRENGTH_BONUS])	// 10
-			.rstr(bonuses[RANGE_STRENGTH]) 	// 11
-			.mdmg(bonuses[MAGIC_DAMAGE])	// 12
-			.build();
+				.astab(bonuses[STAB_ATTACK])	// 0
+				.aslash(bonuses[SLASH_ATTACK])	// 1
+				.acrush(bonuses[CRUSH_ATTACK])	// 2
+				.amagic(bonuses[MAGIC_ATTACK])	// 3
+				.arange(bonuses[RANGE_ATTACK])	// 4
+				.dstab(bonuses[STAB_DEF])		// 5
+				.dslash(bonuses[SLASH_DEF])		// 6
+				.dcrush(bonuses[CRUSH_DEF])		// 7
+				.dmagic(bonuses[MAGIC_DEF])		// 8
+				.drange(bonuses[RANGE_DEF])		// 9
+				.str(bonuses[STRENGTH_BONUS])	// 10
+				.rstr(bonuses[RANGE_STRENGTH]) 	// 11
+				.mdmg(bonuses[MAGIC_DAMAGE])	// 12
+				.build();
 	}
 }

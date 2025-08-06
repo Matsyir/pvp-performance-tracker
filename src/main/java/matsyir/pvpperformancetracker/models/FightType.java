@@ -29,12 +29,16 @@ import org.apache.commons.lang3.ArrayUtils;
 
 public enum FightType
 {
+	ARENA_MAXMED(new CombatLevels(91, 118, 86, 112, 99, 99)),
+	ARENA_ZERK(new CombatLevels(74, 118, 56, 112, 99, 99)),
+	ARENA_1DEF(new CombatLevels(74, 118, 2, 112, 99, 99)),
 	LMS_MAXMED(new CombatLevels(118, 118, 75, 112, 99, 99)),
-	LMS_ZERK(new CombatLevels(91, 118, 45, 112, 99, 99)),
+	LMS_ZERK(new CombatLevels(91, 118, 50, 112, 99, 99)),
 	LMS_1DEF(new CombatLevels(91, 118, 1, 112, 99, 99)),
 	NORMAL(CombatLevels.getConfigLevels());
 
 	private static FightType[] LMS_TYPES = { LMS_MAXMED, LMS_ZERK, LMS_1DEF };
+	private static FightType[] ARENA_TYPES = { ARENA_MAXMED, ARENA_ZERK, ARENA_1DEF };
 
 	private CombatLevels combatLevelsForType;
 	FightType(CombatLevels combatLevelsForType)
@@ -55,5 +59,9 @@ public enum FightType
 	public boolean isLmsFight()
 	{
 		return ArrayUtils.contains(LMS_TYPES, this);
+	}
+	public boolean isArenaFight()
+	{
+		return ArrayUtils.contains(ARENA_TYPES, this);
 	}
 }
