@@ -124,7 +124,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// "pvp-performance-tracker2": From 1.5.9 update, until present
 	public static final String DATA_FOLDER = "pvp-performance-tracker2";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
-	private static final String FROZEN_MESSAGE = "<col=ef1020>You have been frozen!</col>";
 	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
