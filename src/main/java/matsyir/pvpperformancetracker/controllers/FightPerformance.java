@@ -139,6 +139,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 							FightType.LMS_MAXMED;
 		}
 		if(fightIsAtArena) {
+			defLvl = PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE);
 			this.fightType = defLvl <= FightType.ARENA_1DEF.getCombatLevelsForType().def ? FightType.ARENA_1DEF :
 					defLvl <= FightType.ARENA_ZERK.getCombatLevelsForType().def ? FightType.ARENA_ZERK :
 							FightType.ARENA_MAXMED;

@@ -140,4 +140,8 @@ public class CombatLevels
 			default:        return 0;
 		}
 	}
+
+	public String toString() {
+		return "(" + atk + ", " + str + ", " + def + ", " + range + ", " + mage + ", " + hp + ")";
+	}
 }
