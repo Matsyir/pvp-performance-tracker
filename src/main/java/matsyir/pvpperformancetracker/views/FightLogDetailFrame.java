@@ -87,7 +87,7 @@ class FightLogDetailFrame extends JFrame
 	FightLogDetailFrame(FightPerformance fight, FightLogEntry log, int rowIdx, Point location)
 	{
 		super("Fight Log Details - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
-			+ " on world " + fight.getWorld());
+				+ " on world " + fight.getWorld());
 
 		this.rowIdx = rowIdx;
 
@@ -184,32 +184,51 @@ class FightLogDetailFrame extends JFrame
 
 		praysUsedLine.add(defenderPrays, BorderLayout.EAST);
 
-		CombatLevels levels = fight.fightType.getCombatLevelsForType();
+		//Pull levels from fight type or if they exist on attacker and defender
+		CombatLevels attackerLevels = fight.fightType.getCombatLevelsForType();
+		CombatLevels defenderLevels = fight.fightType.getCombatLevelsForType();
+		if(isCompetitorLog) {
+			if(log.getAttackerLevels() != null) {
+				attackerLevels = log.getAttackerLevels();
+			}
+			if(log.getDefenderLevels() != null) {
+				defenderLevels = log.getDefenderLevels();
+			}
+		}
+		if(!isCompetitorLog) {
+			if(log.getAttackerLevels() != null) {
+				attackerLevels = log.getDefenderLevels();
+			}
+			if(log.getDefenderLevels() != null) {
+				defenderLevels = fight.competitor.getFightLogEntries().get(rowIdx).getAttackerLevels();
+			}
+		}
+
 		combatLevelsLine = new JPanel(new BorderLayout());
 		JPanel attackerCombatLevels = new JPanel(new GridLayout(2, 3));
 		attackerAtkLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerAtkLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.ATTACK));
-		attackerAtkLvl.setText(String.valueOf(levels.atk));
+		attackerAtkLvl.setText(String.valueOf(attackerLevels.atk));
 		attackerAtkLvl.setToolTipText("Attack Level");
 		attackerStrLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerStrLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.STRENGTH));
-		attackerStrLvl.setText(String.valueOf(levels.str));
+		attackerStrLvl.setText(String.valueOf(attackerLevels.str));
 		attackerStrLvl.setToolTipText("Strength Level");
 		attackerDefLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerDefLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.DEFENCE));
-		attackerDefLvl.setText(String.valueOf(levels.def));
+		attackerDefLvl.setText(String.valueOf(attackerLevels.def));
 		attackerDefLvl.setToolTipText("Defence Level");
 		attackerRangeLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerRangeLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.RANGED));
-		attackerRangeLvl.setText(String.valueOf(levels.range));
+		attackerRangeLvl.setText(String.valueOf(attackerLevels.range));
 		attackerRangeLvl.setToolTipText("Ranged Level");
 		attackerMageLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerMageLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.MAGIC));
-		attackerMageLvl.setText(String.valueOf(levels.mage));
+		attackerMageLvl.setText(String.valueOf(attackerLevels.mage));
 		attackerMageLvl.setToolTipText("Magic Level");
 		attackerHpLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerHpLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.HITPOINTS));
-		attackerHpLvl.setText(String.valueOf(levels.hp));
+		attackerHpLvl.setText(String.valueOf(attackerLevels.hp));
 		attackerHpLvl.setToolTipText("Hitpoints Level");
 
 		attackerCombatLevels.add(attackerAtkLvl);
@@ -222,28 +241,29 @@ class FightLogDetailFrame extends JFrame
 
 		JPanel defenderCombatLevels = new JPanel(new GridLayout(2, 3));
 		defenderAtkLvl = new JLabel();
+
 		PLUGIN.addSpriteToLabelIfValid(defenderAtkLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.ATTACK));
-		defenderAtkLvl.setText(String.valueOf(levels.atk));
+		defenderAtkLvl.setText(String.valueOf(defenderLevels.atk));
 		defenderAtkLvl.setToolTipText("Attack Level");
 		defenderStrLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(defenderStrLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.STRENGTH));
-		defenderStrLvl.setText(String.valueOf(levels.str));
+		defenderStrLvl.setText(String.valueOf(defenderLevels.str));
 		defenderStrLvl.setToolTipText("Strength Level");
 		defenderDefLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(defenderDefLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.DEFENCE));
-		defenderDefLvl.setText(String.valueOf(levels.def));
+		defenderDefLvl.setText(String.valueOf(defenderLevels.def));
 		defenderDefLvl.setToolTipText("Defence Level");
 		defenderRangeLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(defenderRangeLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.RANGED));
-		defenderRangeLvl.setText(String.valueOf(levels.range));
+		defenderRangeLvl.setText(String.valueOf(defenderLevels.range));
 		defenderRangeLvl.setToolTipText("Ranged Level");
 		defenderMageLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(defenderMageLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.MAGIC));
-		defenderMageLvl.setText(String.valueOf(levels.mage));
+		defenderMageLvl.setText(String.valueOf(defenderLevels.mage));
 		defenderMageLvl.setToolTipText("Magic Level");
 		defenderHpLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(defenderHpLvl, PvpPerformanceTrackerUtils.getSpriteForSkill(Skill.HITPOINTS));
-		defenderHpLvl.setText(String.valueOf(levels.hp));
+		defenderHpLvl.setText(String.valueOf(defenderLevels.hp));
 		defenderHpLvl.setToolTipText("Hitpoints Level");
 
 		defenderCombatLevels.add(defenderAtkLvl);
@@ -259,12 +279,12 @@ class FightLogDetailFrame extends JFrame
 		JPanel equipmentStatsLine = new JPanel(new BorderLayout());
 		JLabel attackerStatsLabel = new JLabel();
 		PLUGIN.getClientThread().invokeLater(() ->
-			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear())));
+				attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear())));
 		equipmentStatsLine.add(attackerStatsLabel, BorderLayout.WEST);
 
 		JLabel defenderStatsLabel = new JLabel();
 		PLUGIN.getClientThread().invokeLater(() ->
-			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear())));
+				defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear())));
 		equipmentStatsLine.add(defenderStatsLabel, BorderLayout.EAST);
 
 		JPanel equipmentRenderLine = new JPanel(new BorderLayout());
@@ -278,8 +298,8 @@ class FightLogDetailFrame extends JFrame
 		JLabel attackerAnimationDetected = new JLabel();
 		attackerAnimationDetected.setText("<html><strong>Animation Detected:</strong> " + log.getAnimationData().toString() + "</html>");
 		attackerAnimationDetected.setToolTipText("<html>Note that the animation can be misleading, as many animations are re-used, but this is normal.<br/>" +
-			"For example, Zammy Hasta and Staff of Fire use the same crush animation.<br/>" +
-			"These were not intended to ever be displayed, but why not include them here.</html>");
+				"For example, Zammy Hasta and Staff of Fire use the same crush animation.<br/>" +
+				"These were not intended to ever be displayed, but why not include them here.</html>");
 		animationDetectedLine.add(attackerAnimationDetected, BorderLayout.CENTER);
 
 
@@ -419,22 +439,22 @@ class FightLogDetailFrame extends JFrame
 		}
 		String sep = "<br/>&nbsp;&nbsp;";
 		return "<html><strong>Attack bonus</strong>" + sep +
-			"Stab: " + prependPlusIfPositive(stats.getAstab()) + sep +
-			"Slash: " + prependPlusIfPositive(stats.getAslash()) + sep +
-			"Crush: " + prependPlusIfPositive(stats.getAcrush()) + sep +
-			"Magic: " + prependPlusIfPositive(stats.getAmagic()) + sep +
-			"Range: " + prependPlusIfPositive(stats.getArange()) +
-			"<br/><strong>Defence bonus</strong>" + sep +
-			"Stab: " + prependPlusIfPositive(stats.getDstab()) + sep +
-			"Slash: " + prependPlusIfPositive(stats.getDslash()) + sep +
-			"Crush: " + prependPlusIfPositive(stats.getDcrush()) + sep +
-			"Magic: " + prependPlusIfPositive(stats.getDmagic()) + sep +
-			"Range: " + prependPlusIfPositive(stats.getDrange()) +
-			"<br/><strong>Other bonuses</strong>" + sep +
-			"Melee strength: " + prependPlusIfPositive(stats.getStr()) + sep +
-			"Ranged strength: " + prependPlusIfPositive(stats.getRstr() + ammoRangeStr) + sep +
-			"Magic damage: " + prependPlusIfPositive((int)stats.getMdmg()) + "%" + sep +
-			"</html>";
+				"Stab: " + prependPlusIfPositive(stats.getAstab()) + sep +
+				"Slash: " + prependPlusIfPositive(stats.getAslash()) + sep +
+				"Crush: " + prependPlusIfPositive(stats.getAcrush()) + sep +
+				"Magic: " + prependPlusIfPositive(stats.getAmagic()) + sep +
+				"Range: " + prependPlusIfPositive(stats.getArange()) +
+				"<br/><strong>Defence bonus</strong>" + sep +
+				"Stab: " + prependPlusIfPositive(stats.getDstab()) + sep +
+				"Slash: " + prependPlusIfPositive(stats.getDslash()) + sep +
+				"Crush: " + prependPlusIfPositive(stats.getDcrush()) + sep +
+				"Magic: " + prependPlusIfPositive(stats.getDmagic()) + sep +
+				"Range: " + prependPlusIfPositive(stats.getDrange()) +
+				"<br/><strong>Other bonuses</strong>" + sep +
+				"Melee strength: " + prependPlusIfPositive(stats.getStr()) + sep +
+				"Ranged strength: " + prependPlusIfPositive(stats.getRstr() + ammoRangeStr) + sep +
+				"Magic damage: " + prependPlusIfPositive((int)stats.getMdmg()) + "%" + sep +
+				"</html>";
 	}
 
 	String prependPlusIfPositive(int number)

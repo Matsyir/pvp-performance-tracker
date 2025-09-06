@@ -28,8 +28,13 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
+import net.runelite.client.hiscore.HiscoreResult;
+import net.runelite.client.hiscore.HiscoreSkill;
+import net.runelite.client.hiscore.HiscoreEndpoint;
+import net.runelite.client.hiscore.HiscoreManager;
 
 // Basic class that will be used to save current combat levels (including boosts/drains)
 @Getter
@@ -38,11 +43,11 @@ public class CombatLevels
 	public static CombatLevels getConfigLevels()
 	{
 		return new CombatLevels(CONFIG.attackLevel(),
-			CONFIG.strengthLevel(),
-			CONFIG.defenceLevel(),
-			CONFIG.rangedLevel(),
-			CONFIG.magicLevel(),
-			99);
+				CONFIG.strengthLevel(),
+				CONFIG.defenceLevel(),
+				CONFIG.rangedLevel(),
+				CONFIG.magicLevel(),
+				99);
 	}
 
 	@Expose
@@ -84,6 +89,44 @@ public class CombatLevels
 		this.hp = client.getBoostedSkillLevel(Skill.HITPOINTS);
 	}
 
+	public CombatLevels(String username, HiscoreManager hiscoreManager) {
+		try {
+				HiscoreResult lookupResults = hiscoreManager.lookupAsync(username.toLowerCase(), HiscoreEndpoint.NORMAL);
+				if(lookupResults == null) {
+					//if highscores fails just pull from config
+					this.atk = CONFIG.attackLevel();
+					this.str = CONFIG.strengthLevel();
+					this.def = CONFIG.defenceLevel();
+					this.range = CONFIG.rangedLevel();
+					this.mage = CONFIG.magicLevel();
+					this.hp = 99;
+				} else {
+					int usernamesAttack = lookupResults.getSkill(HiscoreSkill.ATTACK).getLevel();
+					int usernamesStrength = lookupResults.getSkill(HiscoreSkill.STRENGTH).getLevel();
+					int usernamesDefence = lookupResults.getSkill(HiscoreSkill.DEFENCE).getLevel();
+					int usernamesRange = lookupResults.getSkill(HiscoreSkill.RANGED).getLevel();
+					int usernamesMagic = lookupResults.getSkill(HiscoreSkill.MAGIC).getLevel();
+					int usernamesHitpoints = lookupResults.getSkill(HiscoreSkill.HITPOINTS).getLevel();
+
+					//assume boosted
+					this.atk = (int) Math.floor((usernamesAttack + 5) * 1.15);
+					this.str = (int) Math.floor((usernamesStrength + 5) * 1.15);
+					this.def = (int) Math.floor((usernamesDefence + 2) * 1.20);
+					this.range = (int) Math.floor((usernamesRange + 4) * 1.10);
+					this.mage = usernamesMagic; //nobody uses boosted magic for extended periods of time
+					this.hp = usernamesHitpoints;
+				}
+		} catch (Exception exception) {
+			//if highscores fails just pull from config
+			this.atk = CONFIG.attackLevel();
+			this.str = CONFIG.strengthLevel();
+			this.def = CONFIG.defenceLevel();
+			this.range = CONFIG.rangedLevel();
+			this.mage = CONFIG.magicLevel();
+			this.hp = 99;
+		}
+	}
+
 	public int getSkill(Skill skill)
 	{
 		switch(skill)
@@ -96,5 +139,9 @@ public class CombatLevels
 			case HITPOINTS: return hp;
 			default:        return 0;
 		}
+	}
+
+	public String toString() {
+		return "(" + atk + ", " + str + ", " + def + ", " + range + ", " + mage + ", " + hp + ")";
 	}
 }

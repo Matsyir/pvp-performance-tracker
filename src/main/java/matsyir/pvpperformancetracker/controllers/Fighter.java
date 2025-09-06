@@ -74,7 +74,7 @@ class Fighter
 	@Expose
 	@SerializedName("s")
 	private int offPraySuccessCount; // total number of successful off-pray attacks
-									 // (when you use a different combat style than your opponent's overhead)
+	// (when you use a different combat style than your opponent's overhead)
 	@Expose
 	@SerializedName("d")
 	private double deservedDamage; // total deserved damage based on gear & opponent's pray
@@ -195,11 +195,11 @@ class Fighter
 	// Used for regular, ongoing fights
 	void addAttack(Player opponent, AnimationData animationData, int offensivePray)
 	{
-		addAttack(opponent, animationData, offensivePray, null);
+		addAttack(opponent, animationData, offensivePray, null, null);
 	}
 
 	// Levels can be null
-	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels, CombatLevels opponentLevels)
 	{
 		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
 
@@ -251,7 +251,7 @@ class Fighter
 			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
 		}
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, levels, opponentLevels);
 		deservedDamage += pvpDamageCalc.getAverageHit();
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -265,7 +265,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, opponentLevels, animationData);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
@@ -311,7 +311,7 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, levels, levels);
 
 		ghostBarrageCount++;
 		ghostBarrageDeservedDamage += pvpDamageCalc.getAverageHit();
@@ -382,8 +382,8 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(1);
 		return shortString ?
-			offPraySuccessCount + "/" + attackCount :
-			offPraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffPraySuccessPercentage()) + "%)";
+				offPraySuccessCount + "/" + attackCount :
+				offPraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffPraySuccessPercentage()) + "%)";
 	}
 
 	public String getOffPrayStats()
@@ -399,8 +399,8 @@ class Fighter
 		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(1);
 		String luckPercentage = magicHitCountDeserved != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) :
-			"0";
+				nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) :
+				"0";
 		stats += " (" + luckPercentage + "%)";
 		return stats;
 	}
@@ -409,8 +409,8 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(1);
 		return magicHitCountDeserved != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) + "%" :
-			"0%";
+				nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) + "%" :
+				"0%";
 	}
 
 	public String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
@@ -418,7 +418,7 @@ class Fighter
 		nf.setMaximumFractionDigits(precision);
 		double difference = deservedDamage - opponent.deservedDamage;
 		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
-			nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+				nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
 	public String getDeservedDmgString(Fighter opponent)
 	{
@@ -430,7 +430,7 @@ class Fighter
 	{
 		int difference = damageDealt - opponent.damageDealt;
 		return onlyDiff ? (difference > 0 ? "+" : "") + difference:
-			damageDealt + " (" + (difference > 0 ? "+" : "") + difference + ")";
+				damageDealt + " (" + (difference > 0 ? "+" : "") + difference + ")";
 	}
 	public String getDmgDealtString(Fighter opponent)
 	{
@@ -440,13 +440,13 @@ class Fighter
 	public double calculateOffPraySuccessPercentage()
 	{
 		return attackCount == 0 ? 0 :
-		(double) offPraySuccessCount / attackCount * 100.0;
+				(double) offPraySuccessCount / attackCount * 100.0;
 	}
 
 	public double calculateOffensivePraySuccessPercentage()
 	{
 		return attackCount == 0 ? 0 :
-			(double) offensivePraySuccessCount / attackCount * 100.0;
+				(double) offensivePraySuccessCount / attackCount * 100.0;
 	}
 
 	public int getMagicAttackCount()
@@ -461,8 +461,8 @@ class Fighter
 	{
 		nf.setMaximumFractionDigits(1);
 		return shortString ?
-			offensivePraySuccessCount + "/" + attackCount :
-			offensivePraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffensivePraySuccessPercentage()) + "%)";
+				offensivePraySuccessCount + "/" + attackCount :
+				offensivePraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffensivePraySuccessPercentage()) + "%)";
 	}
 
 	public String getOffensivePrayStats()

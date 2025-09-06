@@ -112,6 +112,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("C")
 	private CombatLevels attackerLevels; // CAN BE NULL
 
+	@Expose
+	@SerializedName("D")
+	private CombatLevels defenderLevels; // CAN BE NULL
+
 	@Getter
 	@Setter
 	@Expose
@@ -192,7 +196,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Getter @Setter
 	private boolean isPartOfTickGroup = false;
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, CombatLevels defLevels, AnimationData animationData)
 	{
 		this.isFullEntry = true;
 
@@ -221,6 +225,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(animationData);
 		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
+		this.defenderLevels = defLevels;
 	}
 
 	// create incomplete entry to save competitor's defensive stats which are only client side
@@ -296,20 +301,20 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	{
 		Color darkRed = new Color(127, 0, 0); // same color as default clan chat color
 		return new ChatMessageBuilder()
-			.append(darkRed, attackerName + ": ")
-			.append(Color.BLACK, "Style: ")
-			.append(darkRed, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
-			.append(Color.BLACK, "  Hit: ")
-			.append(darkRed, getHitRange())
-			.append(Color.BLACK, "  Acc: ")
-			.append(darkRed, nf.format(accuracy))
-			.append(Color.BLACK, "  AvgHit: ")
-			.append(darkRed, nf.format(deservedDamage))
-			.append(Color.BLACK, " Spec?: ")
-			.append(darkRed, animationData.isSpecial ? "Y" : "N")
-			.append(Color.BLACK, " OffP?:")
-			.append(darkRed, success() ? "Y" : "N")
-			.build();
+				.append(darkRed, attackerName + ": ")
+				.append(Color.BLACK, "Style: ")
+				.append(darkRed, WordUtils.capitalizeFully(animationData.attackStyle.toString()))
+				.append(Color.BLACK, "  Hit: ")
+				.append(darkRed, getHitRange())
+				.append(Color.BLACK, "  Acc: ")
+				.append(darkRed, nf.format(accuracy))
+				.append(Color.BLACK, "  AvgHit: ")
+				.append(darkRed, nf.format(deservedDamage))
+				.append(Color.BLACK, " Spec?: ")
+				.append(darkRed, animationData.isSpecial ? "Y" : "N")
+				.append(Color.BLACK, " OffP?:")
+				.append(darkRed, success() ? "Y" : "N")
+				.build();
 	}
 
 	public String getHitRange()
@@ -326,7 +331,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
-			(int)(diff / Math.abs(diff));
+				(int)(diff / Math.abs(diff));
 	}
 
 }
