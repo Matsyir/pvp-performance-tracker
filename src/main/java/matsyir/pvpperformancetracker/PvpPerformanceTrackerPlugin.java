@@ -485,13 +485,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (amount > 0)
 		{
 			if (!(hitType == HitsplatID.DAMAGE_ME
-					|| hitType == HitsplatID.DAMAGE_ME_ORANGE
-					|| hitType == HitsplatID.DAMAGE_OTHER_ORANGE
-					|| hitType == HitsplatID.DAMAGE_OTHER
-					|| hitType == HitsplatID.DAMAGE_MAX_ME
-					|| hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE
-					|| hitType == HitsplatID.POISON
-					|| hitType == HitsplatID.VENOM))
+				|| hitType == HitsplatID.DAMAGE_ME_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER_ORANGE
+				|| hitType == HitsplatID.DAMAGE_OTHER
+				|| hitType == HitsplatID.DAMAGE_MAX_ME
+				|| hitType == HitsplatID.DAMAGE_MAX_ME_ORANGE
+				|| hitType == HitsplatID.POISON
+				|| hitType == HitsplatID.VENOM
+				|| hitType == HitsplatID.BURN))
 			{
 				return;
 			}
@@ -499,12 +500,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		currentFight.addDamageDealt(target.getName(), amount);
 
-		// Exclude certain hitsplat types (like heal, poison, venom, disease)
+		// Exclude certain hitsplat types (like heal, burn, poison, venom, disease)
 		// from the buffer used for HP-before-hit calculations.
 		boolean isExcludedType = hitType == HitsplatID.HEAL ||
-				hitType == HitsplatID.POISON ||
-				hitType == HitsplatID.VENOM ||
-				hitType == HitsplatID.DISEASE;
+								 hitType == HitsplatID.POISON ||
+								 hitType == HitsplatID.VENOM ||
+								 hitType == HitsplatID.BURN ||
+								 hitType == HitsplatID.DISEASE;
 
 		if (isExcludedType)
 		{
@@ -664,7 +666,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							otherPlayer = player;
 						}
 
-						// 4. Check Candidates (Vengeance/Recoil/Burn)
+							// 4. Check Candidates (Vengeance/Recoil)
 						if (otherPlayer != null)
 						{
 							List<HitsplatInfo> incomingHitsOnOther = incomingHitsplatsBuffer.get(tickToProcess);
@@ -701,12 +703,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							}
 						}
 
-						// Burn Check (Lower priority, only if not already identified as Veng/Recoil)
-						if (!isCandidate && hitAmount >= 1 && hitAmount <= 3)
-						{
-							log.debug("Tick {}: Found potential Burn hit ({} damage) on {}", tickToProcess, hitAmount, target.getName());
-							isCandidate = true;
-						}
+							// Burn Check removed: burn hitsplats are excluded earlier in onHitsplatApplied
 
 						// 5. Remove if Candidate Found
 						if (isCandidate)
