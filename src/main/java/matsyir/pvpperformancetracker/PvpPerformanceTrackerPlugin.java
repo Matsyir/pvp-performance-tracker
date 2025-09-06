@@ -779,21 +779,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			}
 			}
 
-			// Determine attacker
-			String actorName = ((Player) opponent).getName();
-			Fighter attacker;
-			if (actorName.equals(currentFight.getOpponent().getName()))
-			{
-				attacker = currentFight.getCompetitor();
-			}
-			else if (actorName.equals(currentFight.getCompetitor().getName()))
-						{
-				attacker = currentFight.getOpponent();
-					}
-					else
-					{
-				return;
-			}
+				// Determine attacker safely (handle null names and prefer identity when possible)
+				String actorName = ((Player) opponent).getName();
+				Fighter attacker;
+				Player trackedOppPlayer = currentFight.getOpponent().getPlayer();
+				Player trackedCompPlayer = currentFight.getCompetitor().getPlayer();
+
+				boolean opponentIsTrackedOpponent = opponent == trackedOppPlayer || Objects.equals(actorName, currentFight.getOpponent().getName());
+				boolean opponentIsTrackedCompetitor = opponent == trackedCompPlayer || Objects.equals(actorName, currentFight.getCompetitor().getName());
+
+				if (opponentIsTrackedOpponent)
+				{
+					attacker = currentFight.getCompetitor();
+				}
+				else if (opponentIsTrackedCompetitor)
+				{
+					attacker = currentFight.getOpponent();
+				}
+				else
+				{
+					return;
+				}
 
 			// Get all potentially relevant, unprocessed entries sorted by animation tick
 			List<FightLogEntry> candidateEntries = attacker.getPendingAttacks().stream()
