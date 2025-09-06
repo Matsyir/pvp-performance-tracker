@@ -37,6 +37,7 @@ import org.apache.commons.lang3.ArrayUtils;
 // cached like most items. Each LMS item will have the 'real' itemId so the stats can be looked up.
 // A few non-LMS range weapons will be saved in order to help estimate ammo type/range strength based
 // on current weapon itemId, or to determine special attacks used.
+@SuppressWarnings("deprecation") // ItemID deprecation isnt a problem
 public enum EquipmentData
 {
 	// Non-LMS items:

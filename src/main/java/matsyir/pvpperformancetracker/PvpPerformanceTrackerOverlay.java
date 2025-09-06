@@ -27,12 +27,10 @@ package matsyir.pvpperformancetracker;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.math.RoundingMode; // Added import
-import java.text.NumberFormat; // Added import
-import java.util.ArrayList; // Added import
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import javax.inject.Inject;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
-import matsyir.pvpperformancetracker.models.FightLogEntry; // Added import
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
