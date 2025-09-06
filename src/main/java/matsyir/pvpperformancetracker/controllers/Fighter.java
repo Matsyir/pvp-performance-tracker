@@ -228,7 +228,7 @@ class Fighter
 			{
 				animationData = AnimationData.RANGED_DRAGON_CROSSBOW_SPEC;
 			}
-		}
+			}
 
 		attackCount++;
 		if (successful)

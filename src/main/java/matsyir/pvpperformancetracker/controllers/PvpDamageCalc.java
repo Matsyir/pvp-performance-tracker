@@ -113,6 +113,9 @@ public class PvpDamageCalc
 	private static final double ABYSSAL_DAGGER_SPEC_ACCURACY_MODIFIER = 1.25;
 	private static final double ABYSSAL_DAGGER_SPEC_DMG_MODIFIER = 0.85;
 
+	private static final double ARKAN_BLADE_SPEC_ACCURACY_MODIFIER = 1.5;
+	private static final double ARKAN_BLADE_SPEC_DMG_MODIFIER = 1.5;
+
 	// 0.975x is a simplified average brimstone mage def formula, where x = opponent's mage def
 	// 25% of attacks ignore 10% of mage def, therefore 25% of attacks are 90% mage def and 75% are the usual 100%.
 	// original formula: 0.25(0.9x) + 0.75x ==> 0.975x
@@ -429,6 +432,7 @@ public class PvpDamageCalc
 		boolean dwh = weapon == EquipmentData.DRAGON_WARHAMMER;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
+		boolean arkanBlade = weapon == EquipmentData.ARKAN_BLADE;
 
 		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
 		// apply void bonus if applicable
@@ -446,6 +450,7 @@ public class PvpDamageCalc
 			(dwh && usingSpec) ? DWH_SPEC_DMG_MODIFIER :
 			(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
 			(abyssalDagger && usingSpec) ? ABYSSAL_DAGGER_SPEC_DMG_MODIFIER :
+			(arkanBlade && usingSpec) ? ARKAN_BLADE_SPEC_DMG_MODIFIER :
 			1;
 		maxHit = (int) (damageModifier * baseDamage);
 	}
@@ -557,6 +562,7 @@ public class PvpDamageCalc
 		boolean fang = weapon == EquipmentData.OSMUMTENS_FANG;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
+		boolean arkanBlade = weapon == EquipmentData.ARKAN_BLADE;
 
 		if (voidwaker && usingSpec)
 		{
@@ -584,6 +590,7 @@ public class PvpDamageCalc
 			ags ? ARMA_GS_SPEC_ACCURACY_MODIFIER :
 			ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
 			fang ? FANG_SPEC_ACCURACY_MODIFIER :
+			arkanBlade ? ARKAN_BLADE_SPEC_ACCURACY_MODIFIER :
 			1;
 
 		/**

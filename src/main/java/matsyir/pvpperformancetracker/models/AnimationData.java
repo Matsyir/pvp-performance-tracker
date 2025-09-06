@@ -103,7 +103,8 @@ public enum AnimationData
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
 	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
-	MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
+    MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
+    MELEE_ARKAN_BLADE_SPEC(12297, AttackStyle.SLASH, true),
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, craw's bow, dbow, dbow spec
@@ -139,6 +140,7 @@ public enum AnimationData
 	MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF(1162, AttackStyle.MAGIC, 16), // strike, bolt and blast (tested all spells, different weapons)
 	MAGIC_STANDARD_WAVE_STAFF(1167, AttackStyle.MAGIC, 20), // tested many staves
 	MAGIC_STANDARD_SURGE_STAFF(7855, AttackStyle.MAGIC, 24), // tested many staves
+	MAGIC_STANDARD_GOD_SPELL(811, AttackStyle.MAGIC, 30), // Same animation for flames of zamorak, claws of guthix and saradomin strike. Assumes charge is active.
 	MAGIC_ANCIENT_SINGLE_TARGET(1978, AttackStyle.MAGIC, 26), // Rush & Blitz animations (tested all 8, different weapons)
 	MAGIC_ANCIENT_MULTI_TARGET(1979, AttackStyle.MAGIC, 30), // Burst & Barrage animations (tested all 8, different weapons)
 	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, AttackStyle.MAGIC, 66); // assume 99 mage's base damage (does not rise when boosted).
