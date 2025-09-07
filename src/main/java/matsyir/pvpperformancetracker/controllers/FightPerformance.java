@@ -329,13 +329,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 		competitorPrevHp = currentHp;
 	}
 
-	// Will return true and stop the fight if the fight should be over.
-	// Ends when either competitor hasn't fought in NEW_FIGHT_DELAY. Death animations
-	// only mark fighters as dead; ending on despawn is handled by the plugin.
-	public boolean isFightOver()
+	// Will return true if either competitor has died yet
+	// Completely ending the fight on despawn is handled by the plugin rather than within FightPerformance.
+	public boolean checkForDeathAnimations()
 	{
-		boolean isOver = false;
-
 		// If either competitor is playing a death animation, mark dead but do not end the fight here.
 		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == opponent.getPlayer().getAnimation()))
 		{
@@ -345,18 +342,16 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			competitor.died();
 		}
-		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds
-		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
-		{
-			isOver = true;
-		}
 
-		if (isOver)
-		{
-			lastFightTime = Instant.now().toEpochMilli();
-		}
+		return competitor.isDead() || opponent.isDead();
+	}
 
-		return isOver;
+	// returns true if the fight is considered inactive due to time. We should end the fight when this happens
+	public boolean isInactive()
+	{
+		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds, consider the fight done, because
+		// presumably either the player or the opponent ran away/teleported at this point.
+		return Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0;
 	}
 
 	public ArrayList<FightLogEntry> getAllFightLogEntries()

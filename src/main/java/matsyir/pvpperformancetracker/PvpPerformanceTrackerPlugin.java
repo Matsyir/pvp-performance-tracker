@@ -380,7 +380,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		stopFightIfOver();
+		checkForFightEnd();
 
 		// if the client player already has a valid opponent AND the fight has started,
 		// or the event source/target aren't players, skip any processing.
@@ -407,7 +407,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		// start a new fight with the new found opponent, if a new one.
+		// start a new fight with the newfound opponent, if a new one.
 		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
@@ -454,7 +454,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged event)
 	{
-		stopFightIfOver();
+		if (!hasOpponent()) { return; }
+
+		checkForFightEnd();
 
 		// delay the animation processing, since we will also want to use equipment data for deserved
 		// damage, and equipment updates are loaded after the animation updates.
@@ -471,17 +473,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// track damage dealt/taken
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
-		int hitType = event.getHitsplat().getHitsplatType();
-		int amount = event.getHitsplat().getAmount();
-		Actor target = event.getActor();
+		Actor target;
 
 		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
 		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
 		// Fighters in the fight being hit.
-		if (!hasOpponent() || !(target instanceof Player))
+		if (!hasOpponent() || !((target = event.getActor()) instanceof Player))
 		{
 			return;
 		}
+
+		int hitType = event.getHitsplat().getHitsplatType();
+		int amount = event.getHitsplat().getAmount();
 
 		// for non-zero hits, only process relevant hitsplat types
 		if (amount > 0)
@@ -602,6 +605,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		// if there is no ongoing fight, skip any onGameTick processing.
+		// We should have enough extra ticks to calc any hitsplats during death animations and empty these queues.
+		if (!hasOpponent()) { return; }
+
 		// Process hitsplats from the previous tick
 		int currentTick = client.getTickCount();
 		int tickToProcess = currentTick - 1;
@@ -609,7 +616,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		List<HitsplatInfo> hitsplatsToProcess = hitsplatBuffer.remove(tickToProcess);
 
 		// --- START: New Pre-processing Logic ---
-		if (hitsplatsToProcess != null && !hitsplatsToProcess.isEmpty() && hasOpponent())
+		if (hitsplatsToProcess != null && !hitsplatsToProcess.isEmpty())
 		{
 			// 1. Calculate total expected hits from pending attacks for this tick
 			int totalExpectedAttackHits = 0;
@@ -730,18 +737,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// Cleanup happens regardless of whether hitsplats were processed this tick
 		// Check if hitsplatsToProcess became null or empty after pre-processing
-		if (hitsplatsToProcess == null || hitsplatsToProcess.isEmpty()) // Modified condition
+		// If there is no active fight anymore, avoid accessing currentFight below.
+		if (hitsplatsToProcess == null || hitsplatsToProcess.isEmpty() || !hasOpponent())
 		{
 			// Cleanup old entries from buffers
-			hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
-			incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
-			return;
-		}
-
-		// If there is no active fight anymore, avoid accessing currentFight below.
-		if (!hasOpponent())
-		{
-			// Cleanup old entries from buffers and exit
 			hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
 			incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
 			return;
@@ -1019,19 +1018,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		Player despawned = event.getPlayer();
 		if (despawned == null || despawned.getName() == null) { return; }
 
-		FightPerformance f = currentFight;
-		if (f == null || f.getOpponent() == null) { return; }
-		String opponentName = f.getOpponent().getName();
+		if (currentFight == null || currentFight.getOpponent() == null) { return; }
+		String opponentName = currentFight.getOpponent().getName();
 		if (opponentName == null) { return; }
 
 		// End fight when opponent despawns after a death was observed on either side
-		if (despawned.getName().equals(opponentName) && (f.getOpponent().isDead() || f.getCompetitor().isDead()))
+		if (despawned.getName().equals(opponentName) && (currentFight.getOpponent().isDead() || currentFight.getCompetitor().isDead()))
 		{
-			if (f.fightStarted())
-			{
-				addToFightHistory(f);
-			}
-			currentFight = null;
+			onFightEnded();
 		}
 	}
 
@@ -1143,17 +1137,34 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		return currentFight != null;
 	}
 
-	private void stopFightIfOver()
+
+	private void checkForFightEnd()
 	{
-		if (hasOpponent() && currentFight.isFightOver())
+		if (!hasOpponent()) { return; }
+
+		// ensure we check for death animations so that Fighter.isDead gets set properly, but we don't need to
+		// use the state of deaths for ending fights YET (not instantly), we do that within onPlayerDespawned
+		// in order to give everything time to process and allow time to check for double deaths, hitsplats etc
+		currentFight.checkForDeathAnimations();
+
+		// if the fight has been inactive for 20+ secs however (FightPerformance.NEW_FIGHT_DELAY, plus however long
+		// until they triggered an event for this check), just end it.
+		if (currentFight.isInactive())
 		{
-			// add fight to fight history if it actually started
-			if (currentFight.fightStarted())
-			{
-				addToFightHistory(currentFight);
-			}
-			currentFight = null;
+			onFightEnded();
 		}
+	}
+
+	private void onFightEnded()
+	{
+		// add fight to fight history if it actually started
+		if (currentFight.fightStarted())
+		{
+			addToFightHistory(currentFight);
+		}
+		currentFight = null;
+		hitsplatBuffer.clear();
+		incomingHitsplatsBuffer.clear();
 	}
 
 	// save the currently loaded fightHistory to the local json data so it is saved for the next client launch.
