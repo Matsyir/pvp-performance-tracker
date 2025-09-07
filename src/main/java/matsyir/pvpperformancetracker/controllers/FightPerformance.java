@@ -330,21 +330,20 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// Will return true and stop the fight if the fight should be over.
-	// if either competitor hasn't fought in NEW_FIGHT_DELAY, or either competitor died.
-	// Will also add the currentFight to fightHistory if the fight ended.
+	// Ends when either competitor hasn't fought in NEW_FIGHT_DELAY. Death animations
+	// only mark fighters as dead; ending on despawn is handled by the plugin.
 	public boolean isFightOver()
 	{
 		boolean isOver = false;
-		// if either competitor died, end the fight.
+
+		// If either competitor is playing a death animation, mark dead but do not end the fight here.
 		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == opponent.getPlayer().getAnimation()))
 		{
 			opponent.died();
-			isOver = true;
 		}
 		if (Arrays.stream(DEATH_ANIMATIONS).anyMatch(e -> e == competitor.getPlayer().getAnimation()))
 		{
 			competitor.died();
-			isOver = true;
 		}
 		// If there was no fight actions in the last NEW_FIGHT_DELAY seconds
 		if (Duration.between(Instant.ofEpochMilli(lastFightTime), Instant.now()).compareTo(NEW_FIGHT_DELAY) > 0)
