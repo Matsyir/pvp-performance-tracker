@@ -118,7 +118,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.7.0";
+	public static final String PLUGIN_VERSION = "1.7.1a";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -667,7 +667,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							otherPlayer = player;
 						}
 
-							// 4. Check Candidates (Vengeance/Recoil)
+						// 4. Check Candidates (Vengeance/Recoil)
 						if (otherPlayer != null)
 						{
 							List<HitsplatInfo> incomingHitsOnOther = incomingHitsplatsBuffer.get(tickToProcess);
@@ -704,7 +704,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							}
 						}
 
-							// Burn Check removed: burn hitsplats are excluded earlier in onHitsplatApplied
+						// burn hitsplats are excluded earlier in onHitsplatApplied
 
 						// 5. Remove if Candidate Found
 						if (isCandidate)
@@ -760,41 +760,41 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				maxHpToUse = CONFIG.opponentHitpointsLevel();
 
 				// Hiscores lookup should only happen if not in LMS
-			if (opponent instanceof Player && opponent.getName() != null)
-			{
-				final HiscoreResult hiscoreResult = hiscoreManager.lookupAsync(opponent.getName(), hiscoreEndpoint);
-				if (hiscoreResult != null)
+				if (opponent.getName() != null)
 				{
-					final int hp = hiscoreResult.getSkill(HiscoreSkill.HITPOINTS).getLevel();
-					if (hp > 0)
+					final HiscoreResult hiscoreResult = hiscoreManager.lookupAsync(opponent.getName(), hiscoreEndpoint);
+					if (hiscoreResult != null)
 					{
-						maxHpToUse = hp; // Use Hiscores HP if available
+						final int hp = hiscoreResult.getSkill(HiscoreSkill.HITPOINTS).getLevel();
+						if (hp > 0)
+						{
+							maxHpToUse = hp; // Use Hiscores HP if available
+						}
 					}
 				}
 			}
+
+			// Determine attacker safely (handle null names and prefer identity when possible)
+			String actorName = ((Player) opponent).getName();
+			Fighter attacker;
+			Player trackedOppPlayer = currentFight.getOpponent().getPlayer();
+			Player trackedCompPlayer = currentFight.getCompetitor().getPlayer();
+
+			boolean opponentIsTrackedOpponent = opponent == trackedOppPlayer || Objects.equals(actorName, currentFight.getOpponent().getName());
+			boolean opponentIsTrackedCompetitor = opponent == trackedCompPlayer || Objects.equals(actorName, currentFight.getCompetitor().getName());
+
+			if (opponentIsTrackedOpponent)
+			{
+				attacker = currentFight.getCompetitor();
 			}
-
-				// Determine attacker safely (handle null names and prefer identity when possible)
-				String actorName = ((Player) opponent).getName();
-				Fighter attacker;
-				Player trackedOppPlayer = currentFight.getOpponent().getPlayer();
-				Player trackedCompPlayer = currentFight.getCompetitor().getPlayer();
-
-				boolean opponentIsTrackedOpponent = opponent == trackedOppPlayer || Objects.equals(actorName, currentFight.getOpponent().getName());
-				boolean opponentIsTrackedCompetitor = opponent == trackedCompPlayer || Objects.equals(actorName, currentFight.getCompetitor().getName());
-
-				if (opponentIsTrackedOpponent)
-				{
-					attacker = currentFight.getCompetitor();
-				}
-				else if (opponentIsTrackedCompetitor)
-				{
-					attacker = currentFight.getOpponent();
-				}
-				else
-				{
-					return;
-				}
+			else if (opponentIsTrackedCompetitor)
+			{
+				attacker = currentFight.getOpponent();
+			}
+			else
+			{
+				return;
+			}
 
 			// Get all potentially relevant, unprocessed entries sorted by animation tick
 			List<FightLogEntry> candidateEntries = attacker.getPendingAttacks().stream()
