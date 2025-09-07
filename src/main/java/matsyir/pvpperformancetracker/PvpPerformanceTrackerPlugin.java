@@ -86,6 +86,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.PlayerDespawned;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
@@ -737,6 +738,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
+		// If there is no active fight anymore, avoid accessing currentFight below.
+		if (!hasOpponent())
+		{
+			// Cleanup old entries from buffers and exit
+			hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
+			incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
+			return;
+		}
+
 		// --- Proceed with Regular Matching using the potentially modified hitsplatsToProcess ---
 
 		// Group hitsplats by the actor receiving them (remaining hitsplats after special removal)
@@ -1000,6 +1010,29 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// Cleanup old entries from buffers at the end of the tick processing
 		hitsplatBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
 		incomingHitsplatsBuffer.keySet().removeIf(tick -> tick < currentTick - maxWindow);
+	}
+
+	@Subscribe
+	public void onPlayerDespawned(PlayerDespawned event)
+	{
+		if (!hasOpponent()) { return; }
+		Player despawned = event.getPlayer();
+		if (despawned == null || despawned.getName() == null) { return; }
+
+		FightPerformance f = currentFight;
+		if (f == null || f.getOpponent() == null) { return; }
+		String opponentName = f.getOpponent().getName();
+		if (opponentName == null) { return; }
+
+		// End fight when opponent despawns after a death was observed on either side
+		if (despawned.getName().equals(opponentName) && (f.getOpponent().isDead() || f.getCompetitor().isDead()))
+		{
+			if (f.fightStarted())
+			{
+				addToFightHistory(f);
+			}
+			currentFight = null;
+		}
 	}
 
 	// #################################################################################################################
