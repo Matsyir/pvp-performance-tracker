@@ -220,7 +220,7 @@ public class FightPerformancePanel extends JPanel
 		);
 
 		// Deserved DMG: both player's deserved dps stats
-		JPanel deservedDpsStatsLine = PanelFactory.createStatsLine("eD", "Expected damage statistic, amt of damage you would've dealt if the game had averaged rng"
+		JPanel deservedDpsStatsLine = PanelFactory.createStatsLine("aD", "Average damage statistic, amt of damage you would've dealt if the game had averaged rng"
 				,competitor.getDeservedDmgString(opponent)
 				,(competitor.getName() + " deserved to deal " + nf2.format(competitor.getDeservedDamage()) +
 						" damage based on gear & overheads (" + competitor.getDeservedDmgString(opponent, 1, true) + " vs opponent)")

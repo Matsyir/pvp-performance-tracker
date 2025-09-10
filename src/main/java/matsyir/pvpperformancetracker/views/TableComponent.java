@@ -85,6 +85,8 @@ public class TableComponent implements LayoutableRenderableEntity
     private Point preferredLocation = new Point();
     private Dimension preferredSize = new Dimension(ComponentConstants.STANDARD_WIDTH, 0);
 
+    private boolean fontsInitialized = false;
+
     public TableComponent()
     {
         this(true);
@@ -162,9 +164,10 @@ public class TableComponent implements LayoutableRenderableEntity
 
                     y += metrics.getHeight();
 
-                    if (middleColumnHackFix)
+                    if (middleColumnHackFix && !fontsInitialized)
                     {
                         cellTextComponent.setFont(PanelFactory.getIndexFontFrom(metrics.getFont()));
+                        fontsInitialized = true;
                     }
 
                     cellTextComponent.updatePosition(x + alignmentOffset,
@@ -181,10 +184,9 @@ public class TableComponent implements LayoutableRenderableEntity
         }
 
         graphics.translate(-preferredLocation.x, -preferredLocation.y);
-        final Dimension dimension = new Dimension(preferredSize.width, height);
         bounds.setLocation(preferredLocation);
-        bounds.setSize(dimension);
-        return dimension;
+        bounds.setSize(preferredSize.width, height);
+        return bounds.getSize();
     }
 
     @Override
@@ -323,12 +325,31 @@ public class TableComponent implements LayoutableRenderableEntity
             return new int[0];
         }
 
+        int[] finalcolw = new int[numCols];     // final width of columns
+
+        // 3colHackFix: simplified width calculation, dont need to do all that math for this basic centered column thing
+        if (is3ColHackFix() && preferredSize.width >= 16)
+        {
+            finalcolw[1] = Math.round(((float)preferredSize.width) * (1f/9f));
+
+            int sidesCombined = preferredSize.width - finalcolw[1];
+            while (sidesCombined % 2 != 0)
+            {
+                finalcolw[1]++;
+                sidesCombined --;
+            }
+
+            finalcolw[0] = sidesCombined / 2;
+            finalcolw[2] = finalcolw[0] - (gutter.width*2);
+
+            return finalcolw;
+        }
+
         // Based on https://stackoverflow.com/questions/22206825/algorithm-for-calculating-variable-column-widths-for-set-table-width
         int[] maxtextw = new int[numCols];      // max text width over all rows
         int[] maxwordw = new int[numCols];      // max width of longest word
         boolean[] flex = new boolean[numCols];  // is column flexible?
         boolean[] wrap = new boolean[numCols];  // can column be wrapped?
-        int[] finalcolw = new int[numCols];     // final width of columns
 
         for (int col = 0; col < numCols; col++)
         {
@@ -421,34 +442,6 @@ public class TableComponent implements LayoutableRenderableEntity
         }
         // Add any remainder to the right-most column
         finalcolw[finalcolw.length - 1] += left;
-
-        if (!is3ColHackFix())
-        {
-            return finalcolw;
-        }
-
-        // !!!
-        // hack fix for our 3col behavior: ensure left/right are the same width, and remove what we add to the
-        // smaller column from the middle colw.
-        // i dont really know wtf goin on in here but managed to understand enough for this hack
-
-        // idx 0: left
-        // idx 1: middle
-        // idx 2: right
-        int largestIdx = finalcolw[0] > finalcolw[2] ? 0 : 2;
-        int smallIdx = largestIdx == 0 ? 2 : 0;
-        int smallLargeDiff = finalcolw[largestIdx] - finalcolw[smallIdx];
-
-        finalcolw[smallIdx] = finalcolw[largestIdx];
-        finalcolw[1] -= smallLargeDiff;
-
-        while (finalcolw[1] <= 0)
-        {
-            finalcolw[0] -= 1;
-            finalcolw[2] -= 1;
-
-            finalcolw[1] += 2;
-        }
 
         return finalcolw;
     }
