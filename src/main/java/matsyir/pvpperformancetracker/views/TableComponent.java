@@ -103,16 +103,16 @@ public class TableComponent implements LayoutableRenderableEntity
         if (!is3ColHackFix() && !cells.isEmpty()) { return; }
 
         line1[0].text = left;
-        line1[0].component.setColor(leftColor);
+        columnColors[0] = leftColor;
         line1[2].text = right;
-        line1[2].component.setColor(rightColor);
+        columnColors[2] = rightColor;
     }
     public void updateLeftCell(String left, Color leftColor)
     {
         if (!is3ColHackFix() && !cells.isEmpty()) { return; }
 
         line1[0].text = left;
-        line1[0].component.setColor(leftColor);
+        columnColors[0] = leftColor;
     }
     public void updateLeftCellText(String left)
     {
@@ -125,7 +125,7 @@ public class TableComponent implements LayoutableRenderableEntity
         if (!is3ColHackFix() && !cells.isEmpty()) { return; }
 
         line1[2].text = right;
-        line1[2].component.setColor(rightColor);
+        columnColors[2] = rightColor;
     }
     public void updateRightCellText(String right)
     {
@@ -167,9 +167,8 @@ public class TableComponent implements LayoutableRenderableEntity
                         cellTextComponent.setFont(PanelFactory.getIndexFontFrom(metrics.getFont()));
                     }
 
-                    cellTextComponent.setPosition(new Point(
-                            x + alignmentOffset,
-                            y - (middleColumnHackFix ? Math.round((1 - PanelFactory.LINE_INDEX_LABEL_FONT_SCALE) * 9) : 0))
+                    cellTextComponent.updatePosition(x + alignmentOffset,
+                            y - (middleColumnHackFix ? Math.round((1 - PanelFactory.LINE_INDEX_LABEL_FONT_SCALE) * 9) : 0)
                     );
                     cellTextComponent.setText(line);
                     cellTextComponent.setColor(getColumnColor(col));
@@ -242,9 +241,10 @@ public class TableComponent implements LayoutableRenderableEntity
         numCols = Math.max(numCols, cells.length);
         numRows++;
         Cell[] newRow = new Cell[cells.length];
-        for (int i = 0; i < cells.length; i++)
+        for (int col = 0; col < cells.length; col++)
         {
-            newRow[i] = new Cell(cells[i], new TextComponentShadowless());
+            TextComponentShadowless cellComponent = new TextComponentShadowless(false, !is3ColHackFix() || col != 1);
+            newRow[col] = new Cell(cells[col], cellComponent);
         }
 
         this.cells.add(newRow);

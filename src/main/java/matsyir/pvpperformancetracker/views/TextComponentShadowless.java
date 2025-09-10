@@ -101,4 +101,10 @@ public class TextComponentShadowless implements RenderableEntity {
     public void setFont(@Nullable Font font) {
         this.font = font;
     }
+
+    public void updatePosition(int x, int y)
+    {
+        position.x = x;
+        position.y = y;
+    }
 }
