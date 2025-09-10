@@ -1,17 +1,25 @@
 package matsyir.pvpperformancetracker.views;
 
-import javax.swing.*;
-
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import net.runelite.api.kit.KitType;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
 
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
@@ -19,7 +27,9 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_I
 @Slf4j
 public class AttackSummaryFrame extends JFrame
 {
-    public final class GroupedWepAnim
+    private static JFrame attackSummaryFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
+
+    private final class GroupedWepAnim
     {
         private final AnimationData anim;
         private final int wepId;
@@ -55,7 +65,29 @@ public class AttackSummaryFrame extends JFrame
     int opponentMeleeCount = 0;
     int opponentRangeCount = 0;
     int opponentMageCount = 0;
-    public AttackSummaryFrame(FightPerformance fight, ArrayList<FightLogEntry> fightLogEntries, JRootPane rootPane)
+
+    public static JFrame createAttackSummaryFrame(FightPerformance fight, JRootPane rootPane)
+    {
+        // destroy current frame if it exists so we only have one at a time (static field)
+        if (attackSummaryFrame != null)
+        {
+            attackSummaryFrame.dispose();
+        }
+        // show error modal if the fight has no log entries to display.
+        ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
+        fightLogEntries.removeIf(e -> !e.isFullEntry());
+        if (fightLogEntries.isEmpty())
+        {
+            PLUGIN.createConfirmationModal(false, "This fight has no attack summary to display, or the data is outdated.");
+            return attackSummaryFrame;
+        }
+
+        attackSummaryFrame = new AttackSummaryFrame(fight, fightLogEntries, rootPane);
+
+        return attackSummaryFrame;
+    }
+
+    private AttackSummaryFrame(FightPerformance fight, ArrayList<FightLogEntry> fightLogEntries, JRootPane rootPane)
     {
         super("Attack Summary - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
                 + " on world " + fight.getWorld());

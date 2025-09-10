@@ -1,35 +1,29 @@
 package matsyir.pvpperformancetracker.views;
 
-import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
-import matsyir.pvpperformancetracker.controllers.FightPerformance;
-import matsyir.pvpperformancetracker.models.FightLogEntry;
-
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 
 public final class PanelFactory
 {
     // constants/final values
     public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
+    public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
+    public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
 
-    private static final Color STATS_LINE_INDEX_COLOR = new Color(255, 255, 255, 99);
+    public static final Font INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
 
-    // static fields
-    private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
-    private static JFrame attackSummaryFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
-
+    public static Font getIndexFontFrom(float initialFontSize)
+    {
+        return INDEX_FONT.deriveFont(initialFontSize  * LINE_INDEX_LABEL_FONT_SCALE);
+    }
+    public static Font getIndexFontFrom(Font initialFont)
+    {
+        return getIndexFontFrom(initialFont.getSize());
+    }
 
     public static JPanel createStatsLine(String miniCenterLabelText, String miniCenterLabelTooltip,
                                          String leftText, String leftTooltip, Color leftColor,
@@ -52,8 +46,7 @@ public final class PanelFactory
 
         JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
         indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
-        indexLabel.setFont(new Font("Monospace", Font.PLAIN,
-                Math.round(indexLabel.getFont().getSize() * LINE_INDEX_LABEL_FONT_SCALE)));
+        indexLabel.setFont(PanelFactory.getIndexFontFrom(indexLabel.getFont()));
         indexLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -81,6 +74,19 @@ public final class PanelFactory
         statsLine.add(indexLabel, gbcIndex);
 
         return statsLine;
+    }
+
+    public static TableComponent createOverlayStatsLine(String miniCenterLabelText,
+                                                        String leftText, Color leftColor,
+                                                        String rightText, Color rightColor)
+    {
+        TableComponent overlayStatsLine = new TableComponent();
+        overlayStatsLine.addRow(leftText, miniCenterLabelText, rightText);
+        overlayStatsLine.setColumnColors(leftColor, OVERLAY_STATS_LINE_INDEX_COLOR, rightColor);
+        overlayStatsLine.setColumnAlignments(TableComponent.TableAlignment.LEFT, TableComponent.TableAlignment.CENTER, TableComponent.TableAlignment.RIGHT);
+        overlayStatsLine.setGutter(new Dimension(2, 0));
+
+        return overlayStatsLine;
     }
 
 
@@ -117,56 +123,5 @@ public final class PanelFactory
             MouseEvent parentEvent = SwingUtilities.convertMouseEvent(this, e, parent);
             parent.dispatchEvent(parentEvent);
         }
-    }
-
-    public static JFrame createFightLogFrame(FightPerformance fight, AnalyzedFightPerformance analyzedFight, JRootPane rootPane)
-    {
-        // destroy current frame if it exists so we only have one at a time (static field)
-        if (fightLogFrame != null)
-        {
-            fightLogFrame.dispose();
-        }
-
-        // show error modal if the fight has no log entries to display.
-        ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
-        fightLogEntries.removeIf(e -> !e.isFullEntry());
-        if (fightLogEntries.isEmpty())
-        {
-            PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
-        }
-        else if (analyzedFight != null) // if analyzed fight is set, then show an analyzed fight's fightLogFrame.
-        {
-            fightLogFrame = new FightLogFrame(analyzedFight, rootPane);
-
-        }
-        else
-        {
-            fightLogFrame = new FightLogFrame(fight,
-                    fightLogEntries,
-                    rootPane);
-        }
-
-        return fightLogFrame;
-    }
-
-    public static JFrame createAttackSummaryFrame(FightPerformance fight, JRootPane rootPane)
-    {
-        // destroy current frame if it exists so we only have one at a time (static field)
-        if (attackSummaryFrame != null)
-        {
-            attackSummaryFrame.dispose();
-        }
-        // show error modal if the fight has no log entries to display.
-        ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
-        fightLogEntries.removeIf(e -> !e.isFullEntry());
-        if (fightLogEntries.isEmpty())
-        {
-            PLUGIN.createConfirmationModal(false, "This fight has no attack summary to display, or the data is outdated.");
-            return attackSummaryFrame;
-        }
-
-        attackSummaryFrame = new AttackSummaryFrame(fight, fightLogEntries, rootPane);
-
-        return attackSummaryFrame;
     }
 }

@@ -57,6 +57,8 @@ import net.runelite.api.SpriteID;
 @Slf4j
 public class FightLogFrame extends JFrame
 {
+	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
+
 	private static final NumberFormat nf = NumberFormat.getInstance();
 	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
 
@@ -76,8 +78,38 @@ public class FightLogFrame extends JFrame
 	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
+	public static JFrame createFightLogFrame(FightPerformance fight, AnalyzedFightPerformance analyzedFight, JRootPane rootPane)
+	{
+		// destroy current frame if it exists so we only have one at a time (static field)
+		if (fightLogFrame != null)
+		{
+			fightLogFrame.dispose();
+		}
+
+		// show error modal if the fight has no log entries to display.
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
+		fightLogEntries.removeIf(e -> !e.isFullEntry());
+		if (fightLogEntries.isEmpty())
+		{
+			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
+		}
+		else if (analyzedFight != null) // if analyzed fight is set, then show an analyzed fight's fightLogFrame.
+		{
+			fightLogFrame = new FightLogFrame(analyzedFight, rootPane);
+
+		}
+		else
+		{
+			fightLogFrame = new FightLogFrame(fight,
+					fightLogEntries,
+					rootPane);
+		}
+
+		return fightLogFrame;
+	}
+
 	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
-	FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
+	private FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
 		super("Fight Log - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
@@ -233,7 +265,7 @@ public class FightLogFrame extends JFrame
 		setVisible(true);
 	}
 
-	static class BufferedImageCellRenderer extends DefaultTableCellRenderer
+	private static class BufferedImageCellRenderer extends DefaultTableCellRenderer
 	{
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
@@ -263,7 +295,7 @@ public class FightLogFrame extends JFrame
 
 	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
 	// to the detailed frame.
-	FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
+	private FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
 	{
 		this(fight,
 			new ArrayList(fight.getAllFightLogEntries().stream()

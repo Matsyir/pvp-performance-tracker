@@ -27,21 +27,24 @@ package matsyir.pvpperformancetracker;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import javax.inject.Inject;
+
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
+
+import matsyir.pvpperformancetracker.views.PanelFactory;
+import matsyir.pvpperformancetracker.views.TableComponent;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
-import net.runelite.client.ui.overlay.components.ComponentConstants;
-import net.runelite.client.ui.overlay.components.LineComponent;
-import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
+import net.runelite.client.ui.overlay.components.*;
 
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
@@ -56,24 +59,24 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
 
-	private TitleComponent overlayTitle;
+	private final TitleComponent overlayTitle;
 
 	// The main overlay is like the panel, each line is optionally turned off.
-	private LineComponent ovlPlayerNamesLine; // Left: player's RSN, Right: Opponent RSN
-	private LineComponent ovlOffPrayLine; // left: player's off-pray stats, right: opponent's off-pray stats
-	private LineComponent ovlDeservedDmgLine; // left: player's deserved dps stats, right: opponent's deserved dps stats
-	private LineComponent ovlDmgDealtLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
-	private LineComponent ovlMagicLuckLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
-	private LineComponent ovlOffensivePrayLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
-	private LineComponent ovlHpHealedLine; // left: player's hp healed pray stats, right: opponent's hp healed
-	private LineComponent ovlRobeHitsLine; // Line for hits on robes
-	private LineComponent ovlTotalKoChanceLine; // Combined total/sum KO chance
-	private LineComponent ovlLastKoChanceLine; // Combined last KO chance
+	private final LineComponent ovlPlayerNamesLine; // Left: player's RSN, Right: Opponent RSN
+	private final TableComponent ovlOffPrayLine; // left: player's off-pray stats, right: opponent's off-pray stats
+	private final TableComponent ovlDeservedDmgLine; // left: player's deserved dps stats, right: opponent's deserved dps stats
+	private final TableComponent ovlDmgDealtLine; // left: player's damage dealt stats, right: opponent's damage dealt stats
+	private final TableComponent ovlMagicLuckLine; // left: player's magic attacks hit stats, right: opponent's magic attacks hit stats
+	private final TableComponent ovlOffensivePrayLine; // left: player's offensive pray stats, right: opponent's offensive pray stats
+	private final TableComponent ovlHpHealedLine; // left: player's hp healed pray stats, right: opponent's hp healed
+	private final TableComponent ovlRobeHitsLine; // Line for hits on robes
+	private final TableComponent ovlTotalKoChanceLine; // Combined total/sum KO chance
+	private final TableComponent ovlLastKoChanceLine; // Combined last KO chance
 
 	// let's keep ghost barrage as the bottom-most statistic:
 	// It's only relevant to people fighting in PvP Arena, and it's mostly only relevant
 	// to people who can share their tracker with each-other - so pretty rarely useful.
-	private LineComponent ovlGhostBarrageLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
+	private final TableComponent ovlGhostBarrageLine; // left: player's ghost barrage stats, right: opponent's ghost barrage stats
 
 	@Inject
 	private PvpPerformanceTrackerOverlay(PvpPerformanceTrackerPlugin plugin, PvpPerformanceTrackerConfig config)
@@ -89,27 +92,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayTitle = TitleComponent.builder().text("PvP Performance").build();
 
 		ovlPlayerNamesLine = LineComponent.builder().build();
-		ovlOffPrayLine = LineComponent.builder().build();
-		ovlDeservedDmgLine = LineComponent.builder().build();
-		ovlDmgDealtLine = LineComponent.builder().build();
-		ovlMagicLuckLine = LineComponent.builder().build();
-		ovlOffensivePrayLine = LineComponent.builder().build();
-		ovlOffensivePrayLine.setLeftColor(Color.WHITE); // this is static so set onload
-		ovlOffensivePrayLine.setRight("N/A"); // static
-		ovlOffensivePrayLine.setRightColor(Color.WHITE); // static
-		ovlHpHealedLine = LineComponent.builder().build();
-		ovlHpHealedLine.setLeftColor(Color.WHITE); // this is static so set onload
-		ovlHpHealedLine.setRight("N/A"); // static
-		ovlHpHealedLine.setRightColor(Color.WHITE); // static
-		ovlTotalKoChanceLine = LineComponent.builder().build(); // Initialize new lines
-		ovlLastKoChanceLine = LineComponent.builder().build(); // Initialize new lines
-		ovlRobeHitsLine = LineComponent.builder().build(); // Initialize robes hits line
+		ovlOffPrayLine = PanelFactory.createOverlayStatsLine("OP", "", Color.WHITE, "", Color.WHITE);
+		ovlDeservedDmgLine = PanelFactory.createOverlayStatsLine("aD", "", Color.WHITE, "", Color.WHITE);
+		ovlDmgDealtLine = PanelFactory.createOverlayStatsLine("D", "", Color.WHITE, "", Color.WHITE);
+		ovlMagicLuckLine = PanelFactory.createOverlayStatsLine("M", "", Color.WHITE, "", Color.WHITE);
+		ovlOffensivePrayLine = PanelFactory.createOverlayStatsLine("P", "", Color.WHITE, "", Color.WHITE);
+		ovlHpHealedLine = PanelFactory.createOverlayStatsLine("HP", "", Color.WHITE, "", Color.WHITE);
+		ovlTotalKoChanceLine = PanelFactory.createOverlayStatsLine("KO", "", Color.WHITE, "", Color.WHITE);
+		ovlLastKoChanceLine = PanelFactory.createOverlayStatsLine("pKO", "", Color.WHITE, "", Color.WHITE);
+		ovlRobeHitsLine = PanelFactory.createOverlayStatsLine("rH", "", Color.WHITE, "", Color.WHITE);
 
-		ovlGhostBarrageLine = LineComponent.builder().build();
-		ovlGhostBarrageLine.setLeft("N/A"); // not static but possibly unused for some full fights
-		ovlGhostBarrageLine.setLeftColor(ColorScheme.BRAND_ORANGE); // static
-		ovlGhostBarrageLine.setRight("N/A"); // static
-		ovlGhostBarrageLine.setRightColor(ColorScheme.BRAND_ORANGE); // static
+		ovlGhostBarrageLine = PanelFactory.createOverlayStatsLine("GB", "", ColorScheme.BRAND_ORANGE, "", ColorScheme.BRAND_ORANGE);
 
 		setLines();
 	}
@@ -127,38 +120,43 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 
 		// off-pray hit success stats
-		ovlOffPrayLine.setLeft(fight.getCompetitor().getOffPrayStats(true));
-		ovlOffPrayLine.setLeftColor(fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
-		ovlOffPrayLine.setRight(fight.getOpponent().getOffPrayStats(true));
-		ovlOffPrayLine.setRightColor(fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE);
+		ovlOffPrayLine.updateLeftRightCells(
+				fight.getCompetitor().getOffPrayStats(true)
+				,fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+				,fight.getOpponent().getOffPrayStats(true)
+				,fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+		);
 
 		// Deserved damage stats
 		// only show deserved damage difference on the competitor, since space is restricted here and having both
 		// differences is redundant since the sign is simply flipped.
-		ovlDeservedDmgLine.setLeft(fight.getCompetitor().getDeservedDmgString(fight.getOpponent()));
-		ovlDeservedDmgLine.setLeftColor(fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
-
-		ovlDeservedDmgLine.setRight(String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage())));
-		ovlDeservedDmgLine.setRightColor(fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE);
+		ovlDeservedDmgLine.updateLeftRightCells(
+				fight.getCompetitor().getDeservedDmgString(fight.getOpponent())
+				,fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				,String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage()))
+				,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+		);
 
 		// Damage dealt stats
 		// same thing for damage dealt, the difference is only on the competitor.
-		ovlDmgDealtLine.setLeft(String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent())));
-		ovlDmgDealtLine.setLeftColor(fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
-
-		ovlDmgDealtLine.setRight(String.valueOf(fight.getOpponent().getDamageDealt()));
-		ovlDmgDealtLine.setRightColor(fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE);
+		ovlDmgDealtLine.updateLeftRightCells(
+				String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent()))
+				,fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
+				,String.valueOf(fight.getOpponent().getDamageDealt())
+				,fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
+		);
 
 		// magic hit stats/luck
-		ovlMagicLuckLine.setLeft(String.valueOf(fight.getCompetitor().getShortMagicHitStats()));
-		ovlMagicLuckLine.setLeftColor(fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+		ovlMagicLuckLine.updateLeftRightCells(
+				String.valueOf(fight.getCompetitor().getShortMagicHitStats())
+				,fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+				,String.valueOf(fight.getOpponent().getShortMagicHitStats())
+				,fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+		);
 
-		ovlMagicLuckLine.setRight(String.valueOf(fight.getOpponent().getShortMagicHitStats()));
-		ovlMagicLuckLine.setRightColor(fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE);
+		ovlOffensivePrayLine.updateLeftCellText(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)));
 
-		ovlOffensivePrayLine.setLeft(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)));
-
-		ovlHpHealedLine.setLeft(String.valueOf(fight.getCompetitor().getHpHealed()));
+		ovlHpHealedLine.updateLeftCellText(String.valueOf(fight.getCompetitor().getHpHealed()));
 
 		// Update Hits on Robes overlay line
 		if (config.showOverlayRobeHits())
@@ -167,15 +165,18 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 			int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 			double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
 			String compStr = compHits + "/" + compTotal;
-			ovlRobeHitsLine.setLeft(compStr);
-			ovlRobeHitsLine.setLeftColor(compRatio < ((double) fight.getOpponent().getRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ? Color.GREEN : Color.WHITE);
+			ovlRobeHitsLine.updateLeftCell(compStr
+				,compRatio < ((double) fight.getOpponent().getRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
+							Color.GREEN : Color.WHITE
+			);
 
 			int oppHits = fight.getOpponent().getRobeHits();
 			int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 			double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 			String oppStr = oppHits + "/" + oppTotal;
-			ovlRobeHitsLine.setRight(oppStr);
-			ovlRobeHitsLine.setRightColor(oppRatio < compRatio ? Color.GREEN : Color.WHITE);
+			ovlRobeHitsLine.updateRightCell(oppStr
+				,oppRatio < compRatio ? Color.GREEN : Color.WHITE
+			);
 		}
 
 		// --- KO Chance Calculation START ---
@@ -184,17 +185,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 				+ (fight.getCompetitorTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getCompetitorTotalKoChance()) + ")" : "");
 		String totalOppStr = fight.getOpponentKoChanceCount()
 				+ (fight.getOpponentTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getOpponentTotalKoChance()) + ")" : "");
-		ovlTotalKoChanceLine.setLeft(totalCompStr);
-		ovlTotalKoChanceLine.setRight(totalOppStr);
+		ovlTotalKoChanceLine.updateLeftCellText(totalCompStr);
+		ovlTotalKoChanceLine.updateRightCellText(totalOppStr);
 
 		// Format Last KO Chance Line
 		String lastCompStr = (fight.getCompetitorLastKoChance() != null ? nfPercent.format(fight.getCompetitorLastKoChance()) : "-");
 		String lastOppStr = (fight.getOpponentLastKoChance() != null ? nfPercent.format(fight.getOpponentLastKoChance()) : "-");
-		ovlLastKoChanceLine.setLeft(lastCompStr);
-		ovlLastKoChanceLine.setRight(lastOppStr);
+		ovlLastKoChanceLine.updateLeftCellText(lastCompStr);
+		ovlLastKoChanceLine.updateRightCellText(lastOppStr);
 		// --- KO Chance Calculation END ---
 
-		ovlGhostBarrageLine.setLeft(fight.getCompetitor().getGhostBarrageStats());
+		ovlGhostBarrageLine.updateLeftCellText(fight.getCompetitor().getGhostBarrageStats());
 
 		return panelComponent.render(graphics);
 	}
@@ -263,5 +264,29 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		ovlPlayerNamesLine.setLeft(cName.substring(0, Math.min(6, cName.length())));
 		String oName = fight.getOpponent().getName();
 		ovlPlayerNamesLine.setRight(oName.substring(0, Math.min(6, oName.length())));
+	}
+
+	private class MyPanel implements LayoutableRenderableEntity
+	{
+
+		@Override
+		public Rectangle getBounds() {
+			return null;
+		}
+
+		@Override
+		public void setPreferredLocation(Point point) {
+
+		}
+
+		@Override
+		public void setPreferredSize(Dimension dimension) {
+
+		}
+
+		@Override
+		public Dimension render(Graphics2D graphics2D) {
+			return null;
+		}
 	}
 }

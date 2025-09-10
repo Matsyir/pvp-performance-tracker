@@ -467,7 +467,7 @@ public class FightPerformancePanel extends JPanel
 					return;
 				}
 
-				PanelFactory.createFightLogFrame(fight, analyzedFight, getRootPane());
+				FightLogFrame.createFightLogFrame(fight, analyzedFight, getRootPane());
 			}
 		};
 		addMouseListener(fightPerformanceMouseListener);
@@ -481,11 +481,11 @@ public class FightPerformancePanel extends JPanel
 
 		// Create "Show fight log" menu (same action as left click)
 		final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
-		displayFightLog.addActionListener(e -> PanelFactory.createFightLogFrame(fight, analyzedFight, getRootPane()));
+		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, analyzedFight, getRootPane()));
 
 		// Create "Show attack summary" menu
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
-		displayAttackSummary.addActionListener(e -> PanelFactory.createAttackSummaryFrame(fight, getRootPane()));
+		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(fight, getRootPane()));
 
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
