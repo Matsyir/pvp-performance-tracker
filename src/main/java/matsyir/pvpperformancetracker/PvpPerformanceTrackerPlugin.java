@@ -458,8 +458,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		checkForFightEnd();
 
-		// delay the animation processing, since we will also want to use equipment data for deserved
-		// damage, and equipment updates are loaded after the animation updates.
+		// delay the animation processing, since we will also want to use equipment data for avg damage,
+		// and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
 			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
@@ -921,10 +921,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				{
 					int originalMin = gmaulEntry.getMinHit();
 					int originalMax = gmaulEntry.getMaxHit();
-					double originalDeserved = gmaulEntry.getDeservedDamage();
+					double originalAvgDmg = gmaulEntry.getAverageDamage();
 					gmaulEntry.setMaxHit(originalMax * totalGmaulHitsMatchedThisTick);
 					gmaulEntry.setMinHit(originalMin * totalGmaulHitsMatchedThisTick);
-					gmaulEntry.setDeservedDamage(originalDeserved * totalGmaulHitsMatchedThisTick);
+					gmaulEntry.setAverageDamage(originalAvgDmg * totalGmaulHitsMatchedThisTick);
 				}
 			}
 		});

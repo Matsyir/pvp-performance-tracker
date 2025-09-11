@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Related plugin component(s)**
-Statistic (X,Y,Z): Deserved Damage, Fight Log Window, etc
+Statistic (X,Y,Z): Average Damage, Fight Log Window, etc
 
 **Describe the bug**
 (A clear and concise description of what the bug is.)

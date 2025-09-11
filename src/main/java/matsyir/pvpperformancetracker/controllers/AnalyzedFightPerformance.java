@@ -74,12 +74,12 @@ public class AnalyzedFightPerformance extends FightPerformance
 		this.competitor.addDamageDealt(Math.max(mainFight.competitor.getDamageDealt(), opposingFight.opponent.getDamageDealt()));
 		this.competitor.addMagicHitCount(Math.max(mainFight.competitor.getMagicHitCount(), opposingFight.opponent.getMagicHitCount()));
 		this.competitor.addHpHealed(mainFight.competitor.getHpHealed());
-		this.competitor.setTotalGhostBarrageStats(mainFight.competitor.getGhostBarrageCount(), mainFight.getCompetitor().getGhostBarrageDeservedDamage());
+		this.competitor.setTotalGhostBarrageStats(mainFight.competitor.getGhostBarrageCount(), mainFight.getCompetitor().getGhostBarrageAverageDamage());
 
 		this.opponent.addDamageDealt(Math.max(opposingFight.competitor.getDamageDealt(), mainFight.opponent.getDamageDealt()));
 		this.opponent.addMagicHitCount(Math.max(opposingFight.competitor.getMagicHitCount(), mainFight.opponent.getMagicHitCount()));
 		this.opponent.addHpHealed(opposingFight.competitor.getHpHealed());
-		this.opponent.setTotalGhostBarrageStats(opposingFight.competitor.getGhostBarrageCount(), opposingFight.getCompetitor().getGhostBarrageDeservedDamage());
+		this.opponent.setTotalGhostBarrageStats(opposingFight.competitor.getGhostBarrageCount(), opposingFight.getCompetitor().getGhostBarrageAverageDamage());
 
 		ArrayList<FightLogEntry> mainFightLogEntries = mainFight.getAllFightLogEntries();
 		mainFightLogEntries.sort(FightLogEntry::compareTo);

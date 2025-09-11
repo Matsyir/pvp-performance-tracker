@@ -76,8 +76,8 @@ class Fighter
 	private int offPraySuccessCount; // total number of successful off-pray attacks
 									 // (when you use a different combat style than your opponent's overhead)
 	@Expose
-	@SerializedName("d")
-	private double deservedDamage; // total deserved damage based on gear & opponent's pray
+	@SerializedName("d") // Note: Previously referred as 'deserved damage'
+	private double averageDamage; // total average damage based on gear & opponent's pray
 	@Expose
 	@SerializedName("h") // h for "hitsplats", real hits
 	private int damageDealt; // actual damage dealt based on opponent's hitsplats
@@ -90,7 +90,7 @@ class Fighter
 	private int magicHitCount; // count of 'successful' magic hits (where you don't splash)
 	@Expose
 	@SerializedName("M")
-	private double magicHitCountDeserved; // cumulative magic accuracy percentage for each attack
+	private double avgMagicHitCount; // cumulative magic accuracy percentage for each attack
 
 	@Expose
 	@SerializedName("p")
@@ -101,7 +101,7 @@ class Fighter
 	private int ghostBarrageCount;
 	@Expose
 	@SerializedName("y")
-	private double ghostBarrageDeservedDamage;
+	private double ghostBarrageAverageDamage;
 
 	@Expose
 	@SerializedName("H")
@@ -134,11 +134,11 @@ class Fighter
 		name = player.getName();
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		deservedDamage = 0;
+		averageDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
-		magicHitCountDeserved = 0;
+		avgMagicHitCount = 0;
 		offensivePraySuccessCount = 0;
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(fight);
@@ -153,11 +153,11 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		deservedDamage = 0;
+		averageDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
-		magicHitCountDeserved = 0;
+		avgMagicHitCount = 0;
 		dead = false;
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = logs;
@@ -172,11 +172,11 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		deservedDamage = 0;
+		averageDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
-		magicHitCountDeserved = 0;
+		avgMagicHitCount = 0;
 		dead = false;
 		pvpDamageCalc = null;
 		fightLogEntries = new ArrayList<>();
@@ -252,12 +252,12 @@ class Fighter
 		}
 
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
-		deservedDamage += pvpDamageCalc.getAverageHit();
+		averageDamage += pvpDamageCalc.getAverageHit();
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			totalMagicAttackCount++;
-			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
+			avgMagicHitCount += pvpDamageCalc.getAccuracy();
 
 			if (opponent.getGraphic() != GraphicID.SPLASH)
 			{
@@ -289,12 +289,12 @@ class Fighter
 		}
 
 		pvpDamageCalc.updateDamageStats(logEntry, defenderLog);
-		deservedDamage += pvpDamageCalc.getAverageHit();
+		averageDamage += pvpDamageCalc.getAverageHit();
 
 		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
 			totalMagicAttackCount++;
-			magicHitCountDeserved += pvpDamageCalc.getAccuracy();
+			avgMagicHitCount += pvpDamageCalc.getAccuracy();
 			// actual magicHitCount is directly added, as it can no longer
 			// be detected and should have been accurate initially.
 		}
@@ -314,17 +314,17 @@ class Fighter
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 
 		ghostBarrageCount++;
-		ghostBarrageDeservedDamage += pvpDamageCalc.getAverageHit();
+		ghostBarrageAverageDamage += pvpDamageCalc.getAverageHit();
 
 		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
 		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
 	}
 
 	// used to manually build Fighters in AnalyzedFightPerformance.
-	public void setTotalGhostBarrageStats(int ghostBarrageCount, double ghostBarrageDeservedDamage)
+	public void setTotalGhostBarrageStats(int ghostBarrageCount, double ghostBarrageAvgDamage)
 	{
 		this.ghostBarrageCount = ghostBarrageCount;
-		this.ghostBarrageDeservedDamage = ghostBarrageDeservedDamage;
+		this.ghostBarrageAverageDamage = ghostBarrageAvgDamage;
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
@@ -332,15 +332,15 @@ class Fighter
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
-		this.deservedDamage += deservedDamage;
+		this.averageDamage += deservedDamage;
 		this.damageDealt += damageDealt;
 		this.totalMagicAttackCount += totalMagicAttackCount;
 		this.magicHitCount += magicHitCount;
-		this.magicHitCountDeserved += magicHitCountDeserved;
+		this.avgMagicHitCount += magicHitCountDeserved;
 		this.offensivePraySuccessCount += offensivePraySuccessCount;
 		this.hpHealed += hpHealed;
 		this.ghostBarrageCount += ghostBarrageCount;
-		this.ghostBarrageDeservedDamage += ghostBarrageDeservedDamage;
+		this.ghostBarrageAverageDamage += ghostBarrageDeservedDamage;
 	}
 
 	void addDamageDealt(int damage)
@@ -398,8 +398,8 @@ class Fighter
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
 		nf.setMaximumFractionDigits(1);
-		String luckPercentage = magicHitCountDeserved != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) :
+		String luckPercentage = avgMagicHitCount != 0 ?
+			nf.format(((double)magicHitCount / avgMagicHitCount) * 100.0) :
 			"0";
 		stats += " (" + luckPercentage + "%)";
 		return stats;
@@ -408,21 +408,21 @@ class Fighter
 	public String getShortMagicHitStats()
 	{
 		nf.setMaximumFractionDigits(1);
-		return magicHitCountDeserved != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountDeserved) * 100.0) + "%" :
+		return avgMagicHitCount != 0 ?
+			nf.format(((double)magicHitCount / avgMagicHitCount) * 100.0) + "%" :
 			"0%";
 	}
 
-	public String getDeservedDmgString(Fighter opponent, int precision, boolean onlyDiff)
+	public String getAverageDmgString(Fighter opponent, int precision, boolean onlyDiff)
 	{
 		nf.setMaximumFractionDigits(precision);
-		double difference = deservedDamage - opponent.deservedDamage;
+		double difference = averageDamage - opponent.averageDamage;
 		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
-			nf.format(deservedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+			nf.format(averageDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
-	public String getDeservedDmgString(Fighter opponent)
+	public String getAverageDmgString(Fighter opponent)
 	{
-		return getDeservedDmgString(opponent, 0, false);
+		return getAverageDmgString(opponent, 0, false);
 	}
 
 
@@ -472,7 +472,7 @@ class Fighter
 
 	public String getGhostBarrageStats()
 	{
-		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageDeservedDamage) + ")";
+		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageAverageDamage) + ")";
 	}
 
 	public void resetRobeHits()

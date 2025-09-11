@@ -183,8 +183,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	@ConfigItem(
 		keyName = "showOverlayDeservedDmg",
-		name = "Overlay: Show Deserved Dmg",
-		description = "The overlay will display deserved damage & difference.<br>Max. of 5 lines on the overlay",
+		name = "Overlay: Show Average Dmg",
+		description = "The overlay will display average damage & difference.<br>Max. of 5 lines on the overlay",
 		position = 7000,
 		section = overlay
 	)
@@ -208,7 +208,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlayMagicHits",
 		name = "Overlay: Show Magic Hits",
-		description = "The overlay will display successful magic hits & deserved magic hits.<br>Max. of 5 lines on the overlay",
+		description = "The overlay will display successful magic hits & average magic hits.<br>Max. of 5 lines on the overlay",
 		position = 9000,
 		section = overlay
 	)
@@ -294,7 +294,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "ringChoice",
 		name = "Ring Used",
-		description = "Rings used for the deserved damage calculations outside of LMS.",
+		description = "Rings used for the average damage calculations outside of LMS.",
 		position = 11000,
 		section = gearAmmo
 	)
@@ -306,7 +306,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "boltChoice",
 		name = "RCB Ammo",
-		description = "Bolts used for rune crossbow's deserved damage calculation." +
+		description = "Bolts used for rune crossbow's average damage calculation." +
 			"<br>LMS fights always use diamond (e). Dragonfire protection not accounted for.",
 		position = 12000,
 		section = gearAmmo
@@ -319,7 +319,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "strongBoltChoice",
 		name = "ACB/DCB/DHCB Ammo",
-		description = "Bolts used for ACB/DCB/DHCB's deserved damage calculation." +
+		description = "Bolts used for ACB/DCB/DHCB's average damage calculation." +
 			"<br>LMS fights always use regular diamond (e). Dragonfire protection not accounted for.",
 		position = 13000,
 		section = gearAmmo
@@ -332,7 +332,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "bpDartChoice",
 		name = "Blowpipe Ammo",
-		description = "Darts used for blowpipe deserved damage calculation.",
+		description = "Darts used for blowpipe average damage calculation.",
 		position = 14000,
 		section = gearAmmo
 	)
@@ -350,7 +350,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "attackLevel",
 		name = "Attack Level",
-		description = "Attack level used for the deserved damage calculations outside of LMS (includes potion boost).",
+		description = "Attack level used for the average damage calculations outside of LMS (includes potion boost).",
 		position = 16000,
 		section = levels
 	)
@@ -366,7 +366,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "strengthLevel",
 		name = "Strength Level",
-		description = "Strength level used for the deserved damage calculations outside of LMS (includes potion boost).",
+		description = "Strength level used for the average damage calculations outside of LMS (includes potion boost).",
 		position = 17000,
 		section = levels
 	)
@@ -382,7 +382,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "defenceLevel",
 		name = "Defence Level",
-		description = "Defence level used for the deserved damage calculations outside of LMS (includes potion boost).",
+		description = "Defence level used for the average damage calculations outside of LMS (includes potion boost).",
 		position = 18000,
 		section = levels
 	)
@@ -398,7 +398,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "rangedLevel",
 		name = "Ranged Level",
-		description = "Ranged level used for the deserved damage calculations outside of LMS (includes potion boost).",
+		description = "Ranged level used for the average damage calculations outside of LMS (includes potion boost).",
 		position = 19000,
 		section = levels
 	)
@@ -414,7 +414,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "magicLevel",
 		name = "Magic Level",
-		description = "Magic level used for the deserved damage calculations outside of LMS (includes potion boost).",
+		description = "Magic level used for the average damage calculations outside of LMS (includes potion boost).",
 		position = 20000,
 		section = levels
 	)
@@ -486,7 +486,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "dlongIsVls",
 		name = "Dlong = VLS",
-		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for deserved damage." +
+		description = "Track Dragon Longsword & its spec as a Vesta's Longsword for average damage." +
 			"<br>Requested/used for for DMM practice purposes.",
 		position = 23000
 	)

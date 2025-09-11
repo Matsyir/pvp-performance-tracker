@@ -390,14 +390,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return opponent.calculateOffPraySuccessPercentage() > competitor.calculateOffPraySuccessPercentage();
 	}
 
-	public boolean competitorDeservedDmgIsGreater()
+	public boolean competitorAverageDmgIsGreater()
 	{
-		return competitor.getDeservedDamage() > opponent.getDeservedDamage();
+		return competitor.getAverageDamage() > opponent.getAverageDamage();
 	}
 
-	public boolean opponentDeservedDmgIsGreater()
+	public boolean opponentAverageDmgIsGreater()
 	{
-		return opponent.getDeservedDamage() > competitor.getDeservedDamage();
+		return opponent.getAverageDamage() > competitor.getAverageDamage();
 	}
 
 	public boolean competitorDmgDealtIsGreater()
@@ -412,27 +412,27 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean competitorMagicHitsLuckier()
 	{
-		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
-		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+		double competitorRate = (competitor.getAvgMagicHitCount() == 0) ? 0 :
+			(competitor.getMagicHitCount() / competitor.getAvgMagicHitCount());
+		double opponentRate = (opponent.getAvgMagicHitCount() == 0) ? 0 :
+			(opponent.getMagicHitCount() / opponent.getAvgMagicHitCount());
 
 		return competitorRate > opponentRate;
 	}
 
 	public boolean opponentMagicHitsLuckier()
 	{
-		double competitorRate = (competitor.getMagicHitCountDeserved() == 0) ? 0 :
-			(competitor.getMagicHitCount() / competitor.getMagicHitCountDeserved());
-		double opponentRate = (opponent.getMagicHitCountDeserved() == 0) ? 0 :
-			(opponent.getMagicHitCount() / opponent.getMagicHitCountDeserved());
+		double competitorRate = (competitor.getAvgMagicHitCount() == 0) ? 0 :
+			(competitor.getMagicHitCount() / competitor.getAvgMagicHitCount());
+		double opponentRate = (opponent.getAvgMagicHitCount() == 0) ? 0 :
+			(opponent.getMagicHitCount() / opponent.getAvgMagicHitCount());
 
 		return opponentRate > competitorRate;
 	}
 
 	public double getCompetitorDeservedDmgDiff()
 	{
-		return competitor.getDeservedDamage() - opponent.getDeservedDamage();
+		return competitor.getAverageDamage() - opponent.getAverageDamage();
 	}
 
 	public double getCompetitorDmgDealtDiff()

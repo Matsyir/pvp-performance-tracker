@@ -151,12 +151,12 @@ public class FightAnalysisFrame extends JFrame
 			"get more accurate stats about the fight, since some data is only available client-side. Both data " +
 			"entries should come from the same fight, but from two different clients. Fighter 2 is Fighter 1's " +
 			"opponent. Right click a fight in order to copy its data.<br/><br/>" +
-			"When using this, the following stats are applied to deserved damage & deserved magic hits:<br/>" +
+			"When using this, the following stats are applied to average damage & average magic hits:<br/>" +
 			"&nbsp;&nbsp;&mdash; Offensive prayers, instead of always being correct<br/>" +
 			"&nbsp;&nbsp;&mdash; Boosted or drained levels (e.g from brewing down), instead of using config stats or fixed LMS stats<br/>" +
 			"&nbsp;&nbsp;&mdash; The magic defence buff from Augury, instead of assuming Piety/Rigour while getting maged (if it's used)" +
 			"<br><br><strong>Note: </strong>For now, ghost barrages are not integrated into this, the above improvements " +
-			"do not apply for its deserved damage, and its deserved damage is not included in the main deserved damage " +
+			"do not apply for its average damage, and its average damage is not included in the main average damage " +
 			"stat. It merely displays what each client had saved.</html>");
 		instructionLabel.setForeground(Color.WHITE);
 		instructionLabel.setSize(mainPanel.getWidth(), instructionLabel.getHeight());

@@ -97,22 +97,22 @@ public class FightPerformancePanel extends JPanel
 	//
 	// Player name ; 									Opponent Name
 	// Player off-pray hit stats ; 						Opponent off-pray hit stats
-	// Player deserved dps stats ; 						Opponent deserved dps stats
+	// Player average dps stats ; 						Opponent average dps stats
 	// Player damage dealt ; 							Opponent damage dealt
-	// Player magic hits/deserved magic hits ; 			Opponent magic hits/deserved magic hits
+	// Player magic hits/average magic hits ; 			Opponent magic hits/average magic hits
 	// Player offensive pray stats ; 					N/A (no data, client only)
 	// Player hp healed ; 								N/A (no data, client only)
 	// Player Hits on robes ;							Opponent Hits on robes
 	// Player Total KO Chances ;						Opponent Total KO Chances
-	// Player Ghost barrages & extra deserved damage ; 	N/A (no data, client only)
+	// Player Ghost barrages & extra average damage ; 	N/A (no data, client only)
 	// The greater stats will be highlighted green. In this example, the player would have all the green highlights.
 	// example:
 	//
 	//     PlayerName      OpponentName
 	//	   32/55 (58%)      28/49 (57%) // off-pray
-	//     176 (+12)          164 (-12) // deserved
+	//     176 (+12)          164 (-12) // avg dmg
 	//     156 (-28)          184 (+28) // dealt
-	//     10/16 (92.7)   12/20 (80.7%) // deserved magic
+	//     10/16 (92.7)   12/20 (80.7%) // avg magic hits
 	//     27/55 (49%)              N/A // offensive pray
 	//     100                      N/A // hp healed
 	//	   11/31 (35.5%)  13/34 (38.2%) // hits on robes

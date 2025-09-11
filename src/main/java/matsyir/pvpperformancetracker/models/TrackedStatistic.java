@@ -12,7 +12,6 @@ import java.awt.Color;
 import java.math.RoundingMode;
 import java.security.InvalidParameterException;
 import java.text.NumberFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -98,23 +97,23 @@ public enum TrackedStatistic
 
         AVG_DMG.init(
                 (fight, oppFight) -> PanelFactory.createStatsLine(AVG_DMG.acronym, AVG_DMG.acronymTooltip
-                    ,fight.competitor.getDeservedDmgString(fight.opponent)
-                    ,(fight.competitor.getName() + " deserved to deal " + nf2.format(fight.competitor.getDeservedDamage()) +
-                            " damage based on gear & overheads (" + fight.competitor.getDeservedDmgString(fight.opponent, 1, true) + " vs opponent)")
-                    ,fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+                    ,fight.competitor.getAverageDmgString(fight.opponent)
+                    ,("On average, " + fight.competitor.getName() + " would have dealt " + nf2.format(fight.competitor.getAverageDamage()) +
+                            " damage, based on gear & overheads (" + fight.competitor.getAverageDmgString(fight.opponent, 1, true) + " vs opponent)")
+                    ,fight.competitorAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
 
-                    ,fight.opponent.getDeservedDmgString(fight.competitor)
-                    ,(fight.opponent.getName() + " deserved to deal " + nf2.format(fight.opponent.getDeservedDamage()) +
-                            " damage based on gear & overheads (" + fight.opponent.getDeservedDmgString(fight.competitor, 1, true) + " vs you)")
-                    ,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+                    ,fight.opponent.getAverageDmgString(fight.competitor)
+                    ,("On average, " + fight.opponent.getName() + " would have dealt " + nf2.format(fight.opponent.getAverageDamage()) +
+                            " damage, based on gear & overheads (" + fight.opponent.getAverageDmgString(fight.competitor, 1, true) + " vs you)")
+                    ,fight.opponentAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
                 ),
                 () -> PanelFactory.createOverlayStatsLine(AVG_DMG.acronym, 70, 30,
                         NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
                 (fight, component) -> component.updateLeftRightCells(
-                    fight.getCompetitor().getDeservedDmgString(fight.getOpponent())
-                    ,fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
-                    ,String.valueOf((int)Math.round(fight.getOpponent().getDeservedDamage()))
-                    ,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+                    fight.getCompetitor().getAverageDmgString(fight.getOpponent())
+                    ,fight.competitorAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
+                    ,String.valueOf((int)Math.round(fight.getOpponent().getAverageDamage()))
+                    ,fight.opponentAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
                 )
         );
 
@@ -128,7 +127,7 @@ public enum TrackedStatistic
                         ,fight.opponent.getDmgDealtString(fight.competitor)
                         ,fight.opponent.getName() + " dealt " + fight.opponent.getDamageDealt() +
                                 " damage (" + fight.opponent.getDmgDealtString(fight.competitor, true) + " vs you)"
-                        ,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
+                        ,fight.opponentAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
 
                 ),
                 () -> PanelFactory.createOverlayStatsLine(DMG_DEALT.acronym, 70, 30,
@@ -145,15 +144,14 @@ public enum TrackedStatistic
                 (fight, oppFight) -> PanelFactory.createStatsLine(MAGIC_HITS.acronym, MAGIC_HITS.acronymTooltip
                         ,String.valueOf(fight.competitor.getMagicHitStats())
                         ,fight.competitor.getName() + " successfully hit " +
-                                fight.competitor.getMagicHitCount() + " of " + fight.competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-                                nf2.format(fight.competitor.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
+                                fight.competitor.getMagicHitCount() + " of " + fight.competitor.getMagicAttackCount() + " magic attacks, but would have hit " +
+                                nf2.format(fight.competitor.getAvgMagicHitCount()) + " on average.<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
                         ,fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE
 
                         ,String.valueOf(fight.opponent.getMagicHitStats())
                         ,fight.opponent.getName() + " successfully hit " +
-                                fight.opponent.getMagicHitCount() + " of " + fight.opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-                                nf2.format(fight.opponent.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
-                                ""
+                                fight.opponent.getMagicHitCount() + " of " + fight.opponent.getMagicAttackCount() + " magic attacks, but would have hit " +
+                                nf2.format(fight.opponent.getAvgMagicHitCount()) + " on average.<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
                         ,fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE
 
                 ),
@@ -353,19 +351,19 @@ public enum TrackedStatistic
 
                         oppGhostBarrageText = (oppComp.getGhostBarrageStats());
                         oppGhostBarrageTooltipText = ("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
-                                + " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageDeservedDamage())
-                                + " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
-                        oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageDeservedDamage() > fight.competitor.getGhostBarrageDeservedDamage()
+                                + " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageAverageDamage())
+                                + " average damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
+                        oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageAverageDamage() > fight.competitor.getGhostBarrageAverageDamage()
                                 ? Color.GREEN : ColorScheme.BRAND_ORANGE);
                     }
 
                     return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
                             ,fight.competitor.getGhostBarrageStats()
                             ,("(Advanced): " + fight.competitor.getName() + " hit " + fight.competitor.getGhostBarrageCount()
-                                    + " ghost barrages during the fight, worth an extra " + nf2.format(fight.competitor.getGhostBarrageDeservedDamage())
-                                    + " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
+                                    + " ghost barrages during the fight, worth an extra " + nf2.format(fight.competitor.getGhostBarrageAverageDamage())
+                                    + " average damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
                             ,((oppFight != null
-                                    && fight.competitor.getGhostBarrageDeservedDamage() > oppFight.getCompetitor().getGhostBarrageDeservedDamage())
+                                    && fight.competitor.getGhostBarrageAverageDamage() > oppFight.getCompetitor().getGhostBarrageAverageDamage())
                                     ? Color.GREEN : ColorScheme.BRAND_ORANGE)
 
                             ,oppGhostBarrageText
