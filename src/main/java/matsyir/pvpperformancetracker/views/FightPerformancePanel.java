@@ -34,13 +34,10 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -54,10 +51,11 @@ import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
-import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+
+import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
@@ -69,20 +67,10 @@ public class FightPerformancePanel extends JPanel
 {
 	private static ImageIcon deathIcon;
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
-	private static final NumberFormat nf2 = NumberFormat.getInstance();
-	private static final NumberFormat nfP1 = NumberFormat.getPercentInstance(); // For KO Chance %
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
 	static
 	{
-		// initialize number format
-		nf2.setMaximumFractionDigits(2);
-		nf2.setRoundingMode(RoundingMode.HALF_UP);
-
-		// initialize percent format
-		nfP1.setMaximumFractionDigits(1);
-		nfP1.setRoundingMode(RoundingMode.HALF_UP);
-
 		// main border used when not hovering:
 		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
 		// inner border: padding for the inner content of the panel.
@@ -101,7 +89,6 @@ public class FightPerformancePanel extends JPanel
 				new EmptyBorder(3, 5, 3, 5)));
 	}
 
-	private FightPerformance fight;
 	private AnalyzedFightPerformance analyzedFight;
 	private boolean showBorders;
 
@@ -145,7 +132,6 @@ public class FightPerformancePanel extends JPanel
 			deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
 		}
 
-		this.fight = fight;
 		// save Fighters temporarily for more direct access
 		Fighter competitor = fight.getCompetitor();
 		Fighter opponent = fight.getOpponent();
@@ -160,6 +146,8 @@ public class FightPerformancePanel extends JPanel
 		if (showBorders) {
 			setBorder(normalBorder);
 		}
+
+		ArrayList<JPanel> panelLines = new ArrayList<JPanel>();
 
 		// boxlayout panel to hold each of the lines.
 		JPanel fightPanel = new JPanel();
@@ -204,243 +192,14 @@ public class FightPerformancePanel extends JPanel
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
 		playerNamesLine.setToolTipText(baseTooltipText);
 
-		// Off-pray: both player's off-pray hit stats
-		JPanel offPrayStatsLine = PanelFactory.createStatsLine("OP", "Off-pray statistic, amt of times you correctly used a different style than your opponent's overhead pray"
-				,competitor.getOffPrayStats()
-				,(competitor.getName() + " hit " + competitor.getOffPraySuccessCount() + " successful off-pray attacks out of " +
-						competitor.getAttackCount() + " total attacks (" +
-						nf2.format(competitor.calculateOffPraySuccessPercentage()) + "%)")
-				,fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
-
-				,opponent.getOffPrayStats()
-				,(opponent.getName() + " hit " + opponent.getOffPraySuccessCount() + " successful off-pray attacks out of " +
-						opponent.getAttackCount() + " total attacks (" +
-						nf2.format(opponent.calculateOffPraySuccessPercentage()) + "%)")
-				,fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
-		);
-
-		// Deserved DMG: both player's deserved dps stats
-		JPanel deservedDpsStatsLine = PanelFactory.createStatsLine("aD", "Average damage statistic, amt of damage you would've dealt if the game had averaged rng"
-				,competitor.getDeservedDmgString(opponent)
-				,(competitor.getName() + " deserved to deal " + nf2.format(competitor.getDeservedDamage()) +
-						" damage based on gear & overheads (" + competitor.getDeservedDmgString(opponent, 1, true) + " vs opponent)")
-				,fight.competitorDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
-
-				,opponent.getDeservedDmgString(competitor)
-				,(opponent.getName() + " deserved to deal " + nf2.format(opponent.getDeservedDamage()) +
-						" damage based on gear & overheads (" + opponent.getDeservedDmgString(competitor, 1, true) + " vs you)")
-				,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
-		);
-
-		// DMG DEALT: both player's damage dealt
-		JPanel dmgDealtStatsLine = PanelFactory.createStatsLine("D", "Damage dealt statistic, sum of your actual damage hitsplats on your opponent"
-				,competitor.getDmgDealtString(opponent)
-				,competitor.getName() + " dealt " + competitor.getDamageDealt() +
-						" damage (" + competitor.getDmgDealtString(opponent, true) + " vs opponent)"
-				,fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
-
-				,opponent.getDmgDealtString(competitor)
-				,opponent.getName() + " dealt " + opponent.getDamageDealt() +
-						" damage (" + opponent.getDmgDealtString(competitor, true) + " vs you)"
-				,fight.opponentDeservedDmgIsGreater() ? Color.GREEN : Color.WHITE
-
-		);
-
-		//MAGIC HITS: both player's magic hit stats (successful magic attacks/deserved successful magic attacks)
-		JPanel magicHitStatsLine = PanelFactory.createStatsLine("M", "Magic luck statistic, checks amount of magit hits vs. expected hits (as opposed to splashes)"
-				,String.valueOf(competitor.getMagicHitStats())
-				,competitor.getName() + " successfully hit " +
-						competitor.getMagicHitCount() + " of " + competitor.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-						nf2.format(competitor.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
-				,fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE
-
-				,String.valueOf(opponent.getMagicHitStats())
-				,opponent.getName() + " successfully hit " +
-						opponent.getMagicHitCount() + " of " + opponent.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-						nf2.format(opponent.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
-						""
-				,fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE
-
-		);
-
-		// OFFENSIVE PRAYS RIGHT: prepare opponent data if its available
-		String oppOffensivePrayStats = "N/A";
-		String oppOffensivePrayTooltip = "No data is available for the opponent's offensive prayers";
-		Color oppOffensivePrayColor = Color.WHITE;
-		if (showOpponentClientStats) {
-			Fighter oppComp = oppFight.getCompetitor();
-
-			oppOffensivePrayStats = String.valueOf(oppComp.getOffensivePrayStats());
-			oppOffensivePrayTooltip = (oppComp.getName() + " did " + oppComp.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
-					oppComp.getAttackCount() + " total attacks (" +
-					nf2.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
-			oppOffensivePrayColor = (
-					oppFight.getCompetitor().calculateOffensivePraySuccessPercentage() > competitor.calculateOffensivePraySuccessPercentage()
-							? Color.GREEN : Color.WHITE);
-		}
-
-		// OFFENSIVE PRAYS: player's offensive pray stats (only player's, usually no data for opponent)
-		JPanel offensivePrayStatsLine = PanelFactory.createStatsLine("P", "Offensive prayer statistic, checks how many offensive prays you got right, e.g piety for melee"
-			,String.valueOf(competitor.getOffensivePrayStats())
-			,(competitor.getName() + " did " + competitor.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
-					competitor.getAttackCount() + " total attacks (" +
-					nf2.format(competitor.calculateOffensivePraySuccessPercentage()) + "%)")
-			,((showOpponentClientStats && competitor.calculateOffensivePraySuccessPercentage() >
-					oppFight.getCompetitor().calculateOffensivePraySuccessPercentage()) ?
-					Color.GREEN : Color.WHITE)
-
-			,oppOffensivePrayStats
-			,oppOffensivePrayTooltip
-			,oppOffensivePrayColor
-		);
-
-		// hp healed, right
-		String oppHpHealedStats = "N/A";
-		String oppHpHealedTooltip = "No data is available for the opponent's hp healed";
-		Color oppHpHealedColor = Color.WHITE;
-		if (showOpponentClientStats) {
-			Fighter oppComp = oppFight.getCompetitor();
-
-			oppHpHealedStats = (String.valueOf(oppComp.getHpHealed()));
-			oppHpHealedTooltip = (oppComp.getName() + " recovered " + oppComp.getHpHealed() + " hitpoints during the fight");
-			oppHpHealedColor = (oppFight.getCompetitor().getHpHealed() > competitor.getHpHealed() ? Color.GREEN : Color.WHITE);
-		}
-
-		// HP healed (only player's, no data for opponent usually)
-		JPanel hpHealedLine = PanelFactory.createStatsLine("HP", "HP healed statistic, amount of HP recovered during the fight (all sources)"
-				,String.valueOf(competitor.getHpHealed())
-				,(competitor.getName() + " recovered " + competitor.getHpHealed() + " hitpoints during the fight")
-				,((showOpponentClientStats && competitor.getHpHealed() > oppFight.getCompetitor().getHpHealed()) ?
-							Color.GREEN : Color.WHITE)
-
-				,oppHpHealedStats
-				,oppHpHealedTooltip
-				,oppHpHealedColor
-		);
-
-
-		// Hits on Robes line (count/total and percentage)
-
-		// Competitor's hits on robes
-		int compHits = fight.getCompetitor().getRobeHits();
-		int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
-		double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
-		// Opponent's hits on robes
-		int oppHits = fight.getOpponent().getRobeHits();
-		int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
-		double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
-
-		JPanel robeHitsLine = PanelFactory.createStatsLine("rH", "Hits on robes statistic, amount of times you got range/melee'd in robes (don't)"
-				,(compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")")
-				,(fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " +
-						compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")<br>" +
-						"In other words, of his opponent's " + compTotal + " range/melee attacks, " +
-						fight.getCompetitor().getName() + " tanked " + compHits + " of them with robes.")
-				,(compRatio < ((double) (fight.getOpponent().getRobeHits()) /
-						Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
-						Color.GREEN : Color.WHITE)
-
-				,(oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")")
-				,(fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
-						oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")<br>" +
-						"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
-						fight.getOpponent().getName() + " tanked " + oppHits + " of them with robes.")
-				,(oppRatio < compRatio ? Color.GREEN : Color.WHITE)
-		);
-
-		// Total KO Chances
-		// Calculate total KO chances and overall probability // MODIFIED Calculation
-		int competitorKoChances = 0;
-		double competitorSurvivalProb = 1.0; // Start with 100% survival chance
-		int opponentKoChances = 0;
-		double opponentSurvivalProb = 1.0; // Start with 100% survival chance
-		List<FightLogEntry> logs = fight.getAllFightLogEntries();
-		for (FightLogEntry log : logs) {
-			Double koChance = log.getKoChance();
-			if (koChance != null) {
-				if (log.attackerName.equals(competitor.getName())) {
-					competitorKoChances++;
-					competitorSurvivalProb *= (1.0 - koChance); // Calculate survival prob
-				} else {
-					opponentKoChances++;
-					opponentSurvivalProb *= (1.0 - koChance); // Calculate survival prob
-				}
-			}
-		}
-
-		// Calculate overall KO probability
-		Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : 0;
-		Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : 0;
-
-		String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nfP1.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
-		String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nfP1.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
-
-		JPanel totalKoChanceLine = PanelFactory.createStatsLine("KO", "KO chance statistic, sums up the KO chances you got and gives you a total chance of KO." +
-						"<br>When you spec your opponent on 20hp and hit a 12, this shows you the KO % chance in the fight log"
-				,compTotalKoChanceText
-				,competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nfP1.format(competitorOverallKoProb)
-				,(competitorOverallKoProb > opponentOverallKoProb ? Color.GREEN : Color.WHITE)
-
-				,oppTotalKoChanceText
-				,opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
-				,(opponentOverallKoProb > competitorOverallKoProb ? Color.GREEN : Color.WHITE)
-		);
-
-		// let's keep ghost barrage as the bottom-most statistic:
-		// It's only relevant to people fighting in PvP Arena, and it's mostly only relevant
-		// to people who can share their tracker with each-other - so pretty rarely useful.
-		// line container for player's Ghost barrages (only player's, no data for opponent)
-		// ... also, more often than not it literally has 0 data. 0 hits, nothing. so let's just not show
-		// this line when there is no data, since it's also the bottom row now, anyways.
-		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;
-		JPanel ghostBarragesLine = null;
-		if (showGhostBarrages)
-		{
-			String oppGhostBarrageText = "N/A";
-			String oppGhostBarrageTooltipText = "No data is available for the opponent's ghost barrages";
-			Color oppGhostBarrageColor = ColorScheme.BRAND_ORANGE;
-
-			if (showOpponentClientStats) {
-				Fighter oppComp = oppFight.getCompetitor();
-
-				oppGhostBarrageText = (oppComp.getGhostBarrageStats());
-				oppGhostBarrageTooltipText = ("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
-						+ " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageDeservedDamage())
-						+ " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
-				oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageDeservedDamage() > competitor.getGhostBarrageDeservedDamage()
-						? Color.GREEN : ColorScheme.BRAND_ORANGE);
-			}
-
-			ghostBarragesLine = PanelFactory.createStatsLine("GB", "Ghost-barrage statistic, for when you're animation stalled while barraging." +
-							"<br>This statistic is hidden if both players have 0gb, which is common." +
-							"<br>Weird and for advanced users only."
-					,competitor.getGhostBarrageStats()
-					,("(Advanced): " + competitor.getName() + " hit " + competitor.getGhostBarrageCount()
-							+ " ghost barrages during the fight, worth an extra " + nf2.format(competitor.getGhostBarrageDeservedDamage())
-							+ " deserved damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
-					,((showOpponentClientStats
-									&& competitor.getGhostBarrageDeservedDamage() > oppFight.getCompetitor().getGhostBarrageDeservedDamage())
-									? Color.GREEN : ColorScheme.BRAND_ORANGE)
-
-					,oppGhostBarrageText
-					,oppGhostBarrageTooltipText
-					,oppGhostBarrageColor
-			);
-		}
-
-		ArrayList<JPanel> panelLines = new ArrayList<JPanel>();
 		panelLines.add(playerNamesLine);
-		panelLines.add(offPrayStatsLine);
-		panelLines.add(deservedDpsStatsLine);
-		panelLines.add(dmgDealtStatsLine);
-		panelLines.add(magicHitStatsLine);
-		panelLines.add(offensivePrayStatsLine);
-		panelLines.add(hpHealedLine);
-		panelLines.add(robeHitsLine);
-		panelLines.add(totalKoChanceLine);
-		if (showGhostBarrages)
+
+		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;
+		for (TrackedStatistic stat : TrackedStatistic.values())
 		{
-			panelLines.add(ghostBarragesLine); // keep as bottom-most
+			if (stat == TrackedStatistic.GHOST_BARRAGES && !showGhostBarrages) { continue; }
+
+			panelLines.add(stat.getPanelComponent(fight, oppFight));
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log
