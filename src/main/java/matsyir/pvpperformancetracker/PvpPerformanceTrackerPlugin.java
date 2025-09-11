@@ -425,8 +425,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		sendUpdateChatMessages();
-
 		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
 
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
@@ -1033,23 +1031,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// ################################## Plugin-specific functions & global helpers ###################################
 	// #################################################################################################################
 
-	private void sendUpdateChatMessages()
+	private void sendUpdateChatMessage()
 	{
-		if (!config.updateNoteMay72025Shown_v2())
+		if (!config.updateNote1_7_1())
 		{
 			chatMessageManager.queue(QueuedMessage.builder()
 					.type(ChatMessageType.GAMEMESSAGE)
-					.runeLiteFormattedMessage(config.updateNoteMay72025Shown_v2_MESSAGE)
+					.runeLiteFormattedMessage(config.updateNote1_7_1_MESSAGE)
 					.build());
-			configManager.setConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2", true);
-		}
-		if (!config.updateNote1_7_0())
-		{
-			chatMessageManager.queue(QueuedMessage.builder()
-					.type(ChatMessageType.GAMEMESSAGE)
-					.runeLiteFormattedMessage(config.updateNote1_7_0_MESSAGE)
-					.build());
-			configManager.setConfiguration(CONFIG_KEY, "updateNote1_7_0", true);
+			configManager.setConfiguration(CONFIG_KEY, "updateNote1_7_1", true);
 		}
 	}
 
@@ -1080,6 +1070,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
+		sendUpdateChatMessage();
 	}
 
 	// very basic update: We added the new hit on robe statistic, instantly recalculate it on launch,

@@ -533,30 +533,15 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= On-update flags for chat message update summaries =================================
 	@ConfigItem(
-			keyName = "updateNoteMay72025Shown_v2", // for 1.6.1 -> 1.6.2
-			name = "Update Note May 7 2025 Shown v2",
-			description = "Tracks if the update note for May 7 2025 (v2) has been shown.",
+			keyName = "updateNote1_7_1", // for 1.7.0 -> 1.7.1
+			name = "Update Note 1.7.0->1.7.1 ~Sept07 2025",
+			description = "Tracks if the update note for 1.7.1 has been shown.",
 			hidden = true
 	)
-	default boolean updateNoteMay72025Shown_v2()
+	default boolean updateNote1_7_1()
 	{
 		return false;
 	}
-	String updateNoteMay72025Shown_v2_MESSAGE = "PvP Performance Tracker 1.6.2 Update: " +
-			"Improved KO chance accuracy, added double gmaul support, " +
-			"fixed eclipse atlatl damage, added abyssal dagger spec.";
-
-	@ConfigItem(
-			keyName = "updateNote1_7_0", // for 1.6.2 -> 1.7.0
-			name = "Update Note 1.6.2->1.7.0 ~Jun06 2025",
-			description = "Tracks if the update note for 1.7.0 has been shown.",
-			hidden = true
-	)
-	default boolean updateNote1_7_0()
-	{
-		return false;
-	}
-	String updateNote1_7_0_MESSAGE = "PvP Performance Tracker 1.7.0 Update: " +
-			"New statistic - 'hit on robe' tracking, various calculation & detection improvements, " +
-			"display fight worlds, new attack summary window.";
+	String updateNote1_7_1_MESSAGE = "PvP Performance Tracker 1.7.1 Update: " +
+			"Support for Arkan blade, burning claws & dark bow special attacks. God spells. Now tracks double deaths. Various calculation and detection improvements.";
 }
