@@ -307,6 +307,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayNames":
 			case "showOverlayOffPray":
 			case "showOverlayDeservedDmg":
+			case "showOverlayAverageDmg":
 			case "showOverlayDmgDealt":
 			case "showOverlayMagicHits":
 			case "showOverlayOffensivePray":
@@ -921,10 +922,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				{
 					int originalMin = gmaulEntry.getMinHit();
 					int originalMax = gmaulEntry.getMaxHit();
-					double originalAvgDmg = gmaulEntry.getAverageDamage();
+					double originalAvgDmg = gmaulEntry.getAvgDamage();
 					gmaulEntry.setMaxHit(originalMax * totalGmaulHitsMatchedThisTick);
 					gmaulEntry.setMinHit(originalMin * totalGmaulHitsMatchedThisTick);
-					gmaulEntry.setAverageDamage(originalAvgDmg * totalGmaulHitsMatchedThisTick);
+					gmaulEntry.setAvgDamage(originalAvgDmg * totalGmaulHitsMatchedThisTick);
 				}
 			}
 		});

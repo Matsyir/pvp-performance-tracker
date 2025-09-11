@@ -150,7 +150,7 @@ public class FightLogFrame extends JFrame
 			stats[i][1] = styleIconLabel;
 			stats[i][2] = fightEntry.getHitRange();
 			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
-			stats[i][4] = nf.format(fightEntry.getAverageDamage());
+			stats[i][4] = nf.format(fightEntry.getAvgDamage());
 			// Actual Dmg column (Index 5)
 			JLabel dmgLabel = new JLabel();
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC && fightEntry.isSplash())

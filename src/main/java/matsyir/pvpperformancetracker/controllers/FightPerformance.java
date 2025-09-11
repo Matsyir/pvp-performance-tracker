@@ -392,12 +392,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean competitorAverageDmgIsGreater()
 	{
-		return competitor.getAverageDamage() > opponent.getAverageDamage();
+		return competitor.getAvgDamage() > opponent.getAvgDamage();
 	}
 
 	public boolean opponentAverageDmgIsGreater()
 	{
-		return opponent.getAverageDamage() > competitor.getAverageDamage();
+		return opponent.getAvgDamage() > competitor.getAvgDamage();
 	}
 
 	public boolean competitorDmgDealtIsGreater()
@@ -430,9 +430,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 		return opponentRate > competitorRate;
 	}
 
-	public double getCompetitorDeservedDmgDiff()
+	public double getCompetitorAverageDmgDiff()
 	{
-		return competitor.getAverageDamage() - opponent.getAverageDamage();
+		return competitor.getAvgDamage() - opponent.getAvgDamage();
 	}
 
 	public double getCompetitorDmgDealtDiff()

@@ -76,8 +76,8 @@ class Fighter
 	private int offPraySuccessCount; // total number of successful off-pray attacks
 									 // (when you use a different combat style than your opponent's overhead)
 	@Expose
-	@SerializedName("d") // Note: Previously referred as 'deserved damage'
-	private double averageDamage; // total average damage based on gear & opponent's pray
+	@SerializedName("d") // Note: Previously referred to as 'deserved damage'
+	private double avgDamage; // total average damage based on gear & opponent's pray
 	@Expose
 	@SerializedName("h") // h for "hitsplats", real hits
 	private int damageDealt; // actual damage dealt based on opponent's hitsplats
@@ -101,7 +101,7 @@ class Fighter
 	private int ghostBarrageCount;
 	@Expose
 	@SerializedName("y")
-	private double ghostBarrageAverageDamage;
+	private double ghostBarrageAvgDamage;
 
 	@Expose
 	@SerializedName("H")
@@ -134,7 +134,7 @@ class Fighter
 		name = player.getName();
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		averageDamage = 0;
+		avgDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
@@ -153,7 +153,7 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		averageDamage = 0;
+		avgDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
@@ -172,7 +172,7 @@ class Fighter
 		this.name = name;
 		attackCount = 0;
 		offPraySuccessCount = 0;
-		averageDamage = 0;
+		avgDamage = 0;
 		damageDealt = 0;
 		totalMagicAttackCount = 0;
 		magicHitCount = 0;
@@ -252,7 +252,7 @@ class Fighter
 		}
 
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
-		averageDamage += pvpDamageCalc.getAverageHit();
+		avgDamage += pvpDamageCalc.getAverageHit();
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
@@ -289,7 +289,7 @@ class Fighter
 		}
 
 		pvpDamageCalc.updateDamageStats(logEntry, defenderLog);
-		averageDamage += pvpDamageCalc.getAverageHit();
+		avgDamage += pvpDamageCalc.getAverageHit();
 
 		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 		{
@@ -314,7 +314,7 @@ class Fighter
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 
 		ghostBarrageCount++;
-		ghostBarrageAverageDamage += pvpDamageCalc.getAverageHit();
+		ghostBarrageAvgDamage += pvpDamageCalc.getAverageHit();
 
 		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
 		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
@@ -324,23 +324,23 @@ class Fighter
 	public void setTotalGhostBarrageStats(int ghostBarrageCount, double ghostBarrageAvgDamage)
 	{
 		this.ghostBarrageCount = ghostBarrageCount;
-		this.ghostBarrageAverageDamage = ghostBarrageAvgDamage;
+		this.ghostBarrageAvgDamage = ghostBarrageAvgDamage;
 	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
-	public void addAttacks(int success, int total, double deservedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountDeserved, int offensivePraySuccessCount, int hpHealed, int ghostBarrageCount, double ghostBarrageDeservedDamage)
+	public void addAttacks(int success, int total, double avgDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountAverage, int offensivePraySuccessCount, int hpHealed, int ghostBarrageCount, double ghostBarrageavgDamage)
 	{
 		offPraySuccessCount += success;
 		attackCount += total;
-		this.averageDamage += deservedDamage;
+		this.avgDamage += avgDamage;
 		this.damageDealt += damageDealt;
 		this.totalMagicAttackCount += totalMagicAttackCount;
 		this.magicHitCount += magicHitCount;
-		this.avgMagicHitCount += magicHitCountDeserved;
+		this.avgMagicHitCount += magicHitCountAverage;
 		this.offensivePraySuccessCount += offensivePraySuccessCount;
 		this.hpHealed += hpHealed;
 		this.ghostBarrageCount += ghostBarrageCount;
-		this.ghostBarrageAverageDamage += ghostBarrageDeservedDamage;
+		this.ghostBarrageAvgDamage += ghostBarrageavgDamage;
 	}
 
 	void addDamageDealt(int damage)
@@ -416,9 +416,9 @@ class Fighter
 	public String getAverageDmgString(Fighter opponent, int precision, boolean onlyDiff)
 	{
 		nf.setMaximumFractionDigits(precision);
-		double difference = averageDamage - opponent.averageDamage;
+		double difference = avgDamage - opponent.avgDamage;
 		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
-			nf.format(averageDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+			nf.format(avgDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
 	}
 	public String getAverageDmgString(Fighter opponent)
 	{
@@ -472,7 +472,7 @@ class Fighter
 
 	public String getGhostBarrageStats()
 	{
-		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageAverageDamage) + ")";
+		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageAvgDamage) + ")";
 	}
 
 	public void resetRobeHits()

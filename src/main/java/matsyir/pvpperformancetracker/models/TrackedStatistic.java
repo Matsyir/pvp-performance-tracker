@@ -22,7 +22,7 @@ public enum TrackedStatistic
     OFF_PRAY("Off-pray", "OP",
             "Off-pray statistic, # of times you correctly used a different style than your opponent's overhead pray." +
                     "<br>For example, when you use melee vs. protect from magic, that's a successful off-pray hit."),
-    AVG_DMG("Average damage", "aD", // NOTE: previously referred to as "Deserved damage"
+    AVG_DMG("Average damage", "aD", // Note: Previously referred to as 'deserved damage'
             "Average damage statistic, # of damage you would've dealt if the game had averaged rng."),
     DMG_DEALT("Damage dealt", "D",
             "Damage dealt statistic, sum of your actual damage hitsplats on your opponent."),
@@ -98,12 +98,12 @@ public enum TrackedStatistic
         AVG_DMG.init(
                 (fight, oppFight) -> PanelFactory.createStatsLine(AVG_DMG.acronym, AVG_DMG.acronymTooltip
                     ,fight.competitor.getAverageDmgString(fight.opponent)
-                    ,("On average, " + fight.competitor.getName() + " would have dealt " + nf2.format(fight.competitor.getAverageDamage()) +
+                    ,("On average, " + fight.competitor.getName() + " would have dealt " + nf2.format(fight.competitor.getAvgDamage()) +
                             " damage, based on gear & overheads (" + fight.competitor.getAverageDmgString(fight.opponent, 1, true) + " vs opponent)")
                     ,fight.competitorAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
 
                     ,fight.opponent.getAverageDmgString(fight.competitor)
-                    ,("On average, " + fight.opponent.getName() + " would have dealt " + nf2.format(fight.opponent.getAverageDamage()) +
+                    ,("On average, " + fight.opponent.getName() + " would have dealt " + nf2.format(fight.opponent.getAvgDamage()) +
                             " damage, based on gear & overheads (" + fight.opponent.getAverageDmgString(fight.competitor, 1, true) + " vs you)")
                     ,fight.opponentAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
                 ),
@@ -112,7 +112,7 @@ public enum TrackedStatistic
                 (fight, component) -> component.updateLeftRightCells(
                     fight.getCompetitor().getAverageDmgString(fight.getOpponent())
                     ,fight.competitorAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
-                    ,String.valueOf((int)Math.round(fight.getOpponent().getAverageDamage()))
+                    ,String.valueOf((int)Math.round(fight.getOpponent().getAvgDamage()))
                     ,fight.opponentAverageDmgIsGreater() ? Color.GREEN : Color.WHITE
                 )
         );
@@ -351,19 +351,19 @@ public enum TrackedStatistic
 
                         oppGhostBarrageText = (oppComp.getGhostBarrageStats());
                         oppGhostBarrageTooltipText = ("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
-                                + " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageAverageDamage())
+                                + " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageAvgDamage())
                                 + " average damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
-                        oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageAverageDamage() > fight.competitor.getGhostBarrageAverageDamage()
+                        oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageAvgDamage() > fight.competitor.getGhostBarrageAvgDamage()
                                 ? Color.GREEN : ColorScheme.BRAND_ORANGE);
                     }
 
                     return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
                             ,fight.competitor.getGhostBarrageStats()
                             ,("(Advanced): " + fight.competitor.getName() + " hit " + fight.competitor.getGhostBarrageCount()
-                                    + " ghost barrages during the fight, worth an extra " + nf2.format(fight.competitor.getGhostBarrageAverageDamage())
+                                    + " ghost barrages during the fight, worth an extra " + nf2.format(fight.competitor.getGhostBarrageAvgDamage())
                                     + " average damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
                             ,((oppFight != null
-                                    && fight.competitor.getGhostBarrageAverageDamage() > oppFight.getCompetitor().getGhostBarrageAverageDamage())
+                                    && fight.competitor.getGhostBarrageAvgDamage() > oppFight.getCompetitor().getGhostBarrageAvgDamage())
                                     ? Color.GREEN : ColorScheme.BRAND_ORANGE)
 
                             ,oppGhostBarrageText
