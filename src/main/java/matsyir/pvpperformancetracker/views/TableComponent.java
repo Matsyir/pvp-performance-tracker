@@ -31,6 +31,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import javax.annotation.Nonnull;
 
@@ -46,6 +47,9 @@ import net.runelite.client.util.Text;
 //
 // then adapted to our usage:
 // patch custom 3-column behavior, to have a consistently centered middle column
+//
+// not sure if original behavior still works at this point, but I did my best to keep it intact &
+// patch our behaviors on top of it in case we wanna use it alongside.
 @Slf4j
 public class TableComponent implements LayoutableRenderableEntity
 {
@@ -54,6 +58,12 @@ public class TableComponent implements LayoutableRenderableEntity
         LEFT,
         CENTER,
         RIGHT
+    }
+
+    public enum TableRowStyle
+    {
+        DEFAULT, // default/original TableComponent behavior (maybe if it still works)
+        PERCENTAGE_BASED, // 3 column hack fix: 0 is left column, 2 is right, 1 is middle/background. 0 & 2 each take up X% width
     }
 
     private class Cell
@@ -71,13 +81,16 @@ public class TableComponent implements LayoutableRenderableEntity
     @Getter
     private final Rectangle bounds = new Rectangle();
 
-    private boolean use3ColHackFix = true;
     private ArrayList<Cell[]> cells = new ArrayList<>();
     private Cell[] line1;
     private TableAlignment[] columnAlignments;
     private Color[] columnColors;
     private int numCols;
     private int numRows;
+    private TableRowStyle rowStyle;
+    private final float centerWidthPercent = 1f;
+    private final float leftWidthPercent;
+    private final float rightWidthPercent;
 
     private TableAlignment defaultAlignment = TableAlignment.LEFT;
     private Color defaultColor = Color.WHITE;
@@ -89,20 +102,31 @@ public class TableComponent implements LayoutableRenderableEntity
 
     public TableComponent()
     {
-        this(true);
+        this(TableRowStyle.DEFAULT);
     }
-    public TableComponent(boolean use3ColHackFix)
+    public TableComponent(TableRowStyle rowStyle)
+    {
+        this(rowStyle, 50, 50);
+    }
+    public TableComponent(TableRowStyle rowStyle, int leftWidthPercent, int rightWidthPercent)
     {
         super();
 
-        this.use3ColHackFix = use3ColHackFix;
+        if (leftWidthPercent + rightWidthPercent != 100)
+        {
+            throw new InvalidParameterException("TableComponent : leftWidthPercent & rightWidthPercent must add to 100");
+        }
+
+        this.rowStyle = rowStyle;
+        this.leftWidthPercent = (float)leftWidthPercent / 100f;
+        this.rightWidthPercent = (float)rightWidthPercent / 100f;
     }
     
-    private boolean is3ColHackFix() { return numCols == 3 && this.use3ColHackFix; }
+    private boolean is3ColHackFix() { return numCols == 3 && rowStyle == TableRowStyle.PERCENTAGE_BASED; }
 
     public void updateLeftRightCells(String left, Color leftColor, String right, Color rightColor)
     {
-        if (!is3ColHackFix() && !cells.isEmpty()) { return; }
+        if (!is3ColHackFix()) { return; }
 
         line1[0].text = left;
         columnColors[0] = leftColor;
@@ -111,27 +135,27 @@ public class TableComponent implements LayoutableRenderableEntity
     }
     public void updateLeftCell(String left, Color leftColor)
     {
-        if (!is3ColHackFix() && !cells.isEmpty()) { return; }
+        if (!is3ColHackFix()) { return; }
 
         line1[0].text = left;
         columnColors[0] = leftColor;
     }
     public void updateLeftCellText(String left)
     {
-        if (!is3ColHackFix() && !cells.isEmpty()) { return; }
+        if (!is3ColHackFix()) { return; }
 
         line1[0].text = left;
     }
     public void updateRightCell(String right, Color rightColor)
     {
-        if (!is3ColHackFix() && !cells.isEmpty()) { return; }
+        if (!is3ColHackFix()) { return; }
 
         line1[2].text = right;
         columnColors[2] = rightColor;
     }
     public void updateRightCellText(String right)
     {
-        if (!is3ColHackFix() && !cells.isEmpty()) { return; }
+        if (!is3ColHackFix()) { return; }
 
         line1[2].text = right;
     }
@@ -139,6 +163,10 @@ public class TableComponent implements LayoutableRenderableEntity
     @Override
     public Dimension render(final Graphics2D graphics)
     {
+        if (is3ColHackFix())
+        {
+            return renderFor3ColHackFix(graphics);
+        }
         final FontMetrics metrics = graphics.getFontMetrics();
         final int[] columnWidths = getColumnWidths(metrics);
         int height = 0;
@@ -173,6 +201,90 @@ public class TableComponent implements LayoutableRenderableEntity
                     cellTextComponent.updatePosition(x + alignmentOffset,
                             y - (middleColumnHackFix ? Math.round((1 - PanelFactory.LINE_INDEX_LABEL_FONT_SCALE) * 9) : 0)
                     );
+                    cellTextComponent.setText(line);
+                    cellTextComponent.setColor(getColumnColor(col));
+                    cellTextComponent.render(graphics);
+                }
+                height = Math.max(height, y);
+                x += columnWidths[col] + gutter.width;
+            }
+            height += gutter.height;
+        }
+
+        graphics.translate(-preferredLocation.x, -preferredLocation.y);
+        bounds.setLocation(preferredLocation);
+        bounds.setSize(preferredSize.width, height);
+        return bounds.getSize();
+    }
+
+    private Dimension renderFor3ColHackFix(final Graphics2D graphics)
+    {
+        final FontMetrics metrics = graphics.getFontMetrics();
+        final int[] columnWidths = getColumnWidths(metrics);
+        int height = 0;
+        TextComponentShadowless cellTextComponent;
+
+        graphics.translate(preferredLocation.x, preferredLocation.y);
+
+        // first: draw the background layer/line, which is col=1
+        for (int row = 0; row < numRows; row++)
+        {
+            int x = 0;
+            int startingRowHeight = height;
+            int col = 1;
+
+            int y = startingRowHeight;
+            final String[] lines = lineBreakText(getCellText(col, row), columnWidths[col], metrics);
+            for (String line : lines)
+            {
+                cellTextComponent = getCellComponent(col, row);
+                if (cellTextComponent == null) { continue; }
+
+                final int alignmentOffset = getAlignedPosition(line, getColumnAlignment(col), columnWidths[col], metrics);
+
+                y += metrics.getHeight();
+
+                if (!fontsInitialized)
+                {
+                    cellTextComponent.setFont(PanelFactory.getIndexFontFrom(metrics.getFont()));
+                    fontsInitialized = true;
+                }
+
+                cellTextComponent.updatePosition(x + alignmentOffset,
+                        y - Math.round((1 - PanelFactory.LINE_INDEX_LABEL_FONT_SCALE) * 9)
+                );
+                cellTextComponent.setText(line);
+                cellTextComponent.setColor(getColumnColor(col));
+                cellTextComponent.render(graphics);
+            }
+            height = Math.max(height, y);
+            x += columnWidths[col] + gutter.width;
+            height += gutter.height;
+        }
+
+        height = 0; // reset height for next layer
+
+        // now draw the 2 other columns as usual (skip middle column 1)
+        for (int row = 0; row < numRows; row++)
+        {
+            int x = 0;
+            int startingRowHeight = height;
+            for (int col = 0; col < numCols; col++)
+            {
+                if (col == 1) { continue; }
+
+                int y = startingRowHeight;
+                final String[] lines = lineBreakText(getCellText(col, row), columnWidths[col], metrics);
+                for (String line : lines)
+                {
+                    cellTextComponent = getCellComponent(col, row);
+                    if (cellTextComponent == null) { continue; }
+
+                    final int alignmentOffset = getAlignedPosition(line, getColumnAlignment(col), columnWidths[col], metrics);
+
+                    y += metrics.getHeight();
+
+                    cellTextComponent.updatePosition(x + alignmentOffset, y);
                     cellTextComponent.setText(line);
                     cellTextComponent.setColor(getColumnColor(col));
                     cellTextComponent.render(graphics);
@@ -327,20 +439,17 @@ public class TableComponent implements LayoutableRenderableEntity
 
         int[] finalcolw = new int[numCols];     // final width of columns
 
-        // 3colHackFix: simplified width calculation, dont need to do all that math for this basic centered column thing
-        if (is3ColHackFix() && preferredSize.width >= 16)
+        // 3colHackFix: simplified width calculation, dont need to do all that math for this basic percentage column thing
+        if (is3ColHackFix() && preferredSize.width >= 4)
         {
-            finalcolw[1] = Math.round(((float)preferredSize.width) * (1f/9f));
+            // middle column: to be drawn on its own layer, 100% width
+            finalcolw[1] = (int)(preferredSize.width * centerWidthPercent);
 
-            int sidesCombined = preferredSize.width - finalcolw[1];
-            while (sidesCombined % 2 != 0)
-            {
-                finalcolw[1]++;
-                sidesCombined --;
-            }
+            // left column: width * leftPercent
+            finalcolw[0] = (int)(preferredSize.width * leftWidthPercent);
 
-            finalcolw[0] = sidesCombined / 2;
-            finalcolw[2] = finalcolw[0] - (gutter.width*2);
+            // right column: remaining pixels, minus gutter*2 (idk why we need x2 but it works)
+            finalcolw[2] = preferredSize.width - finalcolw[0] - (gutter.width * 2);
 
             return finalcolw;
         }

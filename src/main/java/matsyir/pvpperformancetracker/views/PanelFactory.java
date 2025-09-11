@@ -76,11 +76,11 @@ public final class PanelFactory
         return statsLine;
     }
 
-    public static TableComponent createOverlayStatsLine(String miniCenterLabelText,
+    public static TableComponent createOverlayStatsLine(String miniCenterLabelText, int pLeft, int pRight,
                                                         String leftText, Color leftColor,
                                                         String rightText, Color rightColor)
     {
-        TableComponent overlayStatsLine = new TableComponent();
+        TableComponent overlayStatsLine = new TableComponent(TableComponent.TableRowStyle.PERCENTAGE_BASED, pLeft, pRight);
         overlayStatsLine.addRow(leftText, miniCenterLabelText, rightText);
         overlayStatsLine.setColumnColors(leftColor, OVERLAY_STATS_LINE_INDEX_COLOR, rightColor);
         overlayStatsLine.setColumnAlignments(TableComponent.TableAlignment.LEFT, TableComponent.TableAlignment.CENTER, TableComponent.TableAlignment.RIGHT);

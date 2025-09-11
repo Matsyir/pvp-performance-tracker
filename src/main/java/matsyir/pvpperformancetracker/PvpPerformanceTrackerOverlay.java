@@ -48,6 +48,7 @@ import net.runelite.client.ui.overlay.components.*;
 
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
+	private static final String NO_DATA = "-";
 	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
 	static
 	{
@@ -92,17 +93,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		overlayTitle = TitleComponent.builder().text("PvP Performance").build();
 
 		ovlPlayerNamesLine = LineComponent.builder().build();
-		ovlOffPrayLine = PanelFactory.createOverlayStatsLine("OP", "", Color.WHITE, "", Color.WHITE);
-		ovlDeservedDmgLine = PanelFactory.createOverlayStatsLine("aD", "", Color.WHITE, "", Color.WHITE);
-		ovlDmgDealtLine = PanelFactory.createOverlayStatsLine("D", "", Color.WHITE, "", Color.WHITE);
-		ovlMagicLuckLine = PanelFactory.createOverlayStatsLine("M", "", Color.WHITE, "", Color.WHITE);
-		ovlOffensivePrayLine = PanelFactory.createOverlayStatsLine("P", "", Color.WHITE, "", Color.WHITE);
-		ovlHpHealedLine = PanelFactory.createOverlayStatsLine("HP", "", Color.WHITE, "", Color.WHITE);
-		ovlTotalKoChanceLine = PanelFactory.createOverlayStatsLine("KO", "", Color.WHITE, "", Color.WHITE);
-		ovlLastKoChanceLine = PanelFactory.createOverlayStatsLine("pKO", "", Color.WHITE, "", Color.WHITE);
-		ovlRobeHitsLine = PanelFactory.createOverlayStatsLine("rH", "", Color.WHITE, "", Color.WHITE);
+		ovlOffPrayLine = PanelFactory.createOverlayStatsLine("OP", 50, 50, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlDeservedDmgLine = PanelFactory.createOverlayStatsLine("aD", 70, 30, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlDmgDealtLine = PanelFactory.createOverlayStatsLine("D", 70, 30, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlMagicLuckLine = PanelFactory.createOverlayStatsLine("M", 70, 30, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlOffensivePrayLine = PanelFactory.createOverlayStatsLine("P", 80, 20, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlHpHealedLine = PanelFactory.createOverlayStatsLine("HP", 80, 20, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlTotalKoChanceLine = PanelFactory.createOverlayStatsLine("KO", 50, 50, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlLastKoChanceLine = PanelFactory.createOverlayStatsLine("pKO", 50, 50, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlRobeHitsLine = PanelFactory.createOverlayStatsLine("rH", 50, 50, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
 
-		ovlGhostBarrageLine = PanelFactory.createOverlayStatsLine("GB", "", ColorScheme.BRAND_ORANGE, "", ColorScheme.BRAND_ORANGE);
+		ovlGhostBarrageLine = PanelFactory.createOverlayStatsLine("GB", 80, 20, NO_DATA, ColorScheme.BRAND_ORANGE, NO_DATA, ColorScheme.BRAND_ORANGE);
 
 		setLines();
 	}
@@ -181,18 +182,26 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 
 		// --- KO Chance Calculation START ---
 		// Format Total KO Chance Line (Using Overall Probability)
-		String totalCompStr = fight.getCompetitorKoChanceCount()
-				+ (fight.getCompetitorTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getCompetitorTotalKoChance()) + ")" : "");
-		String totalOppStr = fight.getOpponentKoChanceCount()
-				+ (fight.getOpponentTotalKoChance() > 0 ? " (" + nfPercent.format(fight.getOpponentTotalKoChance()) + ")" : "");
-		ovlTotalKoChanceLine.updateLeftCellText(totalCompStr);
-		ovlTotalKoChanceLine.updateRightCellText(totalOppStr);
+		if (fight.getCompetitorTotalKoChance() > 0)
+		{
+			ovlTotalKoChanceLine.updateLeftCellText(fight.getCompetitorKoChanceCount() +
+					" (" + nfPercent.format(fight.getCompetitorTotalKoChance()) + ")");
+		}
+		if (fight.getOpponentTotalKoChance() > 0)
+		{
+			ovlTotalKoChanceLine.updateRightCellText(fight.getOpponentKoChanceCount() +
+					" (" + nfPercent.format(fight.getOpponentTotalKoChance()) + ")");
+		}
 
 		// Format Last KO Chance Line
-		String lastCompStr = (fight.getCompetitorLastKoChance() != null ? nfPercent.format(fight.getCompetitorLastKoChance()) : "-");
-		String lastOppStr = (fight.getOpponentLastKoChance() != null ? nfPercent.format(fight.getOpponentLastKoChance()) : "-");
-		ovlLastKoChanceLine.updateLeftCellText(lastCompStr);
-		ovlLastKoChanceLine.updateRightCellText(lastOppStr);
+		if (fight.getCompetitorLastKoChance() != null)
+		{
+			ovlLastKoChanceLine.updateLeftCellText(nfPercent.format(fight.getCompetitorLastKoChance()));
+		}
+		if (fight.getOpponentLastKoChance() != null)
+		{
+			ovlLastKoChanceLine.updateRightCellText(nfPercent.format(fight.getOpponentLastKoChance()));
+		}
 		// --- KO Chance Calculation END ---
 
 		ovlGhostBarrageLine.updateLeftCellText(fight.getCompetitor().getGhostBarrageStats());
