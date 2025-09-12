@@ -48,6 +48,8 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+
+import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
@@ -457,9 +459,10 @@ public class TotalStatsPanel extends JPanel
 
 		// put tooltip on parent JPanel so that you can hover anywhere on the line to get the tooltip,
 		// rather than having to hover exactly on the statistic label
-		((JPanel)offPrayStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
+		((JPanel)offPrayStatsLabel.getParent()).setToolTipText("<html>" + nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
-			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
+			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)" +
+			TrackedStatistic.OFF_PRAY.getPrefixedAcronymTooltip());
 
 		expectedDmgStatsLabel.setText(nf.format(avgExpectedDmg) + " (" +
 			(avgExpectedDmgDiff > 0 ? "+" : "") + avgExpectedDmgDiffOneDecimal + ")");
@@ -468,7 +471,8 @@ public class TotalStatsPanel extends JPanel
 			avgExpectedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgExpectedDmg) +
 			" (" + (killAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgExpectedDmgDiff) +
 			"), on deaths: " + nf1.format(deathAvgExpectedDmg) +
-			" (" + (deathAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgExpectedDmgDiff) + ")</html>");
+			" (" + (deathAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgExpectedDmgDiff) + ")" +
+			TrackedStatistic.EXPECTED_DMG.getPrefixedAcronymTooltip());
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
@@ -477,7 +481,8 @@ public class TotalStatsPanel extends JPanel
 			avgDmgDealtDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
 			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
-			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")</html>");
+			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")" +
+			TrackedStatistic.DMG_DEALT.getPrefixedAcronymTooltip());
 
 		if (totalStats.getMagicHitCountExpected() >= 10000)
 		{
@@ -490,7 +495,8 @@ public class TotalStatsPanel extends JPanel
 		}
 		((JPanel)magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
 			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but expected to hit " +
-		nf1.format(totalStats.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
+			nf1.format(totalStats.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
+			TrackedStatistic.MAGIC_HITS.getPrefixedAcronymTooltip());
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -502,13 +508,15 @@ public class TotalStatsPanel extends JPanel
 		{
 			offensivePrayCountStatsLabel.setText(totalStats.getOffensivePrayStats());
 		}
-		((JPanel)offensivePrayCountStatsLabel.getParent()).setToolTipText(nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
+		((JPanel)offensivePrayCountStatsLabel.getParent()).setToolTipText("<html>" + nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
-			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)");
+			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)" +
+			TrackedStatistic.OFFENSIVE_PRAY.getPrefixedAcronymTooltip());
 
 		hpHealedStatsLabel.setText(nf.format(avgHpHealed));
-		((JPanel)hpHealedStatsLabel.getParent()).setToolTipText("A total of " + nf.format(totalStats.getHpHealed())
-			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight.");
+		((JPanel)hpHealedStatsLabel.getParent()).setToolTipText("<html>" + "A total of " + nf.format(totalStats.getHpHealed())
+			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight." +
+			TrackedStatistic.HP_HEALED.getPrefixedAcronymTooltip());
 
 		// Avg Hits on Robes label
 		if (numFights > 0)
@@ -516,7 +524,8 @@ public class TotalStatsPanel extends JPanel
 			avgRobeHitsStatsLabel.setText(nf1.format(avgCompetitorRobeHits) + " / " + nf1.format(avgOpponentRobeHits));
 			((JPanel)avgRobeHitsStatsLabel.getParent()).setToolTipText("<html>Average melee/range hits taken while wearing robes per fight:<br>" +
 					"Player: " + nf1.format(avgCompetitorRobeHits) + " (" + nf1.format(avgCompetitorRobeHitsPercentage) + "% of melee/range hits taken were on robes)<br>" +
-					"Opponent: " + nf1.format(avgOpponentRobeHits) + " (" + nf1.format(avgOpponentRobeHitsPercentage) + "% of melee/range hits taken were on robes)");
+					"Opponent: " + nf1.format(avgOpponentRobeHits) + " (" + nf1.format(avgOpponentRobeHitsPercentage) + "% of melee/range hits taken were on robes)" +
+					TrackedStatistic.ROBE_HITS.getPrefixedAcronymTooltip());
 		}
 		else
 		{
@@ -541,7 +550,7 @@ public class TotalStatsPanel extends JPanel
 						+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoProb)
 						+ ")<br>Total KO Chances: Player: "
 						+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
-						+ "</html>");
+						+ TrackedStatistic.KO_CHANCES.getPrefixedAcronymTooltip());
 		}
 		else
 		{
@@ -553,7 +562,8 @@ public class TotalStatsPanel extends JPanel
 		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
 				+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageExpectedDamage)
 				+ " expected damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
-				+ "Unless fighting in PvP Arena, your opponents likely had a similar value.");
+				+ "Unless fighting in PvP Arena, your opponents likely had a similar value."
+				+ TrackedStatistic.GHOST_BARRAGES.getPrefixedAcronymTooltip());
 	}
 
 	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),

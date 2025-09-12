@@ -32,7 +32,7 @@ public final class PanelFactory
         JPanel statsLine = new JPanel(new GridBagLayout());
         statsLine.setBackground(null);
 
-        String tooltipSuffix = "<br><br>" + (miniCenterLabelText + ": " + miniCenterLabelTooltip);
+        String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
         ForwardingLabel leftLabel = new ForwardingLabel(leftText);
         leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);

@@ -21,14 +21,14 @@ public enum TrackedStatistic
 {
     OFF_PRAY("Off-pray", "OP",
             "Off-pray statistic, # of times you correctly used a different style than your opponent's overhead pray." +
-                    "<br>For example, when you use melee vs. protect from magic, that's a successful off-pray hit."),
+                    "<br>For example, when you use melee or ranged vs. protect from magic, that's a successful off-pray hit."),
     EXPECTED_DMG("Expected damage", "eD", // NOTE: previously referred to as "Deserved damage"
-            "Expected damage statistic, # of damage you would've dealt if the game had averaged rng." +
+            "Expected damage statistic, # of damage you would've dealt if the game had averaged rng, including misses." +
                     "<br>Due to the high variance in this game, it's normal for fights to commonly stray from this."),
     DMG_DEALT("Damage dealt", "D",
             "Damage dealt statistic, sum of your actual damage hitsplats on your opponent."),
     MAGIC_HITS("Magic hits luck", "M",
-            "Magic luck statistic, checks average hits vs. # of actual magic hits (as opposed to splashes)."),
+            "Magic luck statistic, checks expected hits vs. # of actual magic hits (as opposed to splashes)."),
     OFFENSIVE_PRAY("Offensive pray", "P",
             "Offensive prayer statistic, checks how many offensive prays you got right, e.g piety for melee."),
     HP_HEALED("HP healed", "HP",
@@ -100,12 +100,12 @@ public enum TrackedStatistic
                 (fight, oppFight) -> PanelFactory.createStatsLine(EXPECTED_DMG.acronym, EXPECTED_DMG.acronymTooltip
                     ,fight.competitor.getExpectedDmgString(fight.opponent)
                     ,"On average, " + (fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
-                            " damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent), including misses")
+                            " damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)")
                     ,fight.competitorExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
 
                     ,fight.opponent.getExpectedDmgString(fight.competitor)
                     ,"On average, " + (fight.opponent.getName() + " could expect to deal " + nf2.format(fight.opponent.getExpectedDamage()) +
-                            " damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you), including misses")
+                            " damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you)")
                     ,fight.opponentExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
                 ),
                 () -> PanelFactory.createOverlayStatsLine(EXPECTED_DMG.acronym, 70, 30,
@@ -422,5 +422,10 @@ public enum TrackedStatistic
         this.getOverlayComponent = getOverlayComponent;
         this.updateOverlayComponent = updateOverlayComponent;
         this.initialized = true;
+    }
+
+    public String getPrefixedAcronymTooltip()
+    {
+        return ("<br><br><b><i>" + this.acronym + "</i></b>: " + this.acronymTooltip);
     }
 }
