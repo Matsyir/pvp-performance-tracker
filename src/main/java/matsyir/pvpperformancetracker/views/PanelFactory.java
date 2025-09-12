@@ -60,7 +60,7 @@ public final class PanelFactory
         statsLine.add(leftLabel, gbc.clone());
 
         // right
-        gbc.gridx = 2;
+        gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.EAST;
         statsLine.add(rightLabel, gbc.clone());
 
