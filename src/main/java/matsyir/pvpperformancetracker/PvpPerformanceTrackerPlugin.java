@@ -306,6 +306,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayTitle":
 			case "showOverlayNames":
 			case "showOverlayOffPray":
+			case "showOverlayDeservedDmg":
 			case "showOverlayExpectedDmg":
 			case "showOverlayDmgDealt":
 			case "showOverlayMagicHits":

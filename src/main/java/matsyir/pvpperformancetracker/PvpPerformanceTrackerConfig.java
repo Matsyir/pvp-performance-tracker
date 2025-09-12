@@ -183,8 +183,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showOverlayDeservedDmg",
-		name = "Overlay: Show Expected Dmg",
+		keyName = "showOverlayDeservedDmg", // Not renaming this key so users keep their config.
+		name = "Overlay: Show Expected Dmg", // Note: Used to be called Deserved Damage.
 		description = "The overlay will display expected damage & difference.<br>Max. of 5 lines on the overlay",
 		position = 7000,
 		section = overlay
