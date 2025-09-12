@@ -145,9 +145,9 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		{
 			panelComponent.getChildren().add(statisticLines.get(TrackedStatistic.OFF_PRAY));
 		}
-		if (config.showOverlayDeservedDmg())
+		if (config.showOverlayExpectedDmg())
 		{
-			panelComponent.getChildren().add(statisticLines.get(TrackedStatistic.AVG_DMG));
+			panelComponent.getChildren().add(statisticLines.get(TrackedStatistic.EXPECTED_DMG));
 		}
 		if (config.showOverlayDmgDealt())
 		{

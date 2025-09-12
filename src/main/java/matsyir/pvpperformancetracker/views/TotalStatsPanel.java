@@ -92,7 +92,7 @@ public class TotalStatsPanel extends JPanel
 	private final JLabel killsLabel;
 	private final JLabel deathsLabel;
 	private final JLabel offPrayStatsLabel;
-	private final JLabel deservedDmgStatsLabel;
+	private final JLabel expectedDmgStatsLabel;
 	private final JLabel dmgDealtStatsLabel;
 	private final JLabel magicHitCountStatsLabel;
 	private final JLabel offensivePrayCountStatsLabel;
@@ -110,20 +110,20 @@ public class TotalStatsPanel extends JPanel
 	private int numKills = 0;
 	private int numDeaths = 0;
 
-	private double totalDeservedDmg = 0;
-	private double totalDeservedDmgDiff = 0;
-	private double avgDeservedDmg = 0;
-	private double avgDeservedDmgDiff = 0;
+	private double totalExpectedDmg = 0;
+	private double totalExpectedDmgDiff = 0;
+	private double avgExpectedDmg = 0;
+	private double avgExpectedDmgDiff = 0;
 
-	private double killTotalDeservedDmg = 0;
-	private double killTotalDeservedDmgDiff = 0;
-	private double killAvgDeservedDmg = 0;
-	private double killAvgDeservedDmgDiff = 0;
+	private double killTotalExpectedDmg = 0;
+	private double killTotalExpectedDmgDiff = 0;
+	private double killAvgExpectedDmg = 0;
+	private double killAvgExpectedDmgDiff = 0;
 
-	private double deathTotalDeservedDmg = 0;
-	private double deathTotalDeservedDmgDiff = 0;
-	private double deathAvgDeservedDmg = 0;
-	private double deathAvgDeservedDmgDiff = 0;
+	private double deathTotalExpectedDmg = 0;
+	private double deathTotalExpectedDmgDiff = 0;
+	private double deathAvgExpectedDmg = 0;
+	private double deathAvgExpectedDmgDiff = 0;
 
 	private double totalDmgDealt = 0;
 	private double totalDmgDealtDiff = 0;
@@ -167,7 +167,7 @@ public class TotalStatsPanel extends JPanel
 	// It's only relevant to people fighting in PvP Arena, and it's mostly only relevant
 	// to people who can share their tracker with each-other - so pretty rarely useful.
 	private double avgGhostBarrageCount = 0;
-	private double avgGhostBarrageDeservedDamage = 0;
+	private double avgGhostBarrageExpectedDamage = 0;
 
 	public TotalStatsPanel()
 	{
@@ -285,23 +285,23 @@ public class TotalStatsPanel extends JPanel
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
-		// panel to show the average deserved damage stats (average damage & average diff)
-		JPanel deservedDmgStatsPanel = new JPanel(new BorderLayout());
+		// panel to show the average expected damage stats (average damage & average diff)
+		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
 
-		// left label with a label to say it's deserved dmg stats
-		JLabel deservedDmgStatsLeftLabel = new JLabel();
-		deservedDmgStatsLeftLabel.setText("Avg Deserved Dmg:");
-		deservedDmgStatsLeftLabel.setForeground(Color.WHITE);
-		deservedDmgStatsPanel.add(deservedDmgStatsLeftLabel, BorderLayout.WEST);
+		// left label with a label to say it's expected dmg stats
+		JLabel expectedDmgStatsLeftLabel = new JLabel();
+		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
+		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
+		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
-		// label to show deserved dmg stats
-		deservedDmgStatsLabel = new JLabel();
-		deservedDmgStatsLabel.setForeground(Color.WHITE);
-		deservedDmgStatsPanel.add(deservedDmgStatsLabel, BorderLayout.EAST);
+		// label to show expected dmg stats
+		expectedDmgStatsLabel = new JLabel();
+		expectedDmgStatsLabel.setForeground(Color.WHITE);
+		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
 
-		deservedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		deservedDmgStatsPanel.setComponentPopupMenu(contextMenu);
-		add(deservedDmgStatsPanel);
+		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		expectedDmgStatsPanel.setComponentPopupMenu(contextMenu);
+		add(expectedDmgStatsPanel);
 
 		// FIFTH LINE
 		// panel to show the average damage dealt stats (average damage & average diff)
@@ -323,7 +323,7 @@ public class TotalStatsPanel extends JPanel
 		add(dmgDealtStatsPanel);
 
 		// SIXTH LINE
-		// panel to show the total magic hit count and deserved hit count
+		// panel to show the total magic hit count and expected hit count
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's magic hit count stats
@@ -434,7 +434,7 @@ public class TotalStatsPanel extends JPanel
 
 	private void setLabels()
 	{
-		String avgDeservedDmgDiffOneDecimal = nf1.format(avgDeservedDmgDiff);
+		String avgExpectedDmgDiffOneDecimal = nf1.format(avgExpectedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
 		killsLabel.setText(nf.format(numKills) + " Kill" + (numKills != 1 ? "s" : ""));
@@ -461,14 +461,14 @@ public class TotalStatsPanel extends JPanel
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)");
 
-		deservedDmgStatsLabel.setText(nf.format(avgDeservedDmg) + " (" +
-			(avgDeservedDmgDiff > 0 ? "+" : "") + avgDeservedDmgDiffOneDecimal + ")");
-		((JPanel)deservedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDeservedDmg) +
-			" deserved damage per fight with avg diff of " + (avgDeservedDmgDiff > 0 ? "+" : "") +
-			avgDeservedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDeservedDmg) +
-			" (" + (killAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgDeservedDmgDiff) +
-			"), on deaths: " + nf1.format(deathAvgDeservedDmg) +
-			" (" + (deathAvgDeservedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgDeservedDmgDiff) + ")</html>");
+		expectedDmgStatsLabel.setText(nf.format(avgExpectedDmg) + " (" +
+			(avgExpectedDmgDiff > 0 ? "+" : "") + avgExpectedDmgDiffOneDecimal + ")");
+		((JPanel)expectedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgExpectedDmg) +
+			" expected damage per fight with avg diff of " + (avgExpectedDmgDiff > 0 ? "+" : "") +
+			avgExpectedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgExpectedDmg) +
+			" (" + (killAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgExpectedDmgDiff) +
+			"), on deaths: " + nf1.format(deathAvgExpectedDmg) +
+			" (" + (deathAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgExpectedDmgDiff) + ")</html>");
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
@@ -479,18 +479,18 @@ public class TotalStatsPanel extends JPanel
 			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
 			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")</html>");
 
-		if (totalStats.getMagicHitCountDeserved() >= 10000)
+		if (totalStats.getMagicHitCountExpected() >= 10000)
 		{
 			magicHitCountStatsLabel.setText(nfWithK(totalStats.getMagicHitCount()) + "/" +
-				nfWithK((int)totalStats.getMagicHitCountDeserved()));
+				nfWithK((int)totalStats.getMagicHitCountExpected()));
 		}
 		else
 		{
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
 		((JPanel)magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
-			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but deserved to hit " +
-		nf1.format(totalStats.getMagicHitCountDeserved()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
+			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but expected to hit " +
+		nf1.format(totalStats.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky</html>");
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -549,10 +549,10 @@ public class TotalStatsPanel extends JPanel
 			((JPanel) avgKoChanceStatsLabel.getParent()).setToolTipText("No KO chance data available for calculation.");
 		}
 
-		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageDeservedDamage) + ")");
+		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageExpectedDamage) + ")");
 		((JPanel)ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
-				+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageDeservedDamage)
-				+ " deserved damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
+				+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageExpectedDamage)
+				+ " expected damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 				+ "Unless fighting in PvP Arena, your opponents likely had a similar value.");
 	}
 
@@ -569,11 +569,11 @@ public class TotalStatsPanel extends JPanel
 		numFights++;
 
 		totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-			fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+			fight.getCompetitor().getExpectedDamage(), fight.getCompetitor().getDamageDealt(),
 			fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-			fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+			fight.getCompetitor().getMagicHitCountExpected(), fight.getCompetitor().getOffensivePraySuccessCount(),
 			fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
-			fight.getCompetitor().getGhostBarrageDeservedDamage());
+			fight.getCompetitor().getGhostBarrageExpectedDamage());
 
 		// Accumulate robe hits
 		totalCompetitorRobeHits += fight.getCompetitor().getRobeHits();
@@ -591,14 +591,14 @@ public class TotalStatsPanel extends JPanel
 		{
 			numDeaths++;
 
-			deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-			deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+			deathTotalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+			deathTotalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 			deathTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 			deathTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
-			deathAvgDeservedDmg = deathTotalDeservedDmg / numDeaths;
-			deathAvgDeservedDmgDiff = deathTotalDeservedDmgDiff / numDeaths;
+			deathAvgExpectedDmg = deathTotalExpectedDmg / numDeaths;
+			deathAvgExpectedDmgDiff = deathTotalExpectedDmgDiff / numDeaths;
 
 			deathAvgDmgDealt = deathTotalDmgDealt / numDeaths;
 			deathAvgDmgDealtDiff = deathTotalDmgDealtDiff / numDeaths;
@@ -608,28 +608,28 @@ public class TotalStatsPanel extends JPanel
 		{
 			numKills++;
 
-			killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-			killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+			killTotalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+			killTotalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 			killTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 			killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
-			killAvgDeservedDmg = killTotalDeservedDmg / numKills;
-			killAvgDeservedDmgDiff = killTotalDeservedDmgDiff / numKills;
+			killAvgExpectedDmg = killTotalExpectedDmg / numKills;
+			killAvgExpectedDmgDiff = killTotalExpectedDmgDiff / numKills;
 
 			killAvgDmgDealt = killTotalDmgDealt / numKills;
 			killAvgDmgDealtDiff = killTotalDmgDealtDiff / numKills;
 		}
 
-		totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-		totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+		totalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+		totalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 		totalDmgDealt += fight.getCompetitor().getDamageDealt();
 		totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 
 		// calculate avg stats based on total/numFights
-		avgDeservedDmg = totalDeservedDmg / numFights;
-		avgDeservedDmgDiff = totalDeservedDmgDiff / numFights;
+		avgExpectedDmg = totalExpectedDmg / numFights;
+		avgExpectedDmgDiff = totalExpectedDmgDiff / numFights;
 
 		avgDmgDealt = totalDmgDealt / numFights;
 		avgDmgDealtDiff = totalDmgDealtDiff / numFights;
@@ -675,7 +675,7 @@ public class TotalStatsPanel extends JPanel
 		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
 
 		avgGhostBarrageCount = (double)totalStats.getGhostBarrageCount() / numFights;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+		avgGhostBarrageExpectedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageExpectedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -702,11 +702,11 @@ public class TotalStatsPanel extends JPanel
 		for (FightPerformance fight : fights)
 		{
 			totalStats.addAttacks(fight.getCompetitor().getOffPraySuccessCount(), fight.getCompetitor().getAttackCount(),
-				fight.getCompetitor().getDeservedDamage(), fight.getCompetitor().getDamageDealt(),
+				fight.getCompetitor().getExpectedDamage(), fight.getCompetitor().getDamageDealt(),
 				fight.getCompetitor().getMagicAttackCount(), fight.getCompetitor().getMagicHitCount(),
-				fight.getCompetitor().getMagicHitCountDeserved(), fight.getCompetitor().getOffensivePraySuccessCount(),
+				fight.getCompetitor().getMagicHitCountExpected(), fight.getCompetitor().getOffensivePraySuccessCount(),
 				fight.getCompetitor().getHpHealed(), fight.getCompetitor().getGhostBarrageCount(),
-				fight.getCompetitor().getGhostBarrageDeservedDamage());
+				fight.getCompetitor().getGhostBarrageExpectedDamage());
 
 			// Accumulate robe hits
 			totalCompetitorRobeHits += fight.getCompetitor().getRobeHits();
@@ -718,8 +718,8 @@ public class TotalStatsPanel extends JPanel
 			{
 				numDeaths++;
 
-				deathTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-				deathTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+				deathTotalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+				deathTotalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 				deathTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 				deathTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
@@ -728,15 +728,15 @@ public class TotalStatsPanel extends JPanel
 			{
 				numKills++;
 
-				killTotalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-				killTotalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+				killTotalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+				killTotalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 				killTotalDmgDealt += fight.getCompetitor().getDamageDealt();
 				killTotalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
 			}
 
-			totalDeservedDmg += fight.getCompetitor().getDeservedDamage();
-			totalDeservedDmgDiff += fight.getCompetitorDeservedDmgDiff();
+			totalExpectedDmg += fight.getCompetitor().getExpectedDamage();
+			totalExpectedDmgDiff += fight.getCompetitorExpectedDmgDiff();
 
 			totalDmgDealt += fight.getCompetitor().getDamageDealt();
 			totalDmgDealtDiff += fight.getCompetitorDmgDealtDiff();
@@ -779,17 +779,17 @@ public class TotalStatsPanel extends JPanel
 		avgOpponentRobeHitsPercentage = totalOpponentRobeHitsAttempted != 0 ? (totalOpponentRobeHits / totalOpponentRobeHitsAttempted) * 100.0 : 0;
 
 		// Recalculate averages for all stats
-		avgDeservedDmg = numFights != 0 ? totalDeservedDmg / numFights : 0;
-		avgDeservedDmgDiff = numFights != 0 ? totalDeservedDmgDiff / numFights: 0;
+		avgExpectedDmg = numFights != 0 ? totalExpectedDmg / numFights : 0;
+		avgExpectedDmgDiff = numFights != 0 ? totalExpectedDmgDiff / numFights: 0;
 
 		avgDmgDealt = numFights != 0 ? totalDmgDealt / numFights : 0;
 		avgDmgDealtDiff = numFights != 0 ? totalDmgDealtDiff / numFights : 0;
 
-		killAvgDeservedDmg = numKills != 0 ? killTotalDeservedDmg / numKills : 0;
-		killAvgDeservedDmgDiff = numKills != 0 ? killTotalDeservedDmgDiff / numKills : 0;
+		killAvgExpectedDmg = numKills != 0 ? killTotalExpectedDmg / numKills : 0;
+		killAvgExpectedDmgDiff = numKills != 0 ? killTotalExpectedDmgDiff / numKills : 0;
 
-		deathAvgDeservedDmg = numDeaths != 0 ? deathTotalDeservedDmg / numDeaths : 0;
-		deathAvgDeservedDmgDiff = numDeaths != 0 ? deathTotalDeservedDmgDiff / numDeaths : 0;
+		deathAvgExpectedDmg = numDeaths != 0 ? deathTotalExpectedDmg / numDeaths : 0;
+		deathAvgExpectedDmgDiff = numDeaths != 0 ? deathTotalExpectedDmgDiff / numDeaths : 0;
 
 		killAvgDmgDealt = numKills != 0 ? killTotalDmgDealt / numKills : 0;
 		killAvgDmgDealtDiff = numKills != 0 ? killTotalDmgDealtDiff / numKills : 0;
@@ -806,7 +806,7 @@ public class TotalStatsPanel extends JPanel
 		avgOpponentKoProb = numFightsWithKoChance != 0 ? totalOpponentKoProbSum / numFightsWithKoChance : 0;
 
 		avgGhostBarrageCount = numFights != 0 ? (double)totalStats.getGhostBarrageCount() / numFights : 0;
-		avgGhostBarrageDeservedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageDeservedDamage() / totalStats.getGhostBarrageCount() : 0;
+		avgGhostBarrageExpectedDamage = totalStats.getGhostBarrageCount() != 0 ? totalStats.getGhostBarrageExpectedDamage() / totalStats.getGhostBarrageCount() : 0;
 
 		SwingUtilities.invokeLater(this::setLabels);
 	}
@@ -817,12 +817,12 @@ public class TotalStatsPanel extends JPanel
 		numDeaths = 0;
 		numKills = 0;
 
-		totalDeservedDmg = 0;
-		totalDeservedDmgDiff = 0;
-		killTotalDeservedDmg = 0;
-		killTotalDeservedDmgDiff = 0;
-		deathTotalDeservedDmg = 0;
-		deathTotalDeservedDmgDiff = 0;
+		totalExpectedDmg = 0;
+		totalExpectedDmgDiff = 0;
+		killTotalExpectedDmg = 0;
+		killTotalExpectedDmgDiff = 0;
+		deathTotalExpectedDmg = 0;
+		deathTotalExpectedDmgDiff = 0;
 		totalDmgDealt = 0;
 		totalDmgDealtDiff = 0;
 		killTotalDmgDealt = 0;
@@ -830,12 +830,12 @@ public class TotalStatsPanel extends JPanel
 		deathTotalDmgDealt = 0;
 		deathTotalDmgDealtDiff = 0;
 
-		avgDeservedDmg = 0;
-		avgDeservedDmgDiff = 0;
-		killAvgDeservedDmg = 0;
-		killAvgDeservedDmgDiff = 0;
-		deathAvgDeservedDmg = 0;
-		deathAvgDeservedDmgDiff = 0;
+		avgExpectedDmg = 0;
+		avgExpectedDmgDiff = 0;
+		killAvgExpectedDmg = 0;
+		killAvgExpectedDmgDiff = 0;
+		deathAvgExpectedDmg = 0;
+		deathAvgExpectedDmgDiff = 0;
 		avgDmgDealt = 0;
 		avgDmgDealtDiff = 0;
 		killAvgDmgDealt = 0;
@@ -866,7 +866,7 @@ public class TotalStatsPanel extends JPanel
 		numFightsWithKoChance = 0; // Reset new counter
 
 		avgGhostBarrageCount = 0;
-		avgGhostBarrageDeservedDamage = 0;
+		avgGhostBarrageExpectedDamage = 0;
 
 		totalStats = new Fighter("Player");
 		SwingUtilities.invokeLater(this::setLabels);

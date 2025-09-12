@@ -306,7 +306,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "showOverlayTitle":
 			case "showOverlayNames":
 			case "showOverlayOffPray":
-			case "showOverlayDeservedDmg":
+			case "showOverlayExpectedDmg":
 			case "showOverlayDmgDealt":
 			case "showOverlayMagicHits":
 			case "showOverlayOffensivePray":
@@ -458,7 +458,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		checkForFightEnd();
 
-		// delay the animation processing, since we will also want to use equipment data for deserved
+		// delay the animation processing, since we will also want to use equipment data for expected
 		// damage, and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
@@ -921,10 +921,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				{
 					int originalMin = gmaulEntry.getMinHit();
 					int originalMax = gmaulEntry.getMaxHit();
-					double originalDeserved = gmaulEntry.getDeservedDamage();
+					double originalExpected = gmaulEntry.getExpectedDamage();
 					gmaulEntry.setMaxHit(originalMax * totalGmaulHitsMatchedThisTick);
 					gmaulEntry.setMinHit(originalMin * totalGmaulHitsMatchedThisTick);
-					gmaulEntry.setDeservedDamage(originalDeserved * totalGmaulHitsMatchedThisTick);
+					gmaulEntry.setExpectedDamage(originalExpected * totalGmaulHitsMatchedThisTick);
 				}
 			}
 		});
@@ -1042,7 +1042,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				.runeLiteFormattedMessage("PvP Performance Tracker 1.7.1 Update: " +
 						"Support for god spells, special attacks for arkan blade, burning claws & dark bow. " +
 						"Double deaths now tracked. New statistic labels & improved tooltips. Various calculation & " +
-						"detection improvements. Renamed Deserved damage to Average damage.")
+						"detection improvements. Renamed Deserved damage to Expected damage.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
