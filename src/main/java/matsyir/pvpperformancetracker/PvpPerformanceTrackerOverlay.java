@@ -118,9 +118,17 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		{
 			ovlLastKoChanceLine.updateLeftCellText(nfP1.format(fight.getCompetitorLastKoChance()));
 		}
+		else
+		{
+			ovlLastKoChanceLine.updateLeftCellText(NO_DATA);
+		}
 		if (fight.getOpponentLastKoChance() != null)
 		{
 			ovlLastKoChanceLine.updateRightCellText(nfP1.format(fight.getOpponentLastKoChance()));
+		}
+		else
+		{
+			ovlLastKoChanceLine.updateRightCellText(NO_DATA);
 		}
 
 		return panelComponent.render(graphics);
