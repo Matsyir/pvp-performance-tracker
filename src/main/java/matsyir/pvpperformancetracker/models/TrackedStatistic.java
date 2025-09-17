@@ -328,18 +328,16 @@ public enum TrackedStatistic
                 },
                 () -> PanelFactory.createOverlayStatsLine(KO_CHANCES.acronym, 50, 50,
                         NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
-                (fight, component) -> {
-                    if (fight.getCompetitorTotalKoChance() > 0)
-                    {
-                        component.updateLeftCellText(fight.getCompetitorKoChanceCount() +
-                                " (" + nfP1.format(fight.getCompetitorTotalKoChance()) + ")");
-                    }
-                    if (fight.getOpponentTotalKoChance() > 0)
-                    {
-                        component.updateRightCellText(fight.getOpponentKoChanceCount() +
-                                " (" + nfP1.format(fight.getOpponentTotalKoChance()) + ")");
-                    }
-                }
+                (fight, component) -> component.updateLeftRightCells(
+                        fight.getCompetitorKoChanceCount() + (fight.getCompetitorKoChanceCount() > 0
+                                ? " (" + nfP1.format(fight.getCompetitorTotalKoChance()) + ")"
+                                : ""),
+                        Color.WHITE,
+                        fight.getOpponentKoChanceCount() + (fight.getOpponentKoChanceCount() > 0
+                                ? " (" + nfP1.format(fight.getOpponentTotalKoChance()) + ")"
+                                : ""),
+                        Color.WHITE
+                )
         );
 
         GHOST_BARRAGES.init(
