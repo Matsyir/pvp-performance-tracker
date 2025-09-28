@@ -48,6 +48,7 @@ import net.runelite.client.game.ItemEquipmentStats;
 import net.runelite.client.game.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
+import net.runelite.api.Skill;
 
 // Pvp damage calculations
 // call updateDamageStats(...) with required parameters, and retrieve results by using the field getters
@@ -149,6 +150,18 @@ public class PvpDamageCalc
 		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING : CONFIG.ringChoice();
 	}
 
+	public void updateCombatLevels(CombatLevels attackerLevels, CombatLevels defenderLevels)
+	{
+		if (attackerLevels != null)
+		{
+			this.attackerLevels = attackerLevels;
+		}
+		if (defenderLevels != null)
+		{
+			this.defenderLevels = defenderLevels;
+		}
+	}
+
 	// main function used to update stats during an ongoing fight
 	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData)
 	{
@@ -164,6 +177,7 @@ public class PvpDamageCalc
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		boolean wearingFullDharoks = EquipmentData.isFullDharoks(attackerItems);
 
 		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
 		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
@@ -179,6 +193,10 @@ public class PvpDamageCalc
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, true);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, true);
+			if (wearingFullDharoks)
+			{
+				applyDharokSetEffect(attackerItems, attacker, null);
+			}
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
@@ -221,6 +239,7 @@ public class PvpDamageCalc
 		maxHit = 0;
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		boolean wearingFullDharoks = EquipmentData.isFullDharoks(attackerItems);
 
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
@@ -236,6 +255,11 @@ public class PvpDamageCalc
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
+			if (wearingFullDharoks)
+			{
+				Integer loggedHp = attackerLevels != null ? attackerLevels.getHp() : null;
+				applyDharokSetEffect(attackerItems, null, loggedHp);
+			}
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
@@ -805,6 +829,71 @@ public class PvpDamageCalc
 		{
 			accuracy *= VOLATILE_NIGHTMARE_STAFF_ACC_MODIFIER;
 		}
+	}
+
+	private void applyDharokSetEffect(int[] attackerItems, Player attacker, Integer overrideCurrentHp)
+	{
+		if (!EquipmentData.isFullDharoks(attackerItems))
+		{
+			return;
+		}
+
+		int baseHp = attackerLevels != null ? attackerLevels.getBaseHp() : 0;
+		if (baseHp <= 0)
+		{
+			baseHp = CombatLevels.getConfigLevels().getBaseHp();
+		}
+
+		Integer currentHp = overrideCurrentHp;
+		if (currentHp == null && attacker != null)
+		{
+			currentHp = estimateCurrentHp(attacker, baseHp);
+		}
+		if (currentHp == null && attackerLevels != null && attackerLevels.getHp() > 0)
+		{
+			currentHp = Math.min(attackerLevels.getHp(), baseHp);
+		}
+
+		if (currentHp == null)
+		{
+			return;
+		}
+
+		double missingHp = Math.max(0, baseHp - Math.min(currentHp, baseHp));
+		double modifier = 1 + (missingHp / 100.0);
+		maxHit = (int) Math.floor(maxHit * modifier);
+	}
+
+	private Integer estimateCurrentHp(Player player, int baseHp)
+	{
+		if (player == null || baseHp <= 0)
+		{
+			return null;
+		}
+
+		if (player == PLUGIN.getClient().getLocalPlayer())
+		{
+			int boosted = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
+			if (boosted > 0)
+			{
+				return boosted;
+			}
+		}
+
+		int ratio = player.getHealthRatio();
+		int scale = player.getHealthScale();
+		if (ratio <= 0 || scale <= 0)
+		{
+			return null;
+		}
+
+		int estimated = (int) Math.ceil((ratio / (double) scale) * baseHp);
+		if (ratio == scale)
+		{
+			estimated = baseHp;
+		}
+		estimated = Math.max(1, Math.min(estimated, baseHp));
+		return estimated;
 	}
 
 	// Retrieve item stats for a single item, returned as an int array so they can be modified.

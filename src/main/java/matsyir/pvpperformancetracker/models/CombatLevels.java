@@ -26,6 +26,7 @@ package matsyir.pvpperformancetracker.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import lombok.AccessLevel;
 import lombok.Getter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import net.runelite.api.Client;
@@ -63,6 +64,10 @@ public class CombatLevels
 	@Expose
 	@SerializedName("h")
 	public int hp; // not currently used but potential dh support in future?
+	@Expose
+	@SerializedName("bH")
+	@Getter(AccessLevel.NONE)
+	private int baseHp;
 
 	public CombatLevels(int atk, int str, int def, int range, int mage, int hp)
 	{
@@ -72,6 +77,7 @@ public class CombatLevels
 		this.range = range;
 		this.mage = mage;
 		this.hp = hp;
+		this.baseHp = hp;
 	}
 
 	public CombatLevels(Client client)
@@ -82,6 +88,23 @@ public class CombatLevels
 		this.range = client.getBoostedSkillLevel(Skill.RANGED);
 		this.mage = client.getBoostedSkillLevel(Skill.MAGIC);
 		this.hp = client.getBoostedSkillLevel(Skill.HITPOINTS);
+		this.baseHp = client.getRealSkillLevel(Skill.HITPOINTS);
+	}
+
+	public int getBaseHp()
+	{
+		if (baseHp > 0)
+		{
+			return baseHp;
+		}
+
+		int configuredHp = CombatLevels.getConfigLevels().hp;
+		if (hp > 0)
+		{
+			return Math.max(hp, configuredHp);
+		}
+
+		return configuredHp;
 	}
 
 	public int getSkill(Skill skill)
