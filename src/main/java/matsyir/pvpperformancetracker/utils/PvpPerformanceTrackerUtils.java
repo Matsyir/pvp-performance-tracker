@@ -117,6 +117,111 @@ public class PvpPerformanceTrackerUtils
 		return hpAfter + damageSum;
 	}
 
+	/**
+	 * Attempt-level KO probability for Dragon Claws specials across two ticks, factoring any healing between phases.
+	 */
+	public static Double calculateClawsTwoPhaseKo(double specAccuracy, int specMaxHit, int hpBefore, int healBetween)
+	{
+		if (specMaxHit <= 0 || hpBefore <= 0)
+		{
+			return null;
+		}
+
+		double accSpec = Math.max(0.0, Math.min(1.0, specAccuracy));
+		int baseMax = Math.max(0, (specMaxHit - 1) / 2);
+		if (baseMax <= 0)
+		{
+			return null;
+		}
+
+		double swingAccuracy;
+		if (accSpec <= 0.0)
+		{
+			swingAccuracy = 0.0;
+		}
+		else if (accSpec >= 1.0)
+		{
+			swingAccuracy = 1.0;
+		}
+		else
+		{
+			swingAccuracy = 1.0 - Math.pow(1.0 - accSpec, 0.25);
+		}
+
+		double missChance = 1.0 - swingAccuracy;
+		double p1 = swingAccuracy;
+		double p2 = missChance * swingAccuracy;
+		double p3 = missChance * missChance * swingAccuracy;
+		double p4 = missChance * missChance * missChance * swingAccuracy;
+
+		double inverseCount = 1.0 / (baseMax + 1);
+		double ko = 0.0;
+
+		for (int roll = 0; roll <= baseMax; roll++)
+		{
+			int halfCeil = (roll + 1) / 2;
+			int halfFloor = roll / 2;
+			int quarterFloor = roll / 4;
+			int threeQuarterCeil = (int) Math.ceil(0.75 * roll);
+			int threeQuarterFloor = (int) Math.floor(0.75 * roll);
+
+			// Case E1: first swing connects (two hits tick k, two hits tick k+1)
+			{
+				int h1 = roll;
+				int h2 = halfCeil;
+				int h3 = quarterFloor;
+				int used = h1 + h2 + h3;
+				int remainder = Math.max(0, 2 * roll - used);
+				int damageTick1 = h1 + h2;
+				int damageTick2 = h3 + remainder;
+				double contribution = p1 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E2: second swing connects (phase 1 does no damage)
+			{
+				int damageTick1 = roll;
+				int damageTick2 = roll;
+				double contribution = p2 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E3: third swing connects (all damage tick k+1)
+			{
+				int damageTick1 = 0;
+				int damageTick2 = threeQuarterCeil + threeQuarterFloor;
+				double contribution = p3 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E4: fourth swing connects (all damage tick k+1)
+			{
+				int damageTick1 = 0;
+				int damageTick2 = threeQuarterCeil + threeQuarterFloor;
+				double contribution = p4 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+		}
+
+		if (ko < 0.0)
+		{
+			ko = 0.0;
+		}
+		else if (ko > 1.0)
+		{
+			ko = 1.0;
+		}
+		return ko;
+	}
+
     public static int getSpriteForSkill(Skill skill)
     {
         switch (skill)
