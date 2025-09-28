@@ -84,8 +84,10 @@ public enum EquipmentData
 	AMULET_OF_FURY(ItemID.AMULET_OF_FURY, ItemID.AMULET_OF_FURY_23640),
 	BANDOS_TASSETS(ItemID.BANDOS_TASSETS, ItemID.BANDOS_TASSETS_23646),
 	BLESSED_SPIRIT_SHIELD(ItemID.BLESSED_SPIRIT_SHIELD, ItemID.BLESSED_SPIRIT_SHIELD_23642),
-	DHAROKS_HELM(ItemID.DHAROKS_HELM, ItemID.DHAROKS_HELM_23639),
-	DHAROKS_PLATELEGS(ItemID.DHAROKS_PLATELEGS, ItemID.DHAROKS_PLATELEGS_23633),
+	DHAROKS_HELM(ItemID.DHAROKS_HELM, ItemID.DHAROKS_HELM_100, ItemID.DHAROKS_HELM_75, ItemID.DHAROKS_HELM_50, ItemID.DHAROKS_HELM_25, ItemID.DHAROKS_HELM_0, ItemID.DHAROKS_HELM_23639),
+	DHAROKS_PLATEBODY(ItemID.DHAROKS_PLATEBODY, ItemID.DHAROKS_PLATEBODY_100, ItemID.DHAROKS_PLATEBODY_75, ItemID.DHAROKS_PLATEBODY_50, ItemID.DHAROKS_PLATEBODY_25, ItemID.DHAROKS_PLATEBODY_0),
+	DHAROKS_PLATELEGS(ItemID.DHAROKS_PLATELEGS, ItemID.DHAROKS_PLATELEGS_100, ItemID.DHAROKS_PLATELEGS_75, ItemID.DHAROKS_PLATELEGS_50, ItemID.DHAROKS_PLATELEGS_25, ItemID.DHAROKS_PLATELEGS_0, ItemID.DHAROKS_PLATELEGS_23633),
+	DHAROKS_GREATAXE(ItemID.DHAROKS_GREATAXE, ItemID.DHAROKS_GREATAXE_100, ItemID.DHAROKS_GREATAXE_75, ItemID.DHAROKS_GREATAXE_50, ItemID.DHAROKS_GREATAXE_25, ItemID.DHAROKS_GREATAXE_0),
 	GUTHANS_HELM(ItemID.GUTHANS_HELM, ItemID.GUTHANS_HELM_23638),
 	KARILS_TOP(ItemID.KARILS_LEATHERTOP, ItemID.KARILS_LEATHERTOP_23632),
 	TORAGS_HELM(ItemID.TORAGS_HELM, ItemID.TORAGS_HELM_23637),
@@ -257,6 +259,35 @@ public enum EquipmentData
 				}
 			}
 		}
+	}
+
+	private static int getFixedItemId(int[] equipmentIds, KitType kitType)
+	{
+		int index = kitType.getIndex();
+		if (equipmentIds == null || equipmentIds.length <= index)
+		{
+			return -1;
+		}
+
+		return PvpPerformanceTrackerUtils.fixItemId(equipmentIds[index]);
+	}
+
+	public static boolean isFullDharoks(int[] equipmentIds)
+	{
+		if (equipmentIds == null)
+		{
+			return false;
+		}
+
+		int helm = getFixedItemId(equipmentIds, KitType.HEAD);
+		int body = getFixedItemId(equipmentIds, KitType.TORSO);
+		int legs = getFixedItemId(equipmentIds, KitType.LEGS);
+		int weapon = getFixedItemId(equipmentIds, KitType.WEAPON);
+
+		return fromId(helm) == DHAROKS_HELM &&
+			fromId(body) == DHAROKS_PLATEBODY &&
+			fromId(legs) == DHAROKS_PLATELEGS &&
+			fromId(weapon) == DHAROKS_GREATAXE;
 	}
 
 	public enum VoidStyle

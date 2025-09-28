@@ -251,6 +251,7 @@ class Fighter
 			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
 		}
 
+		pvpDamageCalc.updateCombatLevels(levels, null);
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 		expectedDamage += pvpDamageCalc.getAverageHit();
 
@@ -311,6 +312,7 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
+		pvpDamageCalc.updateCombatLevels(levels, null);
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 
 		ghostBarrageCount++;
