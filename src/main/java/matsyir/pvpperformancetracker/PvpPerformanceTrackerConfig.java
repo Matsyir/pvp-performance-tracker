@@ -535,13 +535,15 @@ public interface PvpPerformanceTrackerConfig extends Config
 	// ================================= On-update flags for chat message update summaries =================================
 	String updateMsgKey = "updateMsgShown1_7_1";
 	@ConfigItem(
-			keyName = updateMsgKey, // for 1.7.0 -> 1.7.1
-			name = "Update Msg 1.7.0->1.7.1 ~Sept12 2025",
-			description = "Tracks if the update chat message for 1.7.1 has been shown.",
+			keyName = "updateNote1_7_1", // for 1.7.0 -> 1.7.1
+			name = "Update Note 1.7.0->1.7.1 ~Sept07 2025",
+			description = "Tracks if the update note for 1.7.1 has been shown.",
 			hidden = true
 	)
-	default boolean updateMsgShown1_7_1()
+	default boolean updateNote1_7_1()
 	{
 		return false;
 	}
+	String updateNote1_7_1_MESSAGE = "PvP Performance Tracker 1.7.1 Update: " +
+			"Support for Arkan blade, burning claws & dark bow special attacks. God spells. Now tracks double deaths. Various calculation and detection improvements.";
 }

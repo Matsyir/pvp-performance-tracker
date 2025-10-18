@@ -428,8 +428,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		sendUpdateChatMessage();
-
 		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
 
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
@@ -1110,19 +1108,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void sendUpdateChatMessage()
 	{
-		if (configManager.getConfiguration(CONFIG_KEY, config.updateMsgKey, boolean.class)) { return; }
-
-		chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.GAMEMESSAGE)
-				.runeLiteFormattedMessage("PvP Performance Tracker 1.7.1 Update: " +
-						"Support for god spells, special attacks for arkan blade, burning claws & dark bow. " +
-						"Double deaths now tracked. New statistic labels & improved tooltips. Various calculation & " +
-						"detection improvements. Renamed Deserved damage to Expected damage.")
-				.build());
-		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
-
-		// remove any old unnecessary ones after updating
-		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
+		if (!config.updateNote1_7_1())
+		{
+			chatMessageManager.queue(QueuedMessage.builder()
+					.type(ChatMessageType.GAMEMESSAGE)
+					.runeLiteFormattedMessage(config.updateNote1_7_1_MESSAGE)
+					.build());
+			configManager.setConfiguration(CONFIG_KEY, "updateNote1_7_1", true);
+		}
 	}
 
 	private void update(String oldVersion)
@@ -1152,6 +1145,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
+		sendUpdateChatMessage();
 	}
 
 	// very basic update: We added the new hit on robe statistic, instantly recalculate it on launch,
