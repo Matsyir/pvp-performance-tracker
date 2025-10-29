@@ -39,10 +39,10 @@ public enum RingData
 	BERSERKER_RING_I("Berserker Ring (i)", ItemID.BERSERKER_RING_I),
 	RING_OF_SUFFERING_I("Ring of Suffering (i)", ItemID.RING_OF_SUFFERING_I),
 	BRIMSTONE_RING("Brimstone Ring", ItemID.BRIMSTONE_RING),
-	MAGUS_RING("Magus ring", ItemID.MAGUS_RING),
-	VENATOR_RING("Venator ring", ItemID.VENATOR_RING),
-	BELLATOR_RING("Bellator ring", ItemID.BELLATOR_RING),
-	ULTOR_RING("Ultor ring", ItemID.ULTOR_RING),
+	MAGUS_RING("Magus ring", ItemID.MAGUS_RING_28313),
+	VENATOR_RING("Venator ring", ItemID.VENATOR_RING_28310),
+	BELLATOR_RING("Bellator ring", ItemID.BELLATOR_RING_28316),
+	ULTOR_RING("Ultor ring", ItemID.ULTOR_RING_28307),
 	RING_OF_SHADOWS("Ring of Shadows", ItemID.RING_OF_SHADOWS),
 	NONE("None", -1);
 
