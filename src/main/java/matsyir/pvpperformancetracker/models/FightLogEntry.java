@@ -192,6 +192,52 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Getter @Setter
 	private boolean isPartOfTickGroup = false;
 
+	// Transient fields for handling multi-tick Dragon Claws special attacks
+	private transient Integer clawsPhase1Damage = null;
+	private transient Integer clawsHpBeforePhase1 = null;
+	private transient Integer clawsHpAfterPhase1 = null;
+	private transient Integer clawsHpBeforePhase2 = null;
+
+	public Integer getClawsPhase1Damage()
+	{
+		return clawsPhase1Damage;
+	}
+
+	public void setClawsPhase1Damage(Integer clawsPhase1Damage)
+	{
+		this.clawsPhase1Damage = clawsPhase1Damage;
+	}
+
+	public Integer getClawsHpBeforePhase1()
+	{
+		return clawsHpBeforePhase1;
+	}
+
+	public void setClawsHpBeforePhase1(Integer clawsHpBeforePhase1)
+	{
+		this.clawsHpBeforePhase1 = clawsHpBeforePhase1;
+	}
+
+	public Integer getClawsHpAfterPhase1()
+	{
+		return clawsHpAfterPhase1;
+	}
+
+	public void setClawsHpAfterPhase1(Integer clawsHpAfterPhase1)
+	{
+		this.clawsHpAfterPhase1 = clawsHpAfterPhase1;
+	}
+
+	public Integer getClawsHpBeforePhase2()
+	{
+		return clawsHpBeforePhase2;
+	}
+
+	public void setClawsHpBeforePhase2(Integer clawsHpBeforePhase2)
+	{
+		this.clawsHpBeforePhase2 = clawsHpBeforePhase2;
+	}
+
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
 		this.isFullEntry = true;
