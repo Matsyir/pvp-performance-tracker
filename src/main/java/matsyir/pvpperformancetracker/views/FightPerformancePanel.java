@@ -69,6 +69,7 @@ public class FightPerformancePanel extends JPanel
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
+
 	static
 	{
 		// main border used when not hovering:
@@ -125,9 +126,11 @@ public class FightPerformancePanel extends JPanel
 		this(fight, true, true, false, null);
 	}
 
-	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight) {
+	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
+	{
 		this.showBorders = showBorders;
-		if (deathIcon == null) {
+		if (deathIcon == null)
+		{
 			// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
 			deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
 		}
@@ -140,10 +143,11 @@ public class FightPerformancePanel extends JPanel
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + (fight.getWorld() > 0 ? (" (W" + fight.getWorld()) + ")" : "") +
-				": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
+			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
 		setToolTipText(baseTooltipText);
 
-		if (showBorders) {
+		if (showBorders)
+		{
 			setBorder(normalBorder);
 		}
 
@@ -155,11 +159,14 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.setBackground(null);
 
 		// FIRST LINE: both player names, with centered world label
-		JPanel playerNamesLine = new JPanel(new BorderLayout()) {
+		JPanel playerNamesLine = new JPanel(new BorderLayout())
+		{
 			@Override
-			protected void paintComponent(Graphics g) {
+			protected void paintComponent(Graphics g)
+			{
 				super.paintComponent(g);
-				if (CONFIG.showWorldInSummary() && fight.getWorld() > 0) {
+				if (CONFIG.showWorldInSummary() && fight.getWorld() > 0)
+				{
 					String w = "W" + fight.getWorld();
 					FontMetrics fm = g.getFontMetrics(getFont());
 					int x = (getWidth() - fm.stringWidth(w)) / 2;
@@ -175,7 +182,8 @@ public class FightPerformancePanel extends JPanel
 		JLabel playerStatsName = new JLabel();
 
 		// player name LEFT: player name
-		if (competitor.isDead()) {
+		if (competitor.isDead())
+		{
 			playerStatsName.setIcon(deathIcon);
 		}
 		playerStatsName.setText(competitor.getName());
@@ -184,7 +192,8 @@ public class FightPerformancePanel extends JPanel
 
 		// player name RIGHT: opponent name
 		JLabel opponentStatsName = new JLabel();
-		if (opponent.isDead()) {
+		if (opponent.isDead())
+		{
 			opponentStatsName.setIcon(deathIcon);
 		}
 		opponentStatsName.setText(opponent.getName());
@@ -197,32 +206,40 @@ public class FightPerformancePanel extends JPanel
 		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;
 		for (TrackedStatistic stat : TrackedStatistic.values())
 		{
-			if (stat == TrackedStatistic.GHOST_BARRAGES && !showGhostBarrages) { continue; }
+			if (stat == TrackedStatistic.GHOST_BARRAGES && !showGhostBarrages)
+			{
+				continue;
+			}
 
 			panelLines.add(stat.getPanelComponent(fight, oppFight));
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log
-		MouseAdapter fightPerformanceMouseListener = new MouseAdapter() {
+		MouseAdapter fightPerformanceMouseListener = new MouseAdapter()
+		{
 			@Override
-			public void mouseEntered(MouseEvent e) {
+			public void mouseEntered(MouseEvent e)
+			{
 				setFullBackgroundColor(ColorScheme.DARK_GRAY_COLOR);
 				setOutline(true);
 				setCursor(new Cursor(Cursor.HAND_CURSOR));
 			}
 
 			@Override
-			public void mouseExited(MouseEvent e) {
+			public void mouseExited(MouseEvent e)
+			{
 				setFullBackgroundColor(ColorScheme.DARKER_GRAY_COLOR);
 				setOutline(false);
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 			}
 
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseClicked(MouseEvent e)
+			{
 				// ignore right clicks since that should be used for context menus/popup menus.
 				// btn1: left click, btn2: middle click, btn3: right click
-				if (e.getButton() == MouseEvent.BUTTON3) {
+				if (e.getButton() == MouseEvent.BUTTON3)
+				{
 					return;
 				}
 
@@ -232,7 +249,8 @@ public class FightPerformancePanel extends JPanel
 		addMouseListener(fightPerformanceMouseListener);
 
 		// skip the remaining code if we aren't showing actions.
-		if (!showActions) {
+		if (!showActions)
+		{
 			return;
 		}
 
@@ -260,7 +278,8 @@ public class FightPerformancePanel extends JPanel
 		removeFight.addActionListener(e ->
 		{
 			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
-			if (dialogResult == JOptionPane.YES_OPTION) {
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
 				PLUGIN.removeFight(fight);
 			}
 		});

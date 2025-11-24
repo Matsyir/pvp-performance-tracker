@@ -101,8 +101,8 @@ public class FightLogFrame extends JFrame
 		else
 		{
 			fightLogFrame = new FightLogFrame(fight,
-					fightLogEntries,
-					rootPane);
+				fightLogEntries,
+				rootPane);
 		}
 
 		return fightLogFrame;
@@ -223,8 +223,8 @@ public class FightLogFrame extends JFrame
 			i++;
 		}
 
-		String[] header = { "Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
-		"Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)" };
+		String[] header = {"Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
+			"Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)"};
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
@@ -254,7 +254,7 @@ public class FightLogFrame extends JFrame
 				new Point( // place the new detail frame roughly to the right of the fight log window.
 					this.getLocation().x + this.getSize().width,
 					this.getLocation().y)
-				);
+			);
 		};
 
 		table.getSelectionModel().addListSelectionListener(onRowSelected);
@@ -274,11 +274,11 @@ public class FightLogFrame extends JFrame
 			if (value instanceof BufferedImage)
 			{
 				setText("");
-				setIcon(new ImageIcon((BufferedImage)value));
+				setIcon(new ImageIcon((BufferedImage) value));
 			}
 			else if (value instanceof JLabel)
 			{
-				JLabel val = (JLabel)value;
+				JLabel val = (JLabel) value;
 				setIcon(val.getIcon());
 				setText(val.getText());
 				setToolTipText(val.getToolTipText());
@@ -300,7 +300,7 @@ public class FightLogFrame extends JFrame
 		this(fight,
 			new ArrayList(fight.getAllFightLogEntries().stream()
 				.filter(FightLogEntry::isFullEntry) // send only attacker logs, and don't use the matching logs since
-				.collect(Collectors.toList())),	// those have old 'dps' values, they're only used for defender lvls/pray/etc client data
+				.collect(Collectors.toList())),    // those have old 'dps' values, they're only used for defender lvls/pray/etc client data
 			rootPane);
 
 		// test
@@ -308,7 +308,7 @@ public class FightLogFrame extends JFrame
 			.filter(FightLogEntry::isFullEntry) // send only attacker logs
 			.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size())
 		{
-			 log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
+			log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
 		}
 
 		table.getSelectionModel().removeListSelectionListener(onRowSelected);
@@ -317,7 +317,10 @@ public class FightLogFrame extends JFrame
 
 			if (fightLogDetailFrame != null)
 			{
-				if (fightLogDetailFrame.rowIdx == row) { return; }
+				if (fightLogDetailFrame.rowIdx == row)
+				{
+					return;
+				}
 
 				fightLogDetailFrame.dispose();
 				fightLogDetailFrame = null;

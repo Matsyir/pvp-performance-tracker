@@ -183,8 +183,10 @@ public class FightAnalysisFrame extends JFrame
 
 		// setup drag & drop file upload support directly into textbox
 		// https://stackoverflow.com/a/9111327/7982774
-		mainFightJsonInput.setDropTarget(new DropTarget() {
-			public synchronized void drop(DropTargetDropEvent evt) {
+		mainFightJsonInput.setDropTarget(new DropTarget()
+		{
+			public synchronized void drop(DropTargetDropEvent evt)
+			{
 				try
 				{
 					evt.acceptDrop(DnDConstants.ACTION_COPY);
@@ -214,8 +216,10 @@ public class FightAnalysisFrame extends JFrame
 		opponentFightJsonInput.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
 		// setup drag & drop file upload support directly into textbox
-		opponentFightJsonInput.setDropTarget(new DropTarget() {
-			public synchronized void drop(DropTargetDropEvent evt) {
+		opponentFightJsonInput.setDropTarget(new DropTarget()
+		{
+			public synchronized void drop(DropTargetDropEvent evt)
+			{
 				try
 				{
 					evt.acceptDrop(DnDConstants.ACTION_COPY);
@@ -293,7 +297,7 @@ public class FightAnalysisFrame extends JFrame
 			PLUGIN.initializeImportedFight(mainFight);
 			PLUGIN.initializeImportedFight(opponentFight);
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			PLUGIN.createConfirmationModal(false, "Error while parsing fight data.");
 			return false;
@@ -308,7 +312,10 @@ public class FightAnalysisFrame extends JFrame
 	{
 		boolean fightsValid = parseFights();
 		// parseFights includes error messages if the parse fails
-		if (!fightsValid) { return; }
+		if (!fightsValid)
+		{
+			return;
+		}
 
 		try
 		{
@@ -316,7 +323,7 @@ public class FightAnalysisFrame extends JFrame
 			analyzedFight = new AnalyzedFightPerformance(mainFight, opponentFight, this::displayAnalysis);
 			// now that we've got the merged fight, display results, this is done with the displayAnalysis callback
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			log.info("Error during fight analysis - could not merge fights. Exception tack trace: ", e);
 			PLUGIN.createConfirmationModal(false, "<html>Error while merging fights. Unable to analyze.<br/>If you think this should have been valid, feel free to submit<br/>an issue on the github repo, and include client logs.</html>");

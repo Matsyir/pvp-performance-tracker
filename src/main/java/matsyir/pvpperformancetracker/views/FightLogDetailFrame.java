@@ -433,7 +433,7 @@ class FightLogDetailFrame extends JFrame
 			"<br/><strong>Other bonuses</strong>" + sep +
 			"Melee strength: " + prependPlusIfPositive(stats.getStr()) + sep +
 			"Ranged strength: " + prependPlusIfPositive(stats.getRstr() + ammoRangeStr) + sep +
-			"Magic damage: " + prependPlusIfPositive((int)stats.getMdmg()) + "%" + sep +
+			"Magic damage: " + prependPlusIfPositive((int) stats.getMdmg()) + "%" + sep +
 			"</html>";
 	}
 
