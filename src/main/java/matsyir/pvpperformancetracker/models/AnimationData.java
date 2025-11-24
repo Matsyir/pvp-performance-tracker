@@ -103,6 +103,7 @@ public enum AnimationData
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
 	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
+	MELEE_ELDER_MAUL2(11124, AttackStyle.CRUSH), // spec anim, but looks like this anim is also used for normal attacks after using the spec. No spec tracking for now, just for normal attacks
     MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
     MELEE_ARKAN_BLADE_SPEC(12297, AttackStyle.SLASH, true),
 
@@ -135,15 +136,15 @@ public enum AnimationData
 	// MAGIC - uses highest base damage available when animations are re-used. No damage = 0 damage.
 	// for example, strike/bolt/blast animation will be fire blast base damage, multi target ancient spells will be ice barrage.
 	MAGIC_STANDARD_BIND(710, AttackStyle.MAGIC), // tested w/ bind, snare, entangle
-	MAGIC_STANDARD_STRIKE_BOLT_BLAST(711, AttackStyle.MAGIC, 16), // tested w/ bolt
+	MAGIC_STANDARD_STRIKE_BOLT_BLAST(711, 16), // tested w/ bolt
 	MAGIC_STANDARD_BIND_STAFF(1161, AttackStyle.MAGIC), // tested w/ bind, snare, entangle, various staves
-	MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF(1162, AttackStyle.MAGIC, 16), // strike, bolt and blast (tested all spells, different weapons)
-	MAGIC_STANDARD_WAVE_STAFF(1167, AttackStyle.MAGIC, 20), // tested many staves
-	MAGIC_STANDARD_SURGE_STAFF(7855, AttackStyle.MAGIC, 24), // tested many staves
-	MAGIC_STANDARD_GOD_SPELL(811, AttackStyle.MAGIC, 30), // Same animation for flames of zamorak, claws of guthix and saradomin strike. Assumes charge is active.
-	MAGIC_ANCIENT_SINGLE_TARGET(1978, AttackStyle.MAGIC, 26), // Rush & Blitz animations (tested all 8, different weapons)
-	MAGIC_ANCIENT_MULTI_TARGET(1979, AttackStyle.MAGIC, 30), // Burst & Barrage animations (tested all 8, different weapons)
-	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, AttackStyle.MAGIC, 66); // assume 99 mage's base damage (does not rise when boosted).
+	MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF(1162, 16), // strike, bolt and blast (tested all spells, different weapons)
+	MAGIC_STANDARD_WAVE_STAFF(1167, 20), // tested many staves
+	MAGIC_STANDARD_SURGE_STAFF(7855, 24), // tested many staves
+	MAGIC_STANDARD_GOD_SPELL(811, 30), // Same animation for flames of zamorak, claws of guthix and saradomin strike. Assumes charge is active.
+	MAGIC_ANCIENT_SINGLE_TARGET(1978, 26), // Rush & Blitz animations (tested all 8, different weapons)
+	MAGIC_ANCIENT_MULTI_TARGET(1979, 30), // Burst & Barrage animations (tested all 8, different weapons)
+	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, 66); // assume 99 mage's base damage (does not rise when boosted).
 
 	private static final Map<Integer, AnimationData> DATA;
 
@@ -181,14 +182,10 @@ public enum AnimationData
 		this.hitsplatGroupPattern = new int[] {1};
 	}
 	// Magic spell animation data constructor including base spell damage
-	AnimationData(int animationId, AttackStyle attackStyle, int baseSpellDamage)
+	AnimationData(int animationId, int baseSpellDamage)
 	{
-		if (attackStyle == null)
-		{
-			throw new InvalidParameterException("Attack Style and Attack Type must be valid for AnimationData");
-		}
 		this.animationId = animationId;
-		this.attackStyle = attackStyle;
+		this.attackStyle = AttackStyle.MAGIC;
 		this.isSpecial = false;
 		this.baseSpellDamage = baseSpellDamage;
 		this.hitsplatGroupPattern = new int[] {1};

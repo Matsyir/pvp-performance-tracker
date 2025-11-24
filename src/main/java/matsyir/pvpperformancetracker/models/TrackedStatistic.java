@@ -24,26 +24,27 @@ public enum TrackedStatistic
 			"<br>For example, when you use melee or ranged vs. protect from magic, that's a successful off-pray hit."),
 	EXPECTED_DMG("Expected damage", "eD", // NOTE: previously referred to as "Deserved damage"
 		"Expected damage statistic, # of damage you would've dealt if the game had averaged rng, including misses." +
-			"<br>Due to the high variance in this game, it's normal for fights to commonly stray from this."),
+			"<br>Due to the high variance in this game, it's normal for fights to commonly stray from this." +
+			"<br><br>This used to be referred to as 'deserved damage'. The functionality was not changed."),
 	DMG_DEALT("Damage dealt", "D",
 		"Damage dealt statistic, sum of your actual damage hitsplats on your opponent."),
 	MAGIC_HITS("Magic hits luck", "M",
-		"Magic luck statistic, checks expected hits vs. # of actual magic hits (as opposed to splashes)."),
+		"Magic luck statistic, tracks expected hits vs. # of actual magic hits (as opposed to splashes)."),
 	OFFENSIVE_PRAY("Offensive pray", "P",
-		"Offensive prayer statistic, checks how many offensive prays you got right, e.g piety for melee."),
+		"Offensive prayer statistic, tracks # of offensive prays you used correctly, e.g piety for melee."),
 	HP_HEALED("HP healed", "HP",
-		"HP healed statistic, # of HP recovered during the fight (from all sources)."),
+		"HP healed statistic, tracks amount of HP recovered during the fight (from all sources)."),
 	ROBE_HITS("Hits on robes", "rH",
-		"Hits on robes statistic, # of times you got range/melee'd in robes (don't)."),
+		"Hits on robes statistic, tracks # of times you got range/melee'd in robes (don't)."),
 	KO_CHANCES("KO chances", "KO",
-		"KO chance statistic, sums up the KO chances you got and gives you a total chance of KO." +
-			"<br>When you spec your opponent on 20hp and hit a 12, this shows you the KO % chance in the fight log."),
+		"KO chance statistic, tracks every KO chance you got and gives you a total chance of KO." +
+			"<br>When you spec your opponent on 20hp and hit a 12, you can find the KO % chance in the fight log."),
 
 	// NOTE: let's keep ghost barrage as the bottom-most statistic:
 	// It's only relevant to people fighting in PvP Arena, and it's mostly only relevant
 	// to people who can share their tracker with each-other - so pretty rarely useful.
 	// ... also, more often than not it literally has 0 data. 0 hits, nothing. so let's just not show
-	// this line when there is no data, since it's also the bottom row now, anyways.
+	// this line when there is no data, since it's also the bottom row now, anyway.
 	GHOST_BARRAGES("Ghost barrages", "GB",
 		"Ghost-barrage statistic, for when you're animation stalled while barraging." +
 			"<br>This statistic is hidden if both players have 0gb, which is common." +

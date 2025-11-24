@@ -6,7 +6,8 @@ Tracks PvP performance by keeping track of various stats. Mostly useful for 1v1 
 This plugin was created with significant help from [Mazhar, @maz_rs](https://twitter.com/maz_rs) - notably for the idea & implementation of expected damage (previously deserved damage), as well as a few other helpful suggestions & fixes.
 
 Massive thanks to [all other contributors](https://github.com/Matsyir/pvp-performance-tracker/graphs/contributors) as well! No matter how big or small your contribution, this plugin wouldn't be where it is today without everyone's help.
-# Details have been moved to [the wiki](https://github.com/Matsyir/pvp-performance-tracker/wiki)
+
+# Details have been moved to [the wiki](https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki)
 
 **UI Overview:** (from 1.5.0)
 

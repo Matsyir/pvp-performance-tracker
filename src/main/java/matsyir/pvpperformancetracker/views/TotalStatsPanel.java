@@ -57,7 +57,7 @@ import net.runelite.client.util.LinkBrowser;
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 public class TotalStatsPanel extends JPanel
 {
-	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker";
+	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	// number format for 0 decimal digit (mostly for commas in large numbers)
 	private static final NumberFormat nf = NumberFormat.getInstance();
 
