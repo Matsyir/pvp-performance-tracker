@@ -63,6 +63,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
@@ -204,6 +205,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
+	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 
 	// #################################################################################################################
@@ -857,6 +859,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					// Gmaul can hit twice, others match expected hits
 					int hitsToFind = entry.isGmaulSpecial() ? 2 : toMatch;
 
+					// Enforce Dragon Claws 2+2 sequencing: limit phase one to two hits
+					if (entry.getAnimationData() == AnimationData.MELEE_DRAGON_CLAWS_SPEC && entry.getMatchedHitsCount() < 2)
+					{
+						int remainingPhase1 = Math.max(0, 2 - entry.getMatchedHitsCount());
+						hitsToFind = Math.min(hitsToFind, remainingPhase1);
+					}
+
+					// Simple double-GMaul gate: if a different special fired on the previous tick, cap to a single hit
+					if (entry.isGmaulSpecial())
+					{
+						String attackerName = attacker.getName();
+						if (attackerName != null)
+						{
+							Integer lastSpec = lastNonGmaulSpecTickByAttacker.get(attackerName);
+							if (lastSpec != null && lastSpec == entry.getTick() - 1)
+							{
+								hitsToFind = Math.min(hitsToFind, 1);
+							}
+						}
+					}
+
 					while (matchedThisCycle < hitsToFind && hitsIter.hasNext())
 					{
 						HitsplatInfo hInfo = hitsIter.next();
@@ -894,14 +917,31 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						// Fallback to current ratio/scale if polled is unavailable
 						if (ratio < 0 || scale <= 0) { ratio = opponent.getHealthRatio(); scale = opponent.getHealthScale(); }
 						int hpBefore = -1;
+						int hpBeforeThisCycle = -1;
 						if (ratio >= 0 && scale > 0 && maxHpToUse > 0)
 						{
 							hpBefore = PvpPerformanceTrackerUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, entry.getActualDamageSum());
+							hpBeforeThisCycle = PvpPerformanceTrackerUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, damageThisCycle);
 						}
 						if (hpBefore > 0)
 						{
 							entry.setEstimatedHpBeforeHit(hpBefore);
 							entry.setOpponentMaxHp(maxHpToUse);
+						}
+
+						if (entry.getAnimationData() == AnimationData.MELEE_DRAGON_CLAWS_SPEC)
+						{
+							int matched = entry.getMatchedHitsCount();
+							if (matched == 2 && entry.getClawsHpBeforePhase1() == null && hpBeforeThisCycle > 0)
+							{
+								entry.setClawsHpBeforePhase1(hpBeforeThisCycle);
+								entry.setClawsPhase1Damage(damageThisCycle);
+								entry.setClawsHpAfterPhase1(hpBeforeThisCycle - damageThisCycle);
+							}
+							if (matched >= entry.getExpectedHits() && entry.getClawsHpBeforePhase2() == null && hpBeforeThisCycle > 0)
+							{
+								entry.setClawsHpBeforePhase2(hpBeforeThisCycle);
+							}
 						}
 					}
 				}
@@ -990,9 +1030,34 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						entry.setDisplayHpBefore(hpBeforeCurrent);
 						entry.setDisplayHpAfter(hpAfterCurrent);
 
-						Double koChanceCurrent = (hpBeforeCurrent != null)
-							? PvpPerformanceTrackerUtils.calculateKoChance(entry.getAccuracy(), entry.getMinHit(), entry.getMaxHit(), hpBeforeCurrent)
-							: null;
+						Double koChanceCurrent = null;
+						boolean isClawsSpec = entry.getAnimationData() == AnimationData.MELEE_DRAGON_CLAWS_SPEC && entry.getExpectedHits() >= 4;
+						if (isClawsSpec)
+						{
+							if (hpBeforeCurrent != null && entry.getMatchedHitsCount() >= entry.getExpectedHits())
+							{
+								int healBetween = 0;
+								Integer hpAfterP1 = entry.getClawsHpAfterPhase1();
+								Integer hpBeforeP2 = entry.getClawsHpBeforePhase2();
+								if (hpAfterP1 != null && hpBeforeP2 != null)
+								{
+									healBetween = Math.max(0, hpBeforeP2 - hpAfterP1);
+								}
+								koChanceCurrent = PvpPerformanceTrackerUtils.calculateClawsTwoPhaseKo(entry.getAccuracy(), entry.getMaxHit(), hpBeforeCurrent, healBetween);
+							}
+						}
+						else
+						{
+							koChanceCurrent = (hpBeforeCurrent != null)
+								? PvpPerformanceTrackerUtils.calculateKoChance(entry.getAccuracy(), entry.getMinHit(), entry.getMaxHit(), hpBeforeCurrent)
+								: null;
+						}
+
+						if (koChanceCurrent != null && koChanceCurrent <= 0.0)
+						{
+							koChanceCurrent = null;
+						}
+
 						entry.setDisplayKoChance(koChanceCurrent);
 						entry.setKoChance(koChanceCurrent);
 
@@ -1028,6 +1093,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			onFightEnded();
 		}
+	}
+
+	public void recordNonGmaulSpecial(String attackerName, int tick)
+	{
+		if (attackerName == null)
+		{
+			return;
+		}
+		lastNonGmaulSpecTickByAttacker.put(attackerName, tick);
 	}
 
 	// #################################################################################################################
