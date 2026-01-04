@@ -48,6 +48,7 @@ public enum EquipmentData
 	DRAGON_HUNTER_CROSSBOW(ItemID.DRAGON_HUNTER_CROSSBOW),
 	MAGIC_SHORTBOW(ItemID.MAGIC_SHORTBOW),
 	MAGIC_SHORTBOW_I(ItemID.MAGIC_SHORTBOW_I),
+	SCORCHING_BOW(ItemID.SCORCHING_BOW),
 	TOXIC_BLOWPIPE(ItemID.TOXIC_BLOWPIPE),
 	VOLATILE_NIGHTMARE_STAFF(ItemID.VOLATILE_NIGHTMARE_STAFF, ItemID.VOLATILE_NIGHTMARE_STAFF_DEADMAN),
 	//CRAWS_BOW(22550), // ammo bonus is built into weapon so we don't need to include it
@@ -235,6 +236,10 @@ public enum EquipmentData
 		else if (weapon == HUNTERS_SUNLIGHT_CROSSBOW)
 		{
 			return RangeAmmoData.OtherAmmo.MOONLIGHT_ANTLER_BOLTS;
+		}
+		else if (weapon == SCORCHING_BOW)
+		{
+			return RangeAmmoData.OtherAmmo.DRAGON_ARROW;
 		}
 		else if (weapon == MAGIC_SHORTBOW || weapon == MAGIC_SHORTBOW_I)
 		{
