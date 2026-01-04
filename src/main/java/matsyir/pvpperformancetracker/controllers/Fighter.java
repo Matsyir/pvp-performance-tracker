@@ -42,10 +42,12 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import net.runelite.api.ActorSpotAnim;
+import net.runelite.api.GraphicID;
+import net.runelite.api.IterableHashTable;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.kit.KitType;
-import net.runelite.api.GraphicID;
 
 @Slf4j
 @Getter
@@ -215,14 +217,14 @@ class Fighter
 		// --- Detect dark bow & dragon crossbow specials via GFX ---
 		if (weapon == EquipmentData.DARK_BOW && animationData == AnimationData.RANGED_SHORTBOW)
 		{
-			boolean spec = opponent.getGraphic() == GFX_TARGET_DBOW_SPEC;
+			boolean spec = hasTargetSpotAnim(opponent, GFX_TARGET_DBOW_SPEC);
 
 			animationData = spec ? AnimationData.RANGED_DARK_BOW_SPEC : AnimationData.RANGED_DARK_BOW;
 		}
 		else if (weapon == EquipmentData.DRAGON_CROSSBOW &&
 				(animationData == AnimationData.RANGED_CROSSBOW_PVP || animationData == AnimationData.RANGED_RUNE_CROSSBOW))
 		{
-			boolean spec = opponent.getGraphic() == GFX_TARGET_DCBOW_SPEC;
+			boolean spec = hasTargetSpotAnim(opponent, GFX_TARGET_DCBOW_SPEC);
 
 			if (spec)
 			{
@@ -362,6 +364,30 @@ class Fighter
 	void died()
 	{
 		dead = true;
+	}
+
+	private static boolean hasTargetSpotAnim(Player opponent, int spotAnimId)
+	{
+		if (opponent.getGraphic() == spotAnimId)
+		{
+			return true;
+		}
+
+		IterableHashTable<ActorSpotAnim> spotAnims = opponent.getSpotAnims();
+		if (spotAnims == null)
+		{
+			return false;
+		}
+
+		for (ActorSpotAnim spotAnim : spotAnims)
+		{
+			if (spotAnim != null && spotAnim.getId() == spotAnimId)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	AnimationData getAnimationData()
