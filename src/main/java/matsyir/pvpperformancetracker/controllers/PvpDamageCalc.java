@@ -66,6 +66,7 @@ public class PvpDamageCalc
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
 	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you unsuccessfully hit off-pray
 	private static final double ELYSIAN_DAMAGE_MULTIPLIER = 0.75;
+	private static final double STAFF_MELEE_DAMAGE_MULTIPLIER = 0.5;
 
 	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
 	private static final double PIETY_ATK_PRAYER_MODIFIER = 1.2;
@@ -261,11 +262,20 @@ public class PvpDamageCalc
 		{
 			applyElysianReduction();
 		}
+		if (atkLog.isStaffMeleeReductionProc() && atkLog.getAnimationData().attackStyle.isMelee())
+		{
+			applyStaffMeleeReduction();
+		}
 	}
 
 	public void applyElysianReduction()
 	{
 		applyDamageMultiplier(ELYSIAN_DAMAGE_MULTIPLIER);
+	}
+
+	public void applyStaffMeleeReduction()
+	{
+		applyDamageMultiplier(STAFF_MELEE_DAMAGE_MULTIPLIER);
 	}
 
 	private void applyDamageMultiplier(double multiplier)

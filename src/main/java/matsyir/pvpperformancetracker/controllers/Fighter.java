@@ -255,10 +255,20 @@ class Fighter
 			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
 		}
 
+		boolean staffMeleeReduction = false;
+		if (animationData.attackStyle.isMelee())
+		{
+			staffMeleeReduction = hasStaffMeleeReduction(opponent);
+		}
+
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
+		}
+		if (staffMeleeReduction)
+		{
+			pvpDamageCalc.applyStaffMeleeReduction();
 		}
 		expectedDamage += pvpDamageCalc.getAverageHit();
 
@@ -275,6 +285,7 @@ class Fighter
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
 		fightLogEntry.setElyProc(elyProc);
+		fightLogEntry.setStaffMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{
@@ -392,6 +403,29 @@ class Fighter
 			{
 				return true;
 			}
+		}
+
+		return false;
+	}
+
+	private static boolean hasStaffMeleeReduction(Player opponent)
+	{
+		if (hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_EXTRA))
+		{
+			return true;
+		}
+
+		if (hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_EXTRA))
+		{
+			return true;
+		}
+
+		if (hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_EXTRA))
+		{
+			return true;
 		}
 
 		return false;

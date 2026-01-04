@@ -111,6 +111,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("E")
 	@Setter
 	private boolean elyProc = false;
+	@Expose
+	@SerializedName("S")
+	@Setter
+	private boolean staffMeleeReductionProc = false;
 
 	@Expose
 	@SerializedName("C")
@@ -262,6 +266,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = e.splash;
 		this.elyProc = e.elyProc;
+		this.staffMeleeReductionProc = e.staffMeleeReductionProc;
 		this.attackerLevels = e.attackerLevels;
 
 		// defender data

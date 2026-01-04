@@ -297,38 +297,54 @@ public class FightLogFrame extends JFrame
 	{
 		boolean hasPray = fightEntry.getAttackerOffensivePray() > 0;
 		boolean hasEly = fightEntry.isElyProc();
+		boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
 
-		if (!hasPray && !hasEly)
+		if (!hasPray && !hasEly && !hasStaffReduction)
 		{
-			return "";
+			return new JLabel();
 		}
 
-		if (hasPray && hasEly)
+		ArrayList<JLabel> icons = new ArrayList<>();
+		if (hasPray)
+		{
+			JLabel prayLabel = new JLabel();
+			PLUGIN.addSpriteToLabelIfValid(prayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
+			icons.add(prayLabel);
+		}
+
+		if (hasEly)
+		{
+			JLabel elyLabel = new JLabel();
+			PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+			icons.add(elyLabel);
+		}
+
+		if (hasStaffReduction)
+		{
+			JLabel staffLabel = new JLabel();
+			PLUGIN.addItemToLabelIfValid(staffLabel, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
+			icons.add(staffLabel);
+		}
+
+		if (icons.size() == 1)
+		{
+			return icons.get(0);
+		}
+
+		if (icons.size() > 1)
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 			panel.setOpaque(false);
 
-			JLabel prayLabel = new JLabel();
-			PLUGIN.addSpriteToLabelIfValid(prayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-			panel.add(prayLabel);
-
-			JLabel elyLabel = new JLabel();
-			PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
-			panel.add(elyLabel);
+			for (JLabel icon : icons)
+			{
+				panel.add(icon);
+			}
 
 			return panel;
 		}
 
-		JLabel label = new JLabel();
-		if (hasPray)
-		{
-			PLUGIN.addSpriteToLabelIfValid(label, fightEntry.getAttackerOffensivePray(), this::repaint);
-		}
-		else
-		{
-			PLUGIN.addItemToLabelIfValid(label, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
-		}
-		return label;
+		return new JLabel();
 	}
 
 	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
