@@ -943,6 +943,33 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 								entry.setClawsHpBeforePhase2(hpBeforeThisCycle);
 							}
 						}
+						else if (entry.getAnimationData() == AnimationData.RANGED_DARK_BOW ||
+							entry.getAnimationData() == AnimationData.RANGED_DARK_BOW_SPEC)
+						{
+							int matchedAfter = entry.getMatchedHitsCount();
+							int matchedBefore = matchedAfter - matchedThisCycle;
+
+							if (matchedBefore == 0 && matchedThisCycle >= 2)
+							{
+								entry.setDarkBowHitsStacked(true);
+								if (entry.getDarkBowHpBeforeHit1() == null && hpBeforeThisCycle > 0)
+								{
+									entry.setDarkBowHpBeforeHit1(hpBeforeThisCycle);
+								}
+							}
+							else
+							{
+								if (matchedAfter >= 1 && entry.getDarkBowHpBeforeHit1() == null && hpBeforeThisCycle > 0)
+								{
+									entry.setDarkBowHpBeforeHit1(hpBeforeThisCycle);
+									entry.setDarkBowHpAfterHit1(hpBeforeThisCycle - damageThisCycle);
+								}
+								if (matchedAfter >= entry.getExpectedHits() && entry.getDarkBowHpBeforeHit2() == null && hpBeforeThisCycle > 0)
+								{
+									entry.setDarkBowHpBeforeHit2(hpBeforeThisCycle);
+								}
+							}
+						}
 					}
 				}
 
@@ -1032,6 +1059,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 						Double koChanceCurrent = null;
 						boolean isClawsSpec = entry.getAnimationData() == AnimationData.MELEE_DRAGON_CLAWS_SPEC && entry.getExpectedHits() >= 4;
+						boolean isDarkBow = entry.getAnimationData() == AnimationData.RANGED_DARK_BOW ||
+							entry.getAnimationData() == AnimationData.RANGED_DARK_BOW_SPEC;
 						if (isClawsSpec)
 						{
 							if (hpBeforeCurrent != null && entry.getMatchedHitsCount() >= entry.getExpectedHits())
@@ -1044,6 +1073,29 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 									healBetween = Math.max(0, hpBeforeP2 - hpAfterP1);
 								}
 								koChanceCurrent = PvpPerformanceTrackerUtils.calculateClawsTwoPhaseKo(entry.getAccuracy(), entry.getMaxHit(), hpBeforeCurrent, healBetween);
+							}
+						}
+						else if (isDarkBow)
+						{
+							if (hpBeforeCurrent != null && entry.getMatchedHitsCount() >= entry.getExpectedHits())
+							{
+								int healBetween = 0;
+								if (!entry.isDarkBowHitsStacked())
+								{
+									Integer hpAfterHit1 = entry.getDarkBowHpAfterHit1();
+									Integer hpBeforeHit2 = entry.getDarkBowHpBeforeHit2();
+									if (hpAfterHit1 != null && hpBeforeHit2 != null)
+									{
+										healBetween = Math.max(0, hpBeforeHit2 - hpAfterHit1);
+									}
+								}
+								koChanceCurrent = PvpPerformanceTrackerUtils.calculateDarkBowTwoPhaseKo(
+									entry.getAccuracy(),
+									entry.getMinHit(),
+									entry.getMaxHit(),
+									hpBeforeCurrent,
+									healBetween
+								);
 							}
 						}
 						else

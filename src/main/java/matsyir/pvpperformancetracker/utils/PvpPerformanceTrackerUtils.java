@@ -12,6 +12,8 @@ import java.util.Arrays;
 @Slf4j
 public class PvpPerformanceTrackerUtils
 {
+	private static final int DBOW_MAX_HIT_CAP = 48; // per-arrow cap with dragon arrows in PvP
+
 	/**
 	 * Calculates the chance of knocking out an opponent with a single hit.
 	 *
@@ -220,6 +222,125 @@ public class PvpPerformanceTrackerUtils
 			ko = 1.0;
 		}
 		return ko;
+	}
+
+	/**
+	 * Attempt-level KO probability for Dark Bow double hits, factoring any healing between hits.
+	 * Applies per-arrow damage caps by collapsing rolls above the cap into the capped value.
+	 */
+	public static Double calculateDarkBowTwoPhaseKo(double accuracy, int minHitTotal, int maxHitTotal, int hpBefore, int healBetween)
+	{
+		if (maxHitTotal <= 0 || hpBefore <= 0)
+		{
+			return null;
+		}
+
+		double acc = Math.max(0.0, Math.min(1.0, accuracy));
+		int perArrowMax = Math.max(0, maxHitTotal / 2);
+		if (perArrowMax <= 0)
+		{
+			return null;
+		}
+
+		int perArrowMin = Math.max(0, minHitTotal / 2);
+		double[] dist = buildCappedDamageDistribution(acc, perArrowMin, perArrowMax, DBOW_MAX_HIT_CAP);
+		if (dist == null || dist.length == 0)
+		{
+			return null;
+		}
+
+		int maxDamage = dist.length - 1;
+		double[] tail = new double[maxDamage + 2];
+		for (int dmg = maxDamage; dmg >= 0; dmg--)
+		{
+			tail[dmg] = tail[dmg + 1] + dist[dmg];
+		}
+
+		double ko = 0.0;
+		for (int d1 = 0; d1 <= maxDamage; d1++)
+		{
+			double p1 = dist[d1];
+			if (p1 <= 0.0)
+			{
+				continue;
+			}
+
+			if (d1 >= hpBefore)
+			{
+				ko += p1;
+				continue;
+			}
+
+			int hpNeeded = hpBefore - d1 + Math.max(0, healBetween);
+			if (hpNeeded <= 0)
+			{
+				ko += p1;
+				continue;
+			}
+
+			if (hpNeeded <= maxDamage)
+			{
+				ko += p1 * tail[hpNeeded];
+			}
+		}
+
+		if (ko < 0.0)
+		{
+			ko = 0.0;
+		}
+		else if (ko > 1.0)
+		{
+			ko = 1.0;
+		}
+		return ko;
+	}
+
+	private static double[] buildCappedDamageDistribution(double accuracy, int minHit, int maxHit, int maxHitCap)
+	{
+		if (maxHit < 0)
+		{
+			return null;
+		}
+
+		int effectiveCap = maxHitCap > 0 ? maxHitCap : maxHit;
+		int maxDamage = Math.min(maxHit, effectiveCap);
+		if (maxDamage < 0)
+		{
+			return null;
+		}
+
+		double[] dist = new double[maxDamage + 1];
+		double acc = Math.max(0.0, Math.min(1.0, accuracy));
+
+		if (acc <= 0.0)
+		{
+			dist[0] = 1.0;
+			return dist;
+		}
+
+		int clampedMin = Math.max(0, minHit);
+		clampedMin = Math.min(clampedMin, maxHit);
+		clampedMin = Math.min(clampedMin, effectiveCap);
+
+		int rollCount = maxHit + 1;
+		double hitProb = acc / rollCount;
+
+		for (int roll = 0; roll <= maxHit; roll++)
+		{
+			int dmg = roll < clampedMin ? clampedMin : roll;
+			if (dmg > effectiveCap)
+			{
+				dmg = effectiveCap;
+			}
+			if (dmg > maxDamage)
+			{
+				dmg = maxDamage;
+			}
+			dist[dmg] += hitProb;
+		}
+
+		dist[0] += 1.0 - acc;
+		return dist;
 	}
 
     public static int getSpriteForSkill(Skill skill)

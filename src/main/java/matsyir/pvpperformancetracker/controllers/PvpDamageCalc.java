@@ -88,6 +88,7 @@ public class PvpDamageCalc
 	private static final int DBOW_DMG_MODIFIER = 2;
 	private static final int DBOW_SPEC_DMG_MODIFIER = 3;
 	private static final int DBOW_SPEC_MIN_HIT = 16;
+	private static final int DBOW_SPEC_MAX_HIT_PER_ARROW = 48;
 	private static final double DRAGON_CBOW_SPEC_DMG_MODIFIER = 1.2;
 
 	private static final double DDS_SPEC_ACCURACY_MODIFIER = 1.25;
@@ -526,6 +527,15 @@ public class PvpDamageCalc
 
 			maxHit *= dmgModifier;
 		}
+
+		if (dbow && usingSpec)
+		{
+			int cap = DBOW_SPEC_MAX_HIT_PER_ARROW * 2;
+			if (maxHit > cap)
+			{
+				maxHit = cap;
+			}
+		}
 	}
 
 	private void getMagicMaxHit(EquipmentData shield, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
@@ -674,7 +684,12 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		int stanceBonus = STANCE_BONUS;
+		if (weapon == EquipmentData.DARK_BOW && usingSpec)
+		{
+			stanceBonus += 3; // dark bow spec is assumed to be on accurate
+		}
+		effectiveLevelPlayer = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + stanceBonus) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
