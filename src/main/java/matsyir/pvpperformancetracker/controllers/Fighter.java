@@ -47,6 +47,7 @@ import net.runelite.api.GraphicID;
 import net.runelite.api.IterableHashTable;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
+import net.runelite.api.gameval.SpotanimID;
 import net.runelite.api.kit.KitType;
 
 @Slf4j
@@ -213,6 +214,7 @@ class Fighter
 
 		// Granite Maul specific handling
 		boolean isGmaulSpec = animationData == AnimationData.MELEE_GRANITE_MAUL_SPEC;
+		boolean elyProc = hasTargetSpotAnim(opponent, SpotanimID.ELYSIAN_SHIELD_DEFEND_SPOTANIM);
 
 		// --- Detect dark bow & dragon crossbow specials via GFX ---
 		if (weapon == EquipmentData.DARK_BOW && animationData == AnimationData.RANGED_SHORTBOW)
@@ -254,6 +256,10 @@ class Fighter
 		}
 
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		if (elyProc)
+		{
+			pvpDamageCalc.applyElysianReduction();
+		}
 		expectedDamage += pvpDamageCalc.getAverageHit();
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -268,6 +274,7 @@ class Fighter
 		}
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
+		fightLogEntry.setElyProc(elyProc);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{

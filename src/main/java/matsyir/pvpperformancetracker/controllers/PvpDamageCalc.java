@@ -65,6 +65,7 @@ public class PvpDamageCalc
 
 	private static final int STANCE_BONUS = 0; // assume they are not in controlled or defensive
 	private static final double UNSUCCESSFUL_PRAY_DMG_MODIFIER = 0.6; // modifier for when you unsuccessfully hit off-pray
+	private static final double ELYSIAN_DAMAGE_MULTIPLIER = 0.75;
 
 	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
 	private static final double PIETY_ATK_PRAYER_MODIFIER = 1.2;
@@ -255,6 +256,28 @@ public class PvpDamageCalc
 
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+
+		if (atkLog.isElyProc())
+		{
+			applyElysianReduction();
+		}
+	}
+
+	public void applyElysianReduction()
+	{
+		applyDamageMultiplier(ELYSIAN_DAMAGE_MULTIPLIER);
+	}
+
+	private void applyDamageMultiplier(double multiplier)
+	{
+		if (multiplier == 1)
+		{
+			return;
+		}
+
+		averageHit *= multiplier;
+		minHit = (int) Math.floor(minHit * multiplier);
+		maxHit = (int) Math.floor(maxHit * multiplier);
 	}
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)

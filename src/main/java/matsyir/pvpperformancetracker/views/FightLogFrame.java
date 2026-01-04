@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
@@ -52,6 +53,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
 
 @Slf4j
@@ -201,16 +203,7 @@ public class FightLogFrame extends JFrame
 				stats[i][11] = "";
 			}
 			// Offensive Pray (Index 12)
-			JLabel attPrayLabel = new JLabel();
-			if (fightEntry.getAttackerOffensivePray() > 0)
-			{
-				PLUGIN.addSpriteToLabelIfValid(attPrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-				stats[i][12] = attPrayLabel;
-			}
-			else
-			{
-				stats[i][12] = "";
-			}
+			stats[i][12] = buildOffensivePrayCell(fightEntry);
 			int tickDuration = fightEntry.getTick() - initialTick;
 			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
 			Duration duration = Duration.ofMillis(durationMillis);
@@ -271,7 +264,14 @@ public class FightLogFrame extends JFrame
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
 		{
 			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			if (value instanceof BufferedImage)
+			if (value instanceof JPanel)
+			{
+				JPanel panel = (JPanel) value;
+				panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+				panel.setOpaque(true);
+				return panel;
+			}
+			else if (value instanceof BufferedImage)
 			{
 				setText("");
 				setIcon(new ImageIcon((BufferedImage) value));
@@ -291,6 +291,44 @@ public class FightLogFrame extends JFrame
 
 			return this;
 		}
+	}
+
+	private Component buildOffensivePrayCell(FightLogEntry fightEntry)
+	{
+		boolean hasPray = fightEntry.getAttackerOffensivePray() > 0;
+		boolean hasEly = fightEntry.isElyProc();
+
+		if (!hasPray && !hasEly)
+		{
+			return "";
+		}
+
+		if (hasPray && hasEly)
+		{
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+			panel.setOpaque(false);
+
+			JLabel prayLabel = new JLabel();
+			PLUGIN.addSpriteToLabelIfValid(prayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
+			panel.add(prayLabel);
+
+			JLabel elyLabel = new JLabel();
+			PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+			panel.add(elyLabel);
+
+			return panel;
+		}
+
+		JLabel label = new JLabel();
+		if (hasPray)
+		{
+			PLUGIN.addSpriteToLabelIfValid(label, fightEntry.getAttackerOffensivePray(), this::repaint);
+		}
+		else
+		{
+			PLUGIN.addItemToLabelIfValid(label, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+		}
+		return label;
 	}
 
 	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
