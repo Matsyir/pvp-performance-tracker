@@ -179,17 +179,7 @@ public class FightLogFrame extends JFrame
 			// Off-Pray? (Index 9)
 			stats[i][9] = fightEntry.success() ? "✔" : "";
 			// Def Prayer (Index 10)
-			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
-			if (prayIcon > 0)
-			{
-				JLabel defPrayLabel = new JLabel();
-				PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
-				stats[i][10] = defPrayLabel;
-			}
-			else
-			{
-				stats[i][10] = "";
-			}
+			stats[i][10] = buildDefensivePrayCell(fightEntry);
 			// Splash (Index 11)
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 			{
@@ -221,6 +211,7 @@ public class FightLogFrame extends JFrame
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
+		table.getColumnModel().getColumn(10).setPreferredWidth(96); // room for def pray + proc icons
 
 		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
 		table.getColumnModel().getColumn(5).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
@@ -293,9 +284,10 @@ public class FightLogFrame extends JFrame
 		}
 	}
 
-	private Component buildOffensivePrayCell(FightLogEntry fightEntry)
+	private Component buildDefensivePrayCell(FightLogEntry fightEntry)
 	{
-		boolean hasPray = fightEntry.getAttackerOffensivePray() > 0;
+		int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
+		boolean hasPray = prayIcon > 0;
 		boolean hasEly = fightEntry.isElyProc();
 		boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
 
@@ -307,9 +299,10 @@ public class FightLogFrame extends JFrame
 		ArrayList<JLabel> icons = new ArrayList<>();
 		if (hasPray)
 		{
-			JLabel prayLabel = new JLabel();
-			PLUGIN.addSpriteToLabelIfValid(prayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-			icons.add(prayLabel);
+			JLabel defPrayLabel = new JLabel();
+			PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
+			defPrayLabel.setToolTipText("Defensive Prayer");
+			icons.add(defPrayLabel);
 		}
 
 		if (hasEly)
@@ -345,6 +338,19 @@ public class FightLogFrame extends JFrame
 		}
 
 		return new JLabel();
+	}
+
+	private Component buildOffensivePrayCell(FightLogEntry fightEntry)
+	{
+		int offensivePray = fightEntry.getAttackerOffensivePray();
+		if (offensivePray <= 0)
+		{
+			return new JLabel();
+		}
+
+		JLabel prayLabel = new JLabel();
+		PLUGIN.addSpriteToLabelIfValid(prayLabel, offensivePray, this::repaint);
+		return prayLabel;
 	}
 
 	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
