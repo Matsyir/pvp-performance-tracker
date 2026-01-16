@@ -193,95 +193,31 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	private boolean isPartOfTickGroup = false;
 
 	// Transient fields for handling multi-tick Dragon Claws special attacks
+	@Getter
+	@Setter
 	private transient Integer clawsPhase1Damage = null;
+	@Getter
+	@Setter
 	private transient Integer clawsHpBeforePhase1 = null;
+	@Getter
+	@Setter
 	private transient Integer clawsHpAfterPhase1 = null;
+	@Getter
+	@Setter
 	private transient Integer clawsHpBeforePhase2 = null;
 	// Transient fields for handling Dark Bow double-hit sequencing
+	@Getter
+	@Setter
 	private transient Integer darkBowHpBeforeHit1 = null;
+	@Getter
+	@Setter
 	private transient Integer darkBowHpAfterHit1 = null;
+	@Getter
+	@Setter
 	private transient Integer darkBowHpBeforeHit2 = null;
+	@Getter
+	@Setter
 	private transient boolean darkBowHitsStacked = false;
-
-	public Integer getClawsPhase1Damage()
-	{
-		return clawsPhase1Damage;
-	}
-
-	public void setClawsPhase1Damage(Integer clawsPhase1Damage)
-	{
-		this.clawsPhase1Damage = clawsPhase1Damage;
-	}
-
-	public Integer getClawsHpBeforePhase1()
-	{
-		return clawsHpBeforePhase1;
-	}
-
-	public void setClawsHpBeforePhase1(Integer clawsHpBeforePhase1)
-	{
-		this.clawsHpBeforePhase1 = clawsHpBeforePhase1;
-	}
-
-	public Integer getClawsHpAfterPhase1()
-	{
-		return clawsHpAfterPhase1;
-	}
-
-	public void setClawsHpAfterPhase1(Integer clawsHpAfterPhase1)
-	{
-		this.clawsHpAfterPhase1 = clawsHpAfterPhase1;
-	}
-
-	public Integer getClawsHpBeforePhase2()
-	{
-		return clawsHpBeforePhase2;
-	}
-
-	public void setClawsHpBeforePhase2(Integer clawsHpBeforePhase2)
-	{
-		this.clawsHpBeforePhase2 = clawsHpBeforePhase2;
-	}
-
-	public Integer getDarkBowHpBeforeHit1()
-	{
-		return darkBowHpBeforeHit1;
-	}
-
-	public void setDarkBowHpBeforeHit1(Integer darkBowHpBeforeHit1)
-	{
-		this.darkBowHpBeforeHit1 = darkBowHpBeforeHit1;
-	}
-
-	public Integer getDarkBowHpAfterHit1()
-	{
-		return darkBowHpAfterHit1;
-	}
-
-	public void setDarkBowHpAfterHit1(Integer darkBowHpAfterHit1)
-	{
-		this.darkBowHpAfterHit1 = darkBowHpAfterHit1;
-	}
-
-	public Integer getDarkBowHpBeforeHit2()
-	{
-		return darkBowHpBeforeHit2;
-	}
-
-	public void setDarkBowHpBeforeHit2(Integer darkBowHpBeforeHit2)
-	{
-		this.darkBowHpBeforeHit2 = darkBowHpBeforeHit2;
-	}
-
-	public boolean isDarkBowHitsStacked()
-	{
-		return darkBowHitsStacked;
-	}
-
-	public void setDarkBowHitsStacked(boolean darkBowHitsStacked)
-	{
-		this.darkBowHitsStacked = darkBowHitsStacked;
-	}
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
