@@ -179,7 +179,62 @@ public class FightLogFrame extends JFrame
 			// Off-Pray? (Index 9)
 			stats[i][9] = fightEntry.success() ? "✔" : "";
 			// Def Prayer (Index 10)
-			stats[i][10] = buildDefensivePrayCell(fightEntry);
+			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
+			boolean hasPray = prayIcon > 0;
+			boolean hasEly = fightEntry.isElyProc();
+			boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
+
+			if (!hasPray && !hasEly && !hasStaffReduction)
+			{
+				stats[i][10] = "";
+			}
+			else if ((hasPray ? 1 : 0) + (hasEly ? 1 : 0) + (hasStaffReduction ? 1 : 0) == 1)
+			{
+				JLabel label = new JLabel();
+				if (hasPray)
+				{
+					PLUGIN.addSpriteToLabelIfValid(label, prayIcon, this::repaint);
+					label.setToolTipText("Defensive Prayer");
+				}
+				else if (hasEly)
+				{
+					PLUGIN.addItemToLabelIfValid(label, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+				}
+				else
+				{
+					PLUGIN.addItemToLabelIfValid(label, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
+				}
+				stats[i][10] = label;
+			}
+			else
+			{
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+				panel.setOpaque(false);
+
+				if (hasPray)
+				{
+					JLabel defPrayLabel = new JLabel();
+					PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
+					defPrayLabel.setToolTipText("Defensive Prayer");
+					panel.add(defPrayLabel);
+				}
+
+				if (hasEly)
+				{
+					JLabel elyLabel = new JLabel();
+					PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+					panel.add(elyLabel);
+				}
+
+				if (hasStaffReduction)
+				{
+					JLabel staffLabel = new JLabel();
+					PLUGIN.addItemToLabelIfValid(staffLabel, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
+					panel.add(staffLabel);
+				}
+
+				stats[i][10] = panel;
+			}
 			// Splash (Index 11)
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 			{
@@ -193,7 +248,16 @@ public class FightLogFrame extends JFrame
 				stats[i][11] = "";
 			}
 			// Offensive Pray (Index 12)
-			stats[i][12] = buildOffensivePrayCell(fightEntry);
+			JLabel attPrayLabel = new JLabel();
+			if (fightEntry.getAttackerOffensivePray() > 0)
+			{
+				PLUGIN.addSpriteToLabelIfValid(attPrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
+				stats[i][12] = attPrayLabel;
+			}
+			else
+			{
+				stats[i][12] = "";
+			}
 			int tickDuration = fightEntry.getTick() - initialTick;
 			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
 			Duration duration = Duration.ofMillis(durationMillis);
@@ -282,75 +346,6 @@ public class FightLogFrame extends JFrame
 
 			return this;
 		}
-	}
-
-	private Component buildDefensivePrayCell(FightLogEntry fightEntry)
-	{
-		int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
-		boolean hasPray = prayIcon > 0;
-		boolean hasEly = fightEntry.isElyProc();
-		boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
-
-		if (!hasPray && !hasEly && !hasStaffReduction)
-		{
-			return new JLabel();
-		}
-
-		ArrayList<JLabel> icons = new ArrayList<>();
-		if (hasPray)
-		{
-			JLabel defPrayLabel = new JLabel();
-			PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
-			defPrayLabel.setToolTipText("Defensive Prayer");
-			icons.add(defPrayLabel);
-		}
-
-		if (hasEly)
-		{
-			JLabel elyLabel = new JLabel();
-			PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
-			icons.add(elyLabel);
-		}
-
-		if (hasStaffReduction)
-		{
-			JLabel staffLabel = new JLabel();
-			PLUGIN.addItemToLabelIfValid(staffLabel, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
-			icons.add(staffLabel);
-		}
-
-		if (icons.size() == 1)
-		{
-			return icons.get(0);
-		}
-
-		if (icons.size() > 1)
-		{
-			JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-			panel.setOpaque(false);
-
-			for (JLabel icon : icons)
-			{
-				panel.add(icon);
-			}
-
-			return panel;
-		}
-
-		return new JLabel();
-	}
-
-	private Component buildOffensivePrayCell(FightLogEntry fightEntry)
-	{
-		int offensivePray = fightEntry.getAttackerOffensivePray();
-		if (offensivePray <= 0)
-		{
-			return new JLabel();
-		}
-
-		JLabel prayLabel = new JLabel();
-		PLUGIN.addSpriteToLabelIfValid(prayLabel, offensivePray, this::repaint);
-		return prayLabel;
 	}
 
 	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data

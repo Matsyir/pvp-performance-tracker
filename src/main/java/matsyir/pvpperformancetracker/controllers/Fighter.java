@@ -410,25 +410,12 @@ class Fighter
 
 	private static boolean hasStaffMeleeReduction(Player opponent)
 	{
-		if (hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_START) ||
-			hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_EXTRA))
-		{
-			return true;
-		}
-
-		if (hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_START) ||
-			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_EXTRA))
-		{
-			return true;
-		}
-
-		if (hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_START) ||
-			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_EXTRA))
-		{
-			return true;
-		}
-
-		return false;
+		return hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_EXTRA) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_EXTRA) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_EXTRA);
 	}
 
 	AnimationData getAnimationData()
