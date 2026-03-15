@@ -12,6 +12,8 @@ import java.util.Arrays;
 @Slf4j
 public class PvpPerformanceTrackerUtils
 {
+	private static final int DBOW_MAX_HIT_CAP = 48; // per-arrow cap with dragon arrows in PvP
+
 	/**
 	 * Calculates the chance of knocking out an opponent with a single hit.
 	 *
@@ -115,6 +117,230 @@ public class PvpPerformanceTrackerUtils
 		}
 
 		return hpAfter + damageSum;
+	}
+
+	/**
+	 * Attempt-level KO probability for Dragon Claws specials across two ticks, factoring any healing between phases.
+	 */
+	public static Double calculateClawsTwoPhaseKo(double specAccuracy, int specMaxHit, int hpBefore, int healBetween)
+	{
+		if (specMaxHit <= 0 || hpBefore <= 0)
+		{
+			return null;
+		}
+
+		double accSpec = Math.max(0.0, Math.min(1.0, specAccuracy));
+		int baseMax = Math.max(0, (specMaxHit - 1) / 2);
+		if (baseMax <= 0)
+		{
+			return null;
+		}
+
+		double swingAccuracy;
+		if (accSpec <= 0.0)
+		{
+			swingAccuracy = 0.0;
+		}
+		else if (accSpec >= 1.0)
+		{
+			swingAccuracy = 1.0;
+		}
+		else
+		{
+			swingAccuracy = 1.0 - Math.pow(1.0 - accSpec, 0.25);
+		}
+
+		double missChance = 1.0 - swingAccuracy;
+		double p1 = swingAccuracy;
+		double p2 = missChance * swingAccuracy;
+		double p3 = missChance * missChance * swingAccuracy;
+		double p4 = missChance * missChance * missChance * swingAccuracy;
+
+		double inverseCount = 1.0 / (baseMax + 1);
+		double ko = 0.0;
+
+		for (int roll = 0; roll <= baseMax; roll++)
+		{
+			int halfCeil = (roll + 1) / 2;
+			int halfFloor = roll / 2;
+			int quarterFloor = roll / 4;
+			int threeQuarterCeil = (int) Math.ceil(0.75 * roll);
+			int threeQuarterFloor = (int) Math.floor(0.75 * roll);
+
+			// Case E1: first swing connects (two hits tick k, two hits tick k+1)
+			{
+				int h1 = roll;
+				int h2 = halfCeil;
+				int h3 = quarterFloor;
+				int used = h1 + h2 + h3;
+				int remainder = Math.max(0, 2 * roll - used);
+				int damageTick1 = h1 + h2;
+				int damageTick2 = h3 + remainder;
+				double contribution = p1 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E2: second swing connects (phase 1 does no damage)
+			{
+				int damageTick1 = roll;
+				int damageTick2 = roll;
+				double contribution = p2 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E3: third swing connects (all damage tick k+1)
+			{
+				int damageTick1 = 0;
+				int damageTick2 = threeQuarterCeil + threeQuarterFloor;
+				double contribution = p3 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+
+			// Case E4: fourth swing connects (all damage tick k+1)
+			{
+				int damageTick1 = 0;
+				int damageTick2 = threeQuarterCeil + threeQuarterFloor;
+				double contribution = p4 * inverseCount * (damageTick1 >= hpBefore
+					? 1.0
+					: (damageTick2 >= (hpBefore - damageTick1 + healBetween) ? 1.0 : 0.0));
+				ko += contribution;
+			}
+		}
+
+		if (ko < 0.0)
+		{
+			ko = 0.0;
+		}
+		else if (ko > 1.0)
+		{
+			ko = 1.0;
+		}
+		return ko;
+	}
+
+	/**
+	 * Attempt-level KO probability for Dark Bow double hits, factoring any healing between hits.
+	 * Applies per-arrow damage caps by collapsing rolls above the cap into the capped value.
+	 */
+	public static Double calculateDarkBowTwoPhaseKo(double accuracy, int minHitTotal, int maxHitTotal, int hpBefore, int healBetween)
+	{
+		if (maxHitTotal <= 0 || hpBefore <= 0)
+		{
+			return null;
+		}
+
+		double acc = Math.max(0.0, Math.min(1.0, accuracy));
+		int perArrowMax = Math.max(0, maxHitTotal / 2);
+		if (perArrowMax <= 0)
+		{
+			return null;
+		}
+
+		int perArrowMin = Math.max(0, minHitTotal / 2);
+		double[] dist = buildCappedDamageDistribution(acc, perArrowMin, perArrowMax, DBOW_MAX_HIT_CAP);
+		if (dist == null || dist.length == 0)
+		{
+			return null;
+		}
+
+		int maxDamage = dist.length - 1;
+		double[] tail = new double[maxDamage + 2];
+		for (int dmg = maxDamage; dmg >= 0; dmg--)
+		{
+			tail[dmg] = tail[dmg + 1] + dist[dmg];
+		}
+
+		double ko = 0.0;
+		for (int d1 = 0; d1 <= maxDamage; d1++)
+		{
+			double p1 = dist[d1];
+			if (p1 <= 0.0)
+			{
+				continue;
+			}
+
+			if (d1 >= hpBefore)
+			{
+				ko += p1;
+				continue;
+			}
+
+			int hpNeeded = hpBefore - d1 + Math.max(0, healBetween);
+			if (hpNeeded <= 0)
+			{
+				ko += p1;
+				continue;
+			}
+
+			if (hpNeeded <= maxDamage)
+			{
+				ko += p1 * tail[hpNeeded];
+			}
+		}
+
+		if (ko < 0.0)
+		{
+			ko = 0.0;
+		}
+		else if (ko > 1.0)
+		{
+			ko = 1.0;
+		}
+		return ko;
+	}
+
+	private static double[] buildCappedDamageDistribution(double accuracy, int minHit, int maxHit, int maxHitCap)
+	{
+		if (maxHit < 0)
+		{
+			return null;
+		}
+
+		int effectiveCap = maxHitCap > 0 ? maxHitCap : maxHit;
+		int maxDamage = Math.min(maxHit, effectiveCap);
+		if (maxDamage < 0)
+		{
+			return null;
+		}
+
+		double[] dist = new double[maxDamage + 1];
+		double acc = Math.max(0.0, Math.min(1.0, accuracy));
+
+		if (acc <= 0.0)
+		{
+			dist[0] = 1.0;
+			return dist;
+		}
+
+		int clampedMin = Math.max(0, minHit);
+		clampedMin = Math.min(clampedMin, maxHit);
+		clampedMin = Math.min(clampedMin, effectiveCap);
+
+		int rollCount = maxHit + 1;
+		double hitProb = acc / rollCount;
+
+		for (int roll = 0; roll <= maxHit; roll++)
+		{
+			int dmg = roll < clampedMin ? clampedMin : roll;
+			if (dmg > effectiveCap)
+			{
+				dmg = effectiveCap;
+			}
+			if (dmg > maxDamage)
+			{
+				dmg = maxDamage;
+			}
+			dist[dmg] += hitProb;
+		}
+
+		dist[0] += 1.0 - acc;
+		return dist;
 	}
 
     public static int getSpriteForSkill(Skill skill)

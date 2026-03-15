@@ -192,6 +192,33 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Getter @Setter
 	private boolean isPartOfTickGroup = false;
 
+	// Transient fields for handling multi-tick Dragon Claws special attacks
+	@Getter
+	@Setter
+	private transient Integer clawsPhase1Damage = null;
+	@Getter
+	@Setter
+	private transient Integer clawsHpBeforePhase1 = null;
+	@Getter
+	@Setter
+	private transient Integer clawsHpAfterPhase1 = null;
+	@Getter
+	@Setter
+	private transient Integer clawsHpBeforePhase2 = null;
+	// Transient fields for handling Dark Bow double-hit sequencing
+	@Getter
+	@Setter
+	private transient Integer darkBowHpBeforeHit1 = null;
+	@Getter
+	@Setter
+	private transient Integer darkBowHpAfterHit1 = null;
+	@Getter
+	@Setter
+	private transient Integer darkBowHpBeforeHit2 = null;
+	@Getter
+	@Setter
+	private transient boolean darkBowHitsStacked = false;
+
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
 		this.isFullEntry = true;
