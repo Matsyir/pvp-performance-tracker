@@ -42,10 +42,13 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
+import net.runelite.api.ActorSpotAnim;
+import net.runelite.api.GraphicID;
+import net.runelite.api.IterableHashTable;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
+import net.runelite.api.gameval.SpotanimID;
 import net.runelite.api.kit.KitType;
-import net.runelite.api.GraphicID;
 
 @Slf4j
 @Getter
@@ -211,18 +214,19 @@ class Fighter
 
 		// Granite Maul specific handling
 		boolean isGmaulSpec = animationData == AnimationData.MELEE_GRANITE_MAUL_SPEC;
+		boolean elyProc = hasTargetSpotAnim(opponent, SpotanimID.ELYSIAN_SHIELD_DEFEND_SPOTANIM);
 
 		// --- Detect dark bow & dragon crossbow specials via GFX ---
 		if (weapon == EquipmentData.DARK_BOW && animationData == AnimationData.RANGED_SHORTBOW)
 		{
-			boolean spec = opponent.getGraphic() == GFX_TARGET_DBOW_SPEC;
+			boolean spec = hasTargetSpotAnim(opponent, GFX_TARGET_DBOW_SPEC);
 
 			animationData = spec ? AnimationData.RANGED_DARK_BOW_SPEC : AnimationData.RANGED_DARK_BOW;
 		}
 		else if (weapon == EquipmentData.DRAGON_CROSSBOW &&
 				(animationData == AnimationData.RANGED_CROSSBOW_PVP || animationData == AnimationData.RANGED_RUNE_CROSSBOW))
 		{
-			boolean spec = opponent.getGraphic() == GFX_TARGET_DCBOW_SPEC;
+			boolean spec = hasTargetSpotAnim(opponent, GFX_TARGET_DCBOW_SPEC);
 
 			if (spec)
 			{
@@ -251,7 +255,21 @@ class Fighter
 			animationData = animationData.isSpecial ? AnimationData.MELEE_VLS_SPEC : AnimationData.MELEE_SCIM_SLASH;
 		}
 
+		boolean staffMeleeReduction = false;
+		if (animationData.attackStyle.isMelee())
+		{
+			staffMeleeReduction = hasStaffMeleeReduction(opponent);
+		}
+
 		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		if (elyProc)
+		{
+			pvpDamageCalc.applyElysianReduction();
+		}
+		if (staffMeleeReduction)
+		{
+			pvpDamageCalc.applyStaffMeleeReduction();
+		}
 		expectedDamage += pvpDamageCalc.getAverageHit();
 
 		if (animationData.attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -266,6 +284,8 @@ class Fighter
 		}
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
+		fightLogEntry.setElyProc(elyProc);
+		fightLogEntry.setStaffMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (animationData.isSpecial && animationData != AnimationData.MELEE_GRANITE_MAUL_SPEC)
 		{
@@ -366,6 +386,40 @@ class Fighter
 	void died()
 	{
 		dead = true;
+	}
+
+	private static boolean hasTargetSpotAnim(Player opponent, int spotAnimId)
+	{
+		if (opponent.getGraphic() == spotAnimId)
+		{
+			return true;
+		}
+
+		IterableHashTable<ActorSpotAnim> spotAnims = opponent.getSpotAnims();
+		if (spotAnims == null)
+		{
+			return false;
+		}
+
+		for (ActorSpotAnim spotAnim : spotAnims)
+		{
+			if (spotAnim != null && spotAnim.getId() == spotAnimId)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static boolean hasStaffMeleeReduction(Player opponent)
+	{
+		return hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_EXTRA) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_LIGHT_SPECIAL_EXTRA) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_START) ||
+			hasTargetSpotAnim(opponent, SpotanimID.STAFF_OF_BALANCE_SPECIAL_EXTRA);
 	}
 
 	AnimationData getAnimationData()

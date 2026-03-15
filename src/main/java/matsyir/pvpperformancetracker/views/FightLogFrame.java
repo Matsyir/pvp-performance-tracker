@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
@@ -52,6 +53,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
 
 @Slf4j
@@ -178,15 +180,60 @@ public class FightLogFrame extends JFrame
 			stats[i][9] = fightEntry.success() ? "✔" : "";
 			// Def Prayer (Index 10)
 			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
-			if (prayIcon > 0)
+			boolean hasPray = prayIcon > 0;
+			boolean hasEly = fightEntry.isElyProc();
+			boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
+
+			if (!hasPray && !hasEly && !hasStaffReduction)
 			{
-				JLabel defPrayLabel = new JLabel();
-				PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
-				stats[i][10] = defPrayLabel;
+				stats[i][10] = "";
+			}
+			else if ((hasPray ? 1 : 0) + (hasEly ? 1 : 0) + (hasStaffReduction ? 1 : 0) == 1)
+			{
+				JLabel label = new JLabel();
+				if (hasPray)
+				{
+					PLUGIN.addSpriteToLabelIfValid(label, prayIcon, this::repaint);
+					label.setToolTipText("Defensive Prayer");
+				}
+				else if (hasEly)
+				{
+					PLUGIN.addItemToLabelIfValid(label, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+				}
+				else
+				{
+					PLUGIN.addItemToLabelIfValid(label, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
+				}
+				stats[i][10] = label;
 			}
 			else
 			{
-				stats[i][10] = "";
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+				panel.setOpaque(false);
+
+				if (hasPray)
+				{
+					JLabel defPrayLabel = new JLabel();
+					PLUGIN.addSpriteToLabelIfValid(defPrayLabel, prayIcon, this::repaint);
+					defPrayLabel.setToolTipText("Defensive Prayer");
+					panel.add(defPrayLabel);
+				}
+
+				if (hasEly)
+				{
+					JLabel elyLabel = new JLabel();
+					PLUGIN.addItemToLabelIfValid(elyLabel, ItemID.ELYSIAN_SPIRIT_SHIELD, false, this::repaint, "Elysian proc");
+					panel.add(elyLabel);
+				}
+
+				if (hasStaffReduction)
+				{
+					JLabel staffLabel = new JLabel();
+					PLUGIN.addItemToLabelIfValid(staffLabel, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
+					panel.add(staffLabel);
+				}
+
+				stats[i][10] = panel;
 			}
 			// Splash (Index 11)
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -228,6 +275,7 @@ public class FightLogFrame extends JFrame
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
+		table.getColumnModel().getColumn(10).setPreferredWidth(96); // room for def pray + proc icons
 
 		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
 		table.getColumnModel().getColumn(5).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
@@ -271,7 +319,14 @@ public class FightLogFrame extends JFrame
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
 		{
 			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			if (value instanceof BufferedImage)
+			if (value instanceof JPanel)
+			{
+				JPanel panel = (JPanel) value;
+				panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+				panel.setOpaque(true);
+				return panel;
+			}
+			else if (value instanceof BufferedImage)
 			{
 				setText("");
 				setIcon(new ImageIcon((BufferedImage) value));
