@@ -181,8 +181,8 @@ public class FightLogFrame extends JFrame
 			// Def Prayer (Index 10)
 			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			boolean hasPray = prayIcon > 0;
-			boolean hasEly = fightEntry.isElyProc();
-			boolean hasStaffReduction = fightEntry.isStaffMeleeReductionProc();
+			boolean hasEly = fightEntry.isDefenderElyProc();
+			boolean hasStaffReduction = fightEntry.isDefenderSotdMeleeReductionProc();
 
 			if (!hasPray && !hasEly && !hasStaffReduction)
 			{

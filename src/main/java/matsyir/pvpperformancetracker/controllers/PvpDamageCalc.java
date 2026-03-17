@@ -259,11 +259,11 @@ public class PvpDamageCalc
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
-		if (atkLog.isElyProc())
+		if (atkLog.isDefenderElyProc())
 		{
 			applyElysianReduction();
 		}
-		if (atkLog.isStaffMeleeReductionProc() && atkLog.getAnimationData().attackStyle.isMelee())
+		if (atkLog.isDefenderSotdMeleeReductionProc() && atkLog.getAnimationData().attackStyle.isMelee())
 		{
 			applyStaffMeleeReduction();
 		}

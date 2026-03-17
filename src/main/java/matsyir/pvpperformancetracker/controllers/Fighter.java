@@ -284,8 +284,8 @@ class Fighter
 		}
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
-		fightLogEntry.setElyProc(elyProc);
-		fightLogEntry.setStaffMeleeReductionProc(staffMeleeReduction);
+		fightLogEntry.setDefenderElyProc(elyProc);
+		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (animationData.isSpecial && animationData != AnimationData.MELEE_GRANITE_MAUL_SPEC)
 		{

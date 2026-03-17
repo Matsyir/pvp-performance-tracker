@@ -120,7 +120,10 @@ import org.apache.commons.lang3.ArrayUtils;
 public class PvpPerformanceTrackerPlugin extends Plugin
 {
 	// static fields
-	public static final String PLUGIN_VERSION = "1.7.1";
+
+	// reminder: the version number update is needed in a few different places.
+	// Run a find-all of the old version number before updating version.
+	public static final String PLUGIN_VERSION = "1.7.2";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1165,16 +1168,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (configManager.getConfiguration(CONFIG_KEY, config.updateMsgKey, boolean.class)) { return; }
 
 		chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.GAMEMESSAGE)
-				.runeLiteFormattedMessage("PvP Performance Tracker 1.7.1 Update: " +
-						"Support for god spells, special attacks for arkan blade, burning claws & dark bow. " +
-						"Double deaths now tracked. New statistic labels & improved tooltips. Various calculation & " +
-						"detection improvements. Renamed Deserved damage to Expected damage.")
+			.type(ChatMessageType.GAMEMESSAGE)
+			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.2 Update: " +
+				"Track ely damage reduction & SOTD spec melee damage reduction. " +
+				"Improved KO chance for dragon claws & dark bow special attacks. " +
+				"Scorching bow now uses dragon arrows.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
-		// remove any old unnecessary ones after updating
+		// remove any old unnecessary flags after updating
 		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
+		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
 	}
 
 	private void update(String oldVersion)

@@ -108,15 +108,6 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed
 	@Expose
-	@SerializedName("E")
-	@Setter
-	private boolean elyProc = false;
-	@Expose
-	@SerializedName("S")
-	@Setter
-	private boolean staffMeleeReductionProc = false;
-
-	@Expose
 	@SerializedName("C")
 	private CombatLevels attackerLevels; // CAN BE NULL
 
@@ -161,6 +152,14 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("o")
 	private HeadIcon defenderOverhead;
+	@Expose
+	@SerializedName("E")
+	@Setter
+	private boolean defenderElyProc = false;
+	@Expose
+	@SerializedName("S")
+	@Setter
+	private boolean defenderSotdMeleeReductionProc = false;
 
 	@Expose
 	@SerializedName("p")
@@ -292,8 +291,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = e.splash;
-		this.elyProc = e.elyProc;
-		this.staffMeleeReductionProc = e.staffMeleeReductionProc;
+		this.defenderElyProc = e.defenderElyProc;
+		this.defenderSotdMeleeReductionProc = e.defenderSotdMeleeReductionProc;
 		this.attackerLevels = e.attackerLevels;
 
 		// defender data
