@@ -29,8 +29,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 public enum FightType
 {
-	LMS_MAXMED(new CombatLevels(118, 118, 75, 112, 99, 99)),
-	LMS_ZERK(new CombatLevels(91, 118, 45, 112, 99, 99)),
+	LMS_MAXMED(new CombatLevels(118, 118, 85, 112, 99, 99)),
+	LMS_ZERK(new CombatLevels(97, 118, 45, 112, 99, 99)),
 	LMS_1DEF(new CombatLevels(91, 118, 1, 112, 99, 99)),
 	NORMAL(CombatLevels.getConfigLevels());
 
