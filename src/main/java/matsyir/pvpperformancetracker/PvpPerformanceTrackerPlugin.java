@@ -123,7 +123,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.2";
+	public static final String PLUGIN_VERSION = "1.7.3";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1172,7 +1172,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.2 Update: " +
 				"Track ely damage reduction & SOTD spec melee damage reduction. " +
 				"Improved KO chance for dragon claws & dark bow special attacks. " +
-				"Scorching bow now uses dragon arrows.")
+				"Scorching bow now uses dragon arrows. (+ 1.7.3 game data hotfix & LMS adjustments).")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
