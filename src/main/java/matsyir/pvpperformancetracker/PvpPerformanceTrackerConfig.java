@@ -136,6 +136,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "uploadFightsToPvpHub",
 		name = "Upload Fights to PvP-Hub.com",
 		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end.",
+		warning = "This feature will submit your RSN, fight logs, and IP address to a 3rd-party server not controlled or verified by Runelite developers."
 		position = 1200
 	)
 	default boolean uploadFightsToPvpHub()

@@ -17,3 +17,25 @@ Massive thanks to [all other contributors](https://github.com/Matsyir/pvp-perfor
 I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well.
 
 Note that I'm not very active on RS lately myself, so this project is not among my highest priorities - but I'm happy to keep supporting it, especially for issues that affect most users, with normal gear setups in places like LMS or PvP Arena. In other words, the plugin is sort of "on life support" when it comes to the work I'm putting into it, but glad to keep managing it if others want to contribute.
+
+# Why does this PvP-Hub setting say my IP is being requested?
+
+To use this feature, the plugin needs to send some fight data to a server:
+
+https://osrs.pvp-hub.com
+
+Like any website or online service, that server is reached through an IP address. This is simply how devices communicate over the internet.
+
+When the plugin sends data to the server, the server can technically see the IP address the request came from. This is normal for any internet request. However, your IP address is not stored or logged. The server receives the request, processes it, and does not save your IP.
+
+The website source code is available here:
+
+[View the source code on GitHub](https://github.com/LogicalSoIutions/osrs-pvp-performance-tracker-website)
+
+This feature is completely optional.
+
+- The setting is disabled by default.
+- If the checkbox is off, no data is sent to the server.
+- If you enable it, and your opponent also has it enabled, the website can automatically use Advanced Analysis.
+- Advanced Analysis lets you view the full fight, including extra details such as ammo and ring used.
+- If your opponent does not have the plugin, or has this setting disabled, the plugin will use your existing gear settings instead.
