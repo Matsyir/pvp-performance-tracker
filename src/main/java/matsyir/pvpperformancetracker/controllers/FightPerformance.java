@@ -256,7 +256,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 					competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
 				addedAttack = true;
-				maybeGenerateFightId();
+				ensureFightIdGenerated();
 
 			}
 		}
@@ -272,7 +272,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
-				maybeGenerateFightId();
+				ensureFightIdGenerated();
 			}
 		}
 
@@ -569,7 +569,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	 * Generates the fight ID if it hasn't been generated yet and the upload config is enabled.
 	 * Uses both player names, world, and the current game tick as seed material.
 	 */
-	private void maybeGenerateFightId()
+	private void ensureFightIdGenerated()
 	{
 		if (fightIdGenerated || !CONFIG.uploadFightsToPvpHub())
 		{
