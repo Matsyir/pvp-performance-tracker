@@ -43,6 +43,7 @@ import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
+import matsyir.pvpperformancetracker.utils.FightIdGenerator;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
@@ -88,6 +89,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	@SerializedName("w")
 	private int world;
+	@Expose
+	@SerializedName("fightID")
+	@Getter
+	private String fightId;
+
+	private transient boolean fightIdGenerated = false;
+	private transient long initialTime = 0;
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -130,6 +138,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// this is initialized soon before the NEW_FIGHT_DELAY time because the event we
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
+		initialTime = Instant.now().toEpochMilli();
 
 		this.competitor = new Fighter(this, competitor);
 		this.opponent = new Fighter(this, opponent);
@@ -144,6 +153,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor = old.competitor;
 		this.opponent = old.opponent;
 		this.lastFightTime = old.lastFightTime;
+		this.initialTime = old.lastFightTime;
 		if (old.isLmsFight)
 		{
 			if (!competitor.getFightLogEntries().isEmpty())
@@ -214,6 +224,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 
 		lastFightTime = Instant.now().minusSeconds(secondOffset).toEpochMilli();
+		this.initialTime = lastFightTime;
 	}
 
 	// If the given playerName is in this fight, check the Fighter's current animation,
@@ -245,6 +256,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 					competitorLevels);
 				lastFightTime = Instant.now().toEpochMilli();
 				addedAttack = true;
+				maybeGenerateFightId();
 
 			}
 		}
@@ -260,6 +272,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
 				lastFightTime = Instant.now().toEpochMilli();
+				maybeGenerateFightId();
 			}
 		}
 
@@ -549,6 +562,33 @@ public class FightPerformance implements Comparable<FightPerformance>
 					opponent.addRobeHit();
 				}
 			}
+		}
+	}
+
+	/**
+	 * Generates the fight ID if it hasn't been generated yet and the upload config is enabled.
+	 * Uses both player names, world, and the current game tick as seed material.
+	 */
+	private void maybeGenerateFightId()
+	{
+		if (fightIdGenerated || !CONFIG.uploadFightsToPvpHub())
+		{
+			return;
+		}
+
+		if (competitor.getName() != null && opponent.getName() != null)
+		{
+			if (initialTime == 0)
+			{
+				initialTime = lastFightTime;
+			}
+			fightId = FightIdGenerator.generateFightId(
+				competitor.getName(),
+				opponent.getName(),
+				world,
+				initialTime
+			);
+			fightIdGenerated = true;
 		}
 	}
 

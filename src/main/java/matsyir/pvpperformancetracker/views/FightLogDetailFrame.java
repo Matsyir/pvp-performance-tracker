@@ -48,6 +48,7 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
+import matsyir.pvpperformancetracker.models.RingData;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
@@ -85,6 +86,11 @@ class FightLogDetailFrame extends JFrame
 
 	// this is a regular fightLogDetailFrame, for a normal non-merged fight.
 	FightLogDetailFrame(FightPerformance fight, FightLogEntry log, int rowIdx, Point location)
+	{
+		this(fight, log, null, rowIdx, location);
+	}
+
+	FightLogDetailFrame(FightPerformance fight, FightLogEntry log, FightLogEntry defenderLog, int rowIdx, Point location)
 	{
 		super("Fight Log Details - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
 			+ " on world " + fight.getWorld());
@@ -258,18 +264,23 @@ class FightLogDetailFrame extends JFrame
 		// equipment stats line (stab attack, slash attack, etc)
 		JPanel equipmentStatsLine = new JPanel(new BorderLayout());
 		JLabel attackerStatsLabel = new JLabel();
-		PLUGIN.getClientThread().invokeLater(() ->
-			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear())));
+		PLUGIN.getClientThread().invokeLater(() -> {
+			RingData ringUsed = log.getAttackerRingItemId() != null ? RingData.fromId(log.getAttackerRingItemId()) : CONFIG.ringChoice();
+			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear(), log.getAttackerAmmoItemId(), ringUsed));
+		});
 		equipmentStatsLine.add(attackerStatsLabel, BorderLayout.WEST);
 
 		JLabel defenderStatsLabel = new JLabel();
-		PLUGIN.getClientThread().invokeLater(() ->
-			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear())));
+		PLUGIN.getClientThread().invokeLater(() -> {
+			RingData ringUsed = (defenderLog != null && defenderLog.getAttackerRingItemId() != null) ? RingData.fromId(defenderLog.getAttackerRingItemId()) : CONFIG.ringChoice();
+			Integer ammoId = (defenderLog != null) ? defenderLog.getAttackerAmmoItemId() : null;
+			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear(), ammoId, ringUsed));
+		});
 		equipmentStatsLine.add(defenderStatsLabel, BorderLayout.EAST);
 
 		JPanel equipmentRenderLine = new JPanel(new BorderLayout());
-		JPanel attackerEquipmentRender = getEquipmentRender(log.getAttackerGear());
-		JPanel defenderEquipmentRender = getEquipmentRender(log.getDefenderGear());
+		JPanel attackerEquipmentRender = getEquipmentRender(log.getAttackerGear(), log, true);
+		JPanel defenderEquipmentRender = getEquipmentRender(log.getDefenderGear(), defenderLog != null ? defenderLog : log, defenderLog != null);
 		equipmentRenderLine.add(attackerEquipmentRender, BorderLayout.WEST);
 		equipmentRenderLine.add(defenderEquipmentRender, BorderLayout.EAST);
 
@@ -297,7 +308,7 @@ class FightLogDetailFrame extends JFrame
 	// extra-detailed frame for a merged fight, which has both an attacker and defender log for each attack
 	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, int rowIdx, Point location)
 	{
-		this(fight, attackerLog, rowIdx, location);
+		this((FightPerformance) fight, attackerLog, defenderLog, rowIdx, location);
 
 		// attacker lvls
 		CombatLevels aLvls = attackerLog.getAttackerLevels();
@@ -337,7 +348,7 @@ class FightLogDetailFrame extends JFrame
 		});
 	}
 
-	private JPanel getEquipmentRender(int[] itemIds)
+	private JPanel getEquipmentRender(int[] itemIds, FightLogEntry log, boolean isAttacker)
 	{
 		JPanel equipmentRender = new JPanel();
 		equipmentRender.setLayout(new BoxLayout(equipmentRender, BoxLayout.Y_AXIS));
@@ -360,12 +371,25 @@ class FightLogDetailFrame extends JFrame
 		capeLine.add(cape, BorderLayout.WEST);
 		capeLine.add(amulet, BorderLayout.CENTER);
 
-		// ammo: get config's ammo for current weapon
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(itemIds[KitType.WEAPON.getIndex()])));
-		if (weaponAmmo != null)
+		// ammo: use local-player equipped ammo when this attack was performed by us; otherwise fall back to inferred weapon ammo in config
+		int ammoId = -1;
+		if (isAttacker && log.getAttackerAmmoItemId() != null && log.getAttackerAmmoItemId() > 0)
+		{
+			ammoId = log.getAttackerAmmoItemId();
+		}
+		else
+		{
+			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(itemIds[KitType.WEAPON.getIndex()])));
+			if (weaponAmmo != null)
+			{
+				ammoId = weaponAmmo.getItemId();
+			}
+		}
+
+		if (ammoId > 0)
 		{
 			JLabel ammo = new JLabel();
-			PLUGIN.addItemToLabelIfValid(ammo, weaponAmmo, false, null);
+			PLUGIN.addItemToLabelIfValid(ammo, ammoId, false, null);
 			capeLine.add(ammo, BorderLayout.EAST);
 		}
 
@@ -388,8 +412,18 @@ class FightLogDetailFrame extends JFrame
 		PLUGIN.addItemToLabelIfValid(gloves, itemIds[KitType.HANDS.getIndex()]);
 		JLabel boots = new JLabel();
 		PLUGIN.addItemToLabelIfValid(boots, itemIds[KitType.BOOTS.getIndex()]);
+		
 		JLabel ring = new JLabel();
-		PLUGIN.addItemToLabelIfValid(ring, CONFIG.ringChoice().getItemId(), false, () -> {
+		int ringId = -1;
+		if (isAttacker && log.getAttackerRingItemId() != null && log.getAttackerRingItemId() > 0)
+		{
+			ringId = log.getAttackerRingItemId();
+		}
+		else
+		{
+			ringId = CONFIG.ringChoice().getItemId();
+		}
+		PLUGIN.addItemToLabelIfValid(ring, ringId, false, () -> {
 			validate();
 			repaint();
 		});
@@ -409,13 +443,43 @@ class FightLogDetailFrame extends JFrame
 	//
 	String getItemEquipmentStatsString(int[] equipment)
 	{
-		ItemEquipmentStats stats = PvpDamageCalc.calculateBonusesToStats(equipment);
-		// ammo: get config's ammo for current weapon
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])));
+		return getItemEquipmentStatsString(equipment, null, CONFIG.ringChoice());
+	}
+
+	String getItemEquipmentStatsString(int[] equipment, Integer ammoId, RingData ringUsed)
+	{
+		int[] bonuses = PvpDamageCalc.calculateBonuses(equipment, ringUsed);
+		ItemEquipmentStats stats = ItemEquipmentStats.builder()
+			.astab(bonuses[0])	// 0
+			.aslash(bonuses[1])	// 1
+			.acrush(bonuses[2])	// 2
+			.amagic(bonuses[3])	// 3
+			.arange(bonuses[4])	// 4
+			.dstab(bonuses[5])		// 5
+			.dslash(bonuses[6])		// 6
+			.dcrush(bonuses[7])		// 7
+			.dmagic(bonuses[8])		// 8
+			.drange(bonuses[9])		// 9
+			.str(bonuses[10])	// 10
+			.rstr(bonuses[11]) 	// 11
+			.mdmg(bonuses[12])	// 12
+			.build();
 		int ammoRangeStr = 0;
-		if (weaponAmmo != null)
+		if (ammoId != null && ammoId > 0)
 		{
-			ammoRangeStr = weaponAmmo.getRangeStr();
+			RangeAmmoData ammoData = RangeAmmoData.fromId(ammoId);
+			if (ammoData != null)
+			{
+				ammoRangeStr = ammoData.getRangeStr();
+			}
+		}
+		else
+		{
+			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])));
+			if (weaponAmmo != null)
+			{
+				ammoRangeStr = weaponAmmo.getRangeStr();
+			}
 		}
 		String sep = "<br/>&nbsp;&nbsp;";
 		return "<html><strong>Attack bonus</strong>" + sep +

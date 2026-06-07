@@ -132,6 +132,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return RobeHitFilter.EITHER;
 	}
 
+	@ConfigItem(
+		keyName = "uploadFightsToPvpHub",
+		name = "Upload Fights to PvP-Hub.com",
+		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end.",
+		position = 1200
+	)
+	default boolean uploadFightsToPvpHub()
+	{
+		return false;
+	}
+
 	// ================================= Overlay =================================
 
 	@ConfigItem(
