@@ -132,6 +132,18 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return RobeHitFilter.EITHER;
 	}
 
+	@ConfigItem(
+		keyName = "uploadFightsToPvpHub",
+		name = "Upload Fights to PvP-Hub.com",
+		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end.",
+		warning = "This feature will submit your RSN, fight logs, and IP address to a 3rd-party server not controlled or verified by Runelite developers.",
+		position = 1200
+	)
+	default boolean uploadFightsToPvpHub()
+	{
+		return false;
+	}
+
 	// ================================= Overlay =================================
 
 	@ConfigItem(
@@ -534,14 +546,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.
-	String updateMsgKey = "updateMsgShown1_7_2";
+	String updateMsgKey = "updateMsgShown1_7_4";
 	@ConfigItem(
 		keyName = updateMsgKey,
 		name = "Update Msg flag for most recent update",
 		description = "Tracks if the update chat message for the most recent update has been shown.",
 		hidden = true
 	)
-	default boolean updateMsgShown1_7_2()
+	default boolean updateMsgShown1_7_4()
 	{
 		return false;
 	}

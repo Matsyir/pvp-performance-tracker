@@ -41,6 +41,39 @@ public interface RangeAmmoData
 		StrongBoltAmmo.OPAL_DRAGON_BOLTS_E
 	};
 
+	static RangeAmmoData fromId(int itemId)
+	{
+		for (BoltAmmo ammo : BoltAmmo.values())
+		{
+			if (ammo.getItemId() == itemId)
+			{
+				return ammo;
+			}
+		}
+		for (StrongBoltAmmo ammo : StrongBoltAmmo.values())
+		{
+			if (ammo.getItemId() == itemId)
+			{
+				return ammo;
+			}
+		}
+		for (DartAmmo ammo : DartAmmo.values())
+		{
+			if (ammo.getItemId() == itemId)
+			{
+				return ammo;
+			}
+		}
+		for (OtherAmmo ammo : OtherAmmo.values())
+		{
+			if (ammo.getItemId() == itemId)
+			{
+				return ammo;
+			}
+		}
+		return null;
+	}
+
 	int getItemId(); // itemIDs used for DISPLAYING bolts, not getting them.
 	int getRangeStr();
 	double getBonusMaxHit(int rangeLevel); // damage bonus from bolt specs.
@@ -55,8 +88,8 @@ public interface RangeAmmoData
 	enum BoltAmmo implements RangeAmmoConfigData
 	{
 		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, 1, .2, 0.06),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015);
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9244, 117, 1, .2, 0.06),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9243, 105, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = { EquipmentData.RUNE_CROSSBOW };
 
@@ -102,11 +135,11 @@ public interface RangeAmmoData
 	enum StrongBoltAmmo implements RangeAmmoConfigData
 	{
 		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9281, 117, 1, .2, 0.06),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9277, 105, 1.015),
-		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 1668, 122, 1, .2, .06),
-		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 8729, 122, 1, .1, .05),
-		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 1690, 122, 1.015);
+		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9244, 117, 1, .2, 0.06),
+		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9243, 105, 1.015),
+		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 21948, 122, 1, .2, .06),
+		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 21932, 122, 1, .1, .05),
+		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 21946, 122, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = {
 			EquipmentData.ARMADYL_CROSSBOW,
@@ -193,8 +226,8 @@ public interface RangeAmmoData
 	@Getter
 	public enum OtherAmmo implements RangeAmmoData
 	{
-		AMETHYST_ARROWS(4770, 55),
-		DRAGON_ARROW(11216, 60),
+		AMETHYST_ARROWS(21326, 55),
+		DRAGON_ARROW(11212, 60),
 		DRAGON_JAVELIN(19484, 150),
 		BOLT_RACK(4740, 55),
 		MOONLIGHT_ANTLER_BOLTS(28878, 60);

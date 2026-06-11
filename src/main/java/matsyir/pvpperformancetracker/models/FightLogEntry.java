@@ -35,8 +35,12 @@ import lombok.Getter;
 import lombok.Setter;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
@@ -167,6 +171,15 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 	@Expose
 	@Getter
+	@SerializedName("R")
+	private Integer attackerRingItemId;
+	@Expose
+	@Getter
+	@SerializedName("A")
+	private Integer attackerAmmoItemId;
+
+	@Expose
+	@Getter
 	private int expectedHits; // Declare expectedHits field
 
 	@Expose
@@ -247,6 +260,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
+		this.attackerRingItemId = getLocalPlayerRingItemId(attacker);
+		this.attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
 
 		// defender data
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
@@ -269,6 +284,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;
+		this.attackerRingItemId = getLocalPlayerRingItemId(PLUGIN.getClient().getLocalPlayer());
+		this.attackerAmmoItemId = getLocalPlayerAmmoItemId(PLUGIN.getClient().getLocalPlayer());
 		this.actualDamageSum = 0;
 	}
 
@@ -294,6 +311,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.defenderElyProc = e.defenderElyProc;
 		this.defenderSotdMeleeReductionProc = e.defenderSotdMeleeReductionProc;
 		this.attackerLevels = e.attackerLevels;
+		this.attackerRingItemId = e.attackerRingItemId;
+		this.attackerAmmoItemId = e.attackerAmmoItemId;
 
 		// defender data
 		this.defenderGear = e.defenderGear;
@@ -302,6 +321,68 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(e.animationData);
 		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
+	}
+
+	private boolean isLocalPlayer(Player player)
+	{
+		if (player == null)
+		{
+			return false;
+		}
+		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		if (localPlayer == null || localPlayer.getName() == null || player.getName() == null)
+		{
+			return false;
+		}
+
+		String localName = localPlayer.getName().replace("\u00a0", " ").replace("_", " ").trim().toUpperCase();
+		String playerName = player.getName().replace("\u00a0", " ").replace("_", " ").trim().toUpperCase();
+
+		return localName.equals(playerName);
+	}
+
+	private Integer getLocalPlayerRingItemId(Player attacker)
+	{
+		if (!isLocalPlayer(attacker))
+		{
+			return null;
+		}
+
+		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
+		if (worn == null)
+		{
+			return null;
+		}
+
+		Item ring = worn.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+		if (ring == null || ring.getId() <= 0)
+		{
+			return null;
+		}
+
+		return ring.getId();
+	}
+
+	private Integer getLocalPlayerAmmoItemId(Player attacker)
+	{
+		if (!isLocalPlayer(attacker))
+		{
+			return null;
+		}
+
+		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
+		if (worn == null)
+		{
+			return null;
+		}
+
+		Item ammo = worn.getItem(EquipmentInventorySlot.AMMO.getSlotIdx());
+		if (ammo == null || ammo.getId() <= 0)
+		{
+			return null;
+		}
+
+		return ammo.getId();
 	}
 
 	// randomized entry used for testing

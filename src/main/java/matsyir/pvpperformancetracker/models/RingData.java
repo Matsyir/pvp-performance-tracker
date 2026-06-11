@@ -60,4 +60,16 @@ public enum RingData
 	{
 		return name;
 	}
+
+	public static RingData fromId(int itemId)
+	{
+		for (RingData ring : values())
+		{
+			if (ring.itemId == itemId)
+			{
+				return ring;
+			}
+		}
+		return NONE;
+	}
 }

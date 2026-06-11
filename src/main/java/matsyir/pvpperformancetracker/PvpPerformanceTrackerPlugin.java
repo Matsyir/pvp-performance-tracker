@@ -63,6 +63,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.controllers.PvpHubUploader;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
@@ -110,6 +111,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
+import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.ArrayUtils;
 
 
@@ -123,7 +125,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.3";
+	public static final String PLUGIN_VERSION = "1.7.4";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -210,6 +212,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
+	private OkHttpClient httpClient;
 
 	// #################################################################################################################
 	// ##################################### Core RL plugin functions & RL Events ######################################
@@ -263,6 +266,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		overlayManager.add(overlay);
 
 		spriteCache = new HashMap<>(); // prepare sprite cache
+		
+		httpClient = new OkHttpClient();
 
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
@@ -1169,16 +1174,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.2 Update: " +
-				"Track ely damage reduction & SOTD spec melee damage reduction. " +
-				"Improved KO chance for dragon claws & dark bow special attacks. " +
-				"Scorching bow now uses dragon arrows. (+ 1.7.3 game data hotfix & LMS adjustments).")
+			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.4 Update: New OPT-IN feature which automatically uploads " +
+				"your fight data to a PvP Hub website, where it can be publicly viewed by anyone. This is disabled by default - " +
+				"the plugin remains entirely client-side if you do not manually opt-into this feature.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
 		// remove any old unnecessary flags after updating
 		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
+		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_2");
 	}
 
 	private void update(String oldVersion)
@@ -1289,6 +1294,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (currentFight.fightStarted())
 		{
 			addToFightHistory(currentFight);
+
+			// Upload to PvP-Hub if enabled and a fight ID was generated
+			if (CONFIG.uploadFightsToPvpHub() && currentFight.getFightId() != null
+					&& !currentFight.getFightId().isEmpty())
+			{
+				final FightPerformance fightToUpload = currentFight;
+				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient));
+			}
 		}
 		currentFight = null;
 		hitsplatBuffer.clear();
