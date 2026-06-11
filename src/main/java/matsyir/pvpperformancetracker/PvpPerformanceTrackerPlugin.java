@@ -200,7 +200,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private Gson injectedGson;
 
 	@Inject
-	private HiscoreManager hiscoreManager; // Added injection
+	private HiscoreManager hiscoreManager;
+
+	@Inject
+	private OkHttpClient httpClient;
 
 	// custom fields/props
 	public ArrayList<FightPerformance> fightHistory;
@@ -212,7 +215,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
-	private OkHttpClient httpClient;
 
 	// #################################################################################################################
 	// ##################################### Core RL plugin functions & RL Events ######################################
@@ -266,8 +268,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		overlayManager.add(overlay);
 
 		spriteCache = new HashMap<>(); // prepare sprite cache
-		
-		httpClient = new OkHttpClient();
 
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
@@ -1175,7 +1175,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.4 Update: New OPT-IN feature which automatically uploads " +
-				"your fight data to a PvP Hub website, where it can be publicly viewed by anyone. This is disabled by default - " +
+				"your fight data to the PvP Hub website, where it can be publicly viewed by anyone. This is disabled by default - " +
 				"the plugin remains entirely client-side if you do not manually opt-into this feature.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
