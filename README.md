@@ -16,7 +16,7 @@ Massive thanks to [all other contributors](https://github.com/Matsyir/pvp-perfor
 # PvP-Hub
 
 Generously created & hosted by [LogicalSolutions](https://github.com/LogicalSoIutions), and introduced in 1.7.4, this
-new opt-in feature automatically uploads all of your fights to the PvP-Hub website, where it can be publicly viewed by
+new opt-in feature automatically uploads all of your fights to the [PvP-Hub website](https://osrs.pvp-hub.com), where it can be publicly viewed by
 anyone. This is disabled by default - the plugin remains entirely client-side if you do not manually opt-into this
 feature, and there will be a warning popup when you attempt to do so.
 
@@ -38,7 +38,7 @@ This feature is completely optional.
 
 - The setting is disabled by default.
 - If the checkbox is disabled, no data is sent to the server. If it is enabled, data is only sent to the server when you
-  finish a fight. This data includes your fight data, RSN, and a uniquely generated fight ID.
+  finish a fight. This data includes your fight data, RSN, IP, and a uniquely generated fight ID.
 - If you enable it, and your opponent also has it enabled, the website can automatically use Advanced Analysis.
 - Advanced Analysis lets you view the full fight, including more accurate calculations, extra details such as ammo,
   rings used, and more.
