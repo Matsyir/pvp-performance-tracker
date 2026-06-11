@@ -1174,16 +1174,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.2 Update: " +
-				"Track ely damage reduction & SOTD spec melee damage reduction. " +
-				"Improved KO chance for dragon claws & dark bow special attacks. " +
-				"Scorching bow now uses dragon arrows. (+ 1.7.3 game data hotfix & LMS adjustments).")
+			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.4 Update: New OPT-IN feature which automatically uploads " +
+				"your fight data to a PvP Hub website, where it can be publicly viewed by anyone. This is disabled by default - " +
+				"the plugin remains entirely client-side if you do not manually opt-into this feature.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
 		// remove any old unnecessary flags after updating
 		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
+		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_2");
 	}
 
 	private void update(String oldVersion)
@@ -1293,6 +1293,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// add fight to fight history if it actually started
 		if (currentFight.fightStarted())
 		{
+			addToFightHistory(currentFight);
+
 			// Upload to PvP-Hub if enabled and a fight ID was generated
 			if (CONFIG.uploadFightsToPvpHub() && currentFight.getFightId() != null
 					&& !currentFight.getFightId().isEmpty())
@@ -1300,8 +1302,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				final FightPerformance fightToUpload = currentFight;
 				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient));
 			}
-
-			addToFightHistory(currentFight);
 		}
 		currentFight = null;
 		hitsplatBuffer.clear();
