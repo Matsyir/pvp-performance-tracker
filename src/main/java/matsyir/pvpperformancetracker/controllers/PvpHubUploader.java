@@ -25,6 +25,8 @@
 package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
@@ -140,12 +142,25 @@ public class PvpHubUploader
 
 	static final class FightUploadPayload
 	{
+		@Expose
+		@SerializedName("c")
 		final Fighter c;
+		@Expose
+		@SerializedName("o")
 		final Fighter o;
+		@Expose
+		@SerializedName("t")
 		final long t;
+		@Expose
+		@SerializedName("fightID")
 		final String fightID;
+		@Expose
+		@SerializedName("l")
 		final matsyir.pvpperformancetracker.models.FightType l;
+		@Expose
+		@SerializedName("w")
 		final int w;
+		@Expose
 		final int publicDelaySeconds;
 
 		FightUploadPayload(FightPerformance fight, int publicDelaySeconds)
