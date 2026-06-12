@@ -47,6 +47,33 @@ public interface PvpPerformanceTrackerConfig extends Config
 		EITHER
 	}
 
+	enum PvpHubVisibilityDelay
+	{
+		RANDOM_6_20("Random (6-20 minutes)", 0),
+		INSTANT("Instant", 0),
+		MINUTES_15("15 minutes", 15 * 60),
+		MINUTES_30("30 minutes", 30 * 60),
+		HOUR_1("1 hour", 60 * 60),
+		HOUR_2("2 hours", 2 * 60 * 60);
+
+		@Getter
+		private final String displayName;
+		@Getter
+		private final int delaySeconds;
+
+		PvpHubVisibilityDelay(String displayName, int delaySeconds)
+		{
+			this.displayName = displayName;
+			this.delaySeconds = delaySeconds;
+		}
+
+		@Override
+		public String toString()
+		{
+			return displayName;
+		}
+	}
+
 	int LEVEL_MIN = 1;
 	int LEVEL_MAX = 120;
 
@@ -135,13 +162,26 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "uploadFightsToPvpHub",
 		name = "Upload Fights to PvP-Hub.com",
-		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end.",
+		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end." +
+			"<br>Public visibility follows the PvP-Hub upload delay setting below.",
 		warning = "This feature will submit your RSN, fight logs, and IP address to a 3rd-party server not controlled or verified by Runelite developers.",
 		position = 1200
 	)
 	default boolean uploadFightsToPvpHub()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "pvpHubVisibilityDelay",
+		name = "PvP-Hub Upload Delay",
+		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub." +
+			"<br>Random uses a fresh 6-20 minute delay for each uploaded fight.",
+		position = 1210
+	)
+	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
+	{
+		return PvpHubVisibilityDelay.RANDOM_6_20;
 	}
 
 	// ================================= Overlay =================================

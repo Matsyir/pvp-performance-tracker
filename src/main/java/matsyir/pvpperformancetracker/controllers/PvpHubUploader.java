@@ -25,7 +25,9 @@
 package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.Gson;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -36,6 +38,8 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+
 /**
  * Handles uploading fight data to PvP-Hub.com.
  * Uploads are asynchronous and failures are silently logged.
@@ -45,6 +49,8 @@ public class PvpHubUploader
 {
 	private static final String UPLOAD_URL = "https://osrs.pvp-hub.com/api/fights";
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+	static final int RANDOM_DELAY_MIN_SECONDS = 6 * 60;
+	static final int RANDOM_DELAY_MAX_SECONDS = 20 * 60;
 
 	/**
 	 * Asynchronously uploads a completed fight to PvP-Hub.com.
@@ -65,7 +71,8 @@ public class PvpHubUploader
 		String json;
 		try
 		{
-			json = gson.toJson(fight, FightPerformance.class);
+			int publicDelaySeconds = resolvePublicDelaySeconds(CONFIG.pvpHubVisibilityDelay());
+			json = serializeFightUpload(fight, gson, publicDelaySeconds);
 		}
 		catch (Exception e)
 		{
@@ -112,5 +119,44 @@ public class PvpHubUploader
 				}
 			}
 		});
+	}
+
+	static int resolvePublicDelaySeconds(PvpPerformanceTrackerConfig.PvpHubVisibilityDelay delayMode)
+	{
+		PvpPerformanceTrackerConfig.PvpHubVisibilityDelay safeDelayMode =
+			delayMode != null ? delayMode : PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20;
+		if (safeDelayMode == PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20)
+		{
+			return ThreadLocalRandom.current().nextInt(RANDOM_DELAY_MIN_SECONDS, RANDOM_DELAY_MAX_SECONDS + 1);
+		}
+
+		return safeDelayMode.getDelaySeconds();
+	}
+
+	static String serializeFightUpload(FightPerformance fight, Gson gson, int publicDelaySeconds)
+	{
+		return gson.toJson(new FightUploadPayload(fight, publicDelaySeconds));
+	}
+
+	static final class FightUploadPayload
+	{
+		final Fighter c;
+		final Fighter o;
+		final long t;
+		final String fightID;
+		final matsyir.pvpperformancetracker.models.FightType l;
+		final int w;
+		final int publicDelaySeconds;
+
+		FightUploadPayload(FightPerformance fight, int publicDelaySeconds)
+		{
+			this.c = fight.competitor;
+			this.o = fight.opponent;
+			this.t = fight.lastFightTime;
+			this.fightID = fight.getFightId();
+			this.l = fight.getFightType();
+			this.w = fight.getWorld();
+			this.publicDelaySeconds = publicDelaySeconds;
+		}
 	}
 }
