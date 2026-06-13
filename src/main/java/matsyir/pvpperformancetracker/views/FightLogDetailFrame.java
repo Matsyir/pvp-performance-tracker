@@ -39,7 +39,6 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
-import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
@@ -305,48 +304,6 @@ class FightLogDetailFrame extends JFrame
 		this.setVisible(true);
 	}
 
-	// extra-detailed frame for a merged fight, which has both an attacker and defender log for each attack
-	FightLogDetailFrame(AnalyzedFightPerformance fight, FightLogEntry attackerLog, FightLogEntry defenderLog, int rowIdx, Point location)
-	{
-		this((FightPerformance) fight, attackerLog, defenderLog, rowIdx, location);
-
-		// attacker lvls
-		CombatLevels aLvls = attackerLog.getAttackerLevels();
-		if (aLvls == null)
-		{
-			log.info("Fight Analysis: attackerLvls are null! This shouldn't happen.");
-			aLvls = fight.fightType.getCombatLevelsForType();
-		}
-		attackerAtkLvl.setText(String.valueOf(aLvls.atk));
-		attackerStrLvl.setText(String.valueOf(aLvls.str));
-		attackerDefLvl.setText(String.valueOf(aLvls.def));
-		attackerRangeLvl.setText(String.valueOf(aLvls.range));
-		attackerMageLvl.setText(String.valueOf(aLvls.mage));
-		attackerHpLvl.setText(String.valueOf(aLvls.hp));
-
-		// defender lvls
-		CombatLevels dLvls = defenderLog.getAttackerLevels();
-		if (dLvls == null)
-		{
-			log.info("Fight Analysis: defenderLvls are null! This shouldn't happen.");
-			dLvls = fight.fightType.getCombatLevelsForType();
-		}
-		defenderAtkLvl.setText(String.valueOf(dLvls.atk));
-		defenderStrLvl.setText(String.valueOf(dLvls.str));
-		defenderDefLvl.setText(String.valueOf(dLvls.def));
-		defenderRangeLvl.setText(String.valueOf(dLvls.range));
-		defenderMageLvl.setText(String.valueOf(dLvls.mage));
-		defenderHpLvl.setText(String.valueOf(dLvls.hp));
-
-		defenderOffensiveLabel.setText("");
-		PLUGIN.addSpriteToLabelIfValid(defenderOffensiveLabel, defenderLog.getAttackerOffensivePray());
-
-		attackerOffensiveLabel.setText("");
-		PLUGIN.addSpriteToLabelIfValid(attackerOffensiveLabel, attackerLog.getAttackerOffensivePray(), () -> {
-			validate();
-			repaint();
-		});
-	}
 
 	private JPanel getEquipmentRender(int[] itemIds, FightLogEntry log, boolean isAttacker)
 	{

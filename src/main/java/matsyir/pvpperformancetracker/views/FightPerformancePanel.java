@@ -50,7 +50,6 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
-import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -90,7 +89,6 @@ public class FightPerformancePanel extends JPanel
 				new EmptyBorder(3, 5, 3, 5)));
 	}
 
-	private AnalyzedFightPerformance analyzedFight;
 	private boolean showBorders;
 
 	// Panel to display previous fight performance data.
@@ -243,7 +241,7 @@ public class FightPerformancePanel extends JPanel
 					return;
 				}
 
-				FightLogFrame.createFightLogFrame(fight, analyzedFight, getRootPane());
+				FightLogFrame.createFightLogFrame(fight, getRootPane());
 			}
 		};
 		addMouseListener(fightPerformanceMouseListener);
@@ -258,7 +256,7 @@ public class FightPerformancePanel extends JPanel
 
 		// Create "Show fight log" menu (same action as left click)
 		final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
-		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, analyzedFight, getRootPane()));
+		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, getRootPane()));
 
 		// Create "Show attack summary" menu
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
@@ -268,10 +266,6 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
 		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
 		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
-
-		final JMenuItem openFightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
-		openFightAnalysis.addActionListener(e -> new FightAnalysisFrame(fight, this.getRootPane()));
-		openFightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
 
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFight = new JMenuItem("Remove Fight");
@@ -288,7 +282,6 @@ public class FightPerformancePanel extends JPanel
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
 		popupMenu.add(copyFight);
-		popupMenu.add(openFightAnalysis);
 		popupMenu.add(removeFight);
 		setComponentPopupMenu(popupMenu);
 
@@ -302,13 +295,6 @@ public class FightPerformancePanel extends JPanel
 		add(fightPanel, BorderLayout.NORTH);
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
-	}
-
-	public FightPerformancePanel(AnalyzedFightPerformance aFight)
-	{
-		this(aFight, false, true, true, aFight.getOpposingFight());
-
-		this.analyzedFight = aFight;
 	}
 
 	private void setFullBackgroundColor(Color color)

@@ -186,13 +186,6 @@ class Fighter
 		pendingAttacks = new LinkedList<>();
 	}
 
-	// Fighter for AnalyzedFightPerformance
-	public Fighter(FightPerformance fight, String name)
-	{
-		this(name);
-		pvpDamageCalc = new PvpDamageCalc(fight);
-	}
-
 	// add an attack to the counters depending if it is successful or not.
 	// also update the success rate with the new counts.
 	// Used for regular, ongoing fights
@@ -344,12 +337,6 @@ class Fighter
 		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
 	}
 
-	// used to manually build Fighters in AnalyzedFightPerformance.
-	public void setTotalGhostBarrageStats(int ghostBarrageCount, double ghostBarrageExpectedDamage)
-	{
-		this.ghostBarrageCount = ghostBarrageCount;
-		this.ghostBarrageExpectedDamage = ghostBarrageExpectedDamage;
-	}
 
 	// this is to be used from the TotalStatsPanel which saves a total of multiple fights.
 	public void addAttacks(int success, int total, double expectedDamage, int damageDealt, int totalMagicAttackCount, int magicHitCount, double magicHitCountExpected, int offensivePraySuccessCount, int hpHealed, int ghostBarrageCount, double ghostBarrageExpectedDamage)

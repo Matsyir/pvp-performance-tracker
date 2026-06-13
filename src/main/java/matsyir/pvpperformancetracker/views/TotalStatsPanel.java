@@ -229,16 +229,10 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
 
-		// Create "Fight Analysis (Advanced)" popup menu/context menu item
-		final JMenuItem fightAnalysis = new JMenuItem("Fight Analysis (Advanced)");
-		fightAnalysis.addActionListener(e -> new FightAnalysisFrame(TotalStatsPanel.this.getRootPane()));
-		fightAnalysis.setForeground(ColorScheme.BRAND_ORANGE);
-
 		contextMenu.add(viewWiki);
 		contextMenu.add(removeAllFights);
 		contextMenu.add(exportFightHistory);
 		contextMenu.add(importFightHistory);
-		contextMenu.add(fightAnalysis);
 		setComponentPopupMenu(contextMenu);
 
 		// Now initializing all lines:

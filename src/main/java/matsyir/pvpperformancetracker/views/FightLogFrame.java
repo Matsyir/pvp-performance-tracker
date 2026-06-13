@@ -34,7 +34,6 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,7 +44,6 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import lombok.extern.slf4j.Slf4j;
-import matsyir.pvpperformancetracker.controllers.AnalyzedFightPerformance;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -80,7 +78,7 @@ public class FightLogFrame extends JFrame
 	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
-	public static JFrame createFightLogFrame(FightPerformance fight, AnalyzedFightPerformance analyzedFight, JRootPane rootPane)
+	public static JFrame createFightLogFrame(FightPerformance fight, JRootPane rootPane)
 	{
 		// destroy current frame if it exists so we only have one at a time (static field)
 		if (fightLogFrame != null)
@@ -94,11 +92,6 @@ public class FightLogFrame extends JFrame
 		if (fightLogEntries.isEmpty())
 		{
 			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
-		}
-		else if (analyzedFight != null) // if analyzed fight is set, then show an analyzed fight's fightLogFrame.
-		{
-			fightLogFrame = new FightLogFrame(analyzedFight, rootPane);
-
 		}
 		else
 		{
@@ -346,48 +339,5 @@ public class FightLogFrame extends JFrame
 
 			return this;
 		}
-	}
-
-	// initialize frame using an AnalyzedFight, in order to pass the analyzed fight data
-	// to the detailed frame.
-	private FightLogFrame(AnalyzedFightPerformance fight, JRootPane rootPane)
-	{
-		this(fight,
-			new ArrayList(fight.getAllFightLogEntries().stream()
-				.filter(FightLogEntry::isFullEntry) // send only attacker logs, and don't use the matching logs since
-				.collect(Collectors.toList())),    // those have old 'dps' values, they're only used for defender lvls/pray/etc client data
-			rootPane);
-
-		// test
-		if (new ArrayList(fight.getAllFightLogEntries().stream()
-			.filter(FightLogEntry::isFullEntry) // send only attacker logs
-			.collect(Collectors.toList())).size() != fight.getAnalyzedMatchingLogs().size())
-		{
-			log.info("FIGHT ANALYSIS: ERROR! allFightLogEntries.filter::isFullEntry different size than analyzedMatchingLogs - should not happen");
-		}
-
-		table.getSelectionModel().removeListSelectionListener(onRowSelected);
-		onRowSelected = e -> {
-			int row = table.getSelectedRow();
-
-			if (fightLogDetailFrame != null)
-			{
-				if (fightLogDetailFrame.rowIdx == row)
-				{
-					return;
-				}
-
-				fightLogDetailFrame.dispose();
-				fightLogDetailFrame = null;
-			}
-
-			fightLogDetailFrame = new FightLogDetailFrame(fight, fightLogEntries.get(row), fight.getAnalyzedMatchingLogs().get(row)[1], row,
-				new Point( // place the new detail frame roughly to the right of the fight log window.
-					this.getLocationOnScreen().x + (this.getSize().width),
-					this.getLocationOnScreen().y)
-			);
-		};
-
-		table.getSelectionModel().addListSelectionListener(onRowSelected);
 	}
 }
