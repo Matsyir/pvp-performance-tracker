@@ -38,6 +38,7 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -205,7 +206,7 @@ public class FightAnalysisFrame extends JFrame
 				}
 				catch (Exception ex)
 				{
-					ex.printStackTrace();
+					log.debug("Exception caught while drag-and-dropping main fight file into Fight Analysis window: " + Arrays.toString(ex.getStackTrace()));
 				}
 			}
 		});
@@ -238,7 +239,7 @@ public class FightAnalysisFrame extends JFrame
 				}
 				catch (Exception ex)
 				{
-					ex.printStackTrace();
+					log.debug("Exception caught while drag-and-dropping opponent fight file into Fight Analysis window: " + Arrays.toString(ex.getStackTrace()));
 				}
 			}
 		});
