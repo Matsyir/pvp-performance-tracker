@@ -49,7 +49,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	enum PvpHubVisibilityDelay
 	{
-		RANDOM_6_20("Random (6-20 minutes)", 0),
+		RANDOM_6_20("Rand: 6-20min", 0),
 		INSTANT("Instant", 0),
 		MINUTES_15("15 minutes", 15 * 60),
 		MINUTES_30("30 minutes", 30 * 60),
@@ -176,7 +176,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "pvpHubVisibilityDelay",
 		name = "PvP-Hub Upload Delay",
 		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub." +
-			"<br>Random uses a fresh 6-20 minute delay for each uploaded fight.",
+			"<br>The default \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight.",
 		position = 1210
 	)
 	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
