@@ -187,8 +187,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "hideRsnOnPvpHub",
 		name = "Hide RSN on PvP-Hub",
-		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.",
-		warning = "Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel. If you want to keep that hidden identity private, do not show the panel on stream, screenshots, or screen share.",
+		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.<br><br>" +
+			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
+			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
+			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
+		warning = "<html>Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel.<br><br>" +
+			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
+			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
+			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
 		position = 1220
 	)
 	default boolean hideRsnOnPvpHub()

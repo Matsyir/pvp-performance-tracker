@@ -348,6 +348,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "robeHitFilter":
 				recalculateAllRobeHits(true);
 				break;
+			case "uploadFightsToPvpHub":
 			case "hideRsnOnPvpHub":
 				if (panel != null)
 				{

@@ -26,17 +26,21 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -51,7 +55,8 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
 	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
-	private final JLabel pvpHubHiddenNameLabel = new JLabel();
+	private final JButton pvpHubHiddenNameBtn = new JButton();
+	private boolean hiddenNameIsVisible = false;
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -72,13 +77,15 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		add(totalStatsPanel);
 
-		JLabel pvpHubHiddenNameTitle = new JLabel("PvP-Hub Hidden Name:");
-		pvpHubHiddenNameTitle.setHorizontalAlignment(SwingConstants.LEFT);
-		pvpHubHiddenNameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-		pvpHubHiddenNameLabel.setToolTipText("Read-only name used when Hide RSN on PvP-Hub is enabled.");
-		pvpHubHiddenNameLine.add(pvpHubHiddenNameTitle, BorderLayout.WEST);
-		pvpHubHiddenNameLine.add(pvpHubHiddenNameLabel, BorderLayout.EAST);
-		pvpHubHiddenNameLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
+		pvpHubHiddenNameBtn.setBorder(new LineBorder(ColorScheme.BORDER_COLOR, 1));
+		pvpHubHiddenNameBtn.setToolTipText("Your private read-only name used when \"Hide RSN on PvP-Hub\" is enabled. Click to toggle visibility.");
+		pvpHubHiddenNameBtn.addActionListener(actionEvent -> {
+			hiddenNameIsVisible = !hiddenNameIsVisible;
+			updatePvpHubHiddenName();
+		});
+		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
 		updatePvpHubHiddenName();
 
 		add(Box.createRigidArea(new Dimension(0, 4)));
@@ -235,7 +242,8 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	{
 		boolean showHiddenName = config.uploadFightsToPvpHub() && config.hideRsnOnPvpHub();
 		pvpHubHiddenNameLine.setVisible(showHiddenName);
-		pvpHubHiddenNameLabel.setText(showHiddenName ? plugin.getPvpHubHiddenName() : "");
+		pvpHubHiddenNameBtn.setText("<html>PvP-Hub Name: " + (showHiddenName && hiddenNameIsVisible ? plugin.getPvpHubHiddenName() : "<i>(click to view)</i>"));
+
 		revalidate();
 		repaint();
 	}
