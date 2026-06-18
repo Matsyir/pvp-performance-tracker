@@ -233,7 +233,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 	public void updatePvpHubHiddenName()
 	{
-		boolean showHiddenName = config.hideRsnOnPvpHub();
+		boolean showHiddenName = config.uploadFightsToPvpHub() && config.hideRsnOnPvpHub();
 		pvpHubHiddenNameLine.setVisible(showHiddenName);
 		pvpHubHiddenNameLabel.setText(showHiddenName ? plugin.getPvpHubHiddenName() : "");
 		revalidate();
