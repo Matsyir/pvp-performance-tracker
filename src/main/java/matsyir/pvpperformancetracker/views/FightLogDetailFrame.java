@@ -49,6 +49,7 @@ import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import net.runelite.api.PlayerComposition;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
@@ -351,7 +352,7 @@ class FightLogDetailFrame extends JFrame
 		}
 
 		JLabel wep = new JLabel();
-		PLUGIN.addItemToLabelIfValid(wep, itemIds[KitType.WEAPON.getIndex()]);
+		PLUGIN.addItemToLabelIfValid(wep, itemIds[KitType.WEAPON.getIndex()], true, null, null, true);
 		JLabel torso = new JLabel();
 		PLUGIN.addItemToLabelIfValid(torso, itemIds[KitType.TORSO.getIndex()]);
 		JLabel shield = new JLabel();

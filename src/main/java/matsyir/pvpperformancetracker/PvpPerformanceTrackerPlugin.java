@@ -1656,7 +1656,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// if verifyId is true, takes in itemId directly from PlayerComposition
 	// otherwise, assume valid itemId
-	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride, boolean includeItemIdOnTooltip)
 	{
 		if (itemId > PlayerComposition.ITEM_OFFSET || !verifyId)
 		{
@@ -1670,7 +1670,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				else
 				{
 					String name = itemManager.getItemComposition(finalItemId).getName();
-					label.setToolTipText(name != null ? name : "Item Name Not Found");
+					if (name == null || name.isEmpty())
+					{
+						name = "Item Name Not Found";
+					}
+					if (includeItemIdOnTooltip)
+					{
+						name += " (ID=" + finalItemId + ")";
+					}
+					label.setToolTipText(name);
 				}
 
 				if (swingCallback != null)
@@ -1690,14 +1698,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
+	{
+		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, tooltipOverride, false);
+	}
+
 	public void addItemToLabelIfValid(JLabel label, RangeAmmoData data, boolean verifyId, Runnable swingCallback)
 	{
-		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString());
+		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString(), false);
 	}
 
 	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
 	{
-		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null);
+		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null, false);
 	}
 
 	public void addItemToLabelIfValid(JLabel label, int itemId)

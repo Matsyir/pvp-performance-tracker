@@ -30,13 +30,13 @@ import org.apache.commons.lang3.ArrayUtils;
 public enum FightType
 {
 	LMS_MAXMED(new CombatLevels(118, 118, 85, 112, 99, 99)),
-	LMS_ZERK(new CombatLevels(97, 118, 45, 112, 99, 99)),
+	LMS_ZERK(new CombatLevels(97, 118, 50, 112, 99, 99)),
 	LMS_1DEF(new CombatLevels(91, 118, 1, 112, 99, 99)),
 	NORMAL(CombatLevels.getConfigLevels());
 
-	private static FightType[] LMS_TYPES = { LMS_MAXMED, LMS_ZERK, LMS_1DEF };
+	private static final FightType[] LMS_TYPES = {LMS_MAXMED, LMS_ZERK, LMS_1DEF};
 
-	private CombatLevels combatLevelsForType;
+	private final CombatLevels combatLevelsForType;
 	FightType(CombatLevels combatLevelsForType)
 	{
 		this.combatLevelsForType = combatLevelsForType;
