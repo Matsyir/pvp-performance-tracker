@@ -164,7 +164,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Upload Fights to PvP-Hub.com",
 		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end." +
 			"<br>Public visibility follows the PvP-Hub upload delay setting below.",
-		warning = "This feature will submit your RSN, fight logs, and IP address to a 3rd-party server not controlled or verified by Runelite developers.",
+		warning = "This feature will submit fight logs and IP address to a 3rd-party server not controlled or verified by Runelite developers. Your RSN is submitted unless PvP-Hub RSN privacy is enabled.",
 		position = 1200
 	)
 	default boolean uploadFightsToPvpHub()
@@ -182,6 +182,30 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
 	{
 		return PvpHubVisibilityDelay.RANDOM_6_20;
+	}
+
+	@ConfigItem(
+		keyName = "hideRsnOnPvpHub",
+		name = "Hide RSN on PvP-Hub",
+		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.",
+		warning = "Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel. If you want to keep that hidden identity private, do not show the panel on stream, screenshots, or screen share.",
+		position = 1220
+	)
+	default boolean hideRsnOnPvpHub()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "pvpHubAnonymousId",
+		name = "PvP-Hub Anonymous ID",
+		description = "Hidden local random ID used to derive your PvP-Hub hidden name.",
+		position = 1230,
+		hidden = true
+	)
+	default String pvpHubAnonymousId()
+	{
+		return "";
 	}
 
 	// ================================= Overlay =================================
