@@ -139,7 +139,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFight(FightPerformance fight)
 	{
 		// if the nameFilter isn't blank, skip adding the fight to panels if it doesn't respect the name filter
-		if (!config.nameFilter().equals("")
+		if (!config.nameFilter().isEmpty()
 			&& (config.exactNameFilter() ?
 				!fight.getCompetitor().getName().toLowerCase().equals(config.nameFilter())
 				&& !fight.getOpponent().getName().toLowerCase().equals(config.nameFilter())
@@ -174,7 +174,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFights(ArrayList<FightPerformance> fights)
 	{
 		// if the nameFilter isn't blank, skip adding any fights to panels if they don't respect the name filter
-		if (!config.nameFilter().equals(""))
+		if (!config.nameFilter().isEmpty())
 		{
 			fights.removeIf((FightPerformance f) ->
 				// remove if the names aren't EQUAL when using "exactNameFilter",
@@ -223,7 +223,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	{
 		totalStatsPanel.reset();
 		fightHistoryContainer.removeAll();
-		if (plugin.fightHistory.size() > 0)
+		if (!plugin.fightHistory.isEmpty())
 		{
 			// create new arraylist from the main one so we can't modify the fight history
 			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
