@@ -38,11 +38,28 @@ This feature is completely optional.
 
 - The setting is disabled by default.
 - If the checkbox is disabled, no data is sent to the server. If it is enabled, data is only sent to the server when you
-  finish a fight. This data includes your fight data, RSN, IP, and a uniquely generated fight ID.
+  finish a fight. This data includes your fight data, IP, and a uniquely generated fight ID. It includes your RSN unless
+  you also enable the "Hide RSN on PvP-Hub" option.
 - If you enable it, and your opponent also has it enabled, the website can automatically use Advanced Analysis.
 - Advanced Analysis lets you view the full fight, including more accurate calculations, extra details such as ammo,
   rings used, and more.
 - If your opponent does not have the plugin, or has this setting disabled, the plugin will use your existing gear settings instead.
+
+## Hide RSN on PvP-Hub
+
+If "Hide RSN on PvP-Hub" is enabled, the plugin replaces your RSN in PvP-Hub uploads with a generated name like
+`Hidden-ABCDE`.
+
+This is not based on your device, hardware, Windows username, or RuneScape account. The plugin creates a random ID once,
+stores it locally in your RuneLite profile config, and derives the `Hidden-XXXXX` name from that ID. The hidden name is
+stable so your uploaded fights can still be grouped under the same hidden identity.
+
+Your hidden name is shown in the PvP Performance Tracker side panel while this setting is enabled. If you want to keep
+that hidden identity private, do not show the panel on stream, screenshots, or screen share.
+
+To change your hidden name, reset the stored anonymous ID. You can do this with RuneLite's native config reset button, or
+manually by removing the `pvpHubAnonymousId` value from your RuneLite profile data for this plugin. After it is removed,
+the plugin will generate a new random ID the next time the hidden name is needed.
 
 -------------------------------
 I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions &

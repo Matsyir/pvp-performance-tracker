@@ -26,6 +26,7 @@
 package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.util.concurrent.ThreadLocalRandom;
@@ -65,6 +66,19 @@ public class PvpHubUploader
 	 */
 	public static void uploadFight(FightPerformance fight, Gson gson, OkHttpClient httpClient)
 	{
+		uploadFight(fight, gson, httpClient, null);
+	}
+
+	/**
+	 * Asynchronously uploads a completed fight to PvP-Hub.com with an optional local-player hidden name.
+	 *
+	 * @param fight      the completed fight performance data
+	 * @param gson       the Gson instance configured for serialization
+	 * @param httpClient the OkHttpClient to use for the request
+	 * @param hiddenName when present, replaces the local competitor RSN in the upload payload
+	 */
+	public static void uploadFight(FightPerformance fight, Gson gson, OkHttpClient httpClient, String hiddenName)
+	{
 		if (fight == null || fight.getFightId() == null || fight.getFightId().isEmpty())
 		{
 			log.debug("Skipping PvP-Hub upload: fight or fightId is null/empty");
@@ -75,7 +89,7 @@ public class PvpHubUploader
 		try
 		{
 			int publicDelaySeconds = resolvePublicDelaySeconds(CONFIG.pvpHubVisibilityDelay());
-			json = serializeFightUpload(fight, gson, publicDelaySeconds);
+			json = serializeFightUpload(fight, gson, publicDelaySeconds, hiddenName);
 		}
 		catch (Exception e)
 		{
@@ -138,7 +152,18 @@ public class PvpHubUploader
 
 	static String serializeFightUpload(FightPerformance fight, Gson gson, int publicDelaySeconds)
 	{
-		return gson.toJson(new FightUploadPayload(fight, publicDelaySeconds));
+		return serializeFightUpload(fight, gson, publicDelaySeconds, null);
+	}
+
+	static String serializeFightUpload(FightPerformance fight, Gson gson, int publicDelaySeconds, String hiddenName)
+	{
+		JsonObject payload = gson.toJsonTree(new FightUploadPayload(fight, publicDelaySeconds)).getAsJsonObject();
+		if (hiddenName != null && !hiddenName.trim().isEmpty())
+		{
+			payload.getAsJsonObject("c").addProperty("n", hiddenName);
+		}
+
+		return gson.toJson(payload);
 	}
 
 	static final class FightUploadPayload

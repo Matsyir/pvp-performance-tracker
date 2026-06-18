@@ -70,6 +70,7 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
+import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -346,6 +347,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				break;
 			case "robeHitFilter":
 				recalculateAllRobeHits(true);
+				break;
+			case "hideRsnOnPvpHub":
+				if (panel != null)
+				{
+					panel.updatePvpHubHiddenName();
+				}
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -1300,7 +1307,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					&& !currentFight.getFightId().isEmpty())
 			{
 				final FightPerformance fightToUpload = currentFight;
-				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient));
+				final String hiddenName = config.hideRsnOnPvpHub() ? getPvpHubHiddenName() : null;
+				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName));
 			}
 		}
 		currentFight = null;
@@ -1699,5 +1707,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void updateNameFilterConfig(String newFilterName)
 	{
 		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
+	}
+
+	String getPvpHubHiddenName()
+	{
+		String anonymousId = config.pvpHubAnonymousId();
+		if (anonymousId == null || anonymousId.trim().isEmpty())
+		{
+			anonymousId = PvpHubPrivacy.createAnonymousId();
+			configManager.setConfiguration(CONFIG_KEY, "pvpHubAnonymousId", anonymousId);
+		}
+
+		return PvpHubPrivacy.hiddenNameFor(anonymousId);
 	}
 }

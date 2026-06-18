@@ -50,6 +50,8 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
+	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
+	private final JLabel pvpHubHiddenNameLabel = new JLabel();
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -69,6 +71,18 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
 		add(totalStatsPanel);
+
+		JLabel pvpHubHiddenNameTitle = new JLabel("PvP-Hub Hidden Name:");
+		pvpHubHiddenNameTitle.setHorizontalAlignment(SwingConstants.LEFT);
+		pvpHubHiddenNameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		pvpHubHiddenNameLabel.setToolTipText("Read-only name used when Hide RSN on PvP-Hub is enabled.");
+		pvpHubHiddenNameLine.add(pvpHubHiddenNameTitle, BorderLayout.WEST);
+		pvpHubHiddenNameLine.add(pvpHubHiddenNameLabel, BorderLayout.EAST);
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		updatePvpHubHiddenName();
+
+		add(Box.createRigidArea(new Dimension(0, 4)));
+		add(pvpHubHiddenNameLine);
 
 		// add filter line with label & text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
@@ -215,5 +229,14 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void setConfigWarning(boolean enable)
 	{
 		totalStatsPanel.setConfigWarning(enable);
+	}
+
+	public void updatePvpHubHiddenName()
+	{
+		boolean showHiddenName = config.hideRsnOnPvpHub();
+		pvpHubHiddenNameLine.setVisible(showHiddenName);
+		pvpHubHiddenNameLabel.setText(showHiddenName ? plugin.getPvpHubHiddenName() : "");
+		revalidate();
+		repaint();
 	}
 }
