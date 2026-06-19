@@ -49,7 +49,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	enum PvpHubVisibilityDelay
 	{
-		RANDOM_6_20("Random (6-20 minutes)", 0),
+		RANDOM_6_20("Rand: 6-20min", 0),
 		INSTANT("Instant", 0),
 		MINUTES_15("15 minutes", 15 * 60),
 		MINUTES_30("30 minutes", 30 * 60),
@@ -164,7 +164,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Upload Fights to PvP-Hub.com",
 		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end." +
 			"<br>Public visibility follows the PvP-Hub upload delay setting below.",
-		warning = "This feature will submit your RSN, fight logs, and IP address to a 3rd-party server not controlled or verified by Runelite developers.",
+		warning = "This feature will submit fight logs and IP address to a 3rd-party server not controlled or verified by Runelite developers. Your RSN is submitted unless PvP-Hub RSN privacy is enabled.",
 		position = 1200
 	)
 	default boolean uploadFightsToPvpHub()
@@ -176,12 +176,42 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "pvpHubVisibilityDelay",
 		name = "PvP-Hub Upload Delay",
 		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub." +
-			"<br>Random uses a fresh 6-20 minute delay for each uploaded fight.",
+			"<br>The default \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight.",
 		position = 1210
 	)
 	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
 	{
 		return PvpHubVisibilityDelay.RANDOM_6_20;
+	}
+
+	@ConfigItem(
+		keyName = "hideRsnOnPvpHub",
+		name = "Hide RSN on PvP-Hub",
+		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.<br><br>" +
+			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
+			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
+			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
+		warning = "<html>Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel.<br><br>" +
+			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
+			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
+			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
+		position = 1220
+	)
+	default boolean hideRsnOnPvpHub()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "pvpHubAnonymousId",
+		name = "PvP-Hub Anonymous ID",
+		description = "Hidden local random ID used to derive your PvP-Hub hidden name.",
+		position = 1230,
+		hidden = true
+	)
+	default String pvpHubAnonymousId()
+	{
+		return "";
 	}
 
 	// ================================= Overlay =================================

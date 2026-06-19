@@ -70,6 +70,7 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
+import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -346,6 +347,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				break;
 			case "robeHitFilter":
 				recalculateAllRobeHits(true);
+				break;
+			case "uploadFightsToPvpHub":
+			case "hideRsnOnPvpHub":
+				if (panel != null)
+				{
+					panel.updatePvpHubHiddenName();
+				}
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
 //			case "attackLevel":
@@ -1300,7 +1308,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					&& !currentFight.getFightId().isEmpty())
 			{
 				final FightPerformance fightToUpload = currentFight;
-				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient));
+				final String hiddenName = config.hideRsnOnPvpHub() ? getPvpHubHiddenName() : null;
+				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName));
 			}
 		}
 		currentFight = null;
@@ -1647,7 +1656,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// if verifyId is true, takes in itemId directly from PlayerComposition
 	// otherwise, assume valid itemId
-	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride, boolean includeItemIdOnTooltip)
 	{
 		if (itemId > PlayerComposition.ITEM_OFFSET || !verifyId)
 		{
@@ -1661,7 +1670,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				else
 				{
 					String name = itemManager.getItemComposition(finalItemId).getName();
-					label.setToolTipText(name != null ? name : "Item Name Not Found");
+					if (name == null || name.isEmpty())
+					{
+						name = "Item Name Not Found";
+					}
+					if (includeItemIdOnTooltip)
+					{
+						name += " (ID=" + finalItemId + ")";
+					}
+					label.setToolTipText(name);
 				}
 
 				if (swingCallback != null)
@@ -1681,14 +1698,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback, String tooltipOverride)
+	{
+		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, tooltipOverride, false);
+	}
+
 	public void addItemToLabelIfValid(JLabel label, RangeAmmoData data, boolean verifyId, Runnable swingCallback)
 	{
-		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString());
+		addItemToLabelIfValid(label, data.getItemId(), verifyId, swingCallback, data.toString(), false);
 	}
 
 	public void addItemToLabelIfValid(JLabel label, int itemId, boolean verifyId, Runnable swingCallback)
 	{
-		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null);
+		addItemToLabelIfValid(label, itemId, verifyId, swingCallback, null, false);
 	}
 
 	public void addItemToLabelIfValid(JLabel label, int itemId)
@@ -1699,5 +1721,17 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void updateNameFilterConfig(String newFilterName)
 	{
 		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
+	}
+
+	String getPvpHubHiddenName()
+	{
+		String anonymousId = config.pvpHubAnonymousId();
+		if (anonymousId == null || anonymousId.trim().isEmpty())
+		{
+			anonymousId = PvpHubPrivacy.createAnonymousId();
+			configManager.setConfiguration(CONFIG_KEY, "pvpHubAnonymousId", anonymousId);
+		}
+
+		return PvpHubPrivacy.hiddenNameFor(anonymousId);
 	}
 }

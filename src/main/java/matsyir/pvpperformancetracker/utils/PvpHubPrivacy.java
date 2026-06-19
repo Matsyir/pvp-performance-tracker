@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Matsyir <https://github.com/matsyir>
+ * Copyright (c) 2026, LogicalSolutions <https://github.com/LogicalSolutions>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,38 +22,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package matsyir.pvpperformancetracker.utils;
 
-package matsyir.pvpperformancetracker.models;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-public enum FightType
+public final class PvpHubPrivacy
 {
-	LMS_MAXMED(new CombatLevels(118, 118, 85, 112, 99, 99)),
-	LMS_ZERK(new CombatLevels(97, 118, 50, 112, 99, 99)),
-	LMS_1DEF(new CombatLevels(91, 118, 1, 112, 99, 99)),
-	NORMAL(CombatLevels.getConfigLevels());
+	private static final String HIDDEN_NAME_PREFIX = "Hidden-";
+	private static final char[] HIDDEN_NAME_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+	private static final int HIDDEN_NAME_LENGTH = 5;
 
-	private static final FightType[] LMS_TYPES = {LMS_MAXMED, LMS_ZERK, LMS_1DEF};
-
-	private final CombatLevels combatLevelsForType;
-	FightType(CombatLevels combatLevelsForType)
+	private PvpHubPrivacy()
 	{
-		this.combatLevelsForType = combatLevelsForType;
 	}
 
-	public CombatLevels getCombatLevelsForType()
+	public static String createAnonymousId()
 	{
-		if (this == NORMAL)
+		return UUID.randomUUID().toString();
+	}
+
+	public static String hiddenNameFor(String anonymousId)
+	{
+		if (anonymousId == null || anonymousId.trim().isEmpty())
 		{
-			return CombatLevels.getConfigLevels();
+			throw new IllegalArgumentException("anonymousId must not be blank");
 		}
 
-		return combatLevelsForType;
-	}
+		byte[] hash;
+		try
+		{
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			hash = digest.digest(anonymousId.trim().getBytes(StandardCharsets.UTF_8));
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			throw new RuntimeException("SHA-256 not available", e);
+		}
 
-	public boolean isLmsFight()
-	{
-		return ArrayUtils.contains(LMS_TYPES, this);
+		char[] suffix = new char[HIDDEN_NAME_LENGTH];
+		for (int i = 0; i < HIDDEN_NAME_LENGTH; i++)
+		{
+			suffix[i] = HIDDEN_NAME_CHARS[(hash[i] & 0xFF) % HIDDEN_NAME_CHARS.length];
+		}
+
+		return HIDDEN_NAME_PREFIX + new String(suffix);
 	}
 }

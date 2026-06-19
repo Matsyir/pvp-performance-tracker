@@ -26,17 +26,21 @@ package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -50,6 +54,9 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
+	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
+	private final JButton pvpHubHiddenNameBtn = new JButton();
+	private boolean hiddenNameIsVisible = false;
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -69,6 +76,20 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
 		add(totalStatsPanel);
+
+		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
+		pvpHubHiddenNameBtn.setBorder(new LineBorder(ColorScheme.BORDER_COLOR, 1));
+		pvpHubHiddenNameBtn.setToolTipText("Your private read-only name used when \"Hide RSN on PvP-Hub\" is enabled. Click to toggle visibility.");
+		pvpHubHiddenNameBtn.addActionListener(actionEvent -> {
+			hiddenNameIsVisible = !hiddenNameIsVisible;
+			updatePvpHubHiddenName();
+		});
+		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		updatePvpHubHiddenName();
+
+		add(Box.createRigidArea(new Dimension(0, 4)));
+		add(pvpHubHiddenNameLine);
 
 		// add filter line with label & text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
@@ -118,7 +139,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFight(FightPerformance fight)
 	{
 		// if the nameFilter isn't blank, skip adding the fight to panels if it doesn't respect the name filter
-		if (!config.nameFilter().equals("")
+		if (!config.nameFilter().isEmpty()
 			&& (config.exactNameFilter() ?
 				!fight.getCompetitor().getName().toLowerCase().equals(config.nameFilter())
 				&& !fight.getOpponent().getName().toLowerCase().equals(config.nameFilter())
@@ -153,7 +174,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFights(ArrayList<FightPerformance> fights)
 	{
 		// if the nameFilter isn't blank, skip adding any fights to panels if they don't respect the name filter
-		if (!config.nameFilter().equals(""))
+		if (!config.nameFilter().isEmpty())
 		{
 			fights.removeIf((FightPerformance f) ->
 				// remove if the names aren't EQUAL when using "exactNameFilter",
@@ -202,7 +223,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	{
 		totalStatsPanel.reset();
 		fightHistoryContainer.removeAll();
-		if (plugin.fightHistory.size() > 0)
+		if (!plugin.fightHistory.isEmpty())
 		{
 			// create new arraylist from the main one so we can't modify the fight history
 			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
@@ -215,5 +236,15 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 	public void setConfigWarning(boolean enable)
 	{
 		totalStatsPanel.setConfigWarning(enable);
+	}
+
+	public void updatePvpHubHiddenName()
+	{
+		boolean showHiddenName = config.uploadFightsToPvpHub() && config.hideRsnOnPvpHub();
+		pvpHubHiddenNameLine.setVisible(showHiddenName);
+		pvpHubHiddenNameBtn.setText("<html>PvP-Hub Name: " + (showHiddenName && hiddenNameIsVisible ? plugin.getPvpHubHiddenName() : "<i>(click to view)</i>"));
+
+		revalidate();
+		repaint();
 	}
 }
