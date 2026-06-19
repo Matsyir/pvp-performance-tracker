@@ -136,6 +136,7 @@ public class PvpDamageCalc
 	private int minHit = 0;
 	@Getter
 	private int maxHit = 0;
+	private double rangedExpectedProcDamage = 0;
 
 	private CombatLevels attackerLevels;
 	private CombatLevels defenderLevels;
@@ -162,6 +163,7 @@ public class PvpDamageCalc
 		accuracy = 0;
 		minHit = 0;
 		maxHit = 0;
+		rangedExpectedProcDamage = 0;
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
@@ -222,6 +224,7 @@ public class PvpDamageCalc
 		accuracy = 0;
 		minHit = 0;
 		maxHit = 0;
+		rangedExpectedProcDamage = 0;
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
@@ -430,6 +433,7 @@ public class PvpDamageCalc
 		}
 
 		averageHit = accuracy * averageSuccessfulHit * prayerModifier;
+		averageHit += rangedExpectedProcDamage * prayerModifier;
 
 		if (usingSpec && ancientGs)
 		{
@@ -506,6 +510,9 @@ public class PvpDamageCalc
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean dragonCbow = weapon == EquipmentData.DRAGON_CROSSBOW;
+		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
+		boolean opals = ArrayUtils.contains(RangeAmmoData.OPAL_BOLTS, weaponAmmo);
+		boolean skipBoltProcEffects = dragonCbow && usingSpec;
 
 		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
 
@@ -520,7 +527,20 @@ public class PvpDamageCalc
 
 		int baseDamage = (int) Math.floor(0.5 + (effectiveLevel * (rangeStrength + 64) / 640.0));
 
-		double modifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
+		double ammoModifier = weaponAmmo == null ? 1 : weaponAmmo.getDmgModifier();
+		if (!skipBoltProcEffects && diamonds)
+		{
+			// Diamond bolts guarantee accuracy on proc, so treat the extra proc damage as its own expected term.
+			rangedExpectedProcDamage = (ammoModifier - 1) * baseDamage / 2.0;
+			ammoModifier = 1;
+		}
+		else if (!skipBoltProcEffects && opals)
+		{
+			// Opal proc damage is a flat add-on to the landed hit, not a max-hit shape change.
+			rangedExpectedProcDamage = weaponAmmo.getBonusMaxHit(attackerLevels.range);
+		}
+
+		double modifier = ammoModifier;
 		modifier = ballista && usingSpec ? BALLISTA_SPEC_DMG_MODIFIER : modifier;
 		modifier = dbow && !usingSpec ? DBOW_DMG_MODIFIER : modifier;
 		modifier = dbow && usingSpec ? DBOW_SPEC_DMG_MODIFIER : modifier;
@@ -544,9 +564,10 @@ public class PvpDamageCalc
 		}
 		else // Standard Ranged Max Hit Calc
 		{
-		maxHit = weaponAmmo == null ?
-			(int) (modifier * baseDamage) :
-			(int) ((modifier * baseDamage) + weaponAmmo.getBonusMaxHit(attackerLevels.range));
+			double bonusMaxHit = weaponAmmo != null && !opals ? weaponAmmo.getBonusMaxHit(attackerLevels.range) : 0;
+			maxHit = weaponAmmo == null ?
+				(int) (modifier * baseDamage) :
+				(int) ((modifier * baseDamage) + bonusMaxHit);
 		}
 
 		// apply crystal armor bonus if using bow
