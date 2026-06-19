@@ -221,46 +221,59 @@ public enum EquipmentData
 	}
 
 	// get currently selected weapon ammo, based on weapon used & configured bolt choice.
-	public static RangeAmmoData getWeaponAmmo(EquipmentData weapon)
+	public static RangeAmmoData getWeaponAmmo(EquipmentData weapon, boolean isLmsFight)
 	{
+		RangeAmmoData wepAmmo;
+
 		if (ArrayUtils.contains(RangeAmmoData.BoltAmmo.WEAPONS_USING, weapon))
 		{
-			return PvpPerformanceTrackerPlugin.CONFIG.boltChoice();
+			wepAmmo = PvpPerformanceTrackerPlugin.CONFIG.boltChoice();
 		}
 		else if (ArrayUtils.contains(RangeAmmoData.StrongBoltAmmo.WEAPONS_USING, weapon))
 		{
-			return PvpPerformanceTrackerPlugin.CONFIG.strongBoltChoice();
+			wepAmmo = PvpPerformanceTrackerPlugin.CONFIG.strongBoltChoice();
 		}
 		else if (ArrayUtils.contains(RangeAmmoData.DartAmmo.WEAPONS_USING, weapon))
 		{
-			return PvpPerformanceTrackerPlugin.CONFIG.bpDartChoice();
+			wepAmmo = PvpPerformanceTrackerPlugin.CONFIG.bpDartChoice();
 		}
 		else if (weapon == HEAVY_BALLISTA || weapon == LIGHT_BALLISTA)
 		{
-			return RangeAmmoData.OtherAmmo.DRAGON_JAVELIN;
+			wepAmmo = RangeAmmoData.OtherAmmo.DRAGON_JAVELIN;
 		}
 		else if (weapon == DARK_BOW)
 		{
-			return RangeAmmoData.OtherAmmo.DRAGON_ARROW;
+			wepAmmo = RangeAmmoData.OtherAmmo.DRAGON_ARROW;
 		}
 		else if (weapon == KARILS_CROSSBOW)
 		{
-			return RangeAmmoData.OtherAmmo.BOLT_RACK;
+			wepAmmo = RangeAmmoData.OtherAmmo.BOLT_RACK;
 		}
 		else if (weapon == HUNTERS_SUNLIGHT_CROSSBOW)
 		{
-			return RangeAmmoData.OtherAmmo.MOONLIGHT_ANTLER_BOLTS;
+			wepAmmo = RangeAmmoData.OtherAmmo.MOONLIGHT_ANTLER_BOLTS;
 		}
 		else if (weapon == SCORCHING_BOW)
 		{
-			return RangeAmmoData.OtherAmmo.DRAGON_ARROW;
+			wepAmmo = RangeAmmoData.OtherAmmo.DRAGON_ARROW;
 		}
 		else if (weapon == MAGIC_SHORTBOW || weapon == MAGIC_SHORTBOW_I)
 		{
-			return RangeAmmoData.OtherAmmo.AMETHYST_ARROWS;
+			wepAmmo = RangeAmmoData.OtherAmmo.AMETHYST_ARROWS;
+		}
+		else
+		{
+			wepAmmo = null;
 		}
 
-		return null;
+		// if it's an LMS fight and bolts are used, force diamond bolts (e) or opal dragon bolts (e) based on weapon used.
+		if (isLmsFight)
+		{
+			wepAmmo = wepAmmo instanceof RangeAmmoData.StrongBoltAmmo ? RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E :
+				wepAmmo instanceof RangeAmmoData.BoltAmmo ? RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E : wepAmmo;
+		}
+
+		return wepAmmo;
 	}
 
 	static

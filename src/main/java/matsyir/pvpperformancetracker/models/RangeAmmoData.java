@@ -134,12 +134,12 @@ public interface RangeAmmoData
 	@Getter
 	enum StrongBoltAmmo implements RangeAmmoConfigData
 	{
-		RUNITE_BOLTS("Runite Bolts", 9169, 115, 1),
-		DRAGONSTONE_BOLTS_E("Dstone Bolts (e)", 9244, 117, 1, .2, 0.06),
-		DIAMOND_BOLTS_E("Diamond Bolts (e)", 9243, 105, 1.015),
-		DRAGONSTONE_DRAGON_BOLTS_E("Dstone DBolts (e)", 21948, 122, 1, .2, .06),
-		OPAL_DRAGON_BOLTS_E("Opal DBolts (e)", 21932, 122, 1, .1, .05),
-		DIAMOND_DRAGON_BOLTS_E("Diamond DBolts (e)", 21946, 122, 1.015);
+		RUNITE_BOLTS("(!) runite bolts", 9169, 115, 1),
+		DRAGONSTONE_BOLTS_E("(!) dstone bolts (e)", 9244, 117, 1, .2, 0.06),
+		DIAMOND_BOLTS_E("(!) diamond bolts (e)", 9243, 105, 1.015),
+		DRAGONSTONE_DRAGON_BOLTS_E("Dstone D-Bolts (e)", 21948, 122, 1, .2, .06),
+		OPAL_DRAGON_BOLTS_E("Opal D-Bolts (e)", 21932, 122, 1, .1, .05),
+		DIAMOND_DRAGON_BOLTS_E("Diamond D-Bolts (e)", 21946, 122, 1.015);
 
 		static EquipmentData[] WEAPONS_USING = {
 			EquipmentData.ARMADYL_CROSSBOW,

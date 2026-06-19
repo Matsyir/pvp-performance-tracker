@@ -30,10 +30,6 @@ import net.runelite.api.ItemID;
 @Getter
 public enum RingData
 {
-	SEERS_RING("Seers Ring", ItemID.SEERS_RING),
-	ARCHERS_RING("Archers Ring", ItemID.ARCHERS_RING),
-	BERSERKER_RING("Berserker Ring", ItemID.BERSERKER_RING),
-	RING_OF_SUFFERING("Ring of Suffering", ItemID.RING_OF_SUFFERING),
 	SEERS_RING_I("Seers Ring (i)", ItemID.SEERS_RING_I),
 	ARCHERS_RING_I("Archers Ring (i)", ItemID.ARCHERS_RING_I),
 	BERSERKER_RING_I("Berserker Ring (i)", ItemID.BERSERKER_RING_I),

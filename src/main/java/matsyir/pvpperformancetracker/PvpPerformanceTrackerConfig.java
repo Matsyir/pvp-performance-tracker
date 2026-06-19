@@ -383,7 +383,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default RingData ringChoice()
 	{
-		return RingData.BERSERKER_RING;
+		return RingData.BERSERKER_RING_I;
 	}
 
 	@ConfigItem(
@@ -401,15 +401,15 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	@ConfigItem(
 		keyName = "strongBoltChoice",
-		name = "ACB/DCB/DHCB Ammo",
-		description = "Bolts used for ACB/DCB/DHCB's expected damage calculation." +
-			"<br>LMS fights always use regular diamond (e). Dragonfire protection not accounted for.",
+		name = "DCB+ Ammo",
+		description = "Bolts used for stronger crossbow's expected damage calculation. (e.g DCB, ACB, ZCB, DHCB)" +
+			"<br>LMS fights always use opal dragon bolts(e).",
 		position = 13000,
 		section = gearAmmo
 	)
 	default RangeAmmoData.StrongBoltAmmo strongBoltChoice()
 	{
-		return RangeAmmoData.StrongBoltAmmo.DIAMOND_DRAGON_BOLTS_E;
+		return RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E;
 	}
 
 	@ConfigItem(
@@ -558,12 +558,24 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "exactNameFilter",
 		name = "Exact Name Filter",
-		description = "Makes the username filter look for an exact match (case-insensitive), rather than any name starting with the filter.",
+		description = "Makes the username filter look for an exact match (case-insensitive), rather than any name starting with the filter.<br>" +
+			"This can help reduce lag while searching, especially if you've increased your Max Rendered Fights.",
 		position = 22000
 	)
 	default boolean exactNameFilter()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "showWorldInSummary",
+		name = "Show World in Summary",
+		description = "Display the world number between names in the summary panel.",
+		position = 22500
+	)
+	default boolean showWorldInSummary()
+	{
+		return true;
 	}
 
 	@ConfigItem(
@@ -588,17 +600,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default boolean fightLogInChat()
 	{
 		return false;
-	}
-
-	@ConfigItem(
-		keyName = "showWorldInSummary",
-		name = "Show World in Summary",
-		description = "Display the world number between names in the summary panel.",
-		position = 51000
-	)
-	default boolean showWorldInSummary()
-	{
-		return true;
 	}
 
 	@ConfigItem(

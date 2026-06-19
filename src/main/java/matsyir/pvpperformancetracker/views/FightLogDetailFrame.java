@@ -49,7 +49,6 @@ import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
-import net.runelite.api.PlayerComposition;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
@@ -266,7 +265,7 @@ class FightLogDetailFrame extends JFrame
 		JLabel attackerStatsLabel = new JLabel();
 		PLUGIN.getClientThread().invokeLater(() -> {
 			RingData ringUsed = log.getAttackerRingItemId() != null ? RingData.fromId(log.getAttackerRingItemId()) : CONFIG.ringChoice();
-			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear(), log.getAttackerAmmoItemId(), ringUsed));
+			attackerStatsLabel.setText(getItemEquipmentStatsString(log.getAttackerGear(), log.getAttackerAmmoItemId(), ringUsed, fight.fightType.isLmsFight()));
 		});
 		equipmentStatsLine.add(attackerStatsLabel, BorderLayout.WEST);
 
@@ -274,13 +273,13 @@ class FightLogDetailFrame extends JFrame
 		PLUGIN.getClientThread().invokeLater(() -> {
 			RingData ringUsed = (defenderLog != null && defenderLog.getAttackerRingItemId() != null) ? RingData.fromId(defenderLog.getAttackerRingItemId()) : CONFIG.ringChoice();
 			Integer ammoId = (defenderLog != null) ? defenderLog.getAttackerAmmoItemId() : null;
-			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear(), ammoId, ringUsed));
+			defenderStatsLabel.setText(getItemEquipmentStatsString(log.getDefenderGear(), ammoId, ringUsed, fight.fightType.isLmsFight()));
 		});
 		equipmentStatsLine.add(defenderStatsLabel, BorderLayout.EAST);
 
 		JPanel equipmentRenderLine = new JPanel(new BorderLayout());
-		JPanel attackerEquipmentRender = getEquipmentRender(log.getAttackerGear(), log, true);
-		JPanel defenderEquipmentRender = getEquipmentRender(log.getDefenderGear(), defenderLog != null ? defenderLog : log, defenderLog != null);
+		JPanel attackerEquipmentRender = getEquipmentRender(log.getAttackerGear(), log, true, fight.fightType.isLmsFight());
+		JPanel defenderEquipmentRender = getEquipmentRender(log.getDefenderGear(), defenderLog != null ? defenderLog : log, defenderLog != null, fight.fightType.isLmsFight());
 		equipmentRenderLine.add(attackerEquipmentRender, BorderLayout.WEST);
 		equipmentRenderLine.add(defenderEquipmentRender, BorderLayout.EAST);
 
@@ -306,7 +305,7 @@ class FightLogDetailFrame extends JFrame
 	}
 
 
-	private JPanel getEquipmentRender(int[] itemIds, FightLogEntry log, boolean isAttacker)
+	private JPanel getEquipmentRender(int[] itemIds, FightLogEntry log, boolean isAttacker, boolean isLmsFight)
 	{
 		JPanel equipmentRender = new JPanel();
 		equipmentRender.setLayout(new BoxLayout(equipmentRender, BoxLayout.Y_AXIS));
@@ -337,7 +336,7 @@ class FightLogDetailFrame extends JFrame
 		}
 		else
 		{
-			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(itemIds[KitType.WEAPON.getIndex()])));
+			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(itemIds[KitType.WEAPON.getIndex()])), isLmsFight);
 			if (weaponAmmo != null)
 			{
 				ammoId = weaponAmmo.getItemId();
@@ -398,13 +397,7 @@ class FightLogDetailFrame extends JFrame
 		return equipmentRender;
 	}
 
-	//
-	String getItemEquipmentStatsString(int[] equipment)
-	{
-		return getItemEquipmentStatsString(equipment, null, CONFIG.ringChoice());
-	}
-
-	String getItemEquipmentStatsString(int[] equipment, Integer ammoId, RingData ringUsed)
+	String getItemEquipmentStatsString(int[] equipment, Integer ammoId, RingData ringUsed, boolean isLmsFight)
 	{
 		int[] bonuses = PvpDamageCalc.calculateBonuses(equipment, ringUsed);
 		ItemEquipmentStats stats = ItemEquipmentStats.builder()
@@ -433,7 +426,7 @@ class FightLogDetailFrame extends JFrame
 		}
 		else
 		{
-			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])));
+			RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])), isLmsFight);
 			if (weaponAmmo != null)
 			{
 				ammoRangeStr = weaponAmmo.getRangeStr();

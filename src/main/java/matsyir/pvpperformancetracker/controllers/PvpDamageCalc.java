@@ -150,7 +150,7 @@ public class PvpDamageCalc
 		this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
 		this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
 
-		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING : CONFIG.ringChoice();
+		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING_I : CONFIG.ringChoice();
 	}
 
 	// main function used to update stats during an ongoing fight
@@ -495,17 +495,10 @@ public class PvpDamageCalc
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, isLmsFight);
 		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
 		EquipmentData body = EquipmentData.fromId(fixItemId(attackerComposition[KitType.TORSO.getIndex()]));
 		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
-
-		// if it's an LMS fight and bolts are used, force diamond bolts (e) or opal dragon bolts (e) based on weapon used.
-		if (this.isLmsFight)
-		{
-			weaponAmmo = weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo ? RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E :
-				weaponAmmo instanceof RangeAmmoData.BoltAmmo ? RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E : weaponAmmo;
-		}
 
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
@@ -719,13 +712,7 @@ public class PvpDamageCalc
 
 	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon);
-		// if it's an LMS fight and bolts are used, don't use config bolt, just use diamond bolts(e)
-		if (this.isLmsFight && (weaponAmmo instanceof RangeAmmoData.BoltAmmo ||
-			weaponAmmo instanceof RangeAmmoData.StrongBoltAmmo))
-		{
-			weaponAmmo = RangeAmmoData.BoltAmmo.DIAMOND_BOLTS_E;
-		}
+		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, this.isLmsFight);
 
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 		boolean opals = ArrayUtils.contains(RangeAmmoData.OPAL_BOLTS, weaponAmmo);
