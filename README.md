@@ -3,6 +3,8 @@
 
 [_View patch notes & version history_](https://github.com/Matsyir/pvp-performance-tracker/wiki#version-history--patch-notes)
 
+_Note: The existing 1.7.5 version still displays 1.7.4 as the version._
+
 Tracks PvP performance by keeping track of various stats. Mostly useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, Last Man Standing & PvP arena "NHing" being the perfect examples. Multi will cause problems. **Potentially inaccurate:** there are some imperfections and assumptions in this plugin, but it is generally accurate for most popular gear setups & spec weapons. 
 
 This plugin was created with significant help from [Mazhar, @maz_rs](https://twitter.com/maz_rs) - notably for the idea & implementation of expected damage (previously deserved damage), as well as a few other helpful suggestions & fixes.
