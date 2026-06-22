@@ -45,6 +45,17 @@ public class CombatLevels
 			99);
 	}
 
+	public static CombatLevels getRealLevels(Client client)
+	{
+		return new CombatLevels(
+			client.getRealSkillLevel(Skill.ATTACK),
+			client.getRealSkillLevel(Skill.STRENGTH),
+			client.getRealSkillLevel(Skill.DEFENCE),
+			client.getRealSkillLevel(Skill.RANGED),
+			client.getRealSkillLevel(Skill.MAGIC),
+			client.getRealSkillLevel(Skill.HITPOINTS));
+	}
+
 	@Expose
 	@SerializedName("a")
 	public int atk;
