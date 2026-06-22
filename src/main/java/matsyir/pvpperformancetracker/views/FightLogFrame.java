@@ -59,6 +59,41 @@ import net.runelite.api.SpriteID;
 @Slf4j
 public class FightLogFrame extends JFrame
 {
+	// column index constants
+	// there's gotta be a better way to do this but this is at least better than hardcoded indexes everywhere
+	public static final int COLIDX_ATTACKER_NAME = 0;
+	public static final int COLIDX_STYLE_ICON = 1;
+	public static final int COLIDX_BREW_STATE = 2;
+	public static final int COLIDX_HIT_RANGE = 3;
+	public static final int COLIDX_ACCURACY = 4;
+	public static final int COLIDX_AVG_HIT = 5;
+	public static final int COLIDX_DMG_DEALT = 6;
+	public static final int COLIDX_DEF_HP = 7;
+	public static final int COLIDX_KO_CHANCE = 8;
+	public static final int COLIDX_SPEC = 9;
+	public static final int COLIDX_OFF_PRAY = 10;
+	public static final int COLIDX_DEF_PRAYER = 11;
+	public static final int COLIDX_SPLASH = 12;
+	public static final int COLIDX_OFFENSIVE_PRAY = 13;
+	public static final int COLIDX_TIME = 14;
+	public static final int[] COL_INDEXES = {
+		COLIDX_ATTACKER_NAME,
+		COLIDX_STYLE_ICON,
+		COLIDX_BREW_STATE,
+		COLIDX_HIT_RANGE,
+		COLIDX_ACCURACY,
+		COLIDX_AVG_HIT,
+		COLIDX_DMG_DEALT,
+		COLIDX_DEF_HP,
+		COLIDX_KO_CHANCE,
+		COLIDX_SPEC,
+		COLIDX_OFF_PRAY,
+		COLIDX_DEF_PRAYER,
+		COLIDX_SPLASH,
+		COLIDX_OFFENSIVE_PRAY,
+		COLIDX_TIME
+	};
+
 	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
 
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -127,7 +162,7 @@ public class FightLogFrame extends JFrame
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][15];
+		Object[][] stats = new Object[fightLogEntries.size()][COL_INDEXES.length];
 		int i = 0;
 		int initialTick = 0;
 
@@ -148,13 +183,14 @@ public class FightLogFrame extends JFrame
 				: fight.getOpponent();
 			BrewState brewState = attacker.getBrewState(fightEntry);
 
-			stats[i][0] = fightEntry.getAttackerName();
-			stats[i][1] = styleIconLabel;
-			stats[i][2] = brewState.getDisplayName();
-			stats[i][3] = fightEntry.getHitRange();
-			stats[i][4] = nf.format(fightEntry.getAccuracy() * 100) + '%';
-			stats[i][5] = nf.format(fightEntry.getExpectedDamage());
-			// Actual Dmg column (Index 5)
+			stats[i][COLIDX_ATTACKER_NAME] = fightEntry.getAttackerName();
+			stats[i][COLIDX_STYLE_ICON] = styleIconLabel;
+			stats[i][COLIDX_BREW_STATE] = brewState.getDisplayName();
+			stats[i][COLIDX_HIT_RANGE] = fightEntry.getHitRange();
+			stats[i][COLIDX_ACCURACY] = nf.format(fightEntry.getAccuracy() * 100) + '%';
+			stats[i][COLIDX_AVG_HIT] = nf.format(fightEntry.getExpectedDamage());
+
+			// Actual Dmg column
 			JLabel dmgLabel = new JLabel();
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC && fightEntry.isSplash())
 			{
@@ -167,19 +203,17 @@ public class FightLogFrame extends JFrame
 				String dmgText = actualDmg != null ? nf.format(actualDmg) : "-";
 				dmgLabel.setText(dmgText);
 			}
-			stats[i][6] = dmgLabel;
-			// HP column (Index 6) - Display as Current/Max
+			stats[i][COLIDX_DMG_DEALT] = dmgLabel;
+			// HP column - Display as Current/Max
 			Integer hp = fightEntry.getDisplayHpBefore();
 			Integer maxHp = fightEntry.getOpponentMaxHp();
-			stats[i][7] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
-			// KO Chance column (Index 7)
+			stats[i][COLIDX_DEF_HP] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
 			Double koChance = fightEntry.getKoChance();
-			stats[i][8] = koChance != null ? nfPercent.format(koChance) : "-";
-			// Special? (Index 8)
-			stats[i][9] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
-			// Off-Pray? (Index 9)
-			stats[i][10] = fightEntry.success() ? "✔" : "";
-			// Def Prayer (Index 10)
+			stats[i][COLIDX_KO_CHANCE] = koChance != null ? nfPercent.format(koChance) : "-";
+			stats[i][COLIDX_SPEC] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
+			stats[i][COLIDX_OFF_PRAY] = fightEntry.success() ? "✔" : "";
+
+			// Def Prayer + sotd/ely
 			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			boolean hasPray = prayIcon > 0;
 			boolean hasEly = fightEntry.isDefenderElyProc();
@@ -187,7 +221,7 @@ public class FightLogFrame extends JFrame
 
 			if (!hasPray && !hasEly && !hasStaffReduction)
 			{
-				stats[i][11] = "";
+				stats[i][COLIDX_DEF_PRAYER] = "";
 			}
 			else if ((hasPray ? 1 : 0) + (hasEly ? 1 : 0) + (hasStaffReduction ? 1 : 0) == 1)
 			{
@@ -205,7 +239,7 @@ public class FightLogFrame extends JFrame
 				{
 					PLUGIN.addItemToLabelIfValid(label, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
 				}
-				stats[i][11] = label;
+				stats[i][COLIDX_DEF_PRAYER] = label;
 			}
 			else
 			{
@@ -234,30 +268,30 @@ public class FightLogFrame extends JFrame
 					panel.add(staffLabel);
 				}
 
-				stats[i][11] = panel;
+				stats[i][COLIDX_DEF_PRAYER] = panel;
 			}
-			// Splash (Index 11)
+			// Splash
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
 			{
 				int splashIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
 				JLabel splashLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(splashLabel, splashIcon, this::repaint);
-				stats[i][12] = splashLabel;
+				stats[i][COLIDX_SPLASH] = splashLabel;
 			}
 			else
 			{
-				stats[i][12] = "";
+				stats[i][COLIDX_SPLASH] = "";
 			}
 			// Offensive Pray (Index 12)
 			JLabel attPrayLabel = new JLabel();
 			if (fightEntry.getAttackerOffensivePray() > 0)
 			{
 				PLUGIN.addSpriteToLabelIfValid(attPrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-				stats[i][13] = attPrayLabel;
+				stats[i][COLIDX_OFFENSIVE_PRAY] = attPrayLabel;
 			}
 			else
 			{
-				stats[i][13] = "";
+				stats[i][COLIDX_OFFENSIVE_PRAY] = "";
 			}
 			int tickDuration = fightEntry.getTick() - initialTick;
 			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
@@ -266,7 +300,7 @@ public class FightLogFrame extends JFrame
 				duration.toMinutes(),
 				duration.getSeconds() % 60,
 				durationMillis % 1000 / 100) + " (" + tickDuration + ")";
-			stats[i][14] = time;
+			stats[i][COLIDX_TIME] = time;
 
 			i++;
 		}
@@ -276,13 +310,13 @@ public class FightLogFrame extends JFrame
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
-		table.getColumnModel().getColumn(11).setPreferredWidth(96); // room for def pray + proc icons
+		table.getColumnModel().getColumn(COLIDX_DEF_PRAYER).setPreferredWidth(96); // room for def pray + proc icons
 
-		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
-		table.getColumnModel().getColumn(6).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
-		table.getColumnModel().getColumn(11).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
-		table.getColumnModel().getColumn(12).setCellRenderer(new BufferedImageCellRenderer()); // Splash
-		table.getColumnModel().getColumn(13).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
+		table.getColumnModel().getColumn(COLIDX_STYLE_ICON).setCellRenderer(new BufferedImageCellRenderer()); // Style
+		table.getColumnModel().getColumn(COLIDX_DMG_DEALT).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
+		table.getColumnModel().getColumn(COLIDX_DEF_PRAYER).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
+		table.getColumnModel().getColumn(COLIDX_SPLASH).setCellRenderer(new BufferedImageCellRenderer()); // Splash
+		table.getColumnModel().getColumn(COLIDX_OFFENSIVE_PRAY).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
 
 		onRowSelected = e ->
 		{
