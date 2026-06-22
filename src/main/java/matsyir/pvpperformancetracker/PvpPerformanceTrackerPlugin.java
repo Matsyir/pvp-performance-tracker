@@ -39,6 +39,7 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -477,13 +478,40 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		checkForFightEnd();
 
+		Actor actor = event.getActor();
+		if (!(actor instanceof Player) || actor.getName() == null)
+		{
+			return;
+		}
+
+		Player eventSource = (Player) actor;
+		AnimationData animationData = AnimationData.fromId(eventSource.getAnimation());
+		if (animationData == null)
+		{
+			return;
+		}
+		int animationTick = client.getTickCount();
+		long animationTime = Instant.now().toEpochMilli();
+
 		// delay the animation processing, since we will also want to use equipment data for expected
 		// damage, and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
-			if (hasOpponent() && event.getActor() instanceof Player && event.getActor().getName() != null)
+			if (hasOpponent() && eventSource.getName() != null)
 			{
-				currentFight.checkForAttackAnimations((Player)event.getActor(), new CombatLevels(client));
+				Actor interacting = eventSource.getInteracting();
+				if (!(interacting instanceof Player) || interacting.getName() == null)
+				{
+					return;
+				}
+
+				currentFight.checkForAttackAnimations(
+					eventSource,
+					interacting.getName(),
+					animationData,
+					animationTick,
+					animationTime,
+					new CombatLevels(client));
 			}
 		});
 	}
@@ -1301,6 +1329,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// add fight to fight history if it actually started
 		if (currentFight.fightStarted())
 		{
+			currentFight.makeLogTicksRelativeToFightStart();
 			addToFightHistory(currentFight);
 
 			// Upload to PvP-Hub if enabled and a fight ID was generated

@@ -96,6 +96,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	private transient boolean fightIdGenerated = false;
 	private transient long initialTime = 0;
+	private transient int initialFightTick = -1;
+	private transient boolean logTicksRelative = false;
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -230,50 +232,51 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// If the given playerName is in this fight, check the Fighter's current animation,
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
-	public void checkForAttackAnimations(Player eventSource, CombatLevels competitorLevels)
+	public void checkForAttackAnimations(
+		Player eventSource,
+		String interactingName,
+		AnimationData animationData,
+		int animationTick,
+		long animationTime,
+		CombatLevels competitorLevels)
 	{
-		if (eventSource == null || eventSource.getName() == null || eventSource.getInteracting() == null || eventSource.getInteracting().getName() == null)
+		if (eventSource == null || eventSource.getName() == null || interactingName == null || animationData == null)
 		{
 			return;
 		}
 
 		String eName = eventSource.getName(); // event source name
-		String interactingName = eventSource.getInteracting().getName();
 		boolean addedAttack = false;
 
 		// verify that the player is interacting with their tracked opponent before adding attacks
 		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
 		{
+			recordInitialFightTick(animationTick);
 			competitor.setPlayer(eventSource);
-			AnimationData animationData = competitor.getAnimationData();
-			if (animationData != null)
-			{
-				int offensivePray = PLUGIN.currentlyUsedOffensivePray();
-				competitor.addAttack(
-					opponent.getPlayer(),
-					animationData,
-					offensivePray,
-					competitorLevels);
-				lastFightTime = Instant.now().toEpochMilli();
-				addedAttack = true;
-				ensureFightIdGenerated();
+			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
+			competitor.addAttack(
+				opponent.getPlayer(),
+				animationData,
+				offensivePray,
+				competitorLevels,
+				animationTick,
+				animationTime);
+			lastFightTime = animationTime;
+			addedAttack = true;
+			ensureFightIdGenerated();
 
-			}
 		}
 		else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName()))
 		{
+			recordInitialFightTick(animationTick);
 			opponent.setPlayer(eventSource);
-			AnimationData animationData = opponent.getAnimationData();
-			if (animationData != null)
-			{
-				// there is no offensive prayer data for the opponent so hardcode 0
-				opponent.addAttack(competitor.getPlayer(), animationData, 0);
-				addedAttack = true;
-				// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
-				competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray());
-				lastFightTime = Instant.now().toEpochMilli();
-				ensureFightIdGenerated();
-			}
+			// there is no offensive prayer data for the opponent so hardcode 0
+			opponent.addAttack(competitor.getPlayer(), animationData, 0, null, animationTick, animationTime);
+			addedAttack = true;
+			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
+			competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray(), animationTick, animationTime);
+			lastFightTime = animationTime;
+			ensureFightIdGenerated();
 		}
 
 		// Ensure robe hits are calculated for the live overlay when enabled (otherwise, just calc'd once at the end)
@@ -283,6 +286,43 @@ public class FightPerformance implements Comparable<FightPerformance>
 		if (addedAttack && CONFIG.showOverlayRobeHits())
 		{
 			calculateRobeHits(CONFIG.robeHitFilter());
+		}
+	}
+
+	private void recordInitialFightTick(int animationTick)
+	{
+		if (initialFightTick < 0)
+		{
+			initialFightTick = animationTick;
+		}
+	}
+
+	public void makeLogTicksRelativeToFightStart()
+	{
+		if (logTicksRelative)
+		{
+			return;
+		}
+
+		ArrayList<FightLogEntry> entries = getAllFightLogEntries();
+		int startTick = initialFightTick;
+		if (startTick < 0)
+		{
+			startTick = entries.stream()
+				.mapToInt(FightLogEntry::getTick)
+				.min()
+				.orElse(0);
+		}
+
+		makeLogTicksRelativeToStart(entries, startTick);
+		logTicksRelative = true;
+	}
+
+	static void makeLogTicksRelativeToStart(ArrayList<FightLogEntry> entries, int startTick)
+	{
+		for (FightLogEntry entry : entries)
+		{
+			entry.setTick(Math.max(0, entry.getTick() - startTick));
 		}
 	}
 
