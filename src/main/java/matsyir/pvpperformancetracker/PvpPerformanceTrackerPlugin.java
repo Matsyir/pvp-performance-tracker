@@ -127,7 +127,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.4";
+	public static final String PLUGIN_VERSION = "1.7.6";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1206,20 +1206,22 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void sendUpdateChatMessage()
 	{
+		// if the updateMsgKey=true, then they already had this update msg, skip
 		if (configManager.getConfiguration(CONFIG_KEY, config.updateMsgKey, boolean.class)) { return; }
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.4 Update: New OPT-IN feature which automatically uploads " +
-				"your fight data to the PvP Hub website, where it can be publicly viewed by anyone. This is disabled by default - " +
-				"the plugin remains entirely client-side if you do not manually opt-into this feature.")
+			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.5 & 1.7.6 Update: Correctly apply guaranteed " +
+				"expected damage from bolt procs. Various LMS fixes. Fix attack timings in fight logs to allow " +
+				"fight merges on PvP-Hub to work properly.")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
-		// remove any old unnecessary flags after updating
+		// remove unused update msg flags after updating
 		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_2");
+		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_4");
 	}
 
 	private void update(String oldVersion)

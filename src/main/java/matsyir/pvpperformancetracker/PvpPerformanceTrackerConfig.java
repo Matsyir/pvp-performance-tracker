@@ -617,14 +617,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.
-	String updateMsgKey = "updateMsgShown1_7_4";
+	String updateMsgKey = "updateMsgShown1_7_6";
 	@ConfigItem(
 		keyName = updateMsgKey,
 		name = "Update Msg flag for most recent update",
 		description = "Tracks if the update chat message for the most recent update has been shown.",
 		hidden = true
 	)
-	default boolean updateMsgShown1_7_4()
+	default boolean updateMsgShown1_7_6()
 	{
 		return false;
 	}
