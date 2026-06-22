@@ -127,7 +127,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.6";
+	public static final String PLUGIN_VERSION = "1.7.7";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1207,13 +1207,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private void sendUpdateChatMessage()
 	{
 		// if the updateMsgKey=true, then they already had this update msg, skip
-		if (configManager.getConfiguration(CONFIG_KEY, config.updateMsgKey, boolean.class)) { return; }
+		if (config.updateMsgShown())
+		{
+			return;
+		}
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.5 & 1.7.6 Update: Correctly apply guaranteed " +
-				"expected damage from bolt procs. Various LMS fixes. Fix attack timings in fight logs to allow " +
-				"fight merges on PvP-Hub to work properly.")
+			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.7 Update: New fight log column which displays if " +
+				"your stats were potted, brewed down, or neutral during your attacks (only for client player).")
 				.build());
 		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
 
@@ -1222,6 +1224,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_2");
 		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_4");
+		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_6");
 	}
 
 	private void update(String oldVersion)
