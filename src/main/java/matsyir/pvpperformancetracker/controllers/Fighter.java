@@ -191,11 +191,17 @@ class Fighter
 	// Used for regular, ongoing fights
 	void addAttack(Player opponent, AnimationData animationData, int offensivePray)
 	{
-		addAttack(opponent, animationData, offensivePray, null);
+		addAttack(opponent, animationData, offensivePray, null, PLUGIN.getClient().getTickCount(), System.currentTimeMillis());
 	}
 
 	// Levels can be null
 	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	{
+		addAttack(opponent, animationData, offensivePray, levels, PLUGIN.getClient().getTickCount(), System.currentTimeMillis());
+	}
+
+	// Levels can be null
+	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels, int attackTick, long attackTime)
 	{
 		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
 
@@ -276,7 +282,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData, attackTick, attackTime);
 		fightLogEntry.setDefenderElyProc(elyProc);
 		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
@@ -418,6 +424,12 @@ class Fighter
 	void addDefensiveLogs(CombatLevels levels, int offensivePray)
 	{
 		fightLogEntries.add(new FightLogEntry(name, levels, offensivePray));
+	}
+
+	// the "addAttack" for a defensive log that creates an "incomplete" fight log entry.
+	void addDefensiveLogs(CombatLevels levels, int offensivePray, int attackTick, long attackTime)
+	{
+		fightLogEntries.add(new FightLogEntry(name, levels, offensivePray, attackTick, attackTime));
 	}
 
 	// Return a simple string to display the current player's success rate.

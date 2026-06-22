@@ -241,12 +241,17 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
+		this(attacker, defender, pvpDamageCalc, attackerOffensivePray, levels, animationData, PLUGIN.getClient().getTickCount(), Instant.now().toEpochMilli());
+	}
+
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time)
+	{
 		this.isFullEntry = true;
 
 		// general
 		this.attackerName = attacker.getName();
-		this.time = Instant.now().toEpochMilli();
-		this.tick = PLUGIN.getClient().getTickCount();
+		this.time = time;
+		this.tick = tick;
 
 		this.animationData = animationData;
 
@@ -276,11 +281,16 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	// in this context, the "attacker" is not attacking, only defending.
 	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray)
 	{
+		this(attackerName, levels, attackerOffensivePray, PLUGIN.getClient().getTickCount(), Instant.now().toEpochMilli());
+	}
+
+	public FightLogEntry(String attackerName, CombatLevels levels, int attackerOffensivePray, int tick, long time)
+	{
 		this.isFullEntry = false;
 
 		this.attackerName = attackerName;
-		this.time = Instant.now().toEpochMilli();
-		this.tick = PLUGIN.getClient().getTickCount();
+		this.time = time;
+		this.tick = tick;
 
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;
@@ -388,6 +398,12 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	// randomized entry used for testing
 	public FightLogEntry(int [] attackerGear, int expectedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName)
 	{
+		this(attackerGear, expectedDamage, accuracy, minHit, maxHit, defenderGear, attackerName, 0, Instant.now().toEpochMilli());
+	}
+
+	// randomized entry used for testing
+	public FightLogEntry(int [] attackerGear, int expectedDamage, double accuracy, int minHit, int maxHit, int [] defenderGear, String attackerName, int tick, long time)
+	{
 		this.attackerName = attackerName;
 		this.attackerGear = attackerGear;
 		this.attackerOverhead = HeadIcon.MAGIC;
@@ -397,7 +413,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.minHit = minHit;
 		this.maxHit = maxHit;
 		this.splash = Math.random() >= 0.5;
-		this.time = Instant.now().toEpochMilli();
+		this.time = time;
+		this.tick = tick;
 		this.defenderGear = defenderGear;
 		this.defenderOverhead = HeadIcon.MAGIC;
 		this.actualDamageSum = 0;
