@@ -457,6 +457,17 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	{
 		long diff = tick - o.tick;
 
+		// if the attacks were same-ticked, further sort by attacker name so that the sorting is more consistent between 2
+		// clients. Since we add competitor logs to the array before opponent logs, it seems like it would always
+		// prioritize displaying the client player on same-tick attacks, which would result in an oddly conflicting
+		// result when comparing 2 clients, even if the result is the same. This should help keep it more consistent.
+		// note that this is when comparing 2 different fight logs, so when processing same-tick attacks, it should
+		// never be comparing the attacker name with itself, always the opponent name.
+		if (diff == 0)
+		{
+			diff = attackerName.compareTo(o.attackerName);
+		}
+
 		// if diff = 0, return 0. Otherwise, divide diff by its absolute value. This will result in
 		// -1 for negative numbers, and 1 for positive numbers, keeping the sign and a safely small int.
 		return diff == 0 ? 0 :
