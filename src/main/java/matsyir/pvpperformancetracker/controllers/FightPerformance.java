@@ -93,6 +93,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@SerializedName("fightID")
 	@Getter
 	private String fightId;
+	@Expose
+	@SerializedName("v")
+	@Getter
+	private String pluginVersion;
 
 	private transient boolean fightIdGenerated = false;
 	private transient long initialTime = 0;
@@ -147,6 +151,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		this.competitorPrevHp = PLUGIN.getClient().getBoostedSkillLevel(Skill.HITPOINTS);
 		this.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
+
+		this.pluginVersion = PLUGIN.PLUGIN_VERSION;
 	}
 
 	// create a FightPerformance using an old 1.5.5 or earlier version.

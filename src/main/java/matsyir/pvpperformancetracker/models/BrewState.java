@@ -24,19 +24,24 @@
  */
 package matsyir.pvpperformancetracker.models;
 
+import java.awt.Color;
 import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
+import net.runelite.client.ui.ColorScheme;
 
 public enum BrewState
 {
-	POTTED("Potted"),
-	NEUTRAL("Neutral"),
-	BREWED_DOWN("Brewed down");
+	UNKNOWN("-", ColorScheme.TEXT_COLOR),
+	POTTED("Potted", new Color(153, 236, 95)),
+	NEUTRAL("Neutral", ColorScheme.TEXT_COLOR),
+	BREWED_DOWN("Brewed down", new Color(255, 246, 111));
 
 	private final String displayName;
+	private final Color textColor;
 
-	BrewState(String displayName)
+	BrewState(String displayName, Color textColor)
 	{
 		this.displayName = displayName;
+		this.textColor = textColor;
 	}
 
 	public String getDisplayName()
@@ -44,11 +49,16 @@ public enum BrewState
 		return displayName;
 	}
 
+	public Color getTextColor()
+	{
+		return textColor;
+	}
+
 	public static BrewState from(AttackStyle attackStyle, CombatLevels currentLevels, CombatLevels baseLevels)
 	{
 		if (attackStyle == null || currentLevels == null || baseLevels == null)
 		{
-			return NEUTRAL;
+			return UNKNOWN;
 		}
 
 		int currentLevel;

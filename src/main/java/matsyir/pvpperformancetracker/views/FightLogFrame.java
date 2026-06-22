@@ -26,6 +26,7 @@
 package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Point;
@@ -182,10 +183,16 @@ public class FightLogFrame extends JFrame
 				? fight.getCompetitor()
 				: fight.getOpponent();
 			BrewState brewState = attacker.getBrewState(fightEntry);
+			JLabel brewStateLabel = new JLabel();
+			brewStateLabel.setForeground(brewState.getTextColor());
+
+			// bold the brewState by prefixing html if it's either potted or brewed down.
+			brewStateLabel.setText(((brewState == BrewState.POTTED || brewState == BrewState.BREWED_DOWN) ?
+				"<html><strong>" : "") + brewState.getDisplayName().replace(" ", "&nbsp;"));
 
 			stats[i][COLIDX_ATTACKER_NAME] = fightEntry.getAttackerName();
 			stats[i][COLIDX_STYLE_ICON] = styleIconLabel;
-			stats[i][COLIDX_BREW_STATE] = brewState.getDisplayName();
+			stats[i][COLIDX_BREW_STATE] = brewStateLabel;
 			stats[i][COLIDX_HIT_RANGE] = fightEntry.getHitRange();
 			stats[i][COLIDX_ACCURACY] = nf.format(fightEntry.getAccuracy() * 100) + '%';
 			stats[i][COLIDX_AVG_HIT] = nf.format(fightEntry.getExpectedDamage());
@@ -310,6 +317,9 @@ public class FightLogFrame extends JFrame
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
+
+		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setCellRenderer(new BufferedImageCellRenderer());
+		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setPreferredWidth(64); // room for def pray + proc icons
 		table.getColumnModel().getColumn(COLIDX_DEF_PRAYER).setPreferredWidth(96); // room for def pray + proc icons
 
 		table.getColumnModel().getColumn(COLIDX_STYLE_ICON).setCellRenderer(new BufferedImageCellRenderer()); // Style
@@ -317,6 +327,14 @@ public class FightLogFrame extends JFrame
 		table.getColumnModel().getColumn(COLIDX_DEF_PRAYER).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
 		table.getColumnModel().getColumn(COLIDX_SPLASH).setCellRenderer(new BufferedImageCellRenderer()); // Splash
 		table.getColumnModel().getColumn(COLIDX_OFFENSIVE_PRAY).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
+
+		// if the fight has no baseLevels, then we have 0 stats for brew state anyways
+		// NOTE: THIS HAS TO STAY AFTER ALL THE setRenderers or any other usage of getColumn,
+		// or the indexes get messed up
+		if (fight.getCompetitor().getBaseLevels() == null && fight.getOpponent().getBaseLevels() == null)
+		{
+			table.removeColumn(table.getColumnModel().getColumn(COLIDX_BREW_STATE));
+		}
 
 		onRowSelected = e ->
 		{
@@ -372,6 +390,7 @@ public class FightLogFrame extends JFrame
 				setIcon(val.getIcon());
 				setText(val.getText());
 				setToolTipText(val.getToolTipText());
+				setForeground(val.getForeground());
 			}
 			else
 			{
