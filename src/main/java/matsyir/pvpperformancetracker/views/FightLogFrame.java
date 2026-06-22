@@ -44,7 +44,9 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.BrewState;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -121,11 +123,11 @@ public class FightLogFrame extends JFrame
 		}
 
 		setIconImage(PLUGIN_ICON);
-		setSize(860, 503); // Reverted width increase, removed debug columns
+		setSize(980, 503);
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
-		Object[][] stats = new Object[fightLogEntries.size()][14]; // Updated column count to include Actual Dmg
+		Object[][] stats = new Object[fightLogEntries.size()][15];
 		int i = 0;
 		int initialTick = 0;
 
@@ -141,11 +143,17 @@ public class FightLogFrame extends JFrame
 			PLUGIN.addSpriteToLabelIfValid(styleIconLabel, styleIcon, this::repaint);
 			styleIconLabel.setToolTipText(fightEntry.getAnimationData().attackStyle.toString());
 
+			Fighter attacker = fightEntry.getAttackerName().equals(fight.getCompetitor().getName())
+				? fight.getCompetitor()
+				: fight.getOpponent();
+			BrewState brewState = attacker.getBrewState(fightEntry);
+
 			stats[i][0] = fightEntry.getAttackerName();
 			stats[i][1] = styleIconLabel;
-			stats[i][2] = fightEntry.getHitRange();
-			stats[i][3] = nf.format(fightEntry.getAccuracy() * 100) + '%';
-			stats[i][4] = nf.format(fightEntry.getExpectedDamage());
+			stats[i][2] = brewState.getDisplayName();
+			stats[i][3] = fightEntry.getHitRange();
+			stats[i][4] = nf.format(fightEntry.getAccuracy() * 100) + '%';
+			stats[i][5] = nf.format(fightEntry.getExpectedDamage());
 			// Actual Dmg column (Index 5)
 			JLabel dmgLabel = new JLabel();
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC && fightEntry.isSplash())
@@ -159,18 +167,18 @@ public class FightLogFrame extends JFrame
 				String dmgText = actualDmg != null ? nf.format(actualDmg) : "-";
 				dmgLabel.setText(dmgText);
 			}
-			stats[i][5] = dmgLabel;
+			stats[i][6] = dmgLabel;
 			// HP column (Index 6) - Display as Current/Max
 			Integer hp = fightEntry.getDisplayHpBefore();
 			Integer maxHp = fightEntry.getOpponentMaxHp();
-			stats[i][6] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
+			stats[i][7] = (hp != null && maxHp != null) ? hp + "/" + maxHp : (hp != null ? String.valueOf(hp) : "-");
 			// KO Chance column (Index 7)
 			Double koChance = fightEntry.getKoChance();
-			stats[i][7] = koChance != null ? nfPercent.format(koChance) : "-";
+			stats[i][8] = koChance != null ? nfPercent.format(koChance) : "-";
 			// Special? (Index 8)
-			stats[i][8] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
+			stats[i][9] = fightEntry.getAnimationData().isSpecial ? "✔" : "";
 			// Off-Pray? (Index 9)
-			stats[i][9] = fightEntry.success() ? "✔" : "";
+			stats[i][10] = fightEntry.success() ? "✔" : "";
 			// Def Prayer (Index 10)
 			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			boolean hasPray = prayIcon > 0;
@@ -179,7 +187,7 @@ public class FightLogFrame extends JFrame
 
 			if (!hasPray && !hasEly && !hasStaffReduction)
 			{
-				stats[i][10] = "";
+				stats[i][11] = "";
 			}
 			else if ((hasPray ? 1 : 0) + (hasEly ? 1 : 0) + (hasStaffReduction ? 1 : 0) == 1)
 			{
@@ -197,7 +205,7 @@ public class FightLogFrame extends JFrame
 				{
 					PLUGIN.addItemToLabelIfValid(label, ItemID.STAFF_OF_THE_DEAD, false, this::repaint, "Staff spec damage reduction");
 				}
-				stats[i][10] = label;
+				stats[i][11] = label;
 			}
 			else
 			{
@@ -226,7 +234,7 @@ public class FightLogFrame extends JFrame
 					panel.add(staffLabel);
 				}
 
-				stats[i][10] = panel;
+				stats[i][11] = panel;
 			}
 			// Splash (Index 11)
 			if (fightEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
@@ -234,22 +242,22 @@ public class FightLogFrame extends JFrame
 				int splashIcon = fightEntry.isSplash() ? SpriteID.SPELL_ICE_BARRAGE_DISABLED : SpriteID.SPELL_ICE_BARRAGE;
 				JLabel splashLabel = new JLabel();
 				PLUGIN.addSpriteToLabelIfValid(splashLabel, splashIcon, this::repaint);
-				stats[i][11] = splashLabel;
+				stats[i][12] = splashLabel;
 			}
 			else
 			{
-				stats[i][11] = "";
+				stats[i][12] = "";
 			}
 			// Offensive Pray (Index 12)
 			JLabel attPrayLabel = new JLabel();
 			if (fightEntry.getAttackerOffensivePray() > 0)
 			{
 				PLUGIN.addSpriteToLabelIfValid(attPrayLabel, fightEntry.getAttackerOffensivePray(), this::repaint);
-				stats[i][12] = attPrayLabel;
+				stats[i][13] = attPrayLabel;
 			}
 			else
 			{
-				stats[i][12] = "";
+				stats[i][13] = "";
 			}
 			int tickDuration = fightEntry.getTick() - initialTick;
 			int durationMillis = (tickDuration * 600); // (* 0.6) to get duration in secs from ticks, so *600 for ms
@@ -258,23 +266,23 @@ public class FightLogFrame extends JFrame
 				duration.toMinutes(),
 				duration.getSeconds() % 60,
 				durationMillis % 1000 / 100) + " (" + tickDuration + ")";
-			stats[i][13] = time;
+			stats[i][14] = time;
 
 			i++;
 		}
 
-		String[] header = {"Attacker", "Style", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
+		String[] header = {"Attacker", "Style", "Stat State", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
 			"Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)"};
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
-		table.getColumnModel().getColumn(10).setPreferredWidth(96); // room for def pray + proc icons
+		table.getColumnModel().getColumn(11).setPreferredWidth(96); // room for def pray + proc icons
 
 		table.getColumnModel().getColumn(1).setCellRenderer(new BufferedImageCellRenderer()); // Style
-		table.getColumnModel().getColumn(5).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
-		table.getColumnModel().getColumn(10).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
-		table.getColumnModel().getColumn(11).setCellRenderer(new BufferedImageCellRenderer()); // Splash
-		table.getColumnModel().getColumn(12).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
+		table.getColumnModel().getColumn(6).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
+		table.getColumnModel().getColumn(11).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
+		table.getColumnModel().getColumn(12).setCellRenderer(new BufferedImageCellRenderer()); // Splash
+		table.getColumnModel().getColumn(13).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
 
 		onRowSelected = e ->
 		{

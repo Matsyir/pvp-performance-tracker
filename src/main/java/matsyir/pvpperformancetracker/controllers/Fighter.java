@@ -39,6 +39,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.BrewState;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
@@ -121,6 +122,9 @@ class Fighter
 	@Expose
 	@SerializedName("l")
 	private ArrayList<FightLogEntry> fightLogEntries;
+	@Expose
+	@SerializedName("b")
+	private CombatLevels baseLevels;
 
 	private PvpDamageCalc pvpDamageCalc;
 	private int lastGhostBarrageCheckedTick = -1;
@@ -147,6 +151,7 @@ class Fighter
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = new ArrayList<>();
 		pendingAttacks = new LinkedList<>();
+		baseLevels = player == PLUGIN.getClient().getLocalPlayer() ? CombatLevels.getRealLevels(PLUGIN.getClient()) : null;
 	}
 
 	// fighter for merging fight logs together for detailed data (fight analysis)
@@ -165,6 +170,7 @@ class Fighter
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = logs;
 		pendingAttacks = new LinkedList<>();
+		baseLevels = null;
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -184,6 +190,15 @@ class Fighter
 		pvpDamageCalc = null;
 		fightLogEntries = new ArrayList<>();
 		pendingAttacks = new LinkedList<>();
+		baseLevels = null;
+	}
+
+	public BrewState getBrewState(FightLogEntry fightLogEntry)
+	{
+		return BrewState.from(
+			fightLogEntry != null ? fightLogEntry.getAnimationData().attackStyle : null,
+			fightLogEntry != null ? fightLogEntry.getAttackerLevels() : null,
+			baseLevels);
 	}
 
 	// add an attack to the counters depending if it is successful or not.
