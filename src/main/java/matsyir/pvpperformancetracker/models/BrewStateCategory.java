@@ -45,40 +45,4 @@ public enum BrewStateCategory
 		this.displayName = displayName;
 		this.textColor = textColor;
 	}
-
-	public static BrewStateCategory from(AttackStyle attackStyle, CombatLevels currentLevels, CombatLevels baseLevels)
-	{
-		if (attackStyle == null || currentLevels == null || baseLevels == null)
-		{
-			return UNKNOWN;
-		}
-
-		int currentLevel;
-		int baseLevel;
-		if (attackStyle.isMelee())
-		{
-			currentLevel = currentLevels.str;
-			baseLevel = baseLevels.str;
-		}
-		else if (attackStyle == AttackStyle.RANGED)
-		{
-			currentLevel = currentLevels.range;
-			baseLevel = baseLevels.range;
-		}
-		else
-		{
-			currentLevel = currentLevels.mage;
-			baseLevel = baseLevels.mage;
-		}
-
-		if (currentLevel > baseLevel)
-		{
-			return POTTED;
-		}
-		if (currentLevel < baseLevel)
-		{
-			return BREWED_DOWN;
-		}
-		return NEUTRAL;
-	}
 }
