@@ -34,6 +34,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -57,6 +59,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.LinkBrowser;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
@@ -65,6 +68,7 @@ import net.runelite.client.ui.PluginPanel;
 public class FightPerformancePanel extends JPanel
 {
 	private static ImageIcon deathIcon;
+	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
@@ -262,6 +266,11 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(fight, getRootPane()));
 
+		// Create "Open on PvP-Hub" popup menu/context menu
+		final JMenuItem openOnPvpHub = new JMenuItem("<html><u>Open on PvP-Hub Website</u>&nbsp;&#8599;</html>");
+		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
+		openOnPvpHub.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
+
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
 		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
@@ -281,6 +290,10 @@ public class FightPerformancePanel extends JPanel
 
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
+		if (hasPvpHubUrl(fight))
+		{
+			popupMenu.add(openOnPvpHub);
+		}
 		popupMenu.add(copyFight);
 		popupMenu.add(removeFight);
 		setComponentPopupMenu(popupMenu);
@@ -312,5 +325,41 @@ public class FightPerformancePanel extends JPanel
 		{
 			this.setBorder(visible ? hoverBorder : normalBorder);
 		}
+	}
+
+	private boolean hasPvpHubUrl(FightPerformance fight)
+	{
+		return fight != null
+			&& fight.getFightId() != null
+			&& !fight.getFightId().trim().isEmpty()
+			&& fight.getCompetitor() != null
+			&& fight.getCompetitor().getName() != null
+			&& !fight.getCompetitor().getName().trim().isEmpty();
+	}
+
+	private void openOnPvpHub(FightPerformance fight)
+	{
+		if (!hasPvpHubUrl(fight))
+		{
+			return;
+		}
+
+		try
+		{
+			LinkBrowser.browse(buildPvpHubUrl(fight));
+		}
+		catch (URISyntaxException e)
+		{
+			PLUGIN.createConfirmationModal(false, "Could not create the PvP-Hub URL for this fight.");
+		}
+	}
+
+	private String buildPvpHubUrl(FightPerformance fight) throws URISyntaxException
+	{
+		String playerName = CONFIG.hideRsnOnPvpHub()
+			? PLUGIN.getPvpHubHiddenName()
+			: fight.getCompetitor().getName();
+		String path = "/" + playerName.trim() + "/" + fight.getFightId().trim();
+		return new URI("https", PVP_HUB_HOST, path, null).toASCIIString();
 	}
 }
