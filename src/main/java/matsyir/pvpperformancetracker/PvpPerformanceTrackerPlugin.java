@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1214,17 +1215,46 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("PvP Performance Tracker 1.7.7 Update: New fight log column which displays if " +
-				"your stats were potted, brewed down, or neutral during your attacks (only for client player).")
+			.runeLiteFormattedMessage("<col=842b00><shad=000000>PvP Performance Tracker <u>1.7.8</u> Update:</shad> (TODO patch notes).")
 				.build());
-		configManager.setConfiguration(CONFIG_KEY, config.updateMsgKey, true);
+
+		// DELETE THIS CODE BLOCK ON THE NEXT UPDATE AFTER 1.7.8
+		// ====================================================================================================================================================
+		// if someone already opted into pvp hub, and still has the default random visibility option,
+		// show warning before updating their config (new default value => PvpHubVisibilityDelay.INSTANT)
+		if (config.uploadFightsToPvpHub() && config.pvpHubVisibilityDelay() == PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20)
+		{
+			// put a short delay on this warning message so it hopefully appears after other on-login messages.
+			// wouldn't want to abuse this for standard patch notes, but this is a fairly important notice IMO
+			executor.schedule(() -> chatMessageManager.queue(QueuedMessage.builder()
+					.type(ChatMessageType.GAMEMESSAGE)
+					.runeLiteFormattedMessage("<col=ff0000><shad=000000>===== Attention: PvP Performance Tracker <u>1.7.8</u> Update =====<br>" +
+						"<col=842b00>Your configuration option for the \"<u>PvP-Hub Upload Delay</u>\" has been updated to " +
+						"<u>INSTANT</u>. Your fights will now instantly be uploaded to the PvP-Hub website once they end. " +
+						"Your world is never publicly shown anywhere, so this shouldn't cause any concern. Feel free to " +
+						"change the setting if you'd like to revert this.<br>" +
+						"<col=ff0000><shad=000000>============== (end of PvP Tracker warning) ==============")
+					.build())
+				, 678, TimeUnit.MILLISECONDS);
+		}
+
+		// force-change pvpHubVisibilityDelay to Instant, but only if they were still on the old default (RANDOM_6_20).
+		// So people who intentionally chose to interact with this config keep their chosen setting.
+		// this will only run once due to the updateMsgShown / updateMsgKey flag, which we set to true right after.
+		if (config.pvpHubVisibilityDelay() == PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20)
+		{
+			configManager.setConfiguration(CONFIG_KEY, "pvpHubVisibilityDelay", PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.INSTANT);
+		}
+		// ====================================================================================================================================================
+		// end of block to be deleted on next update
+
+		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
 
 		// remove unused update msg flags after updating
-		configManager.unsetConfiguration(CONFIG_KEY, "updateNoteMay72025Shown_v2");
-		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_1");
-		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_2");
-		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_4");
-		configManager.unsetConfiguration(CONFIG_KEY, "updateMsgShown1_7_6");
+		for (String outdatedUpdateMsgKey : PvpPerformanceTrackerConfig.UPDATE_MSG_KEY_GRAVEYARD)
+		{
+			configManager.unsetConfiguration(CONFIG_KEY, outdatedUpdateMsgKey);
+		}
 	}
 
 	private void update(String oldVersion)
