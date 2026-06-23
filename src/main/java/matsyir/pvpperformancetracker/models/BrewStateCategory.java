@@ -25,36 +25,28 @@
 package matsyir.pvpperformancetracker.models;
 
 import java.awt.Color;
+import lombok.Getter;
 import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import net.runelite.client.ui.ColorScheme;
 
-public enum BrewState
+@Getter
+public enum BrewStateCategory
 {
 	UNKNOWN("-", ColorScheme.TEXT_COLOR),
-	POTTED("Potted", new Color(153, 236, 95)),
-	NEUTRAL("Neutral", ColorScheme.TEXT_COLOR),
-	BREWED_DOWN("Brewed down", new Color(255, 246, 111));
+	POTTED("Potted", ColorScheme.PROGRESS_COMPLETE_COLOR),
+	NEUTRAL("Neutral", ColorScheme.BRAND_ORANGE),
+	BREWED_DOWN("Brewed down", ColorScheme.PROGRESS_ERROR_COLOR);
 
 	private final String displayName;
 	private final Color textColor;
 
-	BrewState(String displayName, Color textColor)
+	BrewStateCategory(String displayName, Color textColor)
 	{
 		this.displayName = displayName;
 		this.textColor = textColor;
 	}
 
-	public String getDisplayName()
-	{
-		return displayName;
-	}
-
-	public Color getTextColor()
-	{
-		return textColor;
-	}
-
-	public static BrewState from(AttackStyle attackStyle, CombatLevels currentLevels, CombatLevels baseLevels)
+	public static BrewStateCategory from(AttackStyle attackStyle, CombatLevels currentLevels, CombatLevels baseLevels)
 	{
 		if (attackStyle == null || currentLevels == null || baseLevels == null)
 		{
