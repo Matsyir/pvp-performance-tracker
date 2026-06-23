@@ -1757,7 +1757,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
 	}
 
-	String getPvpHubHiddenName()
+	public String getPvpHubHiddenName()
 	{
 		String anonymousId = config.pvpHubAnonymousId();
 		if (anonymousId == null || anonymousId.trim().isEmpty())
