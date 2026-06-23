@@ -275,7 +275,7 @@ public enum TrackedStatistic
 				double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 
 				return PanelFactory.createStatsLine(ROBE_HITS.acronym, ROBE_HITS.acronymTooltip
-					, (compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")")
+					, (compHits + " (" + nfP1.format(compRatio) + ")")
 					, (fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " +
 						compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")<br>" +
 						"In other words, of his opponent's " + compTotal + " range/melee attacks, " +
@@ -284,7 +284,7 @@ public enum TrackedStatistic
 						Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
 						Color.GREEN : Color.WHITE)
 
-					, (oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")")
+					, (oppHits + " (" + nfP1.format(oppRatio) + ")")
 					, (fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
 						oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")<br>" +
 						"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
@@ -298,8 +298,7 @@ public enum TrackedStatistic
 				int compHits = fight.getCompetitor().getRobeHits();
 				int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 				double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
-				String compStr = compHits + "/" + compTotal;
-				component.updateLeftCell(compStr
+				component.updateLeftCell(String.valueOf(compHits)
 					, compRatio < ((double) fight.getOpponent().getRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
 						Color.GREEN : Color.WHITE
 				);
@@ -307,8 +306,7 @@ public enum TrackedStatistic
 				int oppHits = fight.getOpponent().getRobeHits();
 				int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 				double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
-				String oppStr = oppHits + "/" + oppTotal;
-				component.updateRightCell(oppStr
+				component.updateRightCell(String.valueOf(oppHits)
 					, oppRatio < compRatio ? Color.GREEN : Color.WHITE
 				);
 			}
