@@ -205,6 +205,8 @@ public class TotalStatsPanel extends JPanel
 				PLUGIN.resetFightHistory();
 			}
 		});
+		removeAllFights.setForeground(Color.RED);
+		// TODO create "reset PvP-Hub hidden name" right click option (if opted in + name hidden). Also on the button that displays it.
 
 		// Create "Configure Settings" popup menu/context menu item
 		// TODO? Can't figure out how but would like to in the future. Esp. since there is a warning to setup config.

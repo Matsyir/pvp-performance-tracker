@@ -33,9 +33,9 @@ import net.runelite.client.ui.ColorScheme;
 public enum BrewStateCategory
 {
 	UNKNOWN("-", ColorScheme.TEXT_COLOR),
-	POTTED("Potted", ColorScheme.PROGRESS_COMPLETE_COLOR),
+	POTTED("Potted", Color.GREEN),
 	NEUTRAL("Neutral", ColorScheme.BRAND_ORANGE),
-	BREWED_DOWN("Brewed down", ColorScheme.PROGRESS_ERROR_COLOR);
+	BREWED_DOWN("Brewed down", Color.RED);
 
 	private final String displayName;
 	private final Color textColor;
