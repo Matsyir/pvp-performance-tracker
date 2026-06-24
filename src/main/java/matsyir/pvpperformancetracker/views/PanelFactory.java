@@ -31,6 +31,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
 public final class PanelFactory
 {
@@ -116,16 +117,16 @@ public final class PanelFactory
 	}
 
 
-	// A JLabel that still receives mouse events (so its tooltip works) but forwards them to the parent
-	// using SwingUtilities.convertMouseEvent(...) so the parent sees clicks/popup/hover as if the label
-	// wasn't there.
-	private static class ForwardingLabel extends JLabel
+	// A JShadowedLabel that still receives mouse events (so its tooltip works) but forwards them to the parent
+	// using SwingUtilities.convertMouseEvent(...) so the parent sees clicks/popup/hover as if the label wasn't there.
+	private static class ForwardingLabel extends JShadowedLabel
 	{
 		public ForwardingLabel(String text)
 		{
 			super(text);
 			setOpaque(false);
 			setFocusable(false);
+			setShadow(Color.BLACK);
 		}
 
 		@Override

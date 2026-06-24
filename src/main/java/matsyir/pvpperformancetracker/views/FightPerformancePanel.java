@@ -43,7 +43,6 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -59,6 +58,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.LinkBrowser;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
@@ -73,24 +73,29 @@ public class FightPerformancePanel extends JPanel
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
 
+	// border size: 6px left, 6px right, 4px top, 4px bottom (plus 4px bottom invisible offset)
 	static
 	{
-		// main border used when not hovering:
-		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
-		// inner border: padding for the inner content of the panel.
-		normalBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR),
-			new EmptyBorder(4, 6, 4, 6));
+		Color invisBorder = ColorScheme.DARK_GRAY_COLOR;
+		invisBorder = new Color(invisBorder.getRed(), invisBorder.getGreen(), invisBorder.getBlue(), 0);
 
-		// border used while hovering:
-		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
-		// "middle" border: outline for the main panel
-		// inner border: padding for the inner content of the panel, reduced by 1px to account for the outline
-		hoverBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR),
+		// main border used when not hovering
+		normalBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_HOVER_COLOR),
-				new EmptyBorder(3, 5, 3, 5)));
+				BorderFactory.createMatteBorder(0, 0, 4, 0, invisBorder), // same
+				BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR, 2)),
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
+				new EmptyBorder(1, 3, 1, 3)));
+
+		// border used while hovering
+		hoverBorder = BorderFactory.createCompoundBorder(
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createMatteBorder(0, 0, 4, 0, invisBorder),
+				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE, 2)),
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(ColorScheme.LIGHT_GRAY_COLOR, 1),
+				new EmptyBorder(1, 3, 1, 3)));
 	}
 
 	private boolean showBorders;
@@ -173,15 +178,22 @@ public class FightPerformancePanel extends JPanel
 					FontMetrics fm = g.getFontMetrics(getFont());
 					int x = (getWidth() - fm.stringWidth(w)) / 2;
 					int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
+
+					g.translate(1, 1);
+					g.setColor(Color.BLACK);
+					g.drawString(w, x, y); // draw text shadow
+
+					g.translate(-1, -1);
 					g.setColor(Color.LIGHT_GRAY);
-					g.drawString(w, x, y);
+
+					g.drawString(w, x, y); // draw text
 				}
 			}
 		};
 		playerNamesLine.setBackground(null);
 
 		// player names
-		JLabel playerStatsName = new JLabel();
+		JShadowedLabel playerStatsName = new JShadowedLabel();
 
 		// player name LEFT: player name
 		if (competitor.isDead())
@@ -193,7 +205,7 @@ public class FightPerformancePanel extends JPanel
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
-		JLabel opponentStatsName = new JLabel();
+		JShadowedLabel opponentStatsName = new JShadowedLabel();
 		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(deathIcon);
