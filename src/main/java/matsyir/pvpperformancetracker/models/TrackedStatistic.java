@@ -42,7 +42,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public enum TrackedStatistic
-{
+{ 
 	OFF_PRAY("Off-pray", "OP",
 		"Off-pray statistic, # of times you correctly used a different style than your opponent's overhead pray." +
 			"<br>For example, when you use melee or ranged vs. protect from magic, that's a successful off-pray hit."),
@@ -74,6 +74,9 @@ public enum TrackedStatistic
 			"<br>This statistic is hidden if both players have 0gb, which is common." +
 			"<br>Weird and for advanced users only.");
 
+	public static final Color SUCCESS_COLOR = Color.GREEN;
+	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = Color.WHITE;
+
 	private static final String NO_DATA_SHORT = "-";
 	private static final String NO_DATA = "N/A";
 
@@ -103,21 +106,21 @@ public enum TrackedStatistic
 				, (fight.competitor.getName() + " hit " + fight.competitor.getOffPraySuccessCount() + " successful off-pray attacks out of " +
 					fight.competitor.getAttackCount() + " total attacks (" +
 					nf2.format(fight.competitor.calculateOffPraySuccessPercentage()) + "%)")
-				, fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorOffPraySuccessIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 				, fight.opponent.getOffPrayStats()
 				, (fight.opponent.getName() + " hit " + fight.opponent.getOffPraySuccessCount() + " successful off-pray attacks out of " +
 					fight.opponent.getAttackCount() + " total attacks (" +
 					nf2.format(fight.opponent.calculateOffPraySuccessPercentage()) + "%)")
-				, fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentOffPraySuccessIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			),
 			() -> PanelFactory.createOverlayStatsLine(OFF_PRAY.acronym, 50, 50,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitor().getOffPrayStats(true)
-				, fight.competitorOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorOffPraySuccessIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				, fight.getOpponent().getOffPrayStats(true)
-				, fight.opponentOffPraySuccessIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentOffPraySuccessIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			)
 		);
 
@@ -126,20 +129,20 @@ public enum TrackedStatistic
 				, fight.competitor.getExpectedDmgString(fight.opponent)
 				, "On average, " + (fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
 					" damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)")
-				, fight.competitorExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 				, fight.opponent.getExpectedDmgString(fight.competitor)
 				, "On average, " + (fight.opponent.getName() + " could expect to deal " + nf2.format(fight.opponent.getExpectedDamage()) +
 					" damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you)")
-				, fight.opponentExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			),
 			() -> PanelFactory.createOverlayStatsLine(EXPECTED_DMG.acronym, 70, 30,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitor().getExpectedDmgString(fight.getOpponent())
-				, fight.competitorExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				, String.valueOf((int) Math.round(fight.getOpponent().getExpectedDamage()))
-				, fight.opponentExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			)
 		);
 
@@ -148,21 +151,21 @@ public enum TrackedStatistic
 				, fight.competitor.getDmgDealtString(fight.opponent)
 				, fight.competitor.getName() + " dealt " + fight.competitor.getDamageDealt() +
 					" damage (" + fight.competitor.getDmgDealtString(fight.opponent, true) + " vs opponent)"
-				, fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorDmgDealtIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 				, fight.opponent.getDmgDealtString(fight.competitor)
 				, fight.opponent.getName() + " dealt " + fight.opponent.getDamageDealt() +
 					" damage (" + fight.opponent.getDmgDealtString(fight.competitor, true) + " vs you)"
-				, fight.opponentExpectedDmgIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 			),
 			() -> PanelFactory.createOverlayStatsLine(DMG_DEALT.acronym, 70, 30,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent()))
-				, fight.competitorDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.competitorDmgDealtIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				, String.valueOf(fight.getOpponent().getDamageDealt())
-				, fight.opponentDmgDealtIsGreater() ? Color.GREEN : Color.WHITE
+				, fight.opponentDmgDealtIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			)
 		);
 
@@ -172,23 +175,23 @@ public enum TrackedStatistic
 				, fight.competitor.getName() + " successfully hit " +
 					fight.competitor.getMagicHitCount() + " of " + fight.competitor.getMagicAttackCount() + " magic attacks, but expected to hit " +
 					nf2.format(fight.competitor.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
-				, fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+				, fight.competitorMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 				, String.valueOf(fight.opponent.getMagicHitStats())
 				, fight.opponent.getName() + " successfully hit " +
 					fight.opponent.getMagicHitCount() + " of " + fight.opponent.getMagicAttackCount() + " magic attacks, but expected to hit " +
 					nf2.format(fight.opponent.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
 					""
-				, fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+				, fight.opponentMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 
 			),
 			() -> PanelFactory.createOverlayStatsLine(MAGIC_HITS.acronym, 70, 30,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				String.valueOf(fight.getCompetitor().getShortMagicHitStats())
-				, fight.competitorMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+				, fight.competitorMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				, String.valueOf(fight.getOpponent().getShortMagicHitStats())
-				, fight.opponentMagicHitsLuckier() ? Color.GREEN : Color.WHITE
+				, fight.opponentMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			)
 		);
 
@@ -197,7 +200,7 @@ public enum TrackedStatistic
 				// OFFENSIVE PRAYS RIGHT: prepare opponent data if its available
 				String oppOffensivePrayStats = NO_DATA;
 				String oppOffensivePrayTooltip = "No data is available for the opponent's offensive prayers";
-				Color oppOffensivePrayColor = Color.WHITE;
+				Color oppOffensivePrayColor = UNSUCCESSFUL_OR_NEUTRAL_COLOR;
 				if (oppFight != null)
 				{
 					Fighter oppComp = oppFight.getCompetitor();
@@ -208,7 +211,7 @@ public enum TrackedStatistic
 						nf2.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
 					oppOffensivePrayColor = (
 						oppFight.getCompetitor().calculateOffensivePraySuccessPercentage() > fight.competitor.calculateOffensivePraySuccessPercentage()
-							? Color.GREEN : Color.WHITE);
+							? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR);
 				}
 
 				// OFFENSIVE PRAYS: player's offensive pray stats (only player's, usually no data for opponent)
@@ -219,7 +222,7 @@ public enum TrackedStatistic
 						nf2.format(fight.competitor.calculateOffensivePraySuccessPercentage()) + "%)")
 					, ((oppFight != null && fight.competitor.calculateOffensivePraySuccessPercentage() >
 						oppFight.getCompetitor().calculateOffensivePraySuccessPercentage()) ?
-						Color.GREEN : Color.WHITE)
+						SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 
 					, oppOffensivePrayStats
 					, oppOffensivePrayTooltip
@@ -227,7 +230,7 @@ public enum TrackedStatistic
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(OFFENSIVE_PRAY.acronym, 80, 20,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftCellText(String.valueOf(fight.getCompetitor().getOffensivePrayStats(true)))
 		);
 
@@ -236,14 +239,14 @@ public enum TrackedStatistic
 				// hp healed, right
 				String oppHpHealedStats = NO_DATA;
 				String oppHpHealedTooltip = "No data is available for the opponent's hp healed";
-				Color oppHpHealedColor = Color.WHITE;
+				Color oppHpHealedColor = UNSUCCESSFUL_OR_NEUTRAL_COLOR;
 				if (oppFight != null)
 				{
 					Fighter oppComp = oppFight.getCompetitor();
 
 					oppHpHealedStats = (String.valueOf(oppComp.getHpHealed()));
 					oppHpHealedTooltip = (oppComp.getName() + " recovered " + oppComp.getHpHealed() + " hitpoints during the fight");
-					oppHpHealedColor = (oppFight.getCompetitor().getHpHealed() > fight.competitor.getHpHealed() ? Color.GREEN : Color.WHITE);
+					oppHpHealedColor = (oppFight.getCompetitor().getHpHealed() > fight.competitor.getHpHealed() ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR);
 				}
 
 				// HP healed (only player's, no data for opponent usually)
@@ -251,7 +254,7 @@ public enum TrackedStatistic
 					, String.valueOf(fight.competitor.getHpHealed())
 					, (fight.competitor.getName() + " recovered " + fight.competitor.getHpHealed() + " hitpoints during the fight")
 					, ((oppFight != null && fight.competitor.getHpHealed() > oppFight.getCompetitor().getHpHealed()) ?
-						Color.GREEN : Color.WHITE)
+						SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 
 					, oppHpHealedStats
 					, oppHpHealedTooltip
@@ -259,7 +262,7 @@ public enum TrackedStatistic
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(HP_HEALED.acronym, 80, 20,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftCellText(String.valueOf(fight.getCompetitor().getHpHealed()))
 		);
 
@@ -282,32 +285,32 @@ public enum TrackedStatistic
 						fight.getCompetitor().getName() + " tanked " + compHits + " of them with robes.")
 					, (compRatio < ((double) (fight.getOpponent().getRobeHits()) /
 						Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
-						Color.GREEN : Color.WHITE)
+						SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 
 					, (oppHits + " (" + nfP1.format(oppRatio) + ")")
 					, (fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
 						oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")<br>" +
 						"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
 						fight.getOpponent().getName() + " tanked " + oppHits + " of them with robes.")
-					, (oppRatio < compRatio ? Color.GREEN : Color.WHITE)
+					, (oppRatio < compRatio ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(ROBE_HITS.acronym, 50, 50,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> {
 				int compHits = fight.getCompetitor().getRobeHits();
 				int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
 				double compRatio = compTotal > 0 ? (double) compHits / compTotal : 0.0;
 				component.updateLeftCell(String.valueOf(compHits)
 					, compRatio < ((double) fight.getOpponent().getRobeHits() / Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
-						Color.GREEN : Color.WHITE
+						SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				);
 
 				int oppHits = fight.getOpponent().getRobeHits();
 				int oppTotal = fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount();
 				double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 				component.updateRightCell(String.valueOf(oppHits)
-					, oppRatio < compRatio ? Color.GREEN : Color.WHITE
+					, oppRatio < compRatio ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR
 				);
 			}
 		);
@@ -349,24 +352,24 @@ public enum TrackedStatistic
 				return PanelFactory.createStatsLine(KO_CHANCES.acronym, KO_CHANCES.acronymTooltip
 					, compTotalKoChanceText
 					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nfP1.format(competitorOverallKoProb)
-					, (competitorOverallKoProb > opponentOverallKoProb ? Color.GREEN : Color.WHITE)
+					, (competitorOverallKoProb > opponentOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 
 					, oppTotalKoChanceText
 					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
-					, (opponentOverallKoProb > competitorOverallKoProb ? Color.GREEN : Color.WHITE)
+					, (opponentOverallKoProb > competitorOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_OR_NEUTRAL_COLOR)
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(KO_CHANCES.acronym, 50, 50,
-				NO_DATA_SHORT, Color.WHITE, NO_DATA_SHORT, Color.WHITE),
+				NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_OR_NEUTRAL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitorKoChanceCount() + (fight.getCompetitorKoChanceCount() > 0
 					? " (" + nfP1.format(fight.getCompetitorTotalKoChance()) + ")"
 					: ""),
-				Color.WHITE,
+				UNSUCCESSFUL_OR_NEUTRAL_COLOR,
 				fight.getOpponentKoChanceCount() + (fight.getOpponentKoChanceCount() > 0
 					? " (" + nfP1.format(fight.getOpponentTotalKoChance()) + ")"
 					: ""),
-				Color.WHITE
+				UNSUCCESSFUL_OR_NEUTRAL_COLOR
 			)
 		);
 
@@ -385,7 +388,7 @@ public enum TrackedStatistic
 						+ " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
 					oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
-						? Color.GREEN : ColorScheme.BRAND_ORANGE);
+						? SUCCESS_COLOR : ColorScheme.BRAND_ORANGE);
 				}
 
 				return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
@@ -395,7 +398,7 @@ public enum TrackedStatistic
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
 					, ((oppFight != null
 						&& fight.competitor.getGhostBarrageExpectedDamage() > oppFight.getCompetitor().getGhostBarrageExpectedDamage())
-						? Color.GREEN : ColorScheme.BRAND_ORANGE)
+						? SUCCESS_COLOR : ColorScheme.BRAND_ORANGE)
 
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
