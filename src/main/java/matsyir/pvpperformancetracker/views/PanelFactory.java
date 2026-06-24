@@ -57,7 +57,7 @@ public final class PanelFactory
 										 String rightText, String rightTooltip, Color rightColor)
 	{
 		JPanel statsLine = new JPanel(new GridBagLayout());
-		statsLine.setBackground(null);
+		statsLine.setBackground(leftColor.equals(Color.GREEN) ? new Color(40, 52, 78, 92).brighter() : (rightColor.equals(Color.GREEN) ? new Color(89, 52, 59, 92).brighter() : null));
 
 		String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
