@@ -33,7 +33,9 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JLabel;
+import javax.swing.BorderFactory;
+import net.runelite.api.Point;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -98,19 +100,19 @@ public class TotalStatsPanel extends JPanel
 	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11; // Increased count to include Avg Robe Hits
 
 	// labels to be updated
-	private final JLabel killsLabel;
-	private final JLabel deathsLabel;
-	private final JLabel offPrayStatsLabel;
-	private final JLabel expectedDmgStatsLabel;
-	private final JLabel dmgDealtStatsLabel;
-	private final JLabel magicHitCountStatsLabel;
-	private final JLabel offensivePrayCountStatsLabel;
-	private final JLabel hpHealedStatsLabel;
-	private final JLabel ghostBarrageStatsLabel;
-	private final JLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
-	private final JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
+	private final JShadowedLabel killsLabel;
+	private final JShadowedLabel deathsLabel;
+	private final JShadowedLabel offPrayStatsLabel;
+	private final JShadowedLabel expectedDmgStatsLabel;
+	private final JShadowedLabel dmgDealtStatsLabel;
+	private final JShadowedLabel magicHitCountStatsLabel;
+	private final JShadowedLabel offensivePrayCountStatsLabel;
+	private final JShadowedLabel hpHealedStatsLabel;
+	private final JShadowedLabel ghostBarrageStatsLabel;
+	private final JShadowedLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
+	private final JShadowedLabel avgKoChanceStatsLabel; // Added label for avg KO chances
 
-	private JLabel settingsWarningLabel; // to be hidden/shown
+	private JShadowedLabel settingsWarningLabel; // to be hidden/shown
 
 	private Fighter totalStats;
 
@@ -238,10 +240,12 @@ public class TotalStatsPanel extends JPanel
 		// Now initializing all lines:
 		// FIRST LINE
 		// basic label to display a title.
-		JLabel titleLabel = new JLabel();
+		JShadowedLabel titleLabel = new JShadowedLabel();
 		titleLabel.setText("PvP Performance Tracker v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
+		titleLabel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.BRAND_ORANGE));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
+		titleLabel.setShadow(Color.BLACK);
 		add(titleLabel);
 
 		// if settings haven't been configured, add a red label to display that they should be.
@@ -256,13 +260,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
 
 		// left label to show kills
-		killsLabel = new JLabel();
+		killsLabel = new JShadowedLabel();
 		killsLabel.setText(numKills + " Kills");
 		killsLabel.setForeground(Color.WHITE);
 		killDeathPanel.add(killsLabel, BorderLayout.WEST);
 
 		// right label to show deaths
-		deathsLabel = new JLabel();
+		deathsLabel = new JShadowedLabel();
 		deathsLabel.setText(numDeaths + " Deaths");
 		deathsLabel.setForeground(Color.WHITE);
 		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
@@ -276,13 +280,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's off-pray stats
-		JLabel leftLabel = new JLabel();
+		JShadowedLabel leftLabel = new JShadowedLabel();
 		leftLabel.setText("Total Off-Pray:");
 		leftLabel.setForeground(Color.WHITE);
 		offPrayStatsPanel.add(leftLabel, BorderLayout.WEST);
 
 		// right shows off-pray stats
-		offPrayStatsLabel = new JLabel();
+		offPrayStatsLabel = new JShadowedLabel();
 		offPrayStatsLabel.setForeground(Color.WHITE);
 		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
 
@@ -295,13 +299,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's expected dmg stats
-		JLabel expectedDmgStatsLeftLabel = new JLabel();
+		JShadowedLabel expectedDmgStatsLeftLabel = new JShadowedLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
 		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
-		expectedDmgStatsLabel = new JLabel();
+		expectedDmgStatsLabel = new JShadowedLabel();
 		expectedDmgStatsLabel.setForeground(Color.WHITE);
 		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
 
@@ -314,13 +318,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's avg dmg dealt
-		JLabel dmgDealtStatsLeftLabel = new JLabel();
+		JShadowedLabel dmgDealtStatsLeftLabel = new JShadowedLabel();
 		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
 		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
 		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show avg dmg dealt
-		dmgDealtStatsLabel = new JLabel();
+		dmgDealtStatsLabel = new JShadowedLabel();
 		dmgDealtStatsLabel.setForeground(Color.WHITE);
 		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
@@ -333,13 +337,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's magic hit count stats
-		JLabel magicHitStatsLeftLabel = new JLabel();
+		JShadowedLabel magicHitStatsLeftLabel = new JShadowedLabel();
 		magicHitStatsLeftLabel.setText("Magic Luck:");
 		magicHitStatsLeftLabel.setForeground(Color.WHITE);
 		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show magic hit count stats
-		magicHitCountStatsLabel = new JLabel();
+		magicHitCountStatsLabel = new JShadowedLabel();
 		magicHitCountStatsLabel.setForeground(Color.WHITE);
 		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 
@@ -352,13 +356,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's offensive pray stats
-		JLabel offensivePrayStatsLeftLabel = new JLabel();
+		JShadowedLabel offensivePrayStatsLeftLabel = new JShadowedLabel();
 		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
 		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
 		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show offensive pray stats
-		offensivePrayCountStatsLabel = new JLabel();
+		offensivePrayCountStatsLabel = new JShadowedLabel();
 		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
 		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 
@@ -371,13 +375,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel hpHealedPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's avg hp healed stats
-		JLabel hpHealedLeftLabel = new JLabel();
+		JShadowedLabel hpHealedLeftLabel = new JShadowedLabel();
 		hpHealedLeftLabel.setText("Avg HP Healed:");
 		hpHealedLeftLabel.setForeground(Color.WHITE);
 		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
 
 		// label to show hp healed stats
-		hpHealedStatsLabel = new JLabel();
+		hpHealedStatsLabel = new JShadowedLabel();
 		hpHealedStatsLabel.setForeground(Color.WHITE);
 		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 
@@ -387,10 +391,10 @@ public class TotalStatsPanel extends JPanel
 
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
-		JLabel robeHitsStatsLeftLabel = new JLabel("Avg Hits on Robes:");
+		JShadowedLabel robeHitsStatsLeftLabel = new JShadowedLabel("Avg Hits on Robes:");
 		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
 		robeHitsStatsPanel.add(robeHitsStatsLeftLabel, BorderLayout.WEST);
-		avgRobeHitsStatsLabel = new JLabel();
+		avgRobeHitsStatsLabel = new JShadowedLabel();
 		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
 		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
 		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -402,13 +406,13 @@ public class TotalStatsPanel extends JPanel
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
 
 		// left label
-		JLabel avgKoChanceStatsLeftLabel = new JLabel();
+		JShadowedLabel avgKoChanceStatsLeftLabel = new JShadowedLabel();
 		avgKoChanceStatsLeftLabel.setText("Avg KO Chances:");
 		avgKoChanceStatsLeftLabel.setForeground(Color.WHITE);
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLeftLabel, BorderLayout.WEST);
 
 		// right label (value)
-		avgKoChanceStatsLabel = new JLabel();
+		avgKoChanceStatsLabel = new JShadowedLabel();
 		avgKoChanceStatsLabel.setForeground(Color.WHITE);
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 
@@ -420,12 +424,12 @@ public class TotalStatsPanel extends JPanel
 		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
 
 		// left label with a label to say it's avg ghost barrage stats
-		JLabel ghostBarrageStatsLeftLabel = new JLabel();
+		JShadowedLabel ghostBarrageStatsLeftLabel = new JShadowedLabel();
 		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
 		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
 
-		ghostBarrageStatsLabel = new JLabel();
+		ghostBarrageStatsLabel = new JShadowedLabel();
 		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
 		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -928,7 +932,7 @@ public class TotalStatsPanel extends JPanel
 
 	private void initializeSettingsWarningLabel()
 	{
-		settingsWarningLabel = new JLabel();
+		settingsWarningLabel = new JShadowedLabel();
 		settingsWarningLabel.setText("Check plugin config for setup options!");
 		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
