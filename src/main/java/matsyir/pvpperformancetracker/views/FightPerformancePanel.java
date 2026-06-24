@@ -184,7 +184,7 @@ public class FightPerformancePanel extends JPanel
 					g.drawString(w, x, y); // draw text shadow
 
 					g.translate(-1, -1);
-					g.setColor(Color.LIGHT_GRAY);
+					g.setColor(ColorScheme.TEXT_COLOR);
 
 					g.drawString(w, x, y); // draw text
 				}
@@ -199,6 +199,10 @@ public class FightPerformancePanel extends JPanel
 		if (competitor.isDead())
 		{
 			playerStatsName.setIcon(deathIcon);
+			if (!opponent.isDead())
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
+			}
 		}
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
@@ -209,6 +213,10 @@ public class FightPerformancePanel extends JPanel
 		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(deathIcon);
+			if (!competitor.isDead())
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
+			}
 		}
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setForeground(Color.WHITE);
