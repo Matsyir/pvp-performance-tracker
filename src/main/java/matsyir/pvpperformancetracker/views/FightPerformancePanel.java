@@ -34,6 +34,8 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,7 +43,6 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -57,6 +58,8 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.LinkBrowser;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
@@ -65,28 +68,36 @@ import net.runelite.client.ui.PluginPanel;
 public class FightPerformancePanel extends JPanel
 {
 	private static ImageIcon deathIcon;
+	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
 
+	// border size: 4px on each side. 4px left, 4px right, 4px top, 4px bottom (plus extra 4px bottom invisible offset)
+	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,
+	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
 	static
 	{
-		// main border used when not hovering:
-		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
-		// inner border: padding for the inner content of the panel.
-		normalBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR),
-			new EmptyBorder(4, 6, 4, 6));
+		// spacing between the panels, at the bottom. use same color as the whole panel to appear like a gap between them
+		Border invisBottomBorder = BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR);
 
-		// border used while hovering:
-		// outer border: matte border with 4px bottom, with same color as the panel behind FightPerformancePanels. Used as invisible 4px offset
-		// "middle" border: outline for the main panel
-		// inner border: padding for the inner content of the panel, reduced by 1px to account for the outline
-		hoverBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR),
+		// main border used when not hovering
+		normalBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_HOVER_COLOR),
-				new EmptyBorder(3, 5, 3, 5)));
+				invisBottomBorder,
+				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2)),
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
+				new EmptyBorder(1, 1, 1, 1)));
+
+		// border used while hovering
+		hoverBorder = BorderFactory.createCompoundBorder(
+			BorderFactory.createCompoundBorder(
+				invisBottomBorder,
+				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2)),
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE),
+				new EmptyBorder(1, 1, 1, 1)));
 	}
 
 	private boolean showBorders;
@@ -169,30 +180,53 @@ public class FightPerformancePanel extends JPanel
 					FontMetrics fm = g.getFontMetrics(getFont());
 					int x = (getWidth() - fm.stringWidth(w)) / 2;
 					int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
-					g.setColor(Color.LIGHT_GRAY);
-					g.drawString(w, x, y);
+
+					g.translate(1, 1);
+					g.setColor(Color.BLACK);
+					g.drawString(w, x, y); // draw text shadow
+
+					g.translate(-1, -1);
+					g.setColor(ColorScheme.TEXT_COLOR);
+
+					g.drawString(w, x, y); // draw text
 				}
 			}
 		};
 		playerNamesLine.setBackground(null);
 
 		// player names
-		JLabel playerStatsName = new JLabel();
+		JShadowedLabel playerStatsName = new JShadowedLabel();
 
 		// player name LEFT: player name
 		if (competitor.isDead())
 		{
 			playerStatsName.setIcon(deathIcon);
+			if (!opponent.isDead())
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
+			}
+			else // double death
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
+			}
 		}
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
-		JLabel opponentStatsName = new JLabel();
+		JShadowedLabel opponentStatsName = new JShadowedLabel();
 		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(deathIcon);
+			if (!competitor.isDead())
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
+			}
+			else // double death
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
+			}
 		}
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setForeground(Color.WHITE);
@@ -262,6 +296,11 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(fight, getRootPane()));
 
+		// Create "Open on PvP-Hub" popup menu/context menu
+		final JMenuItem openOnPvpHub = new JMenuItem("<html><u>Open on PvP-Hub Website</u>&nbsp;&#8599;</html>");
+		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
+		openOnPvpHub.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
+
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
 		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
@@ -281,6 +320,10 @@ public class FightPerformancePanel extends JPanel
 
 		popupMenu.add(displayFightLog);
 		popupMenu.add(displayAttackSummary);
+		if (hasPvpHubUrl(fight))
+		{
+			popupMenu.add(openOnPvpHub);
+		}
 		popupMenu.add(copyFight);
 		popupMenu.add(removeFight);
 		setComponentPopupMenu(popupMenu);
@@ -306,11 +349,47 @@ public class FightPerformancePanel extends JPanel
 		}
 	}
 
-	private void setOutline(boolean visible)
+	private void setOutline(boolean hovered)
 	{
 		if (showBorders)
 		{
-			this.setBorder(visible ? hoverBorder : normalBorder);
+			this.setBorder(hovered ? hoverBorder : normalBorder);
 		}
+	}
+
+	private boolean hasPvpHubUrl(FightPerformance fight)
+	{
+		return fight != null
+			&& fight.getFightId() != null
+			&& !fight.getFightId().trim().isEmpty()
+			&& fight.getCompetitor() != null
+			&& fight.getCompetitor().getName() != null
+			&& !fight.getCompetitor().getName().trim().isEmpty();
+	}
+
+	private void openOnPvpHub(FightPerformance fight)
+	{
+		if (!hasPvpHubUrl(fight))
+		{
+			return;
+		}
+
+		try
+		{
+			LinkBrowser.browse(buildPvpHubUrl(fight));
+		}
+		catch (URISyntaxException e)
+		{
+			PLUGIN.createConfirmationModal(false, "Could not create the PvP-Hub URL for this fight.");
+		}
+	}
+
+	private String buildPvpHubUrl(FightPerformance fight) throws URISyntaxException
+	{
+		String playerName = CONFIG.hideRsnOnPvpHub()
+			? PLUGIN.getPvpHubHiddenName()
+			: fight.getCompetitor().getName();
+		String path = "/" + playerName.trim() + "/" + fight.getFightId().trim();
+		return new URI("https", PVP_HUB_HOST, path, null).toASCIIString();
 	}
 }

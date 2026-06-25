@@ -26,6 +26,8 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -33,7 +35,8 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JLabel;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -41,20 +44,21 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
+@Slf4j
 public class TotalStatsPanel extends JPanel
 {
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
@@ -94,23 +98,24 @@ public class TotalStatsPanel extends JPanel
 		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 12; // Increased count to include Avg Robe Hits
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11; // Increased count to include Avg Robe Hits
+	// excluding title row
+	private static final int LAYOUT_ROWS_WITH_WARNING = 12;
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11;
 
 	// labels to be updated
-	private final JLabel killsLabel;
-	private final JLabel deathsLabel;
-	private final JLabel offPrayStatsLabel;
-	private final JLabel expectedDmgStatsLabel;
-	private final JLabel dmgDealtStatsLabel;
-	private final JLabel magicHitCountStatsLabel;
-	private final JLabel offensivePrayCountStatsLabel;
-	private final JLabel hpHealedStatsLabel;
-	private final JLabel ghostBarrageStatsLabel;
-	private final JLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
-	private final JLabel avgKoChanceStatsLabel; // Added label for avg KO chances
+	private final JShadowedLabel killsLabel;
+	private final JShadowedLabel deathsLabel;
+	private final JShadowedLabel offPrayStatsLabel;
+	private final JShadowedLabel expectedDmgStatsLabel;
+	private final JShadowedLabel dmgDealtStatsLabel;
+	private final JShadowedLabel magicHitCountStatsLabel;
+	private final JShadowedLabel offensivePrayCountStatsLabel;
+	private final JShadowedLabel hpHealedStatsLabel;
+	private final JShadowedLabel ghostBarrageStatsLabel;
+	private final JShadowedLabel avgRobeHitsStatsLabel;
+	private final JShadowedLabel avgKoChanceStatsLabel;
 
-	private JLabel settingsWarningLabel; // to be hidden/shown
+	private JShadowedLabel settingsWarningLabel; // to be hidden/shown
 
 	private Fighter totalStats;
 
@@ -178,6 +183,12 @@ public class TotalStatsPanel extends JPanel
 	private double avgGhostBarrageCount = 0;
 	private double avgGhostBarrageExpectedDamage = 0;
 
+	private JPopupMenu popupMenu;
+	private JMenuItem resetPvpHubAnonymousId;
+	private final int pvpHupPopupMenuItemIdx = 1;
+	private int popupMenuDefaultItemCount;
+	private int popupMenuItemCountWithPvpHub;
+
 	public TotalStatsPanel()
 	{
 		totalStats = new Fighter("Player");
@@ -186,8 +197,8 @@ public class TotalStatsPanel extends JPanel
 		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		// Create contextMenu/popupMenu with various general actions
-		JPopupMenu contextMenu = new JPopupMenu();
+		// Create right click popup menu/context menu with various general actions
+		popupMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
 		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
@@ -195,12 +206,28 @@ public class TotalStatsPanel extends JPanel
 
 		// Create "Reset All" popup menu/context menu item
 		final JMenuItem removeAllFights = new JMenuItem("Remove All Fights");
+		removeAllFights.setForeground(Color.RED);
 		removeAllFights.addActionListener(e ->
 		{
 			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.resetFightHistory();
+			}
+		});
+
+		// create "reset PvP-Hub hidden name" right click option. Only display this if opted-in + name hidden.
+		resetPvpHubAnonymousId = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
+		resetPvpHubAnonymousId.setForeground(new Color(30, 230, 30));
+		resetPvpHubAnonymousId.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want " +
+					"to regenerate your Hidden Name for PvP-Hub? You will not be able to go back to your current " +
+					"hidden name. Existing fights will remain uploaded using your previous hidden name.",
+				"Warning", JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
+				PLUGIN.resetPvpHubHiddenName();
 			}
 		});
 
@@ -229,19 +256,25 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
 
-		contextMenu.add(viewWiki);
-		contextMenu.add(removeAllFights);
-		contextMenu.add(exportFightHistory);
-		contextMenu.add(importFightHistory);
-		setComponentPopupMenu(contextMenu);
+		// don't include the resetPvpHubAnonymousId menu item by default, it will be added dynamically if needed,
+		// via this.updatePopupMenuForPvpHubConfig()
+		popupMenu.add(viewWiki);
+		// resetPvpHubAnonymousId goes here (to help with visualizing index)
+		popupMenu.add(exportFightHistory);
+		popupMenu.add(importFightHistory);
+		popupMenu.add(removeAllFights);
+		popupMenuDefaultItemCount = popupMenu.getComponentCount();
+		popupMenuItemCountWithPvpHub = popupMenuDefaultItemCount + 1;
 
 		// Now initializing all lines:
 		// FIRST LINE
 		// basic label to display a title.
-		JLabel titleLabel = new JLabel();
+		JShadowedLabel titleLabel = new JShadowedLabel();
 		titleLabel.setText("PvP Performance Tracker v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
+		titleLabel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.BRAND_ORANGE));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
+		titleLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(titleLabel);
 
 		// if settings haven't been configured, add a red label to display that they should be.
@@ -254,188 +287,197 @@ public class TotalStatsPanel extends JPanel
 		// SECOND LINE
 		// panel to show total kills/deaths
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
+		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label to show kills
-		killsLabel = new JLabel();
+		killsLabel = new JShadowedLabel();
 		killsLabel.setText(numKills + " Kills");
 		killsLabel.setForeground(Color.WHITE);
+
 		killDeathPanel.add(killsLabel, BorderLayout.WEST);
 
 		// right label to show deaths
-		deathsLabel = new JLabel();
+		deathsLabel = new JShadowedLabel();
 		deathsLabel.setText(numDeaths + " Deaths");
 		deathsLabel.setForeground(Color.WHITE);
-		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
 
-		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		killDeathPanel.setComponentPopupMenu(contextMenu);
+		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
 		add(killDeathPanel);
 
 		// THIRD LINE
 		// panel to show the total off-pray stats (successful hits/total attacks)
 		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
+		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's off-pray stats
-		JLabel leftLabel = new JLabel();
+		JShadowedLabel leftLabel = new JShadowedLabel();
 		leftLabel.setText("Total Off-Pray:");
 		leftLabel.setForeground(Color.WHITE);
+
 		offPrayStatsPanel.add(leftLabel, BorderLayout.WEST);
 
 		// right shows off-pray stats
-		offPrayStatsLabel = new JLabel();
+		offPrayStatsLabel = new JShadowedLabel();
 		offPrayStatsLabel.setForeground(Color.WHITE);
-		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
 
-		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offPrayStatsPanel.setComponentPopupMenu(contextMenu);
+		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
 		// panel to show the average expected damage stats (average damage & average diff)
 		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
+		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's expected dmg stats
-		JLabel expectedDmgStatsLeftLabel = new JLabel();
+		JShadowedLabel expectedDmgStatsLeftLabel = new JShadowedLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
+
 		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
-		expectedDmgStatsLabel = new JLabel();
+		expectedDmgStatsLabel = new JShadowedLabel();
 		expectedDmgStatsLabel.setForeground(Color.WHITE);
-		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
 
-		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		expectedDmgStatsPanel.setComponentPopupMenu(contextMenu);
+		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
 		add(expectedDmgStatsPanel);
 
 		// FIFTH LINE
 		// panel to show the average damage dealt stats (average damage & average diff)
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
+		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg dmg dealt
-		JLabel dmgDealtStatsLeftLabel = new JLabel();
+		JShadowedLabel dmgDealtStatsLeftLabel = new JShadowedLabel();
 		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
 		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
+
 		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show avg dmg dealt
-		dmgDealtStatsLabel = new JLabel();
+		dmgDealtStatsLabel = new JShadowedLabel();
 		dmgDealtStatsLabel.setForeground(Color.WHITE);
-		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
-		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		dmgDealtStatsPanel.setComponentPopupMenu(contextMenu);
+		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 		add(dmgDealtStatsPanel);
 
 		// SIXTH LINE
 		// panel to show the total magic hit count and expected hit count
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
+		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's magic hit count stats
-		JLabel magicHitStatsLeftLabel = new JLabel();
+		JShadowedLabel magicHitStatsLeftLabel = new JShadowedLabel();
 		magicHitStatsLeftLabel.setText("Magic Luck:");
 		magicHitStatsLeftLabel.setForeground(Color.WHITE);
+
 		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show magic hit count stats
-		magicHitCountStatsLabel = new JLabel();
+		magicHitCountStatsLabel = new JShadowedLabel();
 		magicHitCountStatsLabel.setForeground(Color.WHITE);
-		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 
-		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		magicHitStatsPanel.setComponentPopupMenu(contextMenu);
+		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 		add(magicHitStatsPanel);
 
 		// SEVENTH LINE
 		// panel to show the offensive prayer success count
 		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
+		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's offensive pray stats
-		JLabel offensivePrayStatsLeftLabel = new JLabel();
+		JShadowedLabel offensivePrayStatsLeftLabel = new JShadowedLabel();
 		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
 		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
+
 		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show offensive pray stats
-		offensivePrayCountStatsLabel = new JLabel();
+		offensivePrayCountStatsLabel = new JShadowedLabel();
 		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
-		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 
-		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offensivePrayStatsPanel.setComponentPopupMenu(contextMenu);
+		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 		add(offensivePrayStatsPanel);
 
 		// EIGTH LINE
 		// panel to show the total hp healed
 		JPanel hpHealedPanel = new JPanel(new BorderLayout());
+		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg hp healed stats
-		JLabel hpHealedLeftLabel = new JLabel();
+		JShadowedLabel hpHealedLeftLabel = new JShadowedLabel();
 		hpHealedLeftLabel.setText("Avg HP Healed:");
 		hpHealedLeftLabel.setForeground(Color.WHITE);
 		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
 
 		// label to show hp healed stats
-		hpHealedStatsLabel = new JLabel();
+		hpHealedStatsLabel = new JShadowedLabel();
 		hpHealedStatsLabel.setForeground(Color.WHITE);
-		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 
-		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		hpHealedPanel.setComponentPopupMenu(contextMenu);
+		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 		add(hpHealedPanel);
 
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
-		JLabel robeHitsStatsLeftLabel = new JLabel("Avg Hits on Robes:");
-		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
-		robeHitsStatsPanel.add(robeHitsStatsLeftLabel, BorderLayout.WEST);
-		avgRobeHitsStatsLabel = new JLabel();
-		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
-		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
 		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		robeHitsStatsPanel.setComponentPopupMenu(contextMenu);
+
+		JShadowedLabel robeHitsStatsLeftLabel = new JShadowedLabel("Avg Hits on Robes:");
+		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
+
+		robeHitsStatsPanel.add(robeHitsStatsLeftLabel, BorderLayout.WEST);
+
+		avgRobeHitsStatsLabel = new JShadowedLabel();
+		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
+
+		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
 		add(robeHitsStatsPanel);
 
-		// TENTH LINE (NEW)
+		// TENTH LINE
 		// panel to show the avg KO chance stats
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
+		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label
-		JLabel avgKoChanceStatsLeftLabel = new JLabel();
+		JShadowedLabel avgKoChanceStatsLeftLabel = new JShadowedLabel();
 		avgKoChanceStatsLeftLabel.setText("Avg KO Chances:");
 		avgKoChanceStatsLeftLabel.setForeground(Color.WHITE);
+
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLeftLabel, BorderLayout.WEST);
 
 		// right label (value)
-		avgKoChanceStatsLabel = new JLabel();
+		avgKoChanceStatsLabel = new JShadowedLabel();
 		avgKoChanceStatsLabel.setForeground(Color.WHITE);
-		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 
-		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		avgKoChanceStatsPanel.setComponentPopupMenu(contextMenu);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 		add(avgKoChanceStatsPanel);
 
 		// panel to show the avg ghost barrage stats
 		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
+		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg ghost barrage stats
-		JLabel ghostBarrageStatsLeftLabel = new JLabel();
+		JShadowedLabel ghostBarrageStatsLeftLabel = new JShadowedLabel();
 		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
 		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
+
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
 
-		ghostBarrageStatsLabel = new JLabel();
+		ghostBarrageStatsLabel = new JShadowedLabel();
 		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
+
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
-		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		ghostBarrageStatsPanel.setComponentPopupMenu(contextMenu);
 		add(ghostBarrageStatsPanel);
 
+		// end of initializing lines
 
-		setLabels();
+		setLabels(); // update labels for all lines
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+
+		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
+		// tried to fix this 1000 cleaner ways but i could only get it to work with this
+		applyPopupRecursively(this, popupMenu);
+		updatePopupMenuForPvpHubConfig();
 	}
 
 	private void setLabels()
@@ -463,30 +505,33 @@ public class TotalStatsPanel extends JPanel
 
 		// put tooltip on parent JPanel so that you can hover anywhere on the line to get the tooltip,
 		// rather than having to hover exactly on the statistic label
-		((JPanel) offPrayStatsLabel.getParent()).setToolTipText("<html>" + nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
+		applyTooltipRecursively(offPrayStatsLabel.getParent(),
+			"<html>" + nf.format(totalStats.getOffPraySuccessCount()) + " successful off-pray attacks/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffPraySuccessPercentage()) + "%)" +
-			TrackedStatistic.OFF_PRAY.getPrefixedAcronymTooltip());
+				TrackedStatistic.OFF_PRAY.getPrefixedAcronymTooltip());
 
 		expectedDmgStatsLabel.setText(nf.format(avgExpectedDmg) + " (" +
 			(avgExpectedDmgDiff > 0 ? "+" : "") + avgExpectedDmgDiffOneDecimal + ")");
-		((JPanel) expectedDmgStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgExpectedDmg) +
+		applyTooltipRecursively(expectedDmgStatsLabel.getParent(),
+			"<html>Avg of " + nf1.format(avgExpectedDmg) +
 			" expected damage per fight with avg diff of " + (avgExpectedDmgDiff > 0 ? "+" : "") +
 			avgExpectedDmgDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgExpectedDmg) +
 			" (" + (killAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(killAvgExpectedDmgDiff) +
 			"), on deaths: " + nf1.format(deathAvgExpectedDmg) +
 			" (" + (deathAvgExpectedDmgDiff > 0 ? "+" : "") + nf1.format(deathAvgExpectedDmgDiff) + ")" +
-			TrackedStatistic.EXPECTED_DMG.getPrefixedAcronymTooltip());
+				TrackedStatistic.EXPECTED_DMG.getPrefixedAcronymTooltip());
 
 		dmgDealtStatsLabel.setText(nf.format(avgDmgDealt) + " (" +
 			(avgDmgDealtDiff > 0 ? "+" : "") + avgDmgDealtDiffOneDecimal + ")");
-		((JPanel) dmgDealtStatsLabel.getParent()).setToolTipText("<html>Avg of " + nf1.format(avgDmgDealt) +
+		applyTooltipRecursively(dmgDealtStatsLabel.getParent(),
+			"<html>Avg of " + nf1.format(avgDmgDealt) +
 			" damage per fight with avg diff of " + (avgDmgDealtDiff > 0 ? "+" : "") +
 			avgDmgDealtDiffOneDecimal + ".<br>On kills: " + nf1.format(killAvgDmgDealt) +
 			" (" + (killAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(killAvgDmgDealtDiff) +
 			"), on deaths: " + nf1.format(deathAvgDmgDealt) +
 			" (" + (deathAvgDmgDealtDiff > 0 ? "+" : "") + nf1.format(deathAvgDmgDealtDiff) + ")" +
-			TrackedStatistic.DMG_DEALT.getPrefixedAcronymTooltip());
+				TrackedStatistic.DMG_DEALT.getPrefixedAcronymTooltip());
 
 		if (totalStats.getMagicHitCountExpected() >= 10000)
 		{
@@ -497,7 +542,8 @@ public class TotalStatsPanel extends JPanel
 		{
 			magicHitCountStatsLabel.setText(totalStats.getMagicHitStats());
 		}
-		((JPanel) magicHitCountStatsLabel.getParent()).setToolTipText("<html>You successfully hit " +
+		applyTooltipRecursively(magicHitCountStatsLabel.getParent(),
+			"<html>You successfully hit " +
 			totalStats.getMagicHitCount() + " of " + totalStats.getMagicAttackCount() + " magic attacks, but expected to hit " +
 			nf1.format(totalStats.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
 			TrackedStatistic.MAGIC_HITS.getPrefixedAcronymTooltip());
@@ -512,13 +558,15 @@ public class TotalStatsPanel extends JPanel
 		{
 			offensivePrayCountStatsLabel.setText(totalStats.getOffensivePrayStats());
 		}
-		((JPanel) offensivePrayCountStatsLabel.getParent()).setToolTipText("<html>" + nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
+		applyTooltipRecursively(offensivePrayCountStatsLabel.getParent(),
+			"<html>" + nf.format(totalStats.getOffensivePraySuccessCount()) + " successful offensive prayers/" +
 			nf.format(totalStats.getAttackCount()) + " total attacks (" +
 			nf2.format(totalStats.calculateOffensivePraySuccessPercentage()) + "%)" +
 			TrackedStatistic.OFFENSIVE_PRAY.getPrefixedAcronymTooltip());
 
 		hpHealedStatsLabel.setText(nf.format(avgHpHealed));
-		((JPanel) hpHealedStatsLabel.getParent()).setToolTipText("<html>" + "A total of " + nf.format(totalStats.getHpHealed())
+		applyTooltipRecursively(hpHealedStatsLabel.getParent(),
+			"<html>" + "A total of " + nf.format(totalStats.getHpHealed())
 			+ " hitpoints were recovered, with an average of " + nf.format(avgHpHealed) + " HP per fight." +
 			TrackedStatistic.HP_HEALED.getPrefixedAcronymTooltip());
 
@@ -526,15 +574,17 @@ public class TotalStatsPanel extends JPanel
 		if (numFights > 0)
 		{
 			avgRobeHitsStatsLabel.setText(nf1.format(avgCompetitorRobeHits) + " / " + nf1.format(avgOpponentRobeHits));
-			((JPanel) avgRobeHitsStatsLabel.getParent()).setToolTipText("<html>Average melee/range hits taken while wearing robes per fight:<br>" +
+			applyTooltipRecursively(avgRobeHitsStatsLabel.getParent(),
+				"<html>Average melee/range hits taken while wearing robes per fight:<br>" +
 				"Player: " + nf1.format(avgCompetitorRobeHits) + " (" + nf1.format(avgCompetitorRobeHitsPercentage) + "% of melee/range hits taken were on robes)<br>" +
 				"Opponent: " + nf1.format(avgOpponentRobeHits) + " (" + nf1.format(avgOpponentRobeHitsPercentage) + "% of melee/range hits taken were on robes)" +
-				TrackedStatistic.ROBE_HITS.getPrefixedAcronymTooltip());
+					TrackedStatistic.ROBE_HITS.getPrefixedAcronymTooltip()
+			);
 		}
 		else
 		{
 			avgRobeHitsStatsLabel.setText("- / -");
-			((JPanel) avgRobeHitsStatsLabel.getParent()).setToolTipText("No robe hits data available for calculation.");
+			applyTooltipRecursively(avgRobeHitsStatsLabel.getParent(), "No robe hits data available for calculation.");
 		}
 
 		// Set Avg KO Chance label
@@ -547,23 +597,25 @@ public class TotalStatsPanel extends JPanel
 
 			// too long of a line to include both chances & percent/sum, so only include those in tooltip
 			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " / " + nf1.format(avgOpponentKoChances));
-			((JPanel) avgKoChanceStatsLabel.getParent())
-				.setToolTipText("<html>Average KO Chances per fight:<br>Player: "
+			applyTooltipRecursively(avgKoChanceStatsLabel.getParent(),
+				"<html>Average KO Chances per fight:<br>Player: "
 					+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoProb)
 					+ ")<br>Opponent: "
 					+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoProb)
 					+ ")<br>Total KO Chances: Player: "
 					+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
-					+ TrackedStatistic.KO_CHANCES.getPrefixedAcronymTooltip());
+					+ TrackedStatistic.KO_CHANCES.getPrefixedAcronymTooltip()
+			);
 		}
 		else
 		{
 			avgKoChanceStatsLabel.setText("- / -");
-			((JPanel) avgKoChanceStatsLabel.getParent()).setToolTipText("No KO chance data available for calculation.");
+			applyTooltipRecursively(avgKoChanceStatsLabel.getParent(), "No KO chance data available for calculation.");
 		}
 
 		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageExpectedDamage) + ")");
-		((JPanel) ghostBarrageStatsLabel.getParent()).setToolTipText("<html>You had an average of " + nf.format(avgGhostBarrageCount)
+		applyTooltipRecursively(ghostBarrageStatsLabel.getParent(),
+			"<html>You had an average of " + nf.format(avgGhostBarrageCount)
 			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageExpectedDamage)
 			+ " expected damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 			+ "Unless fighting in PvP Arena, your opponents likely had a similar value."
@@ -928,7 +980,7 @@ public class TotalStatsPanel extends JPanel
 
 	private void initializeSettingsWarningLabel()
 	{
-		settingsWarningLabel = new JLabel();
+		settingsWarningLabel = new JShadowedLabel();
 		settingsWarningLabel.setText("Check plugin config for setup options!");
 		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
@@ -940,4 +992,66 @@ public class TotalStatsPanel extends JPanel
 
 		settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	}
+
+	public void updatePopupMenuForPvpHubConfig()
+	{
+		// it should have the pvp hub option, so make sure it does
+		if (CONFIG.uploadFightsToPvpHub() && CONFIG.hideRsnOnPvpHub() && popupMenu.getComponentCount() < popupMenuItemCountWithPvpHub)
+		{
+			popupMenu.add(resetPvpHubAnonymousId, pvpHupPopupMenuItemIdx);
+		}
+		else if (popupMenu.getComponentCount() >= popupMenuItemCountWithPvpHub)
+		{
+			popupMenu.remove(pvpHupPopupMenuItemIdx);
+		}
+
+	}
+	private void applyPopupRecursively(Component c, JPopupMenu menu)
+	{
+		applyPopupRecursively(c, menu, -1); // no logs version
+		//applyPopupRecursively(c, menu, 1); // debug version
+	}
+
+	// version with counter for debugging
+	private void applyPopupRecursively(Component c, JPopupMenu menu, int i)
+	{
+		if (c instanceof JComponent)
+		{
+			if (i >= 0)
+			{
+				log.info("Applying popup to component (i=" + i + ")");
+			}
+			((JComponent) c).setComponentPopupMenu(menu);
+		}
+
+		if (c instanceof Container)
+		{
+			for (Component child : ((Container) c).getComponents())
+			{
+				if (i >= 0)
+				{
+					log.info("Children found, applying popup to component's children (i=" + i + ")");
+					i++;
+				}
+				applyPopupRecursively(child, menu, i);
+			}
+		}
+	}
+
+	private void applyTooltipRecursively(Component c, String tooltipText)
+	{
+		if (c instanceof JComponent)
+		{
+			((JComponent) c).setToolTipText(tooltipText);
+		}
+
+		if (c instanceof Container)
+		{
+			for (Component child : ((Container) c).getComponents())
+			{
+				applyTooltipRecursively(child, tooltipText);
+			}
+		}
+	}
+
 }

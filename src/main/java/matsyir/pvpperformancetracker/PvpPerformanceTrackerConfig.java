@@ -49,8 +49,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	enum PvpHubVisibilityDelay
 	{
-		RANDOM_6_20("Rand: 6-20min", 0),
 		INSTANT("Instant", 0),
+		RANDOM_6_20("Rand: 6-20min", 0),
 		MINUTES_15("15 minutes", 15 * 60),
 		MINUTES_30("30 minutes", 30 * 60),
 		HOUR_1("1 hour", 60 * 60),
@@ -181,7 +181,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
 	{
-		return PvpHubVisibilityDelay.RANDOM_6_20;
+		return PvpHubVisibilityDelay.INSTANT;
 	}
 
 	@ConfigItem(
@@ -617,7 +617,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.
-	String updateMsgKey = "updateMsgShown1_7_7";
+	String updateMsgKey = "updateMsgShown1_7_8";
 	@ConfigItem(
 		keyName = updateMsgKey,
 		name = "Update Msg flag for most recent update",
@@ -628,4 +628,16 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return false;
 	}
+
+	// throw any updateMsgShown keys into this as we change it.
+	public static final String[] UPDATE_MSG_KEY_GRAVEYARD = {
+		"updateMsgShown1_7_7",
+		"updateMsgShown1_7_6",
+		"updateMsgShown1_7_4",
+		"updateMsgShown1_7_2",
+		"updateMsgShown1_7_1",
+		"updateNote1_7_0",
+		"updateNote1_6_3",
+		"updateNoteMay72025Shown_v2"
+	};
 }

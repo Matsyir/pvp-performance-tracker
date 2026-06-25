@@ -419,4 +419,14 @@ public class PvpPerformanceTrackerUtils
 
 		return fixedItemIds;
 	}
+
+	public static String prependPlusIfPositive(int number)
+	{
+		if (number >= 0)
+		{
+			return "+" + number;
+		}
+
+		return String.valueOf(number);
+	}
 }

@@ -31,9 +31,17 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import matsyir.pvpperformancetracker.models.TrackedStatistic;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
 public final class PanelFactory
 {
+	public static final Color SUCCESS_COLOR = TrackedStatistic.SUCCESS_COLOR;
+	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = TrackedStatistic.UNSUCCESSFUL_OR_NEUTRAL_COLOR;
+	public static final Color SECONDARY_SUCCESS_COLOR = new Color(40, 52, 78, 92).brighter();
+	public static final Color SECONDARY_UNSUCCESSFUL_COLOR = new Color(89, 52, 59, 92).brighter();
+	public static final Color SECONDARY_NEUTRAL_COLOR = new Color(177, 177, 35, 92).brighter();
+
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
@@ -56,7 +64,7 @@ public final class PanelFactory
 										 String rightText, String rightTooltip, Color rightColor)
 	{
 		JPanel statsLine = new JPanel(new GridBagLayout());
-		statsLine.setBackground(null);
+		statsLine.setBackground(leftColor.equals(SUCCESS_COLOR) ? SECONDARY_SUCCESS_COLOR : (rightColor.equals(SUCCESS_COLOR) ? SECONDARY_UNSUCCESSFUL_COLOR : null));
 
 		String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
@@ -116,16 +124,23 @@ public final class PanelFactory
 	}
 
 
-	// A JLabel that still receives mouse events (so its tooltip works) but forwards them to the parent
-	// using SwingUtilities.convertMouseEvent(...) so the parent sees clicks/popup/hover as if the label
-	// wasn't there.
-	private static class ForwardingLabel extends JLabel
+	// A JShadowedLabel that still receives mouse events (so its tooltip works) but forwards them to the parent
+	// using SwingUtilities.convertMouseEvent(...) so the parent sees clicks/popup/hover as if the label wasn't there.
+	public static class ForwardingLabel extends JShadowedLabel
 	{
+		public ForwardingLabel()
+		{
+			super();
+			setOpaque(false);
+			setFocusable(false);
+			setShadow(Color.BLACK);
+		}
 		public ForwardingLabel(String text)
 		{
 			super(text);
 			setOpaque(false);
 			setFocusable(false);
+			setShadow(Color.BLACK);
 		}
 
 		@Override
@@ -140,6 +155,53 @@ public final class PanelFactory
 		protected void processMouseMotionEvent(MouseEvent e)
 		{
 			// allow label's normal handling (tooltips)
+			super.processMouseMotionEvent(e);
+			forwardToParent(e); // forward so parent can show hover effects / track mouse
+		}
+
+		private void forwardToParent(MouseEvent e)
+		{
+			Container parent = getParent();
+			if (parent == null)
+			{
+				return;
+			}
+
+			// convert to parent's coordinate system and dispatch there
+			MouseEvent parentEvent = SwingUtilities.convertMouseEvent(this, e, parent);
+			parent.dispatchEvent(parentEvent);
+		}
+	}
+
+	// Similar to ForwardingLabel, but for a basic JPanel.
+	public static class ForwardingPanel extends JPanel
+	{
+		public ForwardingPanel()
+		{
+			super();
+			setOpaque(false);
+			setFocusable(false);
+		}
+
+		public ForwardingPanel(LayoutManager layout)
+		{
+			super(layout);
+			setOpaque(false);
+			setFocusable(false);
+		}
+
+		@Override
+		protected void processMouseEvent(MouseEvent e)
+		{
+			// allow panel's normal handling (tooltips etc)
+			super.processMouseEvent(e);
+			forwardToParent(e);
+		}
+
+		@Override
+		protected void processMouseMotionEvent(MouseEvent e)
+		{
+			// allow panel's normal handling (tooltips)
 			super.processMouseMotionEvent(e);
 			forwardToParent(e); // forward so parent can show hover effects / track mouse
 		}

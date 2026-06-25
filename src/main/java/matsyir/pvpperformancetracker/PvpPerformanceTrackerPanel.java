@@ -79,7 +79,9 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
 		pvpHubHiddenNameBtn.setBorder(new LineBorder(ColorScheme.BORDER_COLOR, 1));
-		pvpHubHiddenNameBtn.setToolTipText("Your private read-only name used when \"Hide RSN on PvP-Hub\" is enabled. Click to toggle visibility.");
+		pvpHubHiddenNameBtn.setToolTipText("<html>Your private, read-only \"hidden name\" used when \"Hide RSN on PvP-Hub\" is enabled. " +
+			"Click to toggle visibility.<br><br>" +
+			"You can reset this hidden name by right-clicking the Total Stats just above.");
 		pvpHubHiddenNameBtn.addActionListener(actionEvent -> {
 			hiddenNameIsVisible = !hiddenNameIsVisible;
 			updatePvpHubHiddenName();
@@ -246,5 +248,10 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		revalidate();
 		repaint();
+	}
+
+	public void updatePopupMenuForPvpHubConfig()
+	{
+		totalStatsPanel.updatePopupMenuForPvpHubConfig();
 	}
 }
