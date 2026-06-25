@@ -570,7 +570,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "showWorldInSummary",
 		name = "Show World in Summary",
-		description = "Display the world number between names in the summary panel.",
+		description = "Display the world flag between names in the summary panel.",
 		position = 22500
 	)
 	default boolean showWorldInSummary()

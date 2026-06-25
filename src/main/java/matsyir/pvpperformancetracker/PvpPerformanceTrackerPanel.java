@@ -28,6 +28,10 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.IntSupplier;
 import javax.inject.Inject;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -46,6 +50,11 @@ import javax.swing.event.DocumentListener;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
+import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
+import net.runelite.api.EnumID;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
@@ -62,13 +71,21 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
+	private final WorldService worldService;
+	private final Client client;
+	private final ClientThread clientThread;
+	private final Map<Integer, Integer> worldLocations = new ConcurrentHashMap<>();
+	private final Set<Integer> pendingWorldLocationLoads = ConcurrentHashMap.newKeySet();
 
 	@Inject
-	private PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config)
+	private PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config, final WorldService worldService, final Client client, final ClientThread clientThread)
 	{
 		super(false);
 		this.plugin = plugin;
 		this.config = config;
+		this.worldService = worldService;
+		this.client = client;
+		this.clientThread = clientThread;
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -153,11 +170,11 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			return;
 		}
 
-		totalStatsPanel.addFight(fight);
+		totalStatsPanel.addFight(fight.getPvpHubDisplayFight());
 
 		SwingUtilities.invokeLater(() ->
 		{
-			fightHistoryContainer.add(new FightPerformancePanel(fight), 0);
+			fightHistoryContainer.add(new FightPerformancePanel(fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
 
 			// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
 			if (fightHistoryContainer.getComponentCount() > config.fightHistoryRenderLimit())
@@ -190,7 +207,9 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 					&& !f.getOpponent().getName().toLowerCase().startsWith(config.nameFilter()));
 		}
 
-		totalStatsPanel.addFights(fights);
+		ArrayList<FightPerformance> displayFights = new ArrayList<>();
+		fights.forEach((FightPerformance f) -> displayFights.add(f.getPvpHubDisplayFight()));
+		totalStatsPanel.addFights(displayFights);
 		SwingUtilities.invokeLater(() ->
 		{
 			// if we're adding more fights than we want to render at all, then reduce the number of fights and clear all the existing ones
@@ -218,8 +237,49 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 			}
 
-			fights.forEach((FightPerformance f) -> fightHistoryContainer.add(new FightPerformancePanel(f), 0));
+			fights.forEach((FightPerformance f) -> {
+				fightHistoryContainer.add(new FightPerformancePanel(f, worldService, getWorldLocationSupplier(f.getPvpHubDisplayFight().getWorld())), 0);
+			});
 			updateUI();
+		});
+	}
+
+	private IntSupplier getWorldLocationSupplier(int world)
+	{
+		requestWorldLocation(world);
+		return () -> worldLocations.getOrDefault(world, -1);
+	}
+
+	private void requestWorldLocation(int world)
+	{
+		if (world <= 0 || worldLocations.containsKey(world) || !pendingWorldLocationLoads.add(world))
+		{
+			return;
+		}
+
+		clientThread.invokeLater(() ->
+		{
+			int location = -1;
+			try
+			{
+				EnumComposition worldLocationsEnum = client.getEnum(EnumID.WORLD_LOCATIONS);
+				if (worldLocationsEnum != null)
+				{
+					location = worldLocationsEnum.getIntValue(world);
+				}
+			}
+			catch (RuntimeException ignored)
+			{
+				// Keep fight cards renderable even when the world-location enum is unavailable.
+			}
+
+			final int resolvedLocation = location;
+			SwingUtilities.invokeLater(() ->
+			{
+				worldLocations.put(world, resolvedLocation);
+				pendingWorldLocationLoads.remove(world);
+				fightHistoryContainer.repaint();
+			});
 		});
 	}
 
