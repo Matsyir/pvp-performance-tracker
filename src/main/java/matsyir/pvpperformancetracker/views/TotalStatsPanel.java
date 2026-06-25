@@ -26,16 +26,20 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 import javax.swing.BorderFactory;
-import net.runelite.api.Point;
-import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -43,7 +47,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
@@ -54,9 +58,11 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
+@Slf4j
 public class TotalStatsPanel extends JPanel
 {
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
@@ -180,6 +186,9 @@ public class TotalStatsPanel extends JPanel
 	private double avgGhostBarrageCount = 0;
 	private double avgGhostBarrageExpectedDamage = 0;
 
+	private JPopupMenu defaultPopupMenu;
+	private JPopupMenu popupMenuWithPvpHubOptions;
+
 	public TotalStatsPanel()
 	{
 		totalStats = new Fighter("Player");
@@ -188,8 +197,9 @@ public class TotalStatsPanel extends JPanel
 		setBorder(new EmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
-		// Create contextMenu/popupMenu with various general actions
-		JPopupMenu contextMenu = new JPopupMenu();
+		// Create right click popup menu/context menu with various general actions
+		defaultPopupMenu = new JPopupMenu();
+		popupMenuWithPvpHubOptions = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
 		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
@@ -197,6 +207,7 @@ public class TotalStatsPanel extends JPanel
 
 		// Create "Reset All" popup menu/context menu item
 		final JMenuItem removeAllFights = new JMenuItem("Remove All Fights");
+		removeAllFights.setForeground(Color.RED);
 		removeAllFights.addActionListener(e ->
 		{
 			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
@@ -205,8 +216,21 @@ public class TotalStatsPanel extends JPanel
 				PLUGIN.resetFightHistory();
 			}
 		});
-		removeAllFights.setForeground(Color.RED);
-		// TODO create "reset PvP-Hub hidden name" right click option (if opted in + name hidden). Also on the button that displays it.
+
+		// create "reset PvP-Hub hidden name" right click option. Only display this if opted-in + name hidden.
+		final JMenuItem resetPvpHubAnonymousId = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
+		resetPvpHubAnonymousId.setForeground(new Color(30, 230, 30));
+		resetPvpHubAnonymousId.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want " +
+					"to regenerate your Hidden Name for PvP-Hub? You will not be able to go back to your current " +
+					"hidden name. Existing fights will remain uploaded using your previous hidden name.",
+				"Warning", JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
+				PLUGIN.resetPvpHubHiddenName();
+			}
+		});
 
 		// Create "Configure Settings" popup menu/context menu item
 		// TODO? Can't figure out how but would like to in the future. Esp. since there is a warning to setup config.
@@ -233,11 +257,16 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
 
-		contextMenu.add(viewWiki);
-		contextMenu.add(removeAllFights);
-		contextMenu.add(exportFightHistory);
-		contextMenu.add(importFightHistory);
-		setComponentPopupMenu(contextMenu);
+		defaultPopupMenu.add(viewWiki);
+		defaultPopupMenu.add(exportFightHistory);
+		defaultPopupMenu.add(importFightHistory);
+		defaultPopupMenu.add(removeAllFights);
+
+		popupMenuWithPvpHubOptions.add(viewWiki);
+		popupMenuWithPvpHubOptions.add(resetPvpHubAnonymousId);
+		popupMenuWithPvpHubOptions.add(exportFightHistory);
+		popupMenuWithPvpHubOptions.add(importFightHistory);
+		popupMenuWithPvpHubOptions.add(removeAllFights);
 
 		// Now initializing all lines:
 		// FIRST LINE
@@ -247,7 +276,7 @@ public class TotalStatsPanel extends JPanel
 		titleLabel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.BRAND_ORANGE));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
-		titleLabel.setShadow(Color.BLACK);
+		titleLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(titleLabel);
 
 		// if settings haven't been configured, add a red label to display that they should be.
@@ -260,21 +289,47 @@ public class TotalStatsPanel extends JPanel
 		// SECOND LINE
 		// panel to show total kills/deaths
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
+		killDeathPanel.setInheritsPopupMenu(true);
 
 		// left label to show kills
 		killsLabel = new JShadowedLabel();
 		killsLabel.setText(numKills + " Kills");
 		killsLabel.setForeground(Color.WHITE);
+		killsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+		killsLabel.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				log.info(
+					"pressed button={} modifiers={} popup={}",
+					e.getButton(),
+					e.getModifiersEx(),
+					e.isPopupTrigger()
+				);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				log.info(
+					"released button={} modifiers={} popup={}",
+					e.getButton(),
+					e.getModifiersEx(),
+					e.isPopupTrigger()
+				);
+			}
+		});
+
 		killDeathPanel.add(killsLabel, BorderLayout.WEST);
 
 		// right label to show deaths
 		deathsLabel = new JShadowedLabel();
 		deathsLabel.setText(numDeaths + " Deaths");
 		deathsLabel.setForeground(Color.WHITE);
+		deathsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
-
-		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		killDeathPanel.setComponentPopupMenu(contextMenu);
 		add(killDeathPanel);
 
 		// THIRD LINE
@@ -291,9 +346,6 @@ public class TotalStatsPanel extends JPanel
 		offPrayStatsLabel = new JShadowedLabel();
 		offPrayStatsLabel.setForeground(Color.WHITE);
 		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
-
-		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offPrayStatsPanel.setComponentPopupMenu(contextMenu);
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
@@ -304,15 +356,14 @@ public class TotalStatsPanel extends JPanel
 		JShadowedLabel expectedDmgStatsLeftLabel = new JShadowedLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
+		expectedDmgStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
 		expectedDmgStatsLabel = new JShadowedLabel();
 		expectedDmgStatsLabel.setForeground(Color.WHITE);
+		expectedDmgStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
-
-		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		expectedDmgStatsPanel.setComponentPopupMenu(contextMenu);
 		add(expectedDmgStatsPanel);
 
 		// FIFTH LINE
@@ -323,6 +374,7 @@ public class TotalStatsPanel extends JPanel
 		JShadowedLabel dmgDealtStatsLeftLabel = new JShadowedLabel();
 		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
 		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
+		dmgDealtStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show avg dmg dealt
@@ -330,8 +382,6 @@ public class TotalStatsPanel extends JPanel
 		dmgDealtStatsLabel.setForeground(Color.WHITE);
 		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
-		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		dmgDealtStatsPanel.setComponentPopupMenu(contextMenu);
 		add(dmgDealtStatsPanel);
 
 		// SIXTH LINE
@@ -342,15 +392,15 @@ public class TotalStatsPanel extends JPanel
 		JShadowedLabel magicHitStatsLeftLabel = new JShadowedLabel();
 		magicHitStatsLeftLabel.setText("Magic Luck:");
 		magicHitStatsLeftLabel.setForeground(Color.WHITE);
+		magicHitStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show magic hit count stats
 		magicHitCountStatsLabel = new JShadowedLabel();
 		magicHitCountStatsLabel.setForeground(Color.WHITE);
+		magicHitCountStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 
-		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		magicHitStatsPanel.setComponentPopupMenu(contextMenu);
 		add(magicHitStatsPanel);
 
 		// SEVENTH LINE
@@ -361,15 +411,15 @@ public class TotalStatsPanel extends JPanel
 		JShadowedLabel offensivePrayStatsLeftLabel = new JShadowedLabel();
 		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
 		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
+		offensivePrayStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show offensive pray stats
 		offensivePrayCountStatsLabel = new JShadowedLabel();
 		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
+		offensivePrayCountStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 
-		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offensivePrayStatsPanel.setComponentPopupMenu(contextMenu);
 		add(offensivePrayStatsPanel);
 
 		// EIGTH LINE
@@ -380,6 +430,7 @@ public class TotalStatsPanel extends JPanel
 		JShadowedLabel hpHealedLeftLabel = new JShadowedLabel();
 		hpHealedLeftLabel.setText("Avg HP Healed:");
 		hpHealedLeftLabel.setForeground(Color.WHITE);
+		hpHealedLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
 
 		// label to show hp healed stats
@@ -387,8 +438,6 @@ public class TotalStatsPanel extends JPanel
 		hpHealedStatsLabel.setForeground(Color.WHITE);
 		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 
-		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		hpHealedPanel.setComponentPopupMenu(contextMenu);
 		add(hpHealedPanel);
 
 		// TENTH LINE: Avg Hits on Robes
@@ -400,7 +449,6 @@ public class TotalStatsPanel extends JPanel
 		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
 		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
 		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		robeHitsStatsPanel.setComponentPopupMenu(contextMenu);
 		add(robeHitsStatsPanel);
 
 		// TENTH LINE (NEW)
@@ -419,7 +467,6 @@ public class TotalStatsPanel extends JPanel
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 
 		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		avgKoChanceStatsPanel.setComponentPopupMenu(contextMenu);
 		add(avgKoChanceStatsPanel);
 
 		// panel to show the avg ghost barrage stats
@@ -435,13 +482,14 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
 		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		ghostBarrageStatsPanel.setComponentPopupMenu(contextMenu);
 		add(ghostBarrageStatsPanel);
 
 
 		setLabels();
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+
+		updatePopupMenuForPvpHubConfig(); // apply popupmenu depending on what the pvp hub configs are
 	}
 
 	private void setLabels()
@@ -945,5 +993,39 @@ public class TotalStatsPanel extends JPanel
 		settingsWarningLabel.setFont(newFont);
 
 		settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	}
+
+	public void updatePopupMenuForPvpHubConfig()
+	{
+		applyPopupRecursively(this, (CONFIG.uploadFightsToPvpHub() && CONFIG.hideRsnOnPvpHub()) ? popupMenuWithPvpHubOptions : defaultPopupMenu);
+
+		log.info("TotalStatsPanel.updatePopupMenuForPvpHubConfig_Debug: panel popup = {}", getComponentPopupMenu());
+
+		for (Component c : getComponents())
+		{
+			if (c instanceof JComponent)
+			{
+				log.info("TotalStatsPanel.updatePopupMenuForPvpHubConfig_Debug2: {} popup={}",
+					c.getClass().getSimpleName(),
+					((JComponent) c).getComponentPopupMenu());
+			}
+		}
+	}
+
+	// call setComponentPopupMenu on itself and all children recursively
+	private void applyPopupRecursively(Component c, JPopupMenu menu)
+	{
+		if (c instanceof JComponent)
+		{
+			((JComponent) c).setComponentPopupMenu(menu);
+		}
+
+		if (c instanceof Container)
+		{
+			for (Component child : ((Container) c).getComponents())
+			{
+				applyPopupRecursively(child, menu);
+			}
+		}
 	}
 }

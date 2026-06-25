@@ -125,8 +125,15 @@ public final class PanelFactory
 
 	// A JShadowedLabel that still receives mouse events (so its tooltip works) but forwards them to the parent
 	// using SwingUtilities.convertMouseEvent(...) so the parent sees clicks/popup/hover as if the label wasn't there.
-	private static class ForwardingLabel extends JShadowedLabel
+	public static class ForwardingLabel extends JShadowedLabel
 	{
+		public ForwardingLabel()
+		{
+			super();
+			setOpaque(false);
+			setFocusable(false);
+			setShadow(Color.BLACK);
+		}
 		public ForwardingLabel(String text)
 		{
 			super(text);
@@ -147,6 +154,53 @@ public final class PanelFactory
 		protected void processMouseMotionEvent(MouseEvent e)
 		{
 			// allow label's normal handling (tooltips)
+			super.processMouseMotionEvent(e);
+			forwardToParent(e); // forward so parent can show hover effects / track mouse
+		}
+
+		private void forwardToParent(MouseEvent e)
+		{
+			Container parent = getParent();
+			if (parent == null)
+			{
+				return;
+			}
+
+			// convert to parent's coordinate system and dispatch there
+			MouseEvent parentEvent = SwingUtilities.convertMouseEvent(this, e, parent);
+			parent.dispatchEvent(parentEvent);
+		}
+	}
+
+	// Similar to ForwardingLabel, but for a basic JPanel.
+	public static class ForwardingPanel extends JPanel
+	{
+		public ForwardingPanel()
+		{
+			super();
+			setOpaque(false);
+			setFocusable(false);
+		}
+
+		public ForwardingPanel(LayoutManager layout)
+		{
+			super(layout);
+			setOpaque(false);
+			setFocusable(false);
+		}
+
+		@Override
+		protected void processMouseEvent(MouseEvent e)
+		{
+			// allow panel's normal handling (tooltips etc)
+			super.processMouseEvent(e);
+			forwardToParent(e);
+		}
+
+		@Override
+		protected void processMouseMotionEvent(MouseEvent e)
+		{
+			// allow panel's normal handling (tooltips)
 			super.processMouseMotionEvent(e);
 			forwardToParent(e); // forward so parent can show hover effects / track mouse
 		}

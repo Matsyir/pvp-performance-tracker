@@ -1798,4 +1798,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		return PvpHubPrivacy.hiddenNameFor(anonymousId);
 	}
+
+	public void resetPvpHubHiddenName()
+	{
+		configManager.unsetConfiguration(CONFIG_KEY, "pvpHubAnonymousId");
+	}
 }
