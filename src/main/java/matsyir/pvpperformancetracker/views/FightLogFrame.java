@@ -117,6 +117,11 @@ public class FightLogFrame extends JFrame
 
 	public static JFrame createFightLogFrame(FightPerformance fight, JRootPane rootPane)
 	{
+		return createFightLogFrame(fight, rootPane, false);
+	}
+
+	public static JFrame createFightLogFrame(FightPerformance fight, JRootPane rootPane, boolean pvpHubSynced)
+	{
 		// destroy current frame if it exists so we only have one at a time (static field)
 		if (fightLogFrame != null)
 		{
@@ -134,18 +139,19 @@ public class FightLogFrame extends JFrame
 		{
 			fightLogFrame = new FightLogFrame(fight,
 				fightLogEntries,
-				rootPane);
+				rootPane,
+				pvpHubSynced);
 		}
 
 		return fightLogFrame;
 	}
 
 	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
-	private FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane)
+	private FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane, boolean pvpHubSynced)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
 		super("Fight Log - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
-			+ " on world " + fight.getWorld());
+			+ " on world " + fight.getWorld() + (pvpHubSynced ? " *SYNCED*" : ""));
 
 		fightLogEntries = logEntries;
 		fightLogEntries.removeIf(e -> !e.isFullEntry());

@@ -65,6 +65,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import matsyir.pvpperformancetracker.controllers.PvpHubFightSync;
 import matsyir.pvpperformancetracker.controllers.PvpHubUploader;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -218,7 +219,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
+	private final Set<String> pendingPvpHubSyncFightIds = ConcurrentHashMap.newKeySet();
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
+	private File pvpHubSyncedFightsDir;
 
 	// #################################################################################################################
 	// ##################################### Core RL plugin functions & RL Events ######################################
@@ -243,6 +246,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
 					: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
 			).create();
+		pvpHubSyncedFightsDir = new File(FIGHT_HISTORY_DATA_DIR, PvpHubFightSync.SYNCED_FIGHTS_DIR_NAME);
+		pvpHubSyncedFightsDir.mkdirs();
 
 		if (!config.pluginVersion().equals(PLUGIN_VERSION))
 		{
@@ -260,6 +265,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.build();
 
 		importFightHistoryData();
+		syncExistingPvpHubFightsOnce();
+		executor.scheduleWithFixedDelay(this::syncPendingPvpHubFights, 60, 60, TimeUnit.SECONDS);
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
@@ -1381,7 +1388,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 				final FightPerformance fightToUpload = currentFight;
 				final String hiddenName = config.hideRsnOnPvpHub() ? getPvpHubHiddenName() : null;
-				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName));
+				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName,
+					() -> enqueuePvpHubSync(fightToUpload)));
 			}
 		}
 		currentFight = null;
@@ -1440,6 +1448,125 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	private void syncExistingPvpHubFightsOnce()
+	{
+		if (!CONFIG.uploadFightsToPvpHub())
+		{
+			return;
+		}
+
+		for (FightPerformance fight : fightHistory)
+		{
+			attachPvpHubSyncedFight(fight);
+			if (!fight.hasPvpHubSyncedFight() && fight.getFightId() != null && !fight.getFightId().trim().isEmpty())
+			{
+				requestPvpHubSync(fight);
+			}
+		}
+	}
+
+	private void enqueuePvpHubSync(FightPerformance fight)
+	{
+		if (fight == null || fight.getFightId() == null || fight.getFightId().trim().isEmpty() || fight.hasPvpHubSyncedFight())
+		{
+			return;
+		}
+
+		pendingPvpHubSyncFightIds.add(fight.getFightId().trim());
+	}
+
+	private void syncPendingPvpHubFights()
+	{
+		if (!CONFIG.uploadFightsToPvpHub() || pendingPvpHubSyncFightIds.isEmpty())
+		{
+			return;
+		}
+
+		for (String fightId : new ArrayList<>(pendingPvpHubSyncFightIds))
+		{
+			FightPerformance fight = findFightById(fightId);
+			if (fight == null || fight.hasPvpHubSyncedFight())
+			{
+				pendingPvpHubSyncFightIds.remove(fightId);
+				continue;
+			}
+
+			requestPvpHubSync(fight);
+		}
+	}
+
+	private FightPerformance findFightById(String fightId)
+	{
+		if (fightId == null)
+		{
+			return null;
+		}
+
+		for (FightPerformance fight : fightHistory)
+		{
+			if (fightId.equals(fight.getFightId()))
+			{
+				return fight;
+			}
+		}
+		return null;
+	}
+
+	private void requestPvpHubSync(FightPerformance fight)
+	{
+		if (fight == null || fight.getFightId() == null || fight.getFightId().trim().isEmpty()
+			|| fight.hasPvpHubSyncedFight() || fight.isPvpHubSyncInProgress())
+		{
+			return;
+		}
+
+		fight.setPvpHubSyncInProgress(true);
+		PvpHubFightSync.fetchSyncedFight(fight, GSON, httpClient, new PvpHubFightSync.SyncCallback()
+		{
+			@Override
+			public void onSynced(FightPerformance syncedFight, String responseJson)
+			{
+				try
+				{
+					PvpHubFightSync.saveSyncedFight(pvpHubSyncedFightsDir, fight.getFightId(), responseJson);
+					fight.setPvpHubSyncedFight(syncedFight);
+					pendingPvpHubSyncFightIds.remove(fight.getFightId());
+				}
+				catch (Exception e)
+				{
+					fight.setPvpHubSyncInProgress(false);
+					log.warn("Error applying synced PvP-Hub fight {}: {}: {}", fight.getFightId(), e.getClass().getSimpleName(), e.getMessage());
+					return;
+				}
+
+				clientThread.invokeLater(() ->
+				{
+					try
+					{
+						fight.getPvpHubDisplayFight().calculateRobeHits(config.robeHitFilter());
+					}
+					catch (Exception e)
+					{
+						log.warn("Error recalculating synced PvP-Hub robe hits {}: {}: {}", fight.getFightId(), e.getClass().getSimpleName(), e.getMessage());
+					}
+
+					SwingUtilities.invokeLater(() -> {
+						if (panel != null) {
+							panel.rebuild();
+						}
+					});
+				});
+			}
+
+			@Override
+			public void onNotSynced(String reason)
+			{
+				fight.setPvpHubSyncInProgress(false);
+				log.debug("PvP-Hub sync unavailable for fight {}: {}", fight.getFightId(), reason);
+			}
+		});
+	}
+
 	void recalculateAllRobeHits(boolean rebuildPanel)
 	{
 		clientThread.invokeLater(() ->
@@ -1448,6 +1575,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			for (FightPerformance f : fightHistory)
 			{
 				f.calculateRobeHits(config.robeHitFilter());
+				if (f.hasPvpHubSyncedFight())
+				{
+					f.getPvpHubDisplayFight().calculateRobeHits(config.robeHitFilter());
+				}
 			}
 			if (currentFight != null)
 			{
@@ -1534,10 +1665,26 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		f.getCompetitor().getFightLogEntries().forEach((FightLogEntry l) ->
-			l.attackerName = f.getCompetitor().getName());
-		f.getOpponent().getFightLogEntries().forEach((FightLogEntry l) ->
-			l.attackerName = f.getOpponent().getName());
+		f.initializeFightLogNames();
+		attachPvpHubSyncedFight(f);
+	}
+
+	private void attachPvpHubSyncedFight(FightPerformance fight)
+	{
+		FightPerformance syncedFight = PvpHubFightSync.loadSyncedFight(pvpHubSyncedFightsDir, GSON, fight);
+		if (syncedFight == null)
+		{
+			return;
+		}
+
+		try
+		{
+			fight.setPvpHubSyncedFight(syncedFight);
+		}
+		catch (Exception e)
+		{
+			log.warn("Error attaching synced PvP-Hub fight {}: {}: {}", fight.getFightId(), e.getClass().getSimpleName(), e.getMessage());
+		}
 	}
 
 	// process and add a list of deserialized json fights to the currently loaded fights

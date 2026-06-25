@@ -98,6 +98,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Getter
 	private String pluginVersion;
 
+	@Getter
+	private transient FightPerformance pvpHubSyncedFight;
+	@Getter
+	private transient boolean pvpHubSyncInProgress = false;
 	private transient boolean fightIdGenerated = false;
 	private transient long initialTime = 0;
 	private transient int initialFightTick = -1;
@@ -425,6 +429,79 @@ public class FightPerformance implements Comparable<FightPerformance>
 		combinedList.addAll(opponent.getFightLogEntries());
 		combinedList.sort(FightLogEntry::compareTo);
 		return combinedList;
+	}
+
+	public void initializeFightLogNames()
+	{
+		if (competitor != null && competitor.getFightLogEntries() != null)
+		{
+			competitor.getFightLogEntries().forEach((FightLogEntry l) -> l.attackerName = competitor.getName());
+		}
+		if (opponent != null && opponent.getFightLogEntries() != null)
+		{
+			opponent.getFightLogEntries().forEach((FightLogEntry l) -> l.attackerName = opponent.getName());
+		}
+	}
+
+	public boolean hasPvpHubSyncedFight()
+	{
+		return pvpHubSyncedFight != null;
+	}
+
+	public void setPvpHubSyncInProgress(boolean inProgress)
+	{
+		pvpHubSyncInProgress = inProgress;
+	}
+
+	public void setPvpHubSyncedFight(FightPerformance syncedFight)
+	{
+		pvpHubSyncedFight = syncedFight;
+		pvpHubSyncInProgress = false;
+		if (pvpHubSyncedFight != null)
+		{
+			pvpHubSyncedFight.applyLocalDisplayIdentityFrom(this);
+			pvpHubSyncedFight.initializeFightLogNames();
+		}
+	}
+
+	public FightPerformance getPvpHubDisplayFight()
+	{
+		if (pvpHubSyncedFight == null)
+		{
+			return this;
+		}
+
+		pvpHubSyncedFight.applyLocalDisplayIdentityFrom(this);
+		pvpHubSyncedFight.initializeFightLogNames();
+		return pvpHubSyncedFight;
+	}
+
+	private void applyLocalDisplayIdentityFrom(FightPerformance localFight)
+	{
+		if (localFight == null)
+		{
+			return;
+		}
+		if (competitor != null && localFight.competitor != null)
+		{
+			competitor.setName(localFight.competitor.getName());
+		}
+		if (opponent != null && localFight.opponent != null)
+		{
+			opponent.setName(localFight.opponent.getName());
+		}
+		if (world <= 0)
+		{
+			world = localFight.world;
+		}
+		if (fightId == null || fightId.isEmpty())
+		{
+			fightId = localFight.fightId;
+		}
+		if (pluginVersion == null)
+		{
+			pluginVersion = localFight.pluginVersion;
+		}
 	}
 
 	// Count the fight as started if either:

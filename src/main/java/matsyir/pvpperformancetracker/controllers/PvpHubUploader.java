@@ -79,6 +79,11 @@ public class PvpHubUploader
 	 */
 	public static void uploadFight(FightPerformance fight, Gson gson, OkHttpClient httpClient, String hiddenName)
 	{
+		uploadFight(fight, gson, httpClient, hiddenName, null);
+	}
+
+	public static void uploadFight(FightPerformance fight, Gson gson, OkHttpClient httpClient, String hiddenName, Runnable onSuccess)
+	{
 		if (fight == null || fight.getFightId() == null || fight.getFightId().isEmpty())
 		{
 			log.debug("Skipping PvP-Hub upload: fight or fightId is null/empty");
@@ -119,6 +124,10 @@ public class PvpHubUploader
 					if (response.isSuccessful())
 					{
 						log.info("PvP-Hub upload successful for fight {} (HTTP {})", fight.getFightId(), response.code());
+						if (onSuccess != null)
+						{
+							onSuccess.run();
+						}
 					}
 					else
 					{

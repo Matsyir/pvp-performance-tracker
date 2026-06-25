@@ -29,7 +29,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
@@ -41,6 +40,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -59,6 +59,8 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
+import matsyir.pvpperformancetracker.utils.WorldFlag;
+import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
@@ -156,12 +158,39 @@ public class FightPerformancePanel extends JPanel
 	// these are the params to use for a normal panel.
 	public FightPerformancePanel(FightPerformance fight)
 	{
-		this(fight, true, true, false, null);
+		this(fight, null);
+	}
+
+	public FightPerformancePanel(FightPerformance fight, WorldService worldService)
+	{
+		this(fight, true, true, false, null, worldService, -1);
+	}
+
+	public FightPerformancePanel(FightPerformance fight, WorldService worldService, int worldLocation)
+	{
+		this(fight, true, true, false, null, worldService, worldLocation);
+	}
+
+	public FightPerformancePanel(FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier)
+	{
+		this(fight, true, true, false, null, worldService, worldLocationSupplier);
 	}
 
 	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
 	{
+		this(fight, showActions, showBorders, showOpponentClientStats, oppFight, null, -1);
+	}
+
+	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight, WorldService worldService, int worldLocation)
+	{
+		this(fight, showActions, showBorders, showOpponentClientStats, oppFight, worldService, () -> worldLocation);
+	}
+
+	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight, WorldService worldService, IntSupplier worldLocationSupplier)
+	{
 		this.showBorders = showBorders;
+		boolean pvpHubSynced = fight.hasPvpHubSyncedFight();
+		FightPerformance displayFight = fight.getPvpHubDisplayFight();
 		if (deathIcon == null)
 		{
 			// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
@@ -169,13 +198,13 @@ public class FightPerformancePanel extends JPanel
 		}
 
 		// save Fighters temporarily for more direct access
-		Fighter competitor = fight.getCompetitor();
-		Fighter opponent = fight.getOpponent();
+		Fighter competitor = displayFight.getCompetitor();
+		Fighter opponent = displayFight.getOpponent();
 
 		setLayout(new BorderLayout(0, 0));
 
-		String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + (fight.getWorld() > 0 ? (" (W" + fight.getWorld()) + ")" : "") +
-			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
+		String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + (displayFight.getWorld() > 0 ? (" (W" + displayFight.getWorld()) + ")" : "") +
+			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
 		setToolTipText(baseTooltipText);
 
 		if (showBorders)
@@ -190,28 +219,24 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.setLayout(new BoxLayout(fightPanel, BoxLayout.Y_AXIS));
 		fightPanel.setBackground(null);
 
-		// FIRST LINE: both player names, with centered world label
+		// FIRST LINE: both player names, with centered world flag
 		JPanel playerNamesLine = new JPanel(new BorderLayout())
 		{
 			@Override
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				if (CONFIG.showWorldInSummary() && fight.getWorld() > 0)
+				if (CONFIG.showWorldInSummary() && displayFight.getWorld() > 0)
 				{
-					String w = "W" + fight.getWorld();
-					FontMetrics fm = g.getFontMetrics(getFont());
-					int x = (getWidth() - fm.stringWidth(w)) / 2;
-					int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
-
-					g.translate(1, 1);
-					g.setColor(Color.BLACK);
-					g.drawString(w, x, y); // draw text shadow
-
-					g.translate(-1, -1);
-					g.setColor(ColorScheme.TEXT_COLOR);
-
-					g.drawString(w, x, y); // draw text
+					int worldLocation = worldLocationSupplier.getAsInt();
+					setToolTipText(baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocation) + ")");
+					ImageIcon worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
+					if (worldIcon != null)
+					{
+						int x = (getWidth() - worldIcon.getIconWidth()) / 2;
+						int y = (getHeight() - worldIcon.getIconHeight()) / 2;
+						worldIcon.paintIcon(this, g, x, y);
+					}
 				}
 			}
 		};
@@ -254,7 +279,7 @@ public class FightPerformancePanel extends JPanel
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setForeground(Color.WHITE);
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
-		playerNamesLine.setToolTipText(baseTooltipText);
+		playerNamesLine.setToolTipText(displayFight.getWorld() > 0 ? baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" : baseTooltipText);
 
 		panelLines.add(playerNamesLine);
 
@@ -266,7 +291,7 @@ public class FightPerformancePanel extends JPanel
 				continue;
 			}
 
-			panelLines.add(stat.getPanelComponent(fight, oppFight));
+			panelLines.add(stat.getPanelComponent(displayFight, oppFight));
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log
@@ -304,7 +329,7 @@ public class FightPerformancePanel extends JPanel
 					return;
 				}
 
-				FightLogFrame.createFightLogFrame(fight, getRootPane());
+				FightLogFrame.createFightLogFrame(displayFight, getRootPane(), pvpHubSynced);
 			}
 		};
 		addMouseListener(fightPerformanceMouseListener);
@@ -321,11 +346,14 @@ public class FightPerformancePanel extends JPanel
 
 		// Create "Show fight log" menu (same action as left click)
 		final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
-		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, getRootPane()));
+		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(displayFight, getRootPane(), pvpHubSynced));
+
+		final JMenuItem displayOriginalFightLog = new JMenuItem("Display Original Fight Log");
+		displayOriginalFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, getRootPane()));
 
 		// Create "Show attack summary" menu
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
-		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(fight, getRootPane()));
+		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(displayFight, getRootPane()));
 
 		// Create "Open on PvP-Hub" popup menu/context menu
 		final JMenuItem openOnPvpHub = new JMenuItem("<html><u>Open on PvP-Hub Website</u>&nbsp;&#8599;</html>");
@@ -350,6 +378,10 @@ public class FightPerformancePanel extends JPanel
 		removeFight.setForeground(Color.RED);
 
 		popupMenu.add(displayFightLog);
+		if (pvpHubSynced)
+		{
+			popupMenu.add(displayOriginalFightLog);
+		}
 		popupMenu.add(displayAttackSummary);
 		if (hasPvpHubUrl(fight))
 		{

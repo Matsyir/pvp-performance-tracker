@@ -69,6 +69,7 @@ class Fighter
 
 	@Setter
 	private Player player;
+	@Setter
 	@Expose
 	@SerializedName("n") // use 1 letter serialized variable names for more compact storage
 	private String name; // username
