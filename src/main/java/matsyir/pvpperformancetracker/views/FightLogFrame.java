@@ -47,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.BrewState;
-import matsyir.pvpperformancetracker.models.BrewStateCategory;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -159,7 +158,7 @@ public class FightLogFrame extends JFrame
 		}
 
 		setIconImage(PLUGIN_ICON);
-		setSize(980, 503);
+		setSize(1088, 503);
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
@@ -189,16 +188,7 @@ public class FightLogFrame extends JFrame
 				"if ranging with 110 range, it will display -2 since 112 is max potted (at level 99).<br>" +
 				"You want this to stay as close to 0 as possible.");
 
-			if (brewState.getCategory() == BrewStateCategory.UNKNOWN)
-			{
-				brewStateLabel.setText(brewState.getCategory().getDisplayName());
-			}
-			else
-			{
-				// bold the brewState by prefixing html if it's either potted or brewed down.
-				brewStateLabel.setText(((brewState.getCategory() == BrewStateCategory.POTTED || brewState.getCategory() == BrewStateCategory.BREWED_DOWN) ?
-					"<html><strong>" : "") + brewState.getBoostValue());
-			}
+			brewStateLabel.setText(brewState.getFightLogText());
 
 			stats[i][COLIDX_ATTACKER_NAME] = fightEntry.getAttackerName();
 			stats[i][COLIDX_STYLE_ICON] = styleIconLabel;
@@ -322,16 +312,14 @@ public class FightLogFrame extends JFrame
 			i++;
 		}
 
-		String[] header = {"Attacker", "Style", "Brew Reduction", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
+		String[] header = {"Attacker", "Style", "Level Change", "Hit Range", "Accuracy", "Avg Hit", "Actual Dmg", "HP", "KO Chance", "Special?",
 			"Off-Pray?", "Def Prayer", "Splash", "Offensive Pray", "Time, (Tick)"};
 		table = new JTable(stats, header);
 		table.setRowHeight(30);
 		table.setDefaultEditor(Object.class, null);
 
-		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setCellRenderer(new BufferedImageCellRenderer());
-		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setPreferredWidth(64);
-
 		table.getColumnModel().getColumn(COLIDX_STYLE_ICON).setCellRenderer(new BufferedImageCellRenderer()); // Style
+		table.getColumnModel().getColumn(COLIDX_STYLE_ICON).setPreferredWidth(50);
 		table.getColumnModel().getColumn(COLIDX_DMG_DEALT).setCellRenderer(new BufferedImageCellRenderer()); // Actual Dmg
 
 		table.getColumnModel().getColumn(COLIDX_DEF_PRAYER).setCellRenderer(new BufferedImageCellRenderer()); // Def Prayer
@@ -339,6 +327,14 @@ public class FightLogFrame extends JFrame
 
 		table.getColumnModel().getColumn(COLIDX_SPLASH).setCellRenderer(new BufferedImageCellRenderer()); // Splash
 		table.getColumnModel().getColumn(COLIDX_OFFENSIVE_PRAY).setCellRenderer(new BufferedImageCellRenderer()); // Offensive Pray
+		table.getColumnModel().getColumn(COLIDX_OFFENSIVE_PRAY).setPreferredWidth(50);
+
+		// keep it compact, these are just a checkmark, dont need much width
+		table.getColumnModel().getColumn(COLIDX_SPEC).setPreferredWidth(44);
+		table.getColumnModel().getColumn(COLIDX_OFF_PRAY).setPreferredWidth(50);
+
+		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setCellRenderer(new BufferedImageCellRenderer());
+		table.getColumnModel().getColumn(COLIDX_BREW_STATE).setPreferredWidth(92);
 
 		// if the fight has no baseLevels, then we have 0 stats for brew state anyways, so remove the column
 		// NOTE: THIS HAS TO STAY AFTER ALL THE setRenderers or any other usage of getColumn, or the indexes get messed up

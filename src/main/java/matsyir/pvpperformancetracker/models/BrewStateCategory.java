@@ -26,7 +26,6 @@ package matsyir.pvpperformancetracker.models;
 
 import java.awt.Color;
 import lombok.Getter;
-import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
 import net.runelite.client.ui.ColorScheme;
 
 @Getter

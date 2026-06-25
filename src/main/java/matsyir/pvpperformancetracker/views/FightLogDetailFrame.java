@@ -39,6 +39,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.prependPlusIfPositive;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
@@ -452,13 +453,5 @@ class FightLogDetailFrame extends JFrame
 			"</html>";
 	}
 
-	String prependPlusIfPositive(int number)
-	{
-		if (number >= 0)
-		{
-			return "+" + number;
-		}
 
-		return String.valueOf(number);
-	}
 }

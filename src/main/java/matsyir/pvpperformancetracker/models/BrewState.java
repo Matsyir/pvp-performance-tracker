@@ -26,27 +26,41 @@
 package matsyir.pvpperformancetracker.models;
 
 import lombok.Getter;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 
 @Getter
 public class BrewState
 {
-	// Boost value: 0 = max potted, display number of levels below max potted.
-	// For example, attacking with 116 str would display -2 since 118 is max potted,
-	// and 111 range would display -1 since 112 is max potted (assuming 99str/range in this example)
-	private final int boostValue;
+	// brewedLevels: amount of levels you brewed down from max potted. 0 = max potted, display number of levels below max potted.
+	// For example, attacking with 116 str would be -2 since 118 is max potted,
+	// and 111 range would be -1 since 112 is max potted (assuming 99str/range in this example)
+	// use this logic to determine what counts as potted vs neutral vs brewed
+
+	// any brewedLevels below this threshold will count as neutral or brewed down instead of potted
+	private static final int BREWED_LEVELS_NEUTRAL_THRESHOLD = -3;
+	private final int brewedLevels;
+	private final int levelChange;
+	private final int baseLevel;
+	private final int maxPottedLevel;
 	private final BrewStateCategory category;
 
 	private BrewState()
 	{
-		this.boostValue = 0;
+		this.brewedLevels = 0;
+		this.levelChange = 0;
+		this.baseLevel = 0;
+		this.maxPottedLevel = 0;
 		this.category = BrewStateCategory.UNKNOWN;
 	}
 
 	private BrewState(int currentLevel, int baseLevel, int maxPottedLevel)
 	{
-		this.boostValue = currentLevel - maxPottedLevel;
+		this.brewedLevels = currentLevel - maxPottedLevel;
+		this.levelChange = currentLevel - baseLevel;
+		this.baseLevel = baseLevel;
+		this.maxPottedLevel = maxPottedLevel;
 
-		if (this.boostValue >= -3)
+		if (this.brewedLevels >= BREWED_LEVELS_NEUTRAL_THRESHOLD)
 		{
 			this.category = BrewStateCategory.POTTED;
 		}
@@ -57,6 +71,25 @@ public class BrewState
 		else
 		{
 			this.category = BrewStateCategory.BREWED_DOWN;
+		}
+	}
+
+	public String getFightLogText()
+	{
+		if (this.category == BrewStateCategory.UNKNOWN)
+		{
+			return BrewStateCategory.UNKNOWN.getDisplayName();
+		}
+
+		if (this.category == BrewStateCategory.POTTED || this.category == BrewStateCategory.BREWED_DOWN)
+		{
+			return "<html><strong>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
+				"</u></strong>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
+		}
+		else
+		{
+			return "<html><u>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
+				"</u>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
 		}
 	}
 
