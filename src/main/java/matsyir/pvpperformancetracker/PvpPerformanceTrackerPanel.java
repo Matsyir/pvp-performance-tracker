@@ -249,4 +249,9 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		revalidate();
 		repaint();
 	}
+
+	public void updatePopupMenuForPvpHubConfig()
+	{
+		totalStatsPanel.updatePopupMenuForPvpHubConfig();
+	}
 }

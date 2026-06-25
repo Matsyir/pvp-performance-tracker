@@ -355,6 +355,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				if (panel != null)
 				{
 					panel.updatePvpHubHiddenName();
+					panel.updatePopupMenuForPvpHubConfig();
 				}
 				break;
 				// potential future code for level presets/dynamic config if RL ever supports it.
