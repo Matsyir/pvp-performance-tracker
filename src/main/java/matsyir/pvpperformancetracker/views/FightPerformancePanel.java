@@ -34,6 +34,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -49,6 +50,8 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -59,6 +62,7 @@ import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
@@ -67,11 +71,26 @@ import net.runelite.client.util.LinkBrowser;
 
 public class FightPerformancePanel extends JPanel
 {
-	private static ImageIcon deathIcon;
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
+
+	private static final Color BG_COLOR = new Color(ColorScheme.DARKER_GRAY_COLOR.getRed(), ColorScheme.DARKER_GRAY_COLOR.getGreen(), ColorScheme.DARKER_GRAY_COLOR.getBlue(), 0);
+	private static final Color BG_COLOR_HOVERED = new Color(ColorScheme.DARK_GRAY_HOVER_COLOR.getRed(), ColorScheme.DARK_GRAY_HOVER_COLOR.getGreen(), ColorScheme.DARK_GRAY_HOVER_COLOR.getBlue(), 0);
+
+	private static ImageIcon deathIcon;
+	private static BufferedImage backgroundImage;
+	private static BufferedImage backgroundImageHovered;
+
+	public static void loadBackgroundImages()
+	{
+		backgroundImage = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
+			"/panelBackgrounds/fightPerformancePanel.png");
+		backgroundImageHovered = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
+			"/panelBackgrounds/fightPerformancePanel_Hovered.png");
+	}
+
 
 	// border size: 4px on each side. 4px left, 4px right, 4px top, 4px bottom (plus extra 4px bottom invisible offset)
 	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,
@@ -82,25 +101,30 @@ public class FightPerformancePanel extends JPanel
 		Border invisBottomBorder = BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR);
 
 		// main border used when not hovering
-		normalBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createCompoundBorder(
-				invisBottomBorder,
-				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2)),
-			BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
-				new EmptyBorder(1, 1, 1, 1)));
+//		normalBorder = BorderFactory.createCompoundBorder(
+//			BorderFactory.createCompoundBorder(
+//				invisBottomBorder,
+//				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2)),
+//			BorderFactory.createCompoundBorder(
+//				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
+//				new EmptyBorder(1, 1, 1, 1)));
+
+		normalBorder = BorderFactory.createEmptyBorder(4, 0, 8, 0);
 
 		// border used while hovering
-		hoverBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createCompoundBorder(
-				invisBottomBorder,
-				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2)),
-			BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE),
-				new EmptyBorder(1, 1, 1, 1)));
+//		hoverBorder = BorderFactory.createCompoundBorder(
+//			BorderFactory.createCompoundBorder(
+//				invisBottomBorder,
+//				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2)),
+//			BorderFactory.createCompoundBorder(
+//				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE),
+//				new EmptyBorder(1, 1, 1, 1)));
+
+		hoverBorder = BorderFactory.createEmptyBorder(4, 0, 8, 0);
 	}
 
 	private boolean showBorders;
+	private boolean hovered = false;
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -148,8 +172,7 @@ public class FightPerformancePanel extends JPanel
 		Fighter competitor = fight.getCompetitor();
 		Fighter opponent = fight.getOpponent();
 
-		setLayout(new BorderLayout(5, 0));
-		setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		setLayout(new BorderLayout(0, 0));
 
 		String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + (fight.getWorld() > 0 ? (" (W" + fight.getWorld()) + ")" : "") +
 			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(fight.getLastFightTime())));
@@ -201,14 +224,14 @@ public class FightPerformancePanel extends JPanel
 		if (competitor.isDead())
 		{
 			playerStatsName.setIcon(deathIcon);
-			if (!opponent.isDead())
-			{
-				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
-			}
-			else // double death
-			{
-				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
-			}
+//			if (!opponent.isDead())
+//			{
+//				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
+//			}
+//			else // double death
+//			{
+//				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
+//			}
 		}
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
@@ -219,14 +242,14 @@ public class FightPerformancePanel extends JPanel
 		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(deathIcon);
-			if (!competitor.isDead())
-			{
-				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
-			}
-			else // double death
-			{
-				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
-			}
+//			if (!competitor.isDead())
+//			{
+//				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
+//			}
+//			else // double death
+//			{
+//				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
+//			}
 		}
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setForeground(Color.WHITE);
@@ -252,17 +275,23 @@ public class FightPerformancePanel extends JPanel
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				setFullBackgroundColor(ColorScheme.DARK_GRAY_COLOR);
-				setOutline(true);
+				hovered = true;
+				//setFullBackgroundColor(BG_COLOR_HOVERED);
+				//setOutline(true);
 				setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+				repaint();
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				setFullBackgroundColor(ColorScheme.DARKER_GRAY_COLOR);
-				setOutline(false);
+				hovered = false;
+//				setFullBackgroundColor(BG_COLOR);
+//				setOutline(false);
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+
+				repaint();
 			}
 
 			@Override
@@ -279,6 +308,8 @@ public class FightPerformancePanel extends JPanel
 			}
 		};
 		addMouseListener(fightPerformanceMouseListener);
+
+		setFullBackgroundColor(BG_COLOR);
 
 		// skip the remaining code if we aren't showing actions.
 		if (!showActions)
@@ -337,7 +368,7 @@ public class FightPerformancePanel extends JPanel
 
 		add(fightPanel, BorderLayout.NORTH);
 
-		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 	}
 
 	private void setFullBackgroundColor(Color color)
@@ -391,5 +422,21 @@ public class FightPerformancePanel extends JPanel
 			: fight.getCompetitor().getName();
 		String path = "/" + playerName.trim() + "/" + fight.getFightId().trim();
 		return new URI("https", PVP_HUB_HOST, path, null).toASCIIString();
+	}
+
+	@Override
+	protected void paintComponent(Graphics g)
+	{
+		// Draw bgImage scaled to panel size (ideally should be the same anyway)
+		if (hovered && backgroundImageHovered != null)
+		{
+			g.drawImage(backgroundImageHovered, 0, 0, getWidth(), getHeight(), this);
+		}
+		else if (backgroundImage != null)
+		{
+			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+		}
+
+		super.paintComponent(g);
 	}
 }

@@ -74,6 +74,7 @@ import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -274,6 +275,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
+
+		FightPerformancePanel.loadBackgroundImages();
 		
 		// Explicitly rebuild panel after all setup and import.
         SwingUtilities.invokeLater(() -> {

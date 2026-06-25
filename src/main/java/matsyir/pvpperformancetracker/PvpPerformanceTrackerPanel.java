@@ -49,8 +49,10 @@ import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
-class PvpPerformanceTrackerPanel extends PluginPanel
+public class PvpPerformanceTrackerPanel extends PluginPanel
 {
+	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH;
+
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
@@ -70,7 +72,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(8, 8, 8, 8));
+		setBorder(new EmptyBorder(0, 0, 0, 0));
 		JPanel mainContent = new JPanel(new BorderLayout());
 
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
@@ -87,7 +89,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 			updatePvpHubHiddenName();
 		});
 		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
-		pvpHubHiddenNameLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
 		updatePvpHubHiddenName();
 
 		add(Box.createRigidArea(new Dimension(0, 4)));
@@ -100,7 +102,7 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		filterLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		// filter textfield
 		JTextField nameFilter = new JTextField(config.nameFilter());
-		filterLine.setMaximumSize(new Dimension(PANEL_WIDTH, (int)filterLine.getPreferredSize().getHeight()));
+		filterLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) filterLine.getPreferredSize().getHeight()));
 
 		nameFilter.getDocument().addDocumentListener(new DocumentListener() {
 			private void updateNameFilterValue()
@@ -124,13 +126,13 @@ class PvpPerformanceTrackerPanel extends PluginPanel
 		filterLine.add(filterLabel, BorderLayout.NORTH);
 		filterLine.add(nameFilter, BorderLayout.CENTER);
 
-		add(Box.createRigidArea(new Dimension(0, 4)));
+		//add(Box.createRigidArea(new Dimension(0, 4)));
 		add(filterLine);
 
 		// wrap mainContent with scrollpane so it has a scrollbar
 		JScrollPane scrollableContainer = new JScrollPane(mainContent);
 		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(6, 0));
+		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
 

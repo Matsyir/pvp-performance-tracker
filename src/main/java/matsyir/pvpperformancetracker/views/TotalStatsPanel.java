@@ -45,6 +45,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
@@ -472,7 +473,7 @@ public class TotalStatsPanel extends JPanel
 
 		setLabels(); // update labels for all lines
 
-		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 
 		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
 		// tried to fix this 1000 cleaner ways but i could only get it to work with this

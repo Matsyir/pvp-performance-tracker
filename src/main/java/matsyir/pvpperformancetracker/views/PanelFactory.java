@@ -37,7 +37,7 @@ import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 public final class PanelFactory
 {
 	public static final Color SUCCESS_COLOR = TrackedStatistic.SUCCESS_COLOR;
-	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = TrackedStatistic.UNSUCCESSFUL_OR_NEUTRAL_COLOR;
+	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = TrackedStatistic.UNSUCCESSFUL_COLOR;
 	public static final Color SECONDARY_SUCCESS_COLOR = new Color(40, 52, 78, 92).brighter();
 	public static final Color SECONDARY_UNSUCCESSFUL_COLOR = new Color(89, 52, 59, 92).brighter();
 	public static final Color SECONDARY_NEUTRAL_COLOR = new Color(177, 177, 35, 92).brighter();
@@ -64,19 +64,20 @@ public final class PanelFactory
 										 String rightText, String rightTooltip, Color rightColor)
 	{
 		JPanel statsLine = new JPanel(new GridBagLayout());
-		statsLine.setBackground(leftColor.equals(SUCCESS_COLOR) ? SECONDARY_SUCCESS_COLOR : (rightColor.equals(SUCCESS_COLOR) ? SECONDARY_UNSUCCESSFUL_COLOR : null));
+		//statsLine.setBackground(leftColor.equals(SUCCESS_COLOR) ? SECONDARY_SUCCESS_COLOR : (rightColor.equals(SUCCESS_COLOR) ? SECONDARY_UNSUCCESSFUL_COLOR : null));
+		statsLine.setBackground(null);
 
 		String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
 		ForwardingLabel leftLabel = new ForwardingLabel(leftText);
 		leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);
 		leftLabel.setForeground(leftColor);
-		leftLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		leftLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		ForwardingLabel rightLabel = new ForwardingLabel(rightText);
 		rightLabel.setToolTipText("<html>" + rightTooltip + tooltipSuffix);
 		rightLabel.setForeground(rightColor);
-		rightLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		rightLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
 		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
