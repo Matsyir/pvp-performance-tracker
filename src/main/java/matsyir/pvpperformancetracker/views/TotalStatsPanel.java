@@ -51,7 +51,6 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.views.PanelFactory.ForwardingLabel;
 import net.runelite.client.ui.ColorScheme;
@@ -99,8 +98,9 @@ public class TotalStatsPanel extends JPanel
 		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
 	}
 
-	private static final int LAYOUT_ROWS_WITH_WARNING = 12; // Increased count to include Avg Robe Hits
-	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11; // Increased count to include Avg Robe Hits
+	// excluding title row
+	private static final int LAYOUT_ROWS_WITH_WARNING = 12;
+	private static final int LAYOUT_ROWS_WITHOUT_WARNING = 11;
 
 	// labels to be updated
 	private final ForwardingLabel killsLabel;
@@ -112,8 +112,8 @@ public class TotalStatsPanel extends JPanel
 	private final ForwardingLabel offensivePrayCountStatsLabel;
 	private final ForwardingLabel hpHealedStatsLabel;
 	private final ForwardingLabel ghostBarrageStatsLabel;
-	private final ForwardingLabel avgRobeHitsStatsLabel; // Added label for avg robe hits
-	private final ForwardingLabel avgKoChanceStatsLabel; // Added label for avg KO chances
+	private final ForwardingLabel avgRobeHitsStatsLabel;
+	private final ForwardingLabel avgKoChanceStatsLabel;
 
 	private ForwardingLabel settingsWarningLabel; // to be hidden/shown
 
@@ -256,8 +256,10 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.importUserFightHistoryData(fightHistoryData);
 		});
 
+		// don't include the resetPvpHubAnonymousId menu item by default, it will be added dynamically if needed,
+		// via this.updatePopupMenuForPvpHubConfig()
 		popupMenu.add(viewWiki);
-		// popupMenuWithPvpHubOptions.add(resetPvpHubAnonymousId);
+		// resetPvpHubAnonymousId goes here (to help with visualizing index)
 		popupMenu.add(exportFightHistory);
 		popupMenu.add(importFightHistory);
 		popupMenu.add(removeAllFights);
@@ -285,13 +287,12 @@ public class TotalStatsPanel extends JPanel
 		// SECOND LINE
 		// panel to show total kills/deaths
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
-		killDeathPanel.setInheritsPopupMenu(true);
+		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label to show kills
 		killsLabel = new ForwardingLabel();
 		killsLabel.setText(numKills + " Kills");
 		killsLabel.setForeground(Color.WHITE);
-		killsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		killDeathPanel.add(killsLabel, BorderLayout.WEST);
 
@@ -299,13 +300,14 @@ public class TotalStatsPanel extends JPanel
 		deathsLabel = new ForwardingLabel();
 		deathsLabel.setText(numDeaths + " Deaths");
 		deathsLabel.setForeground(Color.WHITE);
-		deathsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		killDeathPanel.add(deathsLabel, BorderLayout.EAST);
 		add(killDeathPanel);
 
 		// THIRD LINE
 		// panel to show the total off-pray stats (successful hits/total attacks)
 		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
+		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's off-pray stats
 		ForwardingLabel leftLabel = new ForwardingLabel();
@@ -316,150 +318,163 @@ public class TotalStatsPanel extends JPanel
 		// right shows off-pray stats
 		offPrayStatsLabel = new ForwardingLabel();
 		offPrayStatsLabel.setForeground(Color.WHITE);
+
 		offPrayStatsPanel.add(offPrayStatsLabel, BorderLayout.EAST);
 		add(offPrayStatsPanel);
 
 		// FOURTH LINE
 		// panel to show the average expected damage stats (average damage & average diff)
 		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
+		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's expected dmg stats
 		ForwardingLabel expectedDmgStatsLeftLabel = new ForwardingLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
-		expectedDmgStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
 		expectedDmgStatsLabel = new ForwardingLabel();
 		expectedDmgStatsLabel.setForeground(Color.WHITE);
-		expectedDmgStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		expectedDmgStatsPanel.add(expectedDmgStatsLabel, BorderLayout.EAST);
 		add(expectedDmgStatsPanel);
 
 		// FIFTH LINE
 		// panel to show the average damage dealt stats (average damage & average diff)
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
+		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg dmg dealt
 		ForwardingLabel dmgDealtStatsLeftLabel = new ForwardingLabel();
 		dmgDealtStatsLeftLabel.setText("Avg Damage Dealt:");
 		dmgDealtStatsLeftLabel.setForeground(Color.WHITE);
-		dmgDealtStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		dmgDealtStatsPanel.add(dmgDealtStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show avg dmg dealt
 		dmgDealtStatsLabel = new ForwardingLabel();
 		dmgDealtStatsLabel.setForeground(Color.WHITE);
-		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 
+		dmgDealtStatsPanel.add(dmgDealtStatsLabel, BorderLayout.EAST);
 		add(dmgDealtStatsPanel);
 
 		// SIXTH LINE
 		// panel to show the total magic hit count and expected hit count
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
+		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's magic hit count stats
 		ForwardingLabel magicHitStatsLeftLabel = new ForwardingLabel();
 		magicHitStatsLeftLabel.setText("Magic Luck:");
 		magicHitStatsLeftLabel.setForeground(Color.WHITE);
-		magicHitStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		magicHitStatsPanel.add(magicHitStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show magic hit count stats
 		magicHitCountStatsLabel = new ForwardingLabel();
 		magicHitCountStatsLabel.setForeground(Color.WHITE);
-		magicHitCountStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 
+		magicHitStatsPanel.add(magicHitCountStatsLabel, BorderLayout.EAST);
 		add(magicHitStatsPanel);
 
 		// SEVENTH LINE
 		// panel to show the offensive prayer success count
 		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
+		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's offensive pray stats
 		ForwardingLabel offensivePrayStatsLeftLabel = new ForwardingLabel();
 		offensivePrayStatsLeftLabel.setText("Offensive Pray:");
 		offensivePrayStatsLeftLabel.setForeground(Color.WHITE);
-		offensivePrayStatsLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		offensivePrayStatsPanel.add(offensivePrayStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show offensive pray stats
 		offensivePrayCountStatsLabel = new ForwardingLabel();
 		offensivePrayCountStatsLabel.setForeground(Color.WHITE);
-		offensivePrayCountStatsLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 
+		offensivePrayStatsPanel.add(offensivePrayCountStatsLabel, BorderLayout.EAST);
 		add(offensivePrayStatsPanel);
 
 		// EIGTH LINE
 		// panel to show the total hp healed
 		JPanel hpHealedPanel = new JPanel(new BorderLayout());
+		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg hp healed stats
 		ForwardingLabel hpHealedLeftLabel = new ForwardingLabel();
 		hpHealedLeftLabel.setText("Avg HP Healed:");
 		hpHealedLeftLabel.setForeground(Color.WHITE);
-		hpHealedLeftLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		hpHealedPanel.add(hpHealedLeftLabel, BorderLayout.WEST);
 
 		// label to show hp healed stats
 		hpHealedStatsLabel = new ForwardingLabel();
 		hpHealedStatsLabel.setForeground(Color.WHITE);
-		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 
+		hpHealedPanel.add(hpHealedStatsLabel, BorderLayout.EAST);
 		add(hpHealedPanel);
 
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
+		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
 		ForwardingLabel robeHitsStatsLeftLabel = new ForwardingLabel("Avg Hits on Robes:");
 		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
+
 		robeHitsStatsPanel.add(robeHitsStatsLeftLabel, BorderLayout.WEST);
+
 		avgRobeHitsStatsLabel = new ForwardingLabel();
 		avgRobeHitsStatsLabel.setForeground(Color.WHITE);
+
 		robeHitsStatsPanel.add(avgRobeHitsStatsLabel, BorderLayout.EAST);
-		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(robeHitsStatsPanel);
 
-		// TENTH LINE (NEW)
+		// TENTH LINE
 		// panel to show the avg KO chance stats
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
+		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label
 		ForwardingLabel avgKoChanceStatsLeftLabel = new ForwardingLabel();
 		avgKoChanceStatsLeftLabel.setText("Avg KO Chances:");
 		avgKoChanceStatsLeftLabel.setForeground(Color.WHITE);
+
 		avgKoChanceStatsPanel.add(avgKoChanceStatsLeftLabel, BorderLayout.WEST);
 
 		// right label (value)
 		avgKoChanceStatsLabel = new ForwardingLabel();
 		avgKoChanceStatsLabel.setForeground(Color.WHITE);
-		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 
-		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		avgKoChanceStatsPanel.add(avgKoChanceStatsLabel, BorderLayout.EAST);
 		add(avgKoChanceStatsPanel);
 
 		// panel to show the avg ghost barrage stats
 		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
+		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg ghost barrage stats
 		ForwardingLabel ghostBarrageStatsLeftLabel = new ForwardingLabel();
 		ghostBarrageStatsLeftLabel.setText("Avg Ghost Barrages:");
 		ghostBarrageStatsLeftLabel.setForeground(Color.WHITE);
+
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
 
 		ghostBarrageStatsLabel = new ForwardingLabel();
 		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
+
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
-		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(ghostBarrageStatsPanel);
 
+		// end of initializing lines
 
-		setLabels();
+		setLabels(); // update labels for all lines
 
 		setMaximumSize(new Dimension(PluginPanel.PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 
+		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
+		// tried to fix this 1000 cleaner ways but i could only get it to work with this
 		applyPopupRecursively(this, popupMenu);
 		updatePopupMenuForPvpHubConfig();
 	}
