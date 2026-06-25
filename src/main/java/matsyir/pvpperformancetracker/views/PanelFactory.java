@@ -40,6 +40,7 @@ public final class PanelFactory
 	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = TrackedStatistic.UNSUCCESSFUL_OR_NEUTRAL_COLOR;
 	public static final Color SECONDARY_SUCCESS_COLOR = new Color(40, 52, 78, 92).brighter();
 	public static final Color SECONDARY_UNSUCCESSFUL_COLOR = new Color(89, 52, 59, 92).brighter();
+	public static final Color SECONDARY_NEUTRAL_COLOR = new Color(177, 177, 35, 92).brighter();
 
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;

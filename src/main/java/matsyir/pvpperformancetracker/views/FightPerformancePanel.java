@@ -73,29 +73,31 @@ public class FightPerformancePanel extends JPanel
 	private static final Border normalBorder;
 	private static final Border hoverBorder;
 
-	// border size: 6px left, 6px right, 4px top, 4px bottom (plus 4px bottom invisible offset)
+	// border size: 4px on each side. 4px left, 4px right, 4px top, 4px bottom (plus extra 4px bottom invisible offset)
+	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,
+	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
 	static
 	{
-		Color invisBorder = ColorScheme.DARK_GRAY_COLOR;
-		invisBorder = new Color(invisBorder.getRed(), invisBorder.getGreen(), invisBorder.getBlue(), 0);
+		// spacing between the panels, at the bottom. use same color as the whole panel to appear like a gap between them
+		Border invisBottomBorder = BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR);
 
 		// main border used when not hovering
 		normalBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 4, 0, invisBorder), // same
-				BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR, 2)),
+				invisBottomBorder,
+				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2)),
 			BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
-				new EmptyBorder(1, 3, 1, 3)));
+				new EmptyBorder(1, 1, 1, 1)));
 
 		// border used while hovering
 		hoverBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 4, 0, invisBorder),
-				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE, 2)),
+				invisBottomBorder,
+				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2)),
 			BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(ColorScheme.LIGHT_GRAY_COLOR, 1),
-				new EmptyBorder(1, 3, 1, 3)));
+				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE),
+				new EmptyBorder(1, 1, 1, 1)));
 	}
 
 	private boolean showBorders;
@@ -203,6 +205,10 @@ public class FightPerformancePanel extends JPanel
 			{
 				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
 			}
+			else // double death
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
+			}
 		}
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setForeground(Color.WHITE);
@@ -216,6 +222,10 @@ public class FightPerformancePanel extends JPanel
 			if (!competitor.isDead())
 			{
 				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
+			}
+			else // double death
+			{
+				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
 			}
 		}
 		opponentStatsName.setText(opponent.getName());
@@ -339,11 +349,11 @@ public class FightPerformancePanel extends JPanel
 		}
 	}
 
-	private void setOutline(boolean visible)
+	private void setOutline(boolean hovered)
 	{
 		if (showBorders)
 		{
-			this.setBorder(visible ? hoverBorder : normalBorder);
+			this.setBorder(hovered ? hoverBorder : normalBorder);
 		}
 	}
 
