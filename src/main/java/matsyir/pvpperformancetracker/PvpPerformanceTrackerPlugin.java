@@ -128,7 +128,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.7";
+	public static final String PLUGIN_VERSION = "1.7.8";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1214,9 +1214,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
+		// primary update message
+		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.7.8</u></col> <col=dc8a00>Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage("<col=842b00><shad=000000>PvP Performance Tracker <u>1.7.8</u> Update:</shad> (TODO patch notes).")
+			.runeLiteFormattedMessage(updatePrefix +
+				"<col=842b00>New Level Change column in the fight log, to help see how often you attack while brewed " +
+				"down vs potted. Various QOLs and UI improvements. If opted into PvP hub, you can now right click a fight to open it there, " +
+				"and you can right click the Total Stats to reset your hidden name.")
 				.build());
 
 		// DELETE THIS CODE BLOCK ON THE NEXT UPDATE AFTER 1.7.8
@@ -1233,8 +1238,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						"<col=842b00>Your configuration option for the \"<u>PvP-Hub Upload Delay</u>\" has been updated to " +
 						"<u>INSTANT</u>. Your fights will now instantly be uploaded to the PvP-Hub website once they end. " +
 						"Your world is never publicly shown anywhere, so this shouldn't cause any concern. Feel free to " +
-						"change the setting if you'd like to revert this.<br>" +
-						"<col=ff0000><shad=000000>============== (end of PvP Tracker warning) ==============")
+						"change the setting if you'd like to revert this.")
 					.build())
 				, 678, TimeUnit.MILLISECONDS);
 		}
