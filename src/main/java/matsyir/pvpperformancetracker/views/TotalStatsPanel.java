@@ -63,6 +63,9 @@ import net.runelite.client.util.LinkBrowser;
 @Slf4j
 public class TotalStatsPanel extends JPanel
 {
+	// will be re-used directly on panel's show hidden name button. we already have the logic for hiding/showing it here.
+	public static final JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
+
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
 	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
@@ -160,8 +163,7 @@ public class TotalStatsPanel extends JPanel
 	private double avgGhostBarrageCount = 0;
 	private double avgGhostBarrageExpectedDamage = 0;
 
-	private JPopupMenu popupMenu;
-	private JMenuItem resetPvpHubAnonymousId;
+	private final JPopupMenu popupMenu;
 	private final int pvpHupPopupMenuItemIdx = 1;
 	private int popupMenuDefaultItemCount;
 	private int popupMenuItemCountWithPvpHub;
@@ -195,9 +197,8 @@ public class TotalStatsPanel extends JPanel
 		});
 
 		// create "reset PvP-Hub hidden name" right click option. Only display this if opted-in + name hidden.
-		resetPvpHubAnonymousId = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
-		resetPvpHubAnonymousId.setForeground(new Color(30, 230, 30));
-		resetPvpHubAnonymousId.addActionListener(e ->
+		resetPvpHubHiddenNameMenuItem.setForeground(new Color(30, 230, 30));
+		resetPvpHubHiddenNameMenuItem.addActionListener(e ->
 		{
 			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want " +
 					"to regenerate your Hidden Name for PvP-Hub? You will not be able to go back to your current " +
@@ -1011,7 +1012,7 @@ public class TotalStatsPanel extends JPanel
 		// it should have the pvp hub option, so make sure it does
 		if (CONFIG.uploadFightsToPvpHub() && CONFIG.hideRsnOnPvpHub() && popupMenu.getComponentCount() < popupMenuItemCountWithPvpHub)
 		{
-			popupMenu.add(resetPvpHubAnonymousId, pvpHupPopupMenuItemIdx);
+			popupMenu.add(resetPvpHubHiddenNameMenuItem, pvpHupPopupMenuItemIdx);
 		}
 		else if (popupMenu.getComponentCount() >= popupMenuItemCountWithPvpHub)
 		{

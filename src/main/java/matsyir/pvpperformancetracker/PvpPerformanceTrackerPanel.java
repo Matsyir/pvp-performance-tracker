@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -156,22 +157,31 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
 		pvpHubHiddenNameBtn.setToolTipText("<html>Your private, read-only \"hidden name\" used when \"Hide RSN on PvP-Hub\" is enabled. " +
 			"Click to toggle visibility.<br><br>" +
-			"You can reset this hidden name by right-clicking the Total Stats just above.");
+			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
+		pvpHubHiddenNameBtn.setComponentPopupMenu(new JPopupMenu());
+		pvpHubHiddenNameBtn.getComponentPopupMenu().add(TotalStatsPanel.resetPvpHubHiddenNameMenuItem);
 		pvpHubHiddenNameBtn.addMouseListener(new MouseListener()
 		{
 			private boolean hovered;
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				hiddenNameIsVisible = !hiddenNameIsVisible;
-				updatePvpHubHiddenName();
-				if (hovered)
+				if (e.getButton() == MouseEvent.BUTTON1) // left click: toggle hidden name visibility
 				{
-					pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
+					hiddenNameIsVisible = !hiddenNameIsVisible;
+					updatePvpHubHiddenName();
+					if (hovered)
+					{
+						pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
+					}
+					else
+					{
+						pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
+					}
 				}
-				else
+				else if (e.getButton() == MouseEvent.BUTTON3) // right click: popup menu to reset hidden name
 				{
-					pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
+					pvpHubHiddenNameBtn.getComponentPopupMenu().show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
 

@@ -215,10 +215,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Hide RSN on PvP-Hub",
 		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.<br><br>" +
 			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name or would like to change it, you can do so by right-clicking the Total Stats panel above your fight history.",
+			"If you've leaked this name or would like to change it, you can do so by right-clicking <br>" +
+			"the button which displays your hidden name, or the Total Stats panel above your fight history.",
 		warning = "<html>Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel.<br><br>" +
 			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name or would like to change it, you can do so by right-clicking the Total Stats panel above your fight history.",
+			"If you've leaked this name or would like to change it, you can do so by right-clicking <br>" +
+			"the button which displays your hidden name, or the Total Stats panel above your fight history.",
 		position = 1420,
 		section = pvpHubSection
 	)
