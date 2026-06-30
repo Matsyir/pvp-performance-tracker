@@ -27,15 +27,14 @@ package matsyir.pvpperformancetracker.models;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.views.PanelFactory;
 import matsyir.pvpperformancetracker.views.TableComponent;
 import net.runelite.client.ui.ColorScheme;
 
 import javax.swing.JPanel;
 import java.awt.Color;
-import java.math.RoundingMode;
 import java.security.InvalidParameterException;
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -75,25 +74,16 @@ public enum TrackedStatistic
 			"<br>Weird and for advanced users only.");
 
 	public static final Color SUCCESS_COLOR = Color.GREEN;
-	public static final Color UNSUCCESSFUL_COLOR = new Color(255, 32, 0); // red-orange. Similar to fight pits skull but a bit more red.
+	public static final Color UNSUCCESSFUL_COLOR = ColorScheme.BRAND_ORANGE;
 	public static final Color NEUTRAL_COLOR = Color.WHITE;
+	public static final Color GHOST_BARRAGE_COLOR = new Color(163, 165, 251);
 
 	private static final String NO_DATA_SHORT = "-";
 	private static final String NO_DATA = "N/A";
 
-	// TODO ideally refactor these NFs into their own Util class or smth, we spam this NF stuff everywhere....
-	private static final NumberFormat nf2 = NumberFormat.getInstance();
-	private static final NumberFormat nfP1 = NumberFormat.getPercentInstance(); // For KO Chance %
-
 	static
 	{
-		// initialize number format
-		nf2.setMaximumFractionDigits(2);
-		nf2.setRoundingMode(RoundingMode.HALF_UP);
 
-		// initialize percent format
-		nfP1.setMaximumFractionDigits(1);
-		nfP1.setRoundingMode(RoundingMode.HALF_UP);
 
 		// for every TrackedStatistic, init behaviors/functions/providers:
 		// 1) Init/generate FightPerformancePanel line for this statistic
@@ -279,18 +269,18 @@ public enum TrackedStatistic
 				double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 
 				return PanelFactory.createStatsLine(ROBE_HITS.acronym, ROBE_HITS.acronymTooltip
-					, (compHits + " (" + nfP1.format(compRatio) + ")")
+					, (compHits + " (" + nf1.format(compRatio) + ")")
 					, (fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " +
-						compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")<br>" +
+						compHits + "/" + compTotal + " (" + nf1.format(compRatio) + ")<br>" +
 						"In other words, of his opponent's " + compTotal + " range/melee attacks, " +
 						fight.getCompetitor().getName() + " tanked " + compHits + " of them with robes.")
 					, (compRatio < ((double) (fight.getOpponent().getRobeHits()) /
 						Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
 						SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 
-					, (oppHits + " (" + nfP1.format(oppRatio) + ")")
+					, (oppHits + " (" + nf1.format(oppRatio) + ")")
 					, (fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
-						oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")<br>" +
+						oppHits + "/" + oppTotal + " (" + nf1.format(oppRatio) + ")<br>" +
 						"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
 						fight.getOpponent().getName() + " tanked " + oppHits + " of them with robes.")
 					, (oppRatio < compRatio ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
@@ -347,16 +337,16 @@ public enum TrackedStatistic
 				Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : 0;
 				Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : 0;
 
-				String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nfP1.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
-				String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nfP1.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
+				String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nf1.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
+				String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nf1.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
 
 				return PanelFactory.createStatsLine(KO_CHANCES.acronym, KO_CHANCES.acronymTooltip
 					, compTotalKoChanceText
-					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nfP1.format(competitorOverallKoProb)
+					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nf1.format(competitorOverallKoProb)
 					, (competitorOverallKoProb > opponentOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 
 					, oppTotalKoChanceText
-					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
+					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nf1.format(opponentOverallKoProb)
 					, (opponentOverallKoProb > competitorOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 				);
 			},
@@ -364,11 +354,11 @@ public enum TrackedStatistic
 				NO_DATA_SHORT, UNSUCCESSFUL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitorKoChanceCount() + (fight.getCompetitorKoChanceCount() > 0
-					? " (" + nfP1.format(fight.getCompetitorTotalKoChance()) + ")"
+					? " (" + nf1.format(fight.getCompetitorTotalKoChance()) + ")"
 					: ""),
 				UNSUCCESSFUL_COLOR,
 				fight.getOpponentKoChanceCount() + (fight.getOpponentKoChanceCount() > 0
-					? " (" + nfP1.format(fight.getOpponentTotalKoChance()) + ")"
+					? " (" + nf1.format(fight.getOpponentTotalKoChance()) + ")"
 					: ""),
 				UNSUCCESSFUL_COLOR
 			)
@@ -378,7 +368,7 @@ public enum TrackedStatistic
 			(fight, oppFight) -> { // returns FightPerformancePanel component
 				String oppGhostBarrageText = NO_DATA;
 				String oppGhostBarrageTooltipText = "No data is available for the opponent's ghost barrages";
-				Color oppGhostBarrageColor = ColorScheme.BRAND_ORANGE;
+				Color oppGhostBarrageColor = GHOST_BARRAGE_COLOR;
 
 				if (oppFight != null)
 				{
@@ -389,7 +379,7 @@ public enum TrackedStatistic
 						+ " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
 					oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
-						? SUCCESS_COLOR : ColorScheme.BRAND_ORANGE);
+						? SUCCESS_COLOR : GHOST_BARRAGE_COLOR);
 				}
 
 				return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
@@ -399,7 +389,7 @@ public enum TrackedStatistic
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
 					, ((oppFight != null
 						&& fight.competitor.getGhostBarrageExpectedDamage() > oppFight.getCompetitor().getGhostBarrageExpectedDamage())
-						? SUCCESS_COLOR : ColorScheme.BRAND_ORANGE)
+						? SUCCESS_COLOR : GHOST_BARRAGE_COLOR)
 
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
@@ -407,7 +397,7 @@ public enum TrackedStatistic
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(GHOST_BARRAGES.acronym, 80, 20,
-				NO_DATA_SHORT, ColorScheme.BRAND_ORANGE, NO_DATA_SHORT, ColorScheme.BRAND_ORANGE),
+				NO_DATA_SHORT, GHOST_BARRAGE_COLOR, NO_DATA_SHORT, GHOST_BARRAGE_COLOR),
 			(fight, component) -> component.updateLeftCellText(fight.getCompetitor().getGhostBarrageStats())
 		);
 

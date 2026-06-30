@@ -33,6 +33,7 @@ import java.util.HashMap;
 import javax.inject.Inject;
 
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
@@ -51,12 +52,6 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 public class PvpPerformanceTrackerOverlay extends Overlay
 {
 	private static final String NO_DATA = "-";
-	private static final NumberFormat nfP1 = NumberFormat.getPercentInstance(); // For KO Chance %
-	static
-	{
-		nfP1.setMaximumFractionDigits(1);
-		nfP1.setRoundingMode(RoundingMode.HALF_UP);
-	}
 
 	private final PanelComponent panelComponent = new PanelComponent();
 	private final PvpPerformanceTrackerPlugin plugin;
@@ -116,7 +111,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		// Format Last KO Chance Line
 		if (fight.getCompetitorLastKoChance() != null)
 		{
-			ovlLastKoChanceLine.updateLeftCellText(nfP1.format(fight.getCompetitorLastKoChance()));
+			ovlLastKoChanceLine.updateLeftCellText(nf1.format(fight.getCompetitorLastKoChance()));
 		}
 		else
 		{
@@ -124,7 +119,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		if (fight.getOpponentLastKoChance() != null)
 		{
-			ovlLastKoChanceLine.updateRightCellText(nfP1.format(fight.getOpponentLastKoChance()));
+			ovlLastKoChanceLine.updateRightCellText(nf1.format(fight.getOpponentLastKoChance()));
 		}
 		else
 		{

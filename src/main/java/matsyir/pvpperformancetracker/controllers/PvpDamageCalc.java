@@ -31,10 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import static matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
-import static matsyir.pvpperformancetracker.models.FightLogEntry.nf;
 import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
@@ -204,7 +204,7 @@ public class PvpDamageCalc
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
-		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf.format(averageHit) + ", acc: " + nf.format(accuracy) +
+		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf1.format(averageHit) + ", acc: " + nf1.format(accuracy) +
 			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}

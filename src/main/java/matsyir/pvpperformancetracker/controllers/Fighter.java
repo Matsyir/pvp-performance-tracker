@@ -38,6 +38,8 @@ import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.BrewState;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -56,13 +58,6 @@ import net.runelite.api.kit.KitType;
 public
 class Fighter
 {
-	private static final NumberFormat nf = NumberFormat.getInstance();
-	static // initialize number format
-	{
-		nf.setMaximumFractionDigits(1);
-		nf.setRoundingMode(RoundingMode.HALF_UP);
-	}
-
 	// Target graphics IDs indicating special attacks
 	private static final int GFX_TARGET_DBOW_SPEC = 1100;   // dragon-arrow gfx on target
 	private static final int GFX_TARGET_DCBOW_SPEC = 157;    // Annihilate AOE gfx on target
@@ -453,7 +448,6 @@ class Fighter
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
 	public String getOffPrayStats(boolean shortString)
 	{
-		nf.setMaximumFractionDigits(1);
 		return shortString ?
 			offPraySuccessCount + "/" + attackCount :
 			offPraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffPraySuccessPercentage()) + "%)";
@@ -470,9 +464,8 @@ class Fighter
 		String stats = nf.format(magicHitCount);
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
-		nf.setMaximumFractionDigits(1);
 		String luckPercentage = magicHitCountExpected != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountExpected) * 100.0) :
+			nf.format(((double) magicHitCount / magicHitCountExpected) * 100.0) :
 			"0";
 		stats += " (" + luckPercentage + "%)";
 		return stats;
@@ -480,18 +473,19 @@ class Fighter
 
 	public String getShortMagicHitStats()
 	{
-		nf.setMaximumFractionDigits(1);
 		return magicHitCountExpected != 0 ?
-			nf.format(((double)magicHitCount / magicHitCountExpected) * 100.0) + "%" :
+			nf.format(((double) magicHitCount / magicHitCountExpected) * 100.0) + "%" :
 			"0%";
 	}
 
 	public String getExpectedDmgString(Fighter opponent, int precision, boolean onlyDiff)
 	{
-		nf.setMaximumFractionDigits(precision);
+		NumberFormat preciseNf = NumberFormat.getInstance();
+		preciseNf.setRoundingMode(RoundingMode.HALF_UP);
+		preciseNf.setMaximumFractionDigits(precision);
 		double difference = expectedDamage - opponent.expectedDamage;
-		return onlyDiff ? (difference > 0 ? "+" : "") + nf.format(difference) :
-			nf.format(expectedDamage) + " (" + (difference > 0 ? "+" : "") + nf.format(difference) + ")";
+		return onlyDiff ? (difference > 0 ? "+" : "") + preciseNf.format(difference) :
+			preciseNf.format(expectedDamage) + " (" + (difference > 0 ? "+" : "") + preciseNf.format(difference) + ")";
 	}
 	public String getExpectedDmgString(Fighter opponent)
 	{
@@ -532,7 +526,6 @@ class Fighter
 	// if shortString is true, the percentage is omitted, it only returns the fraction.
 	public String getOffensivePrayStats(boolean shortString)
 	{
-		nf.setMaximumFractionDigits(1);
 		return shortString ?
 			offensivePraySuccessCount + "/" + attackCount :
 			offensivePraySuccessCount + "/" + attackCount + " (" + nf.format(calculateOffensivePraySuccessPercentage()) + "%)";
@@ -545,7 +538,7 @@ class Fighter
 
 	public String getGhostBarrageStats()
 	{
-		return ghostBarrageCount + " G.B. (" + nf.format(ghostBarrageExpectedDamage) + ")";
+		return ghostBarrageCount + " G.B. (" + nf1.format(ghostBarrageExpectedDamage) + ")";
 	}
 
 	public void resetRobeHits()

@@ -35,6 +35,7 @@ import lombok.Getter;
 import lombok.Setter;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GraphicID;
 import net.runelite.api.HeadIcon;
@@ -50,14 +51,6 @@ import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 @Getter
 public class FightLogEntry implements Comparable<FightLogEntry>
 {
-	public static final NumberFormat nf;
-	static
-	{
-		nf = NumberFormat.getInstance();
-		nf.setRoundingMode(RoundingMode.HALF_UP);
-		nf.setMaximumFractionDigits(2);
-	}
-
 	// general data
 	// don't expose attacker name since it is present in the parent class (Fighter), so it is
 	// redundant use of storage
@@ -436,9 +429,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 			.append(Color.BLACK, "  Hit: ")
 			.append(darkRed, getHitRange())
 			.append(Color.BLACK, "  Acc: ")
-			.append(darkRed, nf.format(accuracy))
+			.append(darkRed, nf1.format(accuracy))
 			.append(Color.BLACK, "  AvgHit: ")
-			.append(darkRed, nf.format(expectedDamage))
+			.append(darkRed, nf1.format(expectedDamage))
 			.append(Color.BLACK, " Spec?: ")
 			.append(darkRed, animationData.isSpecial ? "Y" : "N")
 			.append(Color.BLACK, " OffP?:")

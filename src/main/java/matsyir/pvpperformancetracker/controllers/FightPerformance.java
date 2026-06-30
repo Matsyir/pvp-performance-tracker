@@ -67,12 +67,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
-	private static final NumberFormat nf = NumberFormat.getInstance();
-	static // initialize number format
-	{
-		nf.setMaximumFractionDigits(1);
-		nf.setRoundingMode(RoundingMode.HALF_UP);
-	}
 
 	@Expose
 	@SerializedName("c") // use 1 letter serialized variable names for more compact storage
