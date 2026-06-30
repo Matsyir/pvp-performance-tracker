@@ -45,6 +45,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
@@ -61,6 +63,8 @@ import net.runelite.client.ui.PluginPanel;
 public class PvpPerformanceTrackerPanel extends PluginPanel
 {
 	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH;
+	public static final int FIGHT_HISTORY_SCROLL_WIDTH = 5;
+	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
 
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
@@ -149,7 +153,16 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// wrap mainContent with scrollpane so it's scrollable
 		JScrollPane scrollableContainer = new JScrollPane(mainContent);
 		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(4, 0));
+		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(FIGHT_HISTORY_SCROLL_WIDTH, 0));
+
+		scrollableContainer.getViewport().addChangeListener(new ChangeListener()
+		{
+			@Override
+			public void stateChanged(ChangeEvent e)
+			{
+				scrollableContainer.getViewport().repaint();
+			}
+		});
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
 

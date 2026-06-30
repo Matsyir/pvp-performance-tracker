@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -72,11 +73,12 @@ public class FightPerformancePanel extends JPanel
 {
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
+
 	private static final Border normalBorder;
-	private static final Border hoverBorder;
 
 	private static final Color BG_COLOR = new Color(ColorScheme.DARKER_GRAY_COLOR.getRed(), ColorScheme.DARKER_GRAY_COLOR.getGreen(), ColorScheme.DARKER_GRAY_COLOR.getBlue(), 0);
-	private static final Color BG_COLOR_HOVERED = new Color(ColorScheme.DARK_GRAY_HOVER_COLOR.getRed(), ColorScheme.DARK_GRAY_HOVER_COLOR.getGreen(), ColorScheme.DARK_GRAY_HOVER_COLOR.getBlue(), 0);
+
+	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
 	private static ImageIcon deathIcon;
 	private static BufferedImage backgroundImage;
@@ -85,9 +87,9 @@ public class FightPerformancePanel extends JPanel
 	public static void loadBackgroundImages()
 	{
 		backgroundImage = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
-			"/panelBackgrounds/fightPerformancePanel.png");
+			"/panelBackgrounds/fightPerformancePanel_GB.png");
 		backgroundImageHovered = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
-			"/panelBackgrounds/fightPerformancePanel_Hovered.png");
+			"/panelBackgrounds/fightPerformancePanel_GB_Hovered.png");
 	}
 
 
@@ -96,30 +98,9 @@ public class FightPerformancePanel extends JPanel
 	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
 	static
 	{
-		// spacing between the panels, at the bottom. use same color as the whole panel to appear like a gap between them
-		Border invisBottomBorder = BorderFactory.createMatteBorder(0, 0, 4, 0, ColorScheme.DARK_GRAY_COLOR);
-
-		// main border used when not hovering
-//		normalBorder = BorderFactory.createCompoundBorder(
-//			BorderFactory.createCompoundBorder(
-//				invisBottomBorder,
-//				BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2)),
-//			BorderFactory.createCompoundBorder(
-//				BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR),
-//				new EmptyBorder(1, 1, 1, 1)));
-
-		normalBorder = BorderFactory.createEmptyBorder(5, 0, 8, 0);
-
-		// border used while hovering
-//		hoverBorder = BorderFactory.createCompoundBorder(
-//			BorderFactory.createCompoundBorder(
-//				invisBottomBorder,
-//				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2)),
-//			BorderFactory.createCompoundBorder(
-//				BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE),
-//				new EmptyBorder(1, 1, 1, 1)));
-
-		hoverBorder = BorderFactory.createEmptyBorder(5, 0, 8, 0);
+		normalBorder = BorderFactory.createCompoundBorder(
+			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+			BorderFactory.createEmptyBorder(5, 0, 4, 0));
 	}
 
 	private boolean hovered = false;
@@ -237,46 +218,35 @@ public class FightPerformancePanel extends JPanel
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
 		playerStatsName.setForeground(Color.WHITE);
+		JShadowedLabel opponentStatsName = new JShadowedLabel();
+		opponentStatsName.setForeground(Color.WHITE);
 
 		// player name LEFT: player name
 		if (competitor.isDead())
 		{
 			playerStatsName.setIcon(deathIcon);
 
-			// TODO replace this logic with foreground color4
-//			if (!opponent.isDead())
-//			{
-//				playerNamesLine.setBackground(PanelFactory.SECONDARY_UNSUCCESSFUL_COLOR.darker());
-//			}
-//			else // double death
-//			{
-//				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
-//			}
+			if (!opponent.isDead())
+			{
+				opponentStatsName.setForeground(new Color(239, 191, 4));
+			}
 		}
 		playerStatsName.setText(competitor.getName());
-
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
-		JShadowedLabel opponentStatsName = new JShadowedLabel();
-		opponentStatsName.setForeground(Color.WHITE);
-
 		if (opponent.isDead())
 		{
 			opponentStatsName.setIcon(deathIcon);
 
-			// TODO replace this logic with foreground color
-//			if (!competitor.isDead())
-//			{
-//				playerNamesLine.setBackground(PanelFactory.SECONDARY_SUCCESS_COLOR.darker());
-//			}
-//			else // double death
-//			{
-//				playerNamesLine.setBackground(PanelFactory.SECONDARY_NEUTRAL_COLOR.darker());
-//			}
+			if (!competitor.isDead())
+			{
+				playerStatsName.setForeground(new Color(239, 191, 4));
+			}
 		}
 		opponentStatsName.setText(opponent.getName());
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
+
 		playerNamesLine.setToolTipText(displayFight.getWorld() > 0 ? baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" : baseTooltipText);
 
 		panelLines.add(playerNamesLine);
@@ -299,8 +269,6 @@ public class FightPerformancePanel extends JPanel
 			public void mouseEntered(MouseEvent e)
 			{
 				hovered = true;
-				//setFullBackgroundColor(BG_COLOR_HOVERED);
-				//setOutline(true);
 				setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 				repaint();
@@ -310,8 +278,6 @@ public class FightPerformancePanel extends JPanel
 			public void mouseExited(MouseEvent e)
 			{
 				hovered = false;
-//				setFullBackgroundColor(BG_COLOR);
-//				setOutline(false);
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 
 				repaint();
@@ -332,6 +298,9 @@ public class FightPerformancePanel extends JPanel
 		};
 		addMouseListener(fightPerformanceMouseListener);
 
+		// We are setting the background colors to transparent here,
+		// this is required even with the image background, otherwise some of the backgrounds are opaque by default and
+		// cover the image. This ensures everything is transparent and doesn't cover the image.
 		setFullBackgroundColor(BG_COLOR);
 
 		JPopupMenu popupMenu = new JPopupMenu();
@@ -392,7 +361,7 @@ public class FightPerformancePanel extends JPanel
 
 		add(fightPanel, BorderLayout.NORTH);
 
-		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+		//setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 	}
 
 	private void setFullBackgroundColor(Color color)
@@ -446,11 +415,11 @@ public class FightPerformancePanel extends JPanel
 		// Draw bgImage scaled to panel size (ideally should be the same anyway)
 		if (hovered && backgroundImageHovered != null)
 		{
-			g.drawImage(backgroundImageHovered, 0, 0, getWidth(), getHeight(), this);
+			g.drawImage(backgroundImageHovered, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}
 		else if (backgroundImage != null)
 		{
-			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}
 
 		super.paintComponent(g);
