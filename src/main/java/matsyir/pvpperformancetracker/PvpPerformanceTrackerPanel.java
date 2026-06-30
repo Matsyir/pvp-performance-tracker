@@ -109,7 +109,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
 		updatePvpHubHiddenName();
 
-		add(Box.createRigidArea(new Dimension(0, 4)));
+		//add(Box.createRigidArea(new Dimension(0, 4)));
 		add(pvpHubHiddenNameLine);
 
 		// add filter line with label & text field.
@@ -143,13 +143,13 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		filterLine.add(filterLabel, BorderLayout.NORTH);
 		filterLine.add(nameFilter, BorderLayout.CENTER);
 
-		//add(Box.createRigidArea(new Dimension(0, 4)));
+		add(Box.createRigidArea(new Dimension(0, 4)));
 		add(filterLine);
 
-		// wrap mainContent with scrollpane so it has a scrollbar
+		// wrap mainContent with scrollpane so it's scrollable
 		JScrollPane scrollableContainer = new JScrollPane(mainContent);
 		scrollableContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
+		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(4, 0));
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
 
