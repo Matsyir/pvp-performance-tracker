@@ -340,6 +340,8 @@ public enum TrackedStatistic
 				String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nfP.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
 				String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nfP.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
 
+				boolean showGhostBarrages = fight.competitor.getGhostBarrageCount() > 0 || fight.opponent.getGhostBarrageCount() > 0;
+
 				return PanelFactory.createStatsLine(KO_CHANCES.acronym, KO_CHANCES.acronymTooltip
 					, compTotalKoChanceText
 					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nfP1.format(competitorOverallKoProb)
@@ -348,6 +350,7 @@ public enum TrackedStatistic
 					, oppTotalKoChanceText
 					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
 					, (opponentOverallKoProb > competitorOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
+					, showGhostBarrages // only show bottom border if we're showing ghost barrages, otherwise it's last statistic so don't need it.
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(KO_CHANCES.acronym, 50, 50,
@@ -394,6 +397,8 @@ public enum TrackedStatistic
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
 					, oppGhostBarrageColor
+					, false // TODO: if we move ghost barrage from being the bottom-most statistic,
+					// then move this to only exclude the bottom border on the new last line.
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(GHOST_BARRAGES.acronym, 80, 20,

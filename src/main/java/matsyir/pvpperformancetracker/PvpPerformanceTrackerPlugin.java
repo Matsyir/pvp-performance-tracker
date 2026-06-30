@@ -117,6 +117,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.Text;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -138,6 +139,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// "pvp-performance-tracker2": From 1.5.9 update, until present
 	public static final String DATA_FOLDER = "pvp-performance-tracker2";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
+	public static final String FIGHT_HISTORY_BACKUP_FNAME = "FightHistoryData_autoBackup.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
@@ -293,6 +295,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
                 panel.rebuild();
             }
         });
+
 	}
 
 	@Override
@@ -1418,6 +1421,34 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
+	// basically same as saveFightHistoryData, but for another file. Only written once on plugin launch, as a backup.
+	private void autoBackupFightHistoryData()
+	{
+		File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
+		File fightHistoryDataBackup = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_BACKUP_FNAME);
+
+		// skip the backup if the backup is already the same size as the core fight history.
+		if (fightHistoryData.exists() && fightHistoryDataBackup.exists() &&
+			fightHistoryData.length() == fightHistoryDataBackup.length())
+		{
+			return;
+		}
+
+		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
+		// from continuing to work, even if there are issues saving the data.
+		try
+		{
+			Writer writer = new FileWriter(fightHistoryDataBackup);
+			GSON.toJson(fightHistory, writer);
+			writer.flush();
+			writer.close();
+		}
+		catch (Exception e)
+		{
+			log.warn("Error ignored while backing up fight history data: " + e.getMessage());
+		}
+	}
+
 	// add fight to loaded fight history
 	void addToFightHistory(FightPerformance fight)
 	{
@@ -1625,6 +1656,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			fightHistory.clear();
 			importFights(savedFights);
+
+			// auto backup fights if they successfully loaded on plugin launch, just in case
+			// any strange bug or crash happens which causes the json to corrupt itself.
+			autoBackupFightHistoryData();
 		}
 		catch (Exception e)
 		{
@@ -1939,9 +1974,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		addItemToLabelIfValid(label, itemId, true, null);
 	}
 
-	public void updateNameFilterConfig(String newFilterName)
+	public String updateNameFilterConfig(String newFilterName)
 	{
-		configManager.setConfiguration(CONFIG_KEY, "nameFilter", newFilterName.trim().toLowerCase());
+		String sanitizedFilterName = Text.toJagexName(newFilterName.trim().toLowerCase());
+
+		configManager.setConfiguration(CONFIG_KEY, "nameFilter", sanitizedFilterName);
+
+		return sanitizedFilterName;
 	}
 
 	public String getPvpHubHiddenName()

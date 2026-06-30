@@ -25,14 +25,16 @@
 
 package matsyir.pvpperformancetracker.views;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import javax.swing.border.Border;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
-import matsyir.pvpperformancetracker.models.TrackedStatistic;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
 public final class PanelFactory
@@ -41,12 +43,27 @@ public final class PanelFactory
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
 	public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
+	public static final int HORIZONTAL_PADDING = 6;
 
-	public static final Font INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
+	public static final Font COMPACT_INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
+
+	// borders for StatsLine on FightPerformancePanel, also reused on TotalStatsPanel
+	// border for left/right padding
+	public static final Border paddingBorder = BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, HORIZONTAL_PADDING);
+	public static final Border bottomLineBorderUnpadded = BorderFactory.createCompoundBorder(
+		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
+		BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARKER_GRAY_HOVER_COLOR));
+
+	public static final Border bottomLineBorder = BorderFactory.createCompoundBorder(
+		paddingBorder, // left/right padding
+		bottomLineBorderUnpadded);
+
+	public static final int PREFERRED_LABEL_WIDTH_UNPADDED = (PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2);
+	public static final int PREFERRED_LABEL_WIDTH = PREFERRED_LABEL_WIDTH_UNPADDED - HORIZONTAL_PADDING;
 
 	public static Font getIndexFontFrom(float initialFontSize)
 	{
-		return INDEX_FONT.deriveFont(initialFontSize * LINE_INDEX_LABEL_FONT_SCALE);
+		return COMPACT_INDEX_FONT.deriveFont(initialFontSize * LINE_INDEX_LABEL_FONT_SCALE);
 	}
 
 	public static Font getIndexFontFrom(Font initialFont)
@@ -58,9 +75,29 @@ public final class PanelFactory
 										 String leftText, String leftTooltip, Color leftColor,
 										 String rightText, String rightTooltip, Color rightColor)
 	{
+		return createStatsLine(miniCenterLabelText, miniCenterLabelTooltip,
+			leftText, leftTooltip, leftColor,
+			rightText, rightTooltip, rightColor, true);
+	}
+	public static JPanel createStatsLine(String miniCenterLabelText, String miniCenterLabelTooltip,
+										 String leftText, String leftTooltip, Color leftColor,
+										 String rightText, String rightTooltip, Color rightColor,
+										 boolean includeBottomBorder)
+	{
 		JPanel statsLine = new JPanel(new GridBagLayout());
-		//statsLine.setBackground(leftColor.equals(SUCCESS_COLOR) ? SECONDARY_SUCCESS_COLOR : (rightColor.equals(SUCCESS_COLOR) ? SECONDARY_UNSUCCESSFUL_COLOR : null));
 		statsLine.setBackground(null);
+		int preferredLabelWidth;
+		if (includeBottomBorder)
+		{
+			statsLine.setBorder(bottomLineBorder);
+			preferredLabelWidth = PREFERRED_LABEL_WIDTH;
+		}
+		else
+		{
+			statsLine.setBorder(paddingBorder);
+			preferredLabelWidth = PREFERRED_LABEL_WIDTH;
+		}
+
 
 		String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
@@ -68,13 +105,13 @@ public final class PanelFactory
 		leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);
 		leftLabel.setForeground(leftColor);
 		leftLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		leftLabel.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, leftLabel.getPreferredSize().height));
+		leftLabel.setPreferredSize(new Dimension(preferredLabelWidth, leftLabel.getPreferredSize().height));
 
 		ForwardingLabel rightLabel = new ForwardingLabel(rightText);
 		rightLabel.setToolTipText("<html>" + rightTooltip + tooltipSuffix);
 		rightLabel.setForeground(rightColor);
 		rightLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		rightLabel.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, leftLabel.getPreferredSize().height));
+		rightLabel.setPreferredSize(new Dimension(preferredLabelWidth, leftLabel.getPreferredSize().height));
 
 		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
 		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);

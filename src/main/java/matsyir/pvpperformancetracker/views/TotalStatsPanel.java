@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
@@ -44,7 +45,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
-import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
@@ -65,6 +66,8 @@ public class TotalStatsPanel extends JPanel
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
 	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
+	private static final int TOTAL_STATS_WIDTH = FULL_PANEL_WIDTH;
+	private static final int TOTAL_STATS_HEIGHT = 196;
 
 	public static void loadBackgroundImages()
 	{
@@ -168,7 +171,8 @@ public class TotalStatsPanel extends JPanel
 		totalStats = new Fighter("Player");
 
 		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
-		setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+
+		setBorder(BorderFactory.createEmptyBorder(3, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// Create right click popup menu/context menu with various general actions
@@ -243,12 +247,25 @@ public class TotalStatsPanel extends JPanel
 		// Now initializing all lines:
 		// FIRST LINE
 		// basic label to display a title.
-		JShadowedLabel titleLabel = new JShadowedLabel();
-		titleLabel.setText("PvP Performance Tracker v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
-		titleLabel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.BRAND_ORANGE));
+		JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+
+		JShadowedLabel titleLabel = new JShadowedLabel("PvP Performance Tracker ");
+		titlePanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEmptyBorder(0, 24, 0, 24), BorderFactory.createCompoundBorder(
+				BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
+				BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(
+					ColorScheme.BRAND_ORANGE.getRed(), ColorScheme.BRAND_ORANGE.getGreen(), ColorScheme.BRAND_ORANGE.getBlue(), 112)))));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
-		add(titleLabel);
+
+		JShadowedLabel titleVersionLabel = new JShadowedLabel("v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
+		titleVersionLabel.setFont(PanelFactory.getIndexFontFrom(titleVersionLabel.getFont()));
+		titleVersionLabel.setForeground(new Color(132, 43, 0));
+
+		titlePanel.add(titleLabel);
+		titlePanel.add(titleVersionLabel);
+
+		add(titlePanel);
 
 		// if settings haven't been configured, add a red label to display that they should be.
 		if (!CONFIG.settingsConfigured())
@@ -260,6 +277,7 @@ public class TotalStatsPanel extends JPanel
 		// SECOND LINE
 		// panel to show total kills/deaths
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
+		killDeathPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label to show kills
 		killsLabel = new JShadowedLabel();
@@ -279,6 +297,7 @@ public class TotalStatsPanel extends JPanel
 		// THIRD LINE
 		// panel to show the total off-pray stats (successful hits/total attacks)
 		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
+		offPrayStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's off-pray stats
 		JShadowedLabel leftLabel = new JShadowedLabel();
@@ -297,12 +316,14 @@ public class TotalStatsPanel extends JPanel
 		// FOURTH LINE
 		// panel to show the average expected damage stats (average damage & average diff)
 		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
+		expectedDmgStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's expected dmg stats
 		JShadowedLabel expectedDmgStatsLeftLabel = new JShadowedLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
 
+		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
 		expectedDmgStatsLabel = new JShadowedLabel();
@@ -314,6 +335,7 @@ public class TotalStatsPanel extends JPanel
 		// FIFTH LINE
 		// panel to show the average damage dealt stats (average damage & average diff)
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
+		dmgDealtStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's avg dmg dealt
 		JShadowedLabel dmgDealtStatsLeftLabel = new JShadowedLabel();
@@ -332,6 +354,7 @@ public class TotalStatsPanel extends JPanel
 		// SIXTH LINE
 		// panel to show the total magic hit count and expected hit count
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
+		magicHitStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's magic hit count stats
 		JShadowedLabel magicHitStatsLeftLabel = new JShadowedLabel();
@@ -350,6 +373,7 @@ public class TotalStatsPanel extends JPanel
 		// SEVENTH LINE
 		// panel to show the offensive prayer success count
 		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
+		offensivePrayStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's offensive pray stats
 		JShadowedLabel offensivePrayStatsLeftLabel = new JShadowedLabel();
@@ -368,6 +392,7 @@ public class TotalStatsPanel extends JPanel
 		// EIGTH LINE
 		// panel to show the total hp healed
 		JPanel hpHealedPanel = new JPanel(new BorderLayout());
+		hpHealedPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label with a label to say it's avg hp healed stats
 		JShadowedLabel hpHealedLeftLabel = new JShadowedLabel();
@@ -384,6 +409,7 @@ public class TotalStatsPanel extends JPanel
 
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
+		robeHitsStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		JShadowedLabel robeHitsStatsLeftLabel = new JShadowedLabel("Avg Hits on Robes:");
 		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
@@ -399,6 +425,7 @@ public class TotalStatsPanel extends JPanel
 		// TENTH LINE
 		// panel to show the avg KO chance stats
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
+		avgKoChanceStatsPanel.setBorder(PanelFactory.bottomLineBorder);
 
 		// left label
 		JShadowedLabel avgKoChanceStatsLeftLabel = new JShadowedLabel();
@@ -416,6 +443,10 @@ public class TotalStatsPanel extends JPanel
 
 		// panel to show the avg ghost barrage stats
 		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
+		// TODO: if we move ghost barrage from being the bottom-most statistic, then move this to only exclude the
+		//       bottom border on the new last line, and put it back on GBs
+		//ghostBarrageStatsPanel.setBorder(PanelFactory.bottomLineBorder);
+		ghostBarrageStatsPanel.setBorder(PanelFactory.paddingBorder);
 
 		// left label with a label to say it's avg ghost barrage stats
 		JShadowedLabel ghostBarrageStatsLeftLabel = new JShadowedLabel();
@@ -440,8 +471,9 @@ public class TotalStatsPanel extends JPanel
 			c.setBackground(BG_COLOR);
 		}
 
-		setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH));
-		//setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, 242));
+		setPreferredSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
+		setMinimumSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
+		setMaximumSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
 
 		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
 		// tried to fix this 1000 cleaner ways but i could only get it to work with this
@@ -454,12 +486,20 @@ public class TotalStatsPanel extends JPanel
 		String avgExpectedDmgDiffOneDecimal = nf1.format(avgExpectedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
+		String kdRatio = numDeaths == 0 ? "0" : nf1.format((double)numKills / (double)numDeaths);
+
+		String killDeathTooltip = "<html>From a total of " + numFights + " fights, you got <u>" + nf.format(numKills)
+			+ " kill" + (numKills != 1 ? "s" : "") + "</u>, and <u>died " +
+			(numDeaths != 1 ? (nf.format(numDeaths) + " times") : " once" )+
+				"</u>.<br>(<u>KD/Ratio = " + kdRatio + ")</u>";
+
 		killsLabel.setText(nf.format(numKills) + " Kill" + (numKills != 1 ? "s" : ""));
-		killsLabel.setToolTipText("From a total of " + numFights + " fights, you got " + nf.format(numKills)
-			+ " kill" + (numKills != 1 ? "s" : ""));
+		killsLabel.setToolTipText(killDeathTooltip);
 		deathsLabel.setText(nf.format(numDeaths) + " Death" + (numDeaths != 1 ? "s" : ""));
-		deathsLabel.setToolTipText("From a total of " + numFights + " fights, you died "
-			+ (numDeaths != 1 ? (nf.format(numDeaths) + " times") : "once"));
+		deathsLabel.setToolTipText(killDeathTooltip);
+
+		JPanel killsLabelLine = (JPanel)deathsLabel.getParent();
+		killsLabelLine.setToolTipText(killDeathTooltip);
 
 		if (totalStats.getAttackCount() >= 10000)
 		{
@@ -950,15 +990,19 @@ public class TotalStatsPanel extends JPanel
 	private void initializeSettingsWarningLabel()
 	{
 		settingsWarningLabel = new JShadowedLabel();
-		settingsWarningLabel.setText("Check plugin config for setup options!");
+		settingsWarningLabel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(Color.RED.darker(), 1),
+			BorderFactory.createLineBorder(Color.RED.darker().darker(), 1)));
+		settingsWarningLabel.setText("<html>&#9888;&nbsp;Check plugin config for setup options!&nbsp;&#9888;");
 		settingsWarningLabel.setToolTipText("Please verify that the plugin options are configured according to your needs in the plugin's Configuration Panel.");
 		settingsWarningLabel.setForeground(Color.RED);
 
 		// make the warning font bold & smaller font size so we can fit more text.
-		Font newFont = settingsWarningLabel.getFont();
-		newFont = newFont.deriveFont(newFont.getStyle() | Font.BOLD, 12f);
+		Font newFont = PanelFactory.getIndexFontFrom(getFont());
+		newFont = newFont.deriveFont(newFont.getStyle() | Font.BOLD, 10f);
 		settingsWarningLabel.setFont(newFont);
-
+		settingsWarningLabel.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) settingsWarningLabel.getPreferredSize().getHeight()));
+		settingsWarningLabel.setPreferredSize(getMaximumSize());
 		settingsWarningLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	}
 

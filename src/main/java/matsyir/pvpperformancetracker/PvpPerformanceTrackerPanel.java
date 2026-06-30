@@ -25,7 +25,13 @@
 package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -34,18 +40,22 @@ import java.util.function.IntSupplier;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
+import matsyir.pvpperformancetracker.views.PlaceholderTextField;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
@@ -54,18 +64,23 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
+@Slf4j
 public class PvpPerformanceTrackerPanel extends PluginPanel
 {
-	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH + 4;
+	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH;
 	public static final int FIGHT_HISTORY_SCROLL_WIDTH = 5;
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
+
+	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
+	public static final int NAME_FILTER_DELAY = 85; // delay in ms
 
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
 	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
-	private final JButton pvpHubHiddenNameBtn = new JButton();
+	private final JShadowedLabel pvpHubHiddenNameBtn = new JShadowedLabel();
 	private boolean hiddenNameIsVisible = false;
 
 	private final PvpPerformanceTrackerPlugin plugin;
@@ -75,6 +90,14 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	private final ClientThread clientThread;
 	private final Map<Integer, Integer> worldLocations = new ConcurrentHashMap<>();
 	private final Set<Integer> pendingWorldLocationLoads = ConcurrentHashMap.newKeySet();
+
+	private final Timer panelFilterTask = new javax.swing.Timer(NAME_FILTER_DELAY, e ->
+	{
+		if (PvpPerformanceTrackerPanel.this.isVisible())
+		{
+			PvpPerformanceTrackerPanel.this.rebuild(); // rebuild entire panel/fight history using new name filter.
+		}
+	});
 
 	@Inject
 	private PvpPerformanceTrackerPanel(final PvpPerformanceTrackerPlugin plugin, final PvpPerformanceTrackerConfig config, final WorldService worldService, final Client client, final ClientThread clientThread)
@@ -95,49 +118,174 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		add(totalStatsPanel);
 
+		// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
+		Border panelActionBorder = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
+			BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2));
+		Border panelActionBorderHovered = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
+			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
+		Border panelActionBorderWarning = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
+			BorderFactory.createLineBorder(new Color(255, 0, 0, 128), 1));
+		Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 3, 0);
+
+		// paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
+		// both pvpHubHiddenNameBtn and the name filter.
+		Border paddedPanelActionBorder = BorderFactory.createCompoundBorder(
+			panelActionBorder,
+			panelActionPaddingBorder);
+		Border paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
+			panelActionBorderHovered,
+			panelActionPaddingBorder);
+		Border paddedPanelActionBorderNameVisible = BorderFactory.createCompoundBorder(
+			BorderFactory.createCompoundBorder(
+				panelActionBorderWarning,
+				BorderFactory.createLineBorder(new Color(255, 0, 0, 80))),
+			panelActionPaddingBorder);
+		Border paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+				BorderFactory.createCompoundBorder(
+					BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
+					BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 2)),
+			panelActionPaddingBorder);
+
+		pvpHubHiddenNameBtn.setBorder(paddedPanelActionBorder);
+		pvpHubHiddenNameBtn.setForeground(ColorScheme.TEXT_COLOR);
+		pvpHubHiddenNameBtn.setShadow(Color.BLACK);
+		pvpHubHiddenNameBtn.setBackground(ColorScheme.BORDER_COLOR);
 		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
-		//pvpHubHiddenNameBtn.setBorder(null);
 		pvpHubHiddenNameBtn.setToolTipText("<html>Your private, read-only \"hidden name\" used when \"Hide RSN on PvP-Hub\" is enabled. " +
 			"Click to toggle visibility.<br><br>" +
 			"You can reset this hidden name by right-clicking the Total Stats just above.");
-		pvpHubHiddenNameBtn.addActionListener(actionEvent -> {
-			hiddenNameIsVisible = !hiddenNameIsVisible;
-			updatePvpHubHiddenName();
+		pvpHubHiddenNameBtn.addMouseListener(new MouseListener()
+		{
+			private boolean hovered;
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				hiddenNameIsVisible = !hiddenNameIsVisible;
+				updatePvpHubHiddenName();
+				if (hovered)
+				{
+					pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
+				}
+				else
+				{
+					pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
+				}
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				hovered = true;
+				pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
+				setCursor(new Cursor(Cursor.HAND_CURSOR));
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				hovered = false;
+				pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
+
+			@Override public void mousePressed(MouseEvent e) {}
+			@Override public void mouseReleased(MouseEvent e) {}
 		});
+
 		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
-		//pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
-		//pvpHubHiddenNameLine.setPreferredSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
+		pvpHubHiddenNameLine.setBackground(ColorScheme.BORDER_COLOR);
 		pvpHubHiddenNameLine.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.BORDER_COLOR));
 		updatePvpHubHiddenName();
 
-		//add(Box.createRigidArea(new Dimension(0, 4)));
 		add(pvpHubHiddenNameLine);
 
 		// add filter line with text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
+		filterLine.setForeground(ColorScheme.TEXT_COLOR);
+		filterLine.setBackground(ColorScheme.BORDER_COLOR);
 		// filter textfield
-		JTextField nameFilter = new JTextField(config.nameFilter());
-		nameFilter.setToolTipText("Filter Usernames");
-		filterLine.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.BORDER_COLOR));
-		//filterLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) filterLine.getPreferredSize().getHeight()));
+		PlaceholderTextField nameFilter = new PlaceholderTextField("Filter Usernames:", config.nameFilter());
+		nameFilter.setHorizontalAlignment(SwingConstants.CENTER);
+		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
+		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
+		nameFilter.setBorder(paddedPanelActionBorder);
+		filterLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) filterLine.getPreferredSize().getHeight()));
 
-		nameFilter.getDocument().addDocumentListener(new DocumentListener() {
-			private void updateNameFilterValue()
+		panelFilterTask.setRepeats(false);
+		((AbstractDocument) nameFilter.getDocument()).setDocumentFilter(new DocumentFilter()
+		{
+			@Override
+			public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+				throws BadLocationException
 			{
-				plugin.updateNameFilterConfig(nameFilter.getText());
-
-				// do not rebuild the panel if the filter starts with a space. This is because you could spam rebuild()
-				// by holding down space and causing massive lag. This isn't really an issue with real filters as the
-				// results quickly get filtered down, resulting in less UI elements.
-				if (!nameFilter.getText().startsWith(" "))
-				{
-					PvpPerformanceTrackerPanel.this.rebuild();
-				}
+				update(fb, offset, 0, string, attr);
 			}
 
-			public void changedUpdate(DocumentEvent e) { updateNameFilterValue(); }
-			public void removeUpdate(DocumentEvent e) { updateNameFilterValue(); }
-			public void insertUpdate(DocumentEvent e) { updateNameFilterValue(); }
+			@Override
+			public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+				throws BadLocationException
+			{
+				update(fb, offset, length, text, attrs);
+			}
+
+			@Override
+			public void remove(FilterBypass fb, int offset, int length)
+				throws BadLocationException
+			{
+				update(fb, offset, length, "", null);
+			}
+
+			private void update(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+				throws BadLocationException
+			{
+				String current = fb.getDocument().getText(0, fb.getDocument().getLength());
+
+				String next = current.substring(0, offset)
+					+ text
+					+ current.substring(offset + length);
+
+				String sanitized = plugin.updateNameFilterConfig(next);
+
+				fb.replace(0, fb.getDocument().getLength(), sanitized, attrs);
+
+				panelFilterTask.restart();
+			}
+		});
+		nameFilter.addFocusListener(new FocusListener()
+		{
+			@Override
+			public void focusGained(FocusEvent e)
+			{
+				nameFilter.setBorder(paddedPanelActionBorderHovered);
+			}
+
+			@Override
+			public void focusLost(FocusEvent e)
+			{
+				nameFilter.setBorder(paddedPanelActionBorder);
+			}
+		});
+		nameFilter.addMouseListener(new MouseListener()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				nameFilter.setBorder(paddedPanelActionBorderHovered);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				nameFilter.setBorder(paddedPanelActionBorder);
+			}
+
+			@Override public void mouseClicked(MouseEvent e) {}
+			@Override public void mousePressed(MouseEvent e) {}
+			@Override public void mouseReleased(MouseEvent e) {}
 		});
 
 		filterLine.add(nameFilter, BorderLayout.CENTER);
@@ -312,7 +460,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	{
 		boolean showHiddenName = config.uploadFightsToPvpHub() && config.hideRsnOnPvpHub();
 		pvpHubHiddenNameLine.setVisible(showHiddenName);
-		pvpHubHiddenNameBtn.setText("<html>PvP-Hub Name: " + (showHiddenName && hiddenNameIsVisible ? plugin.getPvpHubHiddenName() : "<i>(click to view)</i>"));
+		pvpHubHiddenNameBtn.setText("PvP-Hub Name: " + (showHiddenName && hiddenNameIsVisible ? plugin.getPvpHubHiddenName() : "(click to view)"));
 
 		revalidate();
 		repaint();

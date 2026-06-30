@@ -74,7 +74,7 @@ public class FightPerformancePanel extends JPanel
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 
-	private static final Border normalBorder;
+	private static final Border defaultBorder;
 
 	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
 
@@ -98,7 +98,7 @@ public class FightPerformancePanel extends JPanel
 	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
 	static
 	{
-		normalBorder = BorderFactory.createCompoundBorder(
+		defaultBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 			BorderFactory.createEmptyBorder(5, 0, 4, 0));
 	}
@@ -183,7 +183,7 @@ public class FightPerformancePanel extends JPanel
 			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
 		setToolTipText(baseTooltipText);
 
-		setBorder(normalBorder);
+		setBorder(defaultBorder);
 
 		ArrayList<JPanel> panelLines = new ArrayList<>();
 
@@ -214,6 +214,7 @@ public class FightPerformancePanel extends JPanel
 			}
 		};
 		playerNamesLine.setBackground(null);
+		playerNamesLine.setBorder(PanelFactory.bottomLineBorder);
 
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
@@ -231,11 +232,13 @@ public class FightPerformancePanel extends JPanel
 
 			if (!opponent.isDead())
 			{
-				opponentStatsName.setForeground(new Color(239, 191, 4));
+				// opponent survived here & killed opponent.
+				// Possible place to put color/styling, but we'll just leave white name for now.
+				//opponentStatsName.setForeground(Color.YELLOW);//new Color(239, 191, 4));
 			}
 		}
 		playerStatsName.setText(competitor.getName());
-		playerStatsName.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, playerStatsName.getPreferredSize().height));
+		playerStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, playerStatsName.getPreferredSize().height));
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
@@ -245,11 +248,13 @@ public class FightPerformancePanel extends JPanel
 
 			if (!competitor.isDead())
 			{
-				playerStatsName.setForeground(new Color(239, 191, 4));
+				// competitor survived here & killed opponent.
+				// Possible place to put color/styling, but we'll just leave white name for now.
+				//playerStatsName.setForeground(Color.YELLOW);//new Color(239, 191, 4));
 			}
 		}
 		opponentStatsName.setText(opponent.getName());
-		opponentStatsName.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, opponentStatsName.getPreferredSize().height));
+		opponentStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, opponentStatsName.getPreferredSize().height));
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
 
 		playerNamesLine.setToolTipText(displayFight.getWorld() > 0 ? baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" : baseTooltipText);
