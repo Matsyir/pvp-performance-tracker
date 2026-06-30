@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
@@ -62,6 +63,7 @@ import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -179,8 +181,12 @@ public class FightPerformancePanel extends JPanel
 
 		setLayout(new BorderLayout(0, 0));
 
-		String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + (displayFight.getWorld() > 0 ? (" (W" + displayFight.getWorld()) + ")" : "") +
-			": This fight ended at " + DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
+
+		final String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
+			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
+		final String worldDisplayTooltipText = (displayFight.getWorld() > 0 ?
+			" (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" :
+			"");
 		setToolTipText(baseTooltipText);
 
 		setBorder(defaultBorder);
@@ -199,16 +205,54 @@ public class FightPerformancePanel extends JPanel
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				if (CONFIG.showWorldInSummary() && displayFight.getWorld() > 0)
+				if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.HIDDEN)
+				{
+					return;
+				}
+
+				if (displayFight.getWorld() > 0)
 				{
 					int worldLocation = worldLocationSupplier.getAsInt();
-					setToolTipText(baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocation) + ")");
+					setToolTipText(baseTooltipText + worldDisplayTooltipText);
 					ImageIcon worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
+					boolean isDisplayingWorldLabel = CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL;
+
+					Graphics g2 = g.create();
+
 					if (worldIcon != null)
 					{
+						if (isDisplayingWorldLabel)
+						{
+							g2.setColor(ColorUtil.colorWithAlpha(Color.WHITE, 165));
+						}
 						int x = (getWidth() - worldIcon.getIconWidth()) / 2;
 						int y = (getHeight() - worldIcon.getIconHeight()) / 2;
-						worldIcon.paintIcon(this, g, x, y);
+						worldIcon.paintIcon(this, g2, x, y);
+					}
+
+					if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL)
+					{
+						String worldText = String.valueOf(fight.getWorld());
+						g2.setFont(PanelFactory.getIndexFontFrom(g2.getFont()).deriveFont(13f));
+						FontMetrics fm = g2.getFontMetrics(g2.getFont());
+						int x = (getWidth() - fm.stringWidth(worldText)) / 2;
+						int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
+
+						g2.translate(1, 1);
+						g2.setColor(Color.BLACK);
+						g2.drawString(worldText, x, y); // draw text shadow 1/3
+
+						g2.translate(-2, 0);
+						g2.drawString(worldText, x, y); // draw text shadow 2/3
+						g2.translate(1, 1);
+						g2.drawString(worldText, x, y); // draw text shadow 2/3
+
+						g2.translate(0, -2);
+						g2.setColor(Color.WHITE);
+
+						g2.drawString(worldText, x, y); // draw text
+
+						g2.dispose();
 					}
 				}
 			}
@@ -256,8 +300,6 @@ public class FightPerformancePanel extends JPanel
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, opponentStatsName.getPreferredSize().height));
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
-
-		playerNamesLine.setToolTipText(displayFight.getWorld() > 0 ? baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" : baseTooltipText);
 
 		panelLines.add(playerNamesLine);
 

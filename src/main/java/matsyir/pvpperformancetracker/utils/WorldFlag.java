@@ -30,6 +30,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.ImageIcon;
+import lombok.Getter;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import net.runelite.client.game.WorldService;
 import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldRegion;
@@ -37,6 +39,26 @@ import net.runelite.http.api.worlds.WorldResult;
 
 public final class WorldFlag
 {
+	@Getter
+	public enum WorldDisplayChoice
+	{
+		FLAG("Flag Only"),
+		HIDDEN("Hidden"),
+		WORLD_LABEL("<html><font color='#ff0000'>&#9888;</font> World Label");
+
+		private String name;
+
+		WorldDisplayChoice(String name)
+		{
+			this.name = name;
+		}
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+
+	}
 	private static final int FLAG_WIDTH = 24;
 	private static final int FLAG_HEIGHT = 12;
 	private static final int LOCATION_US_WEST = -73;
@@ -57,7 +79,8 @@ public final class WorldFlag
 	public static String getTooltip(int world, WorldService worldService, int worldLocation)
 	{
 		Region region = getRegion(world, worldService, worldLocation);
-		return "World " + world + " - " + region.displayName;
+		boolean showWorld = PvpPerformanceTrackerPlugin.CONFIG.getWorldDisplayChoice() == WorldDisplayChoice.WORLD_LABEL && world > 0;
+		return (showWorld ? "World " + world + " - " : "") + region.displayName;
 	}
 
 	private static Region getRegion(int worldId, WorldService worldService, int worldLocation)

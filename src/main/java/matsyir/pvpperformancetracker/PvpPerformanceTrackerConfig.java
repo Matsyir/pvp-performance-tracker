@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
+import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -79,26 +80,36 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= Sections =================================
 
+	@ConfigSection(name = "PvP-Hub Website",
+		description = "Contains settings relating to the PvP-Hub website.<br>" +
+			"Note that the client remains entirely client-side if you don't opt into these features.",
+		position = 1399,
+		closedByDefault = false
+	)
+	String pvpHubSection = "pvpHubSection";
+
 	@ConfigSection(name = "Overlay (5 lines max)",
 		description = "Contains overlay settings (MAX of 5 lines allowed)",
 		position = 2000,
 		closedByDefault = true
 	)
-	String overlay = "overlay";
+	String overlaySection = "overlay";
 
 	@ConfigSection(name = "Gear/Ammo",
-		description = "Contains gear/ammo settings for fights outside LMS",
+		description = "Contains gear/ammo settings for fights outside LMS.<br>" +
+			"This is what's used for expected damage if the fight isn't merged.",
 		position = 11000,
 		closedByDefault = false
 	)
-	String gearAmmo = "gearAmmo";
+	String gearAmmoSection = "gearAmmo";
 
 	@ConfigSection(name = "Levels",
-		description = "Contains level settings for fights outside of LMS (including boosts)",
+		description = "Contains level settings for fights outside of LMS (including boosts).<br>" +
+			"This is what's used for expected damage if the fight isn't merged.",
 		position = 15000,
 		closedByDefault = false
 	)
-	String levels = "levels";
+	String levelsSection = "levels";
 
 	// ================================= General =================================
 
@@ -160,12 +171,25 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "worldDisplayChoice",
+		name = "World Display Style",
+		description = "Choose how you want the world to be displayed in the fight history panel, or hide it entirely.",
+		position = 1150
+	)
+	default WorldFlag.WorldDisplayChoice getWorldDisplayChoice()
+	{
+		return WorldFlag.WorldDisplayChoice.FLAG;
+	}
+
+	@ConfigItem(
 		keyName = "uploadFightsToPvpHub",
 		name = "Upload Fights to PvP-Hub.com",
 		description = "When enabled, fights will be assigned a shared ID and uploaded to PvP-Hub.com after they end." +
 			"<br>Public visibility follows the PvP-Hub upload delay setting below.",
-		warning = "This feature will submit fight logs and IP address to a 3rd-party server not controlled or verified by Runelite developers. Your RSN is submitted unless PvP-Hub RSN privacy is enabled.",
-		position = 1200
+		warning = "This feature will submit fight logs and IP address to a 3rd-party server not controlled or verified by Runelite developers. " +
+			"Your RSN is submitted unless PvP-Hub RSN privacy is enabled.",
+		position = 1400,
+		section = pvpHubSection
 	)
 	default boolean uploadFightsToPvpHub()
 	{
@@ -175,9 +199,11 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "pvpHubVisibilityDelay",
 		name = "PvP-Hub Upload Delay",
-		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub." +
-			"<br>The default \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight.",
-		position = 1210
+		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub.<br>" +
+			"The \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight.<br>" +
+			"Worlds are never publicly displayed on the website, so it shouldn't be much of a concern to keep it on Instant.",
+		position = 1410,
+		section = pvpHubSection
 	)
 	default PvpHubVisibilityDelay pvpHubVisibilityDelay()
 	{
@@ -189,13 +215,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Hide RSN on PvP-Hub",
 		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.<br><br>" +
 			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
-			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
+			"If you've leaked this name or would like to change it, you can do so by right-clicking the Total Stats panel above your fight history.",
 		warning = "<html>Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel.<br><br>" +
 			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name and would like to change it, you can do so by clicking the Reset button below to reset the entire plugin config.<br>" +
-			"Beware that doing so will erase your local fight history, so make a backup copy of it first if you'd like to keep it.",
-		position = 1220
+			"If you've leaked this name or would like to change it, you can do so by right-clicking the Total Stats panel above your fight history.",
+		position = 1420,
+		section = pvpHubSection
 	)
 	default boolean hideRsnOnPvpHub()
 	{
@@ -206,7 +231,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "pvpHubAnonymousId",
 		name = "PvP-Hub Anonymous ID",
 		description = "Hidden local random ID used to derive your PvP-Hub hidden name.",
-		position = 1230,
+		position = 1430,
 		hidden = true
 	)
 	default String pvpHubAnonymousId()
@@ -221,7 +246,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Show Fight Overlay",
 		description = "Display an overlay of statistics while fighting.",
 		position = 2000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showFightOverlay()
 	{
@@ -233,7 +258,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Title",
 		description = "The overlay will have a title to display that it is PvP Performance.",
 		position = 4000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayTitle()
 	{
@@ -245,7 +270,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Names",
 		description = "The overlay will display names.<br>Max. of 5 lines on the overlay",
 		position = 5000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayNames()
 	{
@@ -257,7 +282,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Off-Pray",
 		description = "The overlay will display off-pray stats as a fraction & percentage.<br>Max. of 5 lines on the overlay",
 		position = 6000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayOffPray()
 	{
@@ -269,7 +294,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Expected Dmg", // Note: Used to be called Deserved Damage.
 		description = "The overlay will display expected damage & difference.<br>Max. of 5 lines on the overlay",
 		position = 7000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayExpectedDmg()
 	{
@@ -281,7 +306,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Dmg Dealt",
 		description = "The overlay will display damage dealt.<br>Max. of 5 lines on the overlay",
 		position = 8000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayDmgDealt()
 	{
@@ -293,7 +318,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Magic Hits",
 		description = "The overlay will display successful magic hits & expected magic hits.<br>Max. of 5 lines on the overlay",
 		position = 9000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayMagicHits()
 	{
@@ -305,7 +330,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Offensive Pray",
 		description = "The overlay will display offensive pray stats.<br>Max. of 5 lines on the overlay",
 		position = 10000,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayOffensivePray()
 	{
@@ -317,7 +342,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show HP Healed",
 		description = "The overlay will display hitpoints healed.<br>Max. of 5 lines on the overlay",
 		position = 10500,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayHpHealed()
 	{
@@ -329,7 +354,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Hits on Robes",
 		description = "The overlay will display hits on robes ratio (melee & ranged attacks).<br>Max. of 5 lines on the overlay",
 		position = 10700,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayRobeHits()
 	{
@@ -341,7 +366,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Total KO Chance",
 		description = "The overlay will display total KO chances and sum percentage.<br>Max. of 5 lines on the overlay",
 		position = 10800,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayTotalKoChance()
 	{
@@ -353,7 +378,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Overlay: Show Last KO Chance",
 		description = "The overlay will display the last KO chance percentage.<br>Max. of 5 lines on the overlay",
 		position = 10900,
-		section = overlay
+		section = overlaySection
 	)
 	default boolean showOverlayLastKoChance()
 	{
@@ -365,7 +390,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 			name = "Overlay: Show Ghost Barrage",
 			description = "(Advanced): The overlay will display ghost barrage stats.<br>Max. of 5 lines on the overlay",
 			position = 10950,
-			section = overlay
+			section = overlaySection
 	)
 	default boolean showOverlayGhostBarrage()
 	{
@@ -379,7 +404,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Ring Used",
 		description = "Rings used for the expected damage calculations outside of LMS.",
 		position = 11000,
-		section = gearAmmo
+		section = gearAmmoSection
 	)
 	default RingData ringChoice()
 	{
@@ -392,7 +417,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Bolts used for rune crossbow's expected damage calculation." +
 			"<br>LMS fights always use diamond (e). Dragonfire protection not accounted for.",
 		position = 12000,
-		section = gearAmmo
+		section = gearAmmoSection
 	)
 	default RangeAmmoData.BoltAmmo boltChoice()
 	{
@@ -405,7 +430,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Bolts used for stronger crossbow's expected damage calculation. (e.g DCB, ACB, ZCB, DHCB)" +
 			"<br>LMS fights always use opal dragon bolts(e).",
 		position = 13000,
-		section = gearAmmo
+		section = gearAmmoSection
 	)
 	default RangeAmmoData.StrongBoltAmmo strongBoltChoice()
 	{
@@ -417,7 +442,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Blowpipe Ammo",
 		description = "Darts used for blowpipe expected damage calculation.",
 		position = 14000,
-		section = gearAmmo
+		section = gearAmmoSection
 	)
 	default RangeAmmoData.DartAmmo bpDartChoice()
 	{
@@ -435,7 +460,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Attack Level",
 		description = "Attack level used for the expected damage calculations outside of LMS (includes potion boost).",
 		position = 16000,
-		section = levels
+		section = levelsSection
 	)
 	default int attackLevel()
 	{
@@ -451,7 +476,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Strength Level",
 		description = "Strength level used for the expected damage calculations outside of LMS (includes potion boost).",
 		position = 17000,
-		section = levels
+		section = levelsSection
 	)
 	default int strengthLevel()
 	{
@@ -467,7 +492,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Defence Level",
 		description = "Defence level used for the expected damage calculations outside of LMS (includes potion boost).",
 		position = 18000,
-		section = levels
+		section = levelsSection
 	)
 	default int defenceLevel()
 	{
@@ -483,7 +508,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Ranged Level",
 		description = "Ranged level used for the expected damage calculations outside of LMS (includes potion boost).",
 		position = 19000,
-		section = levels
+		section = levelsSection
 	)
 	default int rangedLevel()
 	{
@@ -499,7 +524,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Magic Level",
 		description = "Magic level used for the expected damage calculations outside of LMS (includes potion boost).",
 		position = 20000,
-		section = levels
+		section = levelsSection
 	)
 	default int magicLevel()
 	{
@@ -515,7 +540,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Opponent HP Level",
 		description = "Assumed Hitpoints level for opponents when calculating KO chance.",
 		position = 20100, // Place it after other levels
-		section = levels
+		section = levelsSection
 	)
 	default int opponentHitpointsLevel()
 	{
@@ -565,17 +590,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default boolean exactNameFilter()
 	{
 		return false;
-	}
-
-	@ConfigItem(
-		keyName = "showWorldInSummary",
-		name = "Show World in Summary",
-		description = "Display the world flag between names in the summary panel.",
-		position = 22500
-	)
-	default boolean showWorldInSummary()
-	{
-		return true;
 	}
 
 	@ConfigItem(
@@ -629,8 +643,9 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return false;
 	}
 
-	// throw any updateMsgShown keys into this as we change it.
+	// throw any updateMsgShown keys into this as we change it. Or any other config we won't be using anymore.
 	public static final String[] UPDATE_MSG_KEY_GRAVEYARD = {
+		"showWorldInSummary",
 		"updateMsgShown1_7_7",
 		"updateMsgShown1_7_6",
 		"updateMsgShown1_7_4",
