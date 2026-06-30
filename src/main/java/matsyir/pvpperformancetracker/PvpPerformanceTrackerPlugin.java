@@ -286,7 +286,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// prepare default N/A or None symbol for eventual use.
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
 
-		FightPerformancePanel.loadBackgroundImages();
 		TotalStatsPanel.loadBackgroundImages();
 		
 		// Explicitly rebuild panel after all setup and import.

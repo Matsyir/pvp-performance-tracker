@@ -225,20 +225,28 @@ public enum AnimationData
 		return DATA.get(animationId);
 	}
 
-	public static boolean isStandardSpellbookSpell(AnimationData animationData)
+	public boolean isStandardSpellbookSpell()
 	{
-		return (animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
-			animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST ||
-			animationData == MAGIC_STANDARD_WAVE_STAFF ||
-			animationData == MAGIC_STANDARD_SURGE_STAFF);
+		return (this == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
+			this == MAGIC_STANDARD_STRIKE_BOLT_BLAST ||
+			this == MAGIC_STANDARD_WAVE_STAFF ||
+			this == MAGIC_STANDARD_SURGE_STAFF);
 	}
 
-	public static boolean isFireSpell(AnimationData animationData)
+	public boolean isFireSpell()
 	{
-		return (animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
-			animationData == MAGIC_STANDARD_STRIKE_BOLT_BLAST ||
-			animationData == MAGIC_STANDARD_WAVE_STAFF ||
-			animationData == MAGIC_STANDARD_SURGE_STAFF);
+		return (this == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
+			this == MAGIC_STANDARD_STRIKE_BOLT_BLAST ||
+			this == MAGIC_STANDARD_WAVE_STAFF ||
+			this == MAGIC_STANDARD_SURGE_STAFF);
+	}
+	public boolean isStaffBash()
+	{
+		return (this == MELEE_STAFF_CRUSH_2 ||
+			this == MELEE_STAFF_CRUSH_3 ||
+			this == MELEE_STAFF_SLASH ||
+			this == MELEE_STAFF_STAB ||
+			this == MELEE_AHRIMS_STAFF_CRUSH);
 	}
 
 	@Override

@@ -592,12 +592,12 @@ public class PvpDamageCalc
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		// provide dmg buff from smoke battlestaff if applicable
-		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
+		if (smokeBstaff && animationData.isStandardSpellbookSpell())
 		{
 			magicBonus *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
 		}
 		// provide dmg buff from tome of fire if applicable
-		if (tome && AnimationData.isFireSpell(animationData))
+		if (tome && animationData.isFireSpell())
 		{
 			magicBonus *= TOME_OF_FIRE_DMG_MODIFIER;
 		}
@@ -853,7 +853,7 @@ public class PvpDamageCalc
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
 		boolean volatileStaff = weapon == EquipmentData.VOLATILE_NIGHTMARE_STAFF;
 		// provide accuracy buff from smoke battlestaff or volatile staff spec if applicable
-		if (smokeBstaff && AnimationData.isStandardSpellbookSpell(animationData))
+		if (smokeBstaff && animationData.isStandardSpellbookSpell())
 		{
 			accuracy *= SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER;
 		}

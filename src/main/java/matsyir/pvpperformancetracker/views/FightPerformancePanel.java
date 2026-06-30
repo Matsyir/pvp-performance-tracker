@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -51,6 +52,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -58,6 +60,8 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 
+import matsyir.pvpperformancetracker.models.AnimationData;
+import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
@@ -76,36 +80,57 @@ public class FightPerformancePanel extends JPanel
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 
-	private static final Border defaultBorder;
-
 	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
 	private static ImageIcon deathIcon;
-	private static BufferedImage backgroundImage;
-	private static BufferedImage backgroundImageHovered;
 
-	public static void loadBackgroundImages()
-	{
-		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(),
-			"/panelBackgrounds/fightPerformancePanel_GB.png");
-		backgroundImageHovered = ImageUtil.loadImageResource(PLUGIN.getClass(),
-			"/panelBackgrounds/fightPerformancePanel_GB_Hovered.png");
-	}
-
-
-	// border size: 4px on each side. 4px left, 4px right, 4px top, 4px bottom (plus extra 4px bottom invisible offset)
+	private static final Border paddingBorder;
+	// border size: 0px left, 0px right, 5px top, 4px bottom (plus extra 4px bottom invisible offset)
 	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,
 	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
 	static
 	{
-		defaultBorder = BorderFactory.createCompoundBorder(
+		paddingBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 			BorderFactory.createEmptyBorder(5, 0, 4, 0));
 	}
 
+	@Getter
+	public enum BackgroundStyle
+	{
+		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Default"),
+		MAX_HIT_KO("Max Hit KO", Color.RED, "GB_Red"),
+		SPEC_KO("Spec KO", new Color(57, 125, 59), "GB_Green"),
+		SPEC_MAX_HIT_KO("Spec Max Hit Ko", Color.MAGENTA.darker(), "GB_Purple"),
+		PUNCH_KO("Punch KO", ColorScheme.BRAND_ORANGE, "GB_Default", false),
+		KICK_KO("Kick KO", ColorScheme.BRAND_ORANGE, "GB_Default", false),
+		STAFF_KO("Staff KO", ColorScheme.BRAND_ORANGE, "GB_Default", false);
+
+		final String name;
+		final Color highlightColor;
+		final BufferedImage bgImg;
+		final BufferedImage hoverBgImg;
+		final boolean enabled;
+
+		BackgroundStyle(String name, Color highlightColor, String fname)
+		{
+			this(name, highlightColor, fname, true);
+		}
+		BackgroundStyle(String name, Color highlightColor, String fname, boolean enabled)
+		{
+			this.name = name;
+			this.highlightColor = highlightColor;
+			this.bgImg = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png");
+			this.hoverBgImg = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + "_Hovered.png");
+			this.enabled = enabled;
+		}
+	}
+
 	private boolean hovered = false;
+	private BackgroundStyle bgStyle = BackgroundStyle.DEFAULT;
+	private final String bgStyleDisplayTooltipText;
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -182,14 +207,14 @@ public class FightPerformancePanel extends JPanel
 		setLayout(new BorderLayout(0, 0));
 
 
-		final String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
+		final String baseTooltipText = "<html>" + competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
 			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
 		final String worldDisplayTooltipText = (displayFight.getWorld() > 0 ?
 			" (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" :
 			"");
 		setToolTipText(baseTooltipText);
 
-		setBorder(defaultBorder);
+		setBorder(paddingBorder);
 
 		ArrayList<JPanel> panelLines = new ArrayList<>();
 
@@ -213,7 +238,7 @@ public class FightPerformancePanel extends JPanel
 				if (displayFight.getWorld() > 0)
 				{
 					int worldLocation = worldLocationSupplier.getAsInt();
-					setToolTipText(baseTooltipText + worldDisplayTooltipText);
+					setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
 					ImageIcon worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
 					boolean isDisplayingWorldLabel = CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL;
 
@@ -259,6 +284,8 @@ public class FightPerformancePanel extends JPanel
 		};
 		playerNamesLine.setBackground(null);
 		playerNamesLine.setBorder(PanelFactory.bottomLineBorder);
+		boolean competitorDied = competitor.isDead();
+		boolean opponentDied = opponent.isDead();
 
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
@@ -270,32 +297,18 @@ public class FightPerformancePanel extends JPanel
 		opponentStatsName.setHorizontalAlignment(SwingConstants.CENTER);
 
 		// player name LEFT: player name
-		if (competitor.isDead())
+		if (competitorDied)
 		{
 			playerStatsName.setIcon(deathIcon);
-
-			if (!opponent.isDead())
-			{
-				// opponent survived here & killed opponent.
-				// Possible place to put color/styling, but we'll just leave white name for now.
-				//opponentStatsName.setForeground(Color.YELLOW);//new Color(239, 191, 4));
-			}
 		}
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, playerStatsName.getPreferredSize().height));
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
-		if (opponent.isDead())
+		if (opponentDied)
 		{
 			opponentStatsName.setIcon(deathIcon);
-
-			if (!competitor.isDead())
-			{
-				// competitor survived here & killed opponent.
-				// Possible place to put color/styling, but we'll just leave white name for now.
-				//playerStatsName.setForeground(Color.YELLOW);//new Color(239, 191, 4));
-			}
 		}
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, opponentStatsName.getPreferredSize().height));
@@ -414,6 +427,82 @@ public class FightPerformancePanel extends JPanel
 		add(fightPanel, BorderLayout.NORTH);
 
 		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+
+		FightLogEntry lastCmpLog = null;
+		try
+		{
+			ArrayList<FightLogEntry> competitorLogs = (ArrayList<FightLogEntry>) competitor.getFightLogEntries().stream().filter((e) -> e.attackerName.equals(competitor.getName())).collect(Collectors.toList());;
+			lastCmpLog = competitorLogs.get(competitorLogs.size() - 1);
+		}
+		catch (Exception e) {}
+		FightLogEntry lastOppLog = null;
+		try
+		{
+			ArrayList<FightLogEntry> oppLogs = (ArrayList<FightLogEntry>) opponent.getFightLogEntries().stream().filter((e) -> e.attackerName.equals(opponent.getName())).collect(Collectors.toList());
+			lastOppLog = oppLogs.get(oppLogs.size() - 1);
+		}
+		catch (Exception e) {}
+
+		boolean validCmpLog = (lastCmpLog != null && lastCmpLog.getAnimationData() != null);
+		boolean validOppLog = (lastOppLog != null && lastOppLog.getAnimationData() != null);
+		if (!validCmpLog && !validOppLog)
+		{
+			bgStyleDisplayTooltipText = "";
+			return;
+		}
+
+		boolean isCmpMaxHitKo = validCmpLog && opponentDied && lastCmpLog.getMaxHit() == lastCmpLog.getActualDamageSum();;
+		boolean isCmpSpecKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData().isSpecial;
+		boolean isCmpSpecMaxHitKo = isCmpSpecKo && isCmpMaxHitKo;
+
+		boolean isCmpPunchKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_PUNCH;
+		boolean isCmpKickKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_KICK;
+		boolean isCmpStaffKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData().isStaffBash();
+
+		boolean isOppMaxHitKo = validOppLog && competitorDied && lastOppLog.getMaxHit() == lastOppLog.getActualDamageSum();
+		boolean isOppSpecKo = validOppLog && competitorDied && lastOppLog.getAnimationData().isSpecial;
+		boolean isOppSpecMaxHitKo = isOppSpecKo && isOppMaxHitKo;
+
+		boolean isOppPunchKo = validOppLog && competitorDied && lastOppLog.getAnimationData() == AnimationData.MELEE_PUNCH;
+		boolean isOppKickKo = validOppLog && competitorDied && lastOppLog.getAnimationData() == AnimationData.MELEE_KICK;
+		boolean isOppStaffKo = validOppLog && competitorDied && lastOppLog.getAnimationData().isStaffBash();
+
+		if (isCmpSpecMaxHitKo || isOppSpecMaxHitKo)
+		{
+			this.bgStyle = BackgroundStyle.SPEC_MAX_HIT_KO;
+		}
+		else if (isCmpSpecKo || isOppSpecKo)
+		{
+			this.bgStyle = BackgroundStyle.SPEC_KO;
+		}
+		else if (isCmpPunchKo || isOppPunchKo)
+		{
+			this.bgStyle = BackgroundStyle.PUNCH_KO;
+		}
+		else if (isCmpKickKo || isOppKickKo)
+		{
+			this.bgStyle = BackgroundStyle.KICK_KO;
+		}
+		else if (isCmpStaffKo || isOppStaffKo)
+		{
+			this.bgStyle = BackgroundStyle.STAFF_KO;
+		}
+		else if (isCmpMaxHitKo || isOppMaxHitKo)
+		{
+			this.bgStyle = BackgroundStyle.MAX_HIT_KO;
+		}
+
+		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
+		{
+			bgStyleDisplayTooltipText = "<br><br>" +
+				"<strong>Border Style: </strong><u>" + bgStyle.name + "</u>";
+			setToolTipText(baseTooltipText + bgStyleDisplayTooltipText);
+		}
+		else
+		{
+			bgStyleDisplayTooltipText = "";
+		}
+
 	}
 
 	private void setFullBackgroundColor(Color color)
@@ -465,13 +554,13 @@ public class FightPerformancePanel extends JPanel
 	protected void paintComponent(Graphics g)
 	{
 		// Draw bgImage scaled to panel size (ideally should be the same anyway)
-		if (hovered && backgroundImageHovered != null)
+		if (hovered && bgStyle.hoverBgImg != null)
 		{
-			g.drawImage(backgroundImageHovered, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
+			g.drawImage(bgStyle.hoverBgImg, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}
-		else if (backgroundImage != null)
+		else if (bgStyle.bgImg != null)
 		{
-			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
+			g.drawImage(bgStyle.bgImg, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}
 
 		super.paintComponent(g);
