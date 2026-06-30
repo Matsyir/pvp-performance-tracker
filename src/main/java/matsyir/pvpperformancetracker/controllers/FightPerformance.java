@@ -690,7 +690,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	/**
 	 * Generates the fight ID if it hasn't been generated yet and the upload config is enabled.
-	 * Uses both player names, world, and the current game tick as seed material.
+	 * Uses both player names, world, and the first recorded fight-log timestamp as seed material.
 	 */
 	private void ensureFightIdGenerated()
 	{
@@ -701,18 +701,27 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		if (competitor.getName() != null && opponent.getName() != null)
 		{
-			if (initialTime == 0)
-			{
-				initialTime = lastFightTime;
-			}
 			fightId = FightIdGenerator.generateFightId(
 				competitor.getName(),
 				opponent.getName(),
 				world,
-				initialTime
+				getFightIdAnchorTime()
 			);
 			fightIdGenerated = true;
 		}
+	}
+
+	long getFightIdAnchorTime()
+	{
+		return getFightIdAnchorTime(getAllFightLogEntries(), lastFightTime);
+	}
+
+	static long getFightIdAnchorTime(ArrayList<FightLogEntry> entries, long fallbackTime)
+	{
+		return entries.stream()
+			.mapToLong(FightLogEntry::getTime)
+			.min()
+			.orElse(fallbackTime);
 	}
 
     public void updateKoChanceStats(FightLogEntry entry)

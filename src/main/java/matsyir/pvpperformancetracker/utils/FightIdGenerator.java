@@ -36,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
  * The ID is derived from:
  * - Both player names (sorted alphabetically so order doesn't matter)
  * - The world number
- * - The game tick of the first attack (server-synchronized)
+ * - A shared fight timestamp anchor, bucketed to absorb small clock differences
  */
 public class FightIdGenerator
 {
@@ -48,7 +48,7 @@ public class FightIdGenerator
 	 * Both clients will produce the same ID because all inputs are derived from
 	 * shared game state and NTP-synchronized system clocks.
 	 *
-	 * The epoch time is rounded to the nearest 10-second window to absorb any
+	 * The epoch time is bucketed into a 10-second window to absorb small
 	 * minor clock differences between clients (typically < 100ms with NTP).
 	 *
 	 * @param name1      one player's RSN
@@ -70,7 +70,7 @@ public class FightIdGenerator
 			n2 = temp;
 		}
 
-		// Round to 10-second granularity so both clients land in the same bucket
+		// Bucket to 10-second granularity so both clients land in the same bucket
 		// even with minor clock differences (NTP typically syncs within <100ms).
 		long roundedEpoch = epochMillis / 10000;
 		String seed = n1 + ":" + n2 + ":" + world + ":" + roundedEpoch;
