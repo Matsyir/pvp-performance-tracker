@@ -31,17 +31,12 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
 public final class PanelFactory
 {
-	public static final Color SUCCESS_COLOR = TrackedStatistic.SUCCESS_COLOR;
-	public static final Color UNSUCCESSFUL_OR_NEUTRAL_COLOR = TrackedStatistic.UNSUCCESSFUL_COLOR;
-	public static final Color SECONDARY_SUCCESS_COLOR = new Color(40, 52, 78, 92).brighter();
-	public static final Color SECONDARY_UNSUCCESSFUL_COLOR = new Color(89, 52, 59, 92).brighter();
-	public static final Color SECONDARY_NEUTRAL_COLOR = new Color(177, 177, 35, 92).brighter();
-
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
@@ -73,11 +68,13 @@ public final class PanelFactory
 		leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);
 		leftLabel.setForeground(leftColor);
 		leftLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		leftLabel.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, leftLabel.getPreferredSize().height));
 
 		ForwardingLabel rightLabel = new ForwardingLabel(rightText);
 		rightLabel.setToolTipText("<html>" + rightTooltip + tooltipSuffix);
 		rightLabel.setForeground(rightColor);
 		rightLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		rightLabel.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, leftLabel.getPreferredSize().height));
 
 		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
 		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
@@ -87,7 +84,7 @@ public final class PanelFactory
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridy = 0;
 		gbc.weightx = 1;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.fill = GridBagConstraints.NONE;
 
 		// left
 		gbc.gridx = 0;

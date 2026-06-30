@@ -75,7 +75,7 @@ public enum TrackedStatistic
 			"<br>Weird and for advanced users only.");
 
 	public static final Color SUCCESS_COLOR = Color.GREEN;
-	public static final Color UNSUCCESSFUL_COLOR = Color.RED;
+	public static final Color UNSUCCESSFUL_COLOR = new Color(255, 32, 0); // red-orange. Similar to fight pits skull but a bit more red.
 	public static final Color NEUTRAL_COLOR = Color.WHITE;
 
 	private static final String NO_DATA_SHORT = "-";

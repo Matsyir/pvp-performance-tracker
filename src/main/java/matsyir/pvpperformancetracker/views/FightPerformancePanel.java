@@ -42,13 +42,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
@@ -218,8 +218,11 @@ public class FightPerformancePanel extends JPanel
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
 		playerStatsName.setForeground(Color.WHITE);
+		playerStatsName.setHorizontalAlignment(SwingConstants.CENTER);
+
 		JShadowedLabel opponentStatsName = new JShadowedLabel();
 		opponentStatsName.setForeground(Color.WHITE);
+		opponentStatsName.setHorizontalAlignment(SwingConstants.CENTER);
 
 		// player name LEFT: player name
 		if (competitor.isDead())
@@ -232,6 +235,7 @@ public class FightPerformancePanel extends JPanel
 			}
 		}
 		playerStatsName.setText(competitor.getName());
+		playerStatsName.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, playerStatsName.getPreferredSize().height));
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
 		// player name RIGHT: opponent name
@@ -245,6 +249,7 @@ public class FightPerformancePanel extends JPanel
 			}
 		}
 		opponentStatsName.setText(opponent.getName());
+		opponentStatsName.setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2, opponentStatsName.getPreferredSize().height));
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
 
 		playerNamesLine.setToolTipText(displayFight.getWorld() > 0 ? baseTooltipText + " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" : baseTooltipText);
