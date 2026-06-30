@@ -76,7 +76,7 @@ public class FightPerformancePanel extends JPanel
 
 	private static final Border normalBorder;
 
-	private static final Color BG_COLOR = new Color(ColorScheme.DARKER_GRAY_COLOR.getRed(), ColorScheme.DARKER_GRAY_COLOR.getGreen(), ColorScheme.DARKER_GRAY_COLOR.getBlue(), 0);
+	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
@@ -86,9 +86,9 @@ public class FightPerformancePanel extends JPanel
 
 	public static void loadBackgroundImages()
 	{
-		backgroundImage = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
+		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(),
 			"/panelBackgrounds/fightPerformancePanel_GB.png");
-		backgroundImageHovered = ImageUtil.getResourceStreamFromClass(PLUGIN.getClass(),
+		backgroundImageHovered = ImageUtil.loadImageResource(PLUGIN.getClass(),
 			"/panelBackgrounds/fightPerformancePanel_GB_Hovered.png");
 	}
 
@@ -366,7 +366,7 @@ public class FightPerformancePanel extends JPanel
 
 		add(fightPanel, BorderLayout.NORTH);
 
-		//setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 	}
 
 	private void setFullBackgroundColor(Color color)

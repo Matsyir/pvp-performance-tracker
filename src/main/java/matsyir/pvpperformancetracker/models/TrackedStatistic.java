@@ -269,18 +269,18 @@ public enum TrackedStatistic
 				double oppRatio = oppTotal > 0 ? (double) oppHits / oppTotal : 0.0;
 
 				return PanelFactory.createStatsLine(ROBE_HITS.acronym, ROBE_HITS.acronymTooltip
-					, (compHits + " (" + nf1.format(compRatio) + ")")
+					, (compHits + " (" + nfP.format(compRatio) + ")")
 					, (fight.getCompetitor().getName() + " was hit with range/melee while wearing robes: " +
-						compHits + "/" + compTotal + " (" + nf1.format(compRatio) + ")<br>" +
+						compHits + "/" + compTotal + " (" + nfP1.format(compRatio) + ")<br>" +
 						"In other words, of his opponent's " + compTotal + " range/melee attacks, " +
 						fight.getCompetitor().getName() + " tanked " + compHits + " of them with robes.")
 					, (compRatio < ((double) (fight.getOpponent().getRobeHits()) /
 						Math.max(1, fight.getCompetitor().getAttackCount() - fight.getCompetitor().getTotalMagicAttackCount())) ?
 						SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 
-					, (oppHits + " (" + nf1.format(oppRatio) + ")")
+					, (oppHits + " (" + nfP.format(oppRatio) + ")")
 					, (fight.getOpponent().getName() + " was hit with range/melee while wearing robes: " +
-						oppHits + "/" + oppTotal + " (" + nf1.format(oppRatio) + ")<br>" +
+						oppHits + "/" + oppTotal + " (" + nfP1.format(oppRatio) + ")<br>" +
 						"In other words, of his opponent's " + oppTotal + " range/melee attacks, " +
 						fight.getOpponent().getName() + " tanked " + oppHits + " of them with robes.")
 					, (oppRatio < compRatio ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
@@ -337,16 +337,16 @@ public enum TrackedStatistic
 				Double competitorOverallKoProb = (competitorKoChances > 0) ? (1.0 - competitorSurvivalProb) : 0;
 				Double opponentOverallKoProb = (opponentKoChances > 0) ? (1.0 - opponentSurvivalProb) : 0;
 
-				String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nf1.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
-				String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nf1.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
+				String compTotalKoChanceText = competitorKoChances + (competitorOverallKoProb > 0 ? " (" + nfP.format(competitorOverallKoProb) + ")" : ""); // Use overall prob
+				String oppTotalKoChanceText = opponentKoChances + (opponentOverallKoProb > 0 ? " (" + nfP.format(opponentOverallKoProb) + ")" : ""); // Use overall prob
 
 				return PanelFactory.createStatsLine(KO_CHANCES.acronym, KO_CHANCES.acronymTooltip
 					, compTotalKoChanceText
-					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nf1.format(competitorOverallKoProb)
+					, fight.competitor.getName() + " got " + competitorKoChances + " KO attempts with an overall KO probability of " + nfP1.format(competitorOverallKoProb)
 					, (competitorOverallKoProb > opponentOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 
 					, oppTotalKoChanceText
-					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nf1.format(opponentOverallKoProb)
+					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
 					, (opponentOverallKoProb > competitorOverallKoProb ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR)
 				);
 			},
@@ -354,11 +354,11 @@ public enum TrackedStatistic
 				NO_DATA_SHORT, UNSUCCESSFUL_COLOR, NO_DATA_SHORT, UNSUCCESSFUL_COLOR),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitorKoChanceCount() + (fight.getCompetitorKoChanceCount() > 0
-					? " (" + nf1.format(fight.getCompetitorTotalKoChance()) + ")"
+					? " (" + nfP.format(fight.getCompetitorTotalKoChance()) + ")"
 					: ""),
 				UNSUCCESSFUL_COLOR,
 				fight.getOpponentKoChanceCount() + (fight.getOpponentKoChanceCount() > 0
-					? " (" + nf1.format(fight.getOpponentTotalKoChance()) + ")"
+					? " (" + nfP.format(fight.getOpponentTotalKoChance()) + ")"
 					: ""),
 				UNSUCCESSFUL_COLOR
 			)

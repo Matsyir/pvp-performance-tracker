@@ -27,13 +27,11 @@ package matsyir.pvpperformancetracker;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.util.HashMap;
 import javax.inject.Inject;
 
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
-import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.nfP1;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
@@ -111,7 +109,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		// Format Last KO Chance Line
 		if (fight.getCompetitorLastKoChance() != null)
 		{
-			ovlLastKoChanceLine.updateLeftCellText(nf1.format(fight.getCompetitorLastKoChance()));
+			ovlLastKoChanceLine.updateLeftCellText(nfP1.format(fight.getCompetitorLastKoChance()));
 		}
 		else
 		{
@@ -119,7 +117,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 		if (fight.getOpponentLastKoChance() != null)
 		{
-			ovlLastKoChanceLine.updateRightCellText(nf1.format(fight.getOpponentLastKoChance()));
+			ovlLastKoChanceLine.updateRightCellText(nfP1.format(fight.getOpponentLastKoChance()));
 		}
 		else
 		{

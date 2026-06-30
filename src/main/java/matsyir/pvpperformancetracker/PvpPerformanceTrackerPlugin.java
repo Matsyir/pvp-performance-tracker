@@ -76,6 +76,7 @@ import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
+import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -255,7 +256,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
-		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skull_red.png");
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/skull_red.png");
 		PLUGIN_ICON = new ImageIcon(icon).getImage();
 		navButton = NavigationButton.builder()
 			.tooltip("PvP Fight History")
@@ -284,6 +285,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
 
 		FightPerformancePanel.loadBackgroundImages();
+		TotalStatsPanel.loadBackgroundImages();
 		
 		// Explicitly rebuild panel after all setup and import.
         SwingUtilities.invokeLater(() -> {

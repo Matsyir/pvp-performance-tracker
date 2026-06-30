@@ -30,9 +30,9 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridLayout;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -43,7 +43,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
@@ -53,9 +52,10 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
+import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
@@ -63,40 +63,13 @@ import net.runelite.client.util.LinkBrowser;
 public class TotalStatsPanel extends JPanel
 {
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
-	// number format for 0 decimal digit (mostly for commas in large numbers)
-	private static final NumberFormat nf = NumberFormat.getInstance();
+	private static BufferedImage backgroundImage;
+	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
 
-	static // initialize number format
+	public static void loadBackgroundImages()
 	{
-		nf.setMaximumFractionDigits(1);
-		nf.setRoundingMode(RoundingMode.HALF_UP);
-	}
-
-	// number format for 1 decimal digit
-	private static final NumberFormat nf1 = NumberFormat.getInstance();
-
-	static // initialize number format
-	{
-		nf1.setMaximumFractionDigits(1);
-		nf1.setRoundingMode(RoundingMode.HALF_UP);
-	}
-
-	// number format for 2 decimal digits
-	private static final NumberFormat nf2 = NumberFormat.getInstance();
-
-	static // initialize number format
-	{
-		nf2.setMaximumFractionDigits(2);
-		nf2.setRoundingMode(RoundingMode.HALF_UP);
-	}
-
-	// number format for percentages
-	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance();
-
-	static
-	{
-		nfPercent.setMaximumFractionDigits(1);
-		nfPercent.setRoundingMode(RoundingMode.HALF_UP);
+		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(),
+			"/panelBackgrounds/totalStatsPanel.png");
 	}
 
 	// excluding title row
@@ -195,7 +168,7 @@ public class TotalStatsPanel extends JPanel
 		totalStats = new Fighter("Player");
 
 		setLayout(new GridLayout(CONFIG.settingsConfigured() ? LAYOUT_ROWS_WITHOUT_WARNING : LAYOUT_ROWS_WITH_WARNING, 1));
-		setBorder(new EmptyBorder(4, 6, 4, 6));
+		setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// Create right click popup menu/context menu with various general actions
@@ -275,7 +248,6 @@ public class TotalStatsPanel extends JPanel
 		titleLabel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.BRAND_ORANGE));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
-		titleLabel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		add(titleLabel);
 
 		// if settings haven't been configured, add a red label to display that they should be.
@@ -288,7 +260,6 @@ public class TotalStatsPanel extends JPanel
 		// SECOND LINE
 		// panel to show total kills/deaths
 		JPanel killDeathPanel = new JPanel(new BorderLayout());
-		killDeathPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label to show kills
 		killsLabel = new JShadowedLabel();
@@ -308,7 +279,6 @@ public class TotalStatsPanel extends JPanel
 		// THIRD LINE
 		// panel to show the total off-pray stats (successful hits/total attacks)
 		JPanel offPrayStatsPanel = new JPanel(new BorderLayout());
-		offPrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's off-pray stats
 		JShadowedLabel leftLabel = new JShadowedLabel();
@@ -327,14 +297,12 @@ public class TotalStatsPanel extends JPanel
 		// FOURTH LINE
 		// panel to show the average expected damage stats (average damage & average diff)
 		JPanel expectedDmgStatsPanel = new JPanel(new BorderLayout());
-		expectedDmgStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's expected dmg stats
 		JShadowedLabel expectedDmgStatsLeftLabel = new JShadowedLabel();
 		expectedDmgStatsLeftLabel.setText("Avg Expected Dmg:");
 		expectedDmgStatsLeftLabel.setForeground(Color.WHITE);
 
-		expectedDmgStatsPanel.add(expectedDmgStatsLeftLabel, BorderLayout.WEST);
 
 		// label to show expected dmg stats
 		expectedDmgStatsLabel = new JShadowedLabel();
@@ -346,7 +314,6 @@ public class TotalStatsPanel extends JPanel
 		// FIFTH LINE
 		// panel to show the average damage dealt stats (average damage & average diff)
 		JPanel dmgDealtStatsPanel = new JPanel(new BorderLayout());
-		dmgDealtStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg dmg dealt
 		JShadowedLabel dmgDealtStatsLeftLabel = new JShadowedLabel();
@@ -365,7 +332,6 @@ public class TotalStatsPanel extends JPanel
 		// SIXTH LINE
 		// panel to show the total magic hit count and expected hit count
 		JPanel magicHitStatsPanel = new JPanel(new BorderLayout());
-		magicHitStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's magic hit count stats
 		JShadowedLabel magicHitStatsLeftLabel = new JShadowedLabel();
@@ -384,7 +350,6 @@ public class TotalStatsPanel extends JPanel
 		// SEVENTH LINE
 		// panel to show the offensive prayer success count
 		JPanel offensivePrayStatsPanel = new JPanel(new BorderLayout());
-		offensivePrayStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's offensive pray stats
 		JShadowedLabel offensivePrayStatsLeftLabel = new JShadowedLabel();
@@ -403,7 +368,6 @@ public class TotalStatsPanel extends JPanel
 		// EIGTH LINE
 		// panel to show the total hp healed
 		JPanel hpHealedPanel = new JPanel(new BorderLayout());
-		hpHealedPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg hp healed stats
 		JShadowedLabel hpHealedLeftLabel = new JShadowedLabel();
@@ -420,7 +384,6 @@ public class TotalStatsPanel extends JPanel
 
 		// TENTH LINE: Avg Hits on Robes
 		JPanel robeHitsStatsPanel = new JPanel(new BorderLayout());
-		robeHitsStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		JShadowedLabel robeHitsStatsLeftLabel = new JShadowedLabel("Avg Hits on Robes:");
 		robeHitsStatsLeftLabel.setForeground(Color.WHITE);
@@ -436,7 +399,6 @@ public class TotalStatsPanel extends JPanel
 		// TENTH LINE
 		// panel to show the avg KO chance stats
 		JPanel avgKoChanceStatsPanel = new JPanel(new BorderLayout());
-		avgKoChanceStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label
 		JShadowedLabel avgKoChanceStatsLeftLabel = new JShadowedLabel();
@@ -454,7 +416,6 @@ public class TotalStatsPanel extends JPanel
 
 		// panel to show the avg ghost barrage stats
 		JPanel ghostBarrageStatsPanel = new JPanel(new BorderLayout());
-		ghostBarrageStatsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		// left label with a label to say it's avg ghost barrage stats
 		JShadowedLabel ghostBarrageStatsLeftLabel = new JShadowedLabel();
@@ -473,7 +434,14 @@ public class TotalStatsPanel extends JPanel
 
 		setLabels(); // update labels for all lines
 
-		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
+		this.setBackground(BG_COLOR);
+		for (Component c : getComponents())
+		{
+			c.setBackground(BG_COLOR);
+		}
+
+		setPreferredSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH));
+		//setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH, 242));
 
 		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
 		// tried to fix this 1000 cleaner ways but i could only get it to work with this
@@ -600,9 +568,9 @@ public class TotalStatsPanel extends JPanel
 			avgKoChanceStatsLabel.setText(nf1.format(avgCompetitorKoChances) + " / " + nf1.format(avgOpponentKoChances));
 			applyTooltipRecursively(avgKoChanceStatsLabel.getParent(),
 				"<html>Average KO Chances per fight:<br>Player: "
-					+ nf1.format(avgCompetitorKoChances) + " (" + nfPercent.format(avgCompetitorKoProb)
+					+ nf1.format(avgCompetitorKoChances) + " (" + nfP1.format(avgCompetitorKoProb)
 					+ ")<br>Opponent: "
-					+ nf1.format(avgOpponentKoChances) + " (" + nfPercent.format(avgOpponentKoProb)
+					+ nf1.format(avgOpponentKoChances) + " (" + nfP1.format(avgOpponentKoProb)
 					+ ")<br>Total KO Chances: Player: "
 					+ nf.format(totalCompetitorKoChances) + ", Opponent: " + nf.format(totalOpponentKoChances)
 					+ TrackedStatistic.KO_CHANCES.getPrefixedAcronymTooltip()
@@ -1053,6 +1021,15 @@ public class TotalStatsPanel extends JPanel
 				applyTooltipRecursively(child, tooltipText);
 			}
 		}
+	}
+
+	@Override
+	protected void paintComponent(Graphics g)
+	{
+		// Draw bgImage scaled to panel size (ideally should be the same anyway)
+		g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+
+		super.paintComponent(g);
 	}
 
 }
