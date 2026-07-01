@@ -812,16 +812,19 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
 	{
-		return !filter.isEmpty()
-			&& (
-				(CONFIG.exactNameFilter() ?
-					(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
-					: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
-				)
+		if (filter == null || filter.isEmpty())
+		{
+			return true;
+		}
+
+		return (CONFIG.exactNameFilter() ?
+			(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
+			: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
+		)
 			|| (
 				bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
 				&& bgStyle.isEnabled()
 				&& bgStyle.getName().toLowerCase().replace(" ", "").startsWith(filter)
-			));
+			);
 	}
 }
