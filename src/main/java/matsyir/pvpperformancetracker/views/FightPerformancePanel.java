@@ -27,6 +27,7 @@ package matsyir.pvpperformancetracker.views;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -45,6 +46,7 @@ import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -79,8 +81,10 @@ public class FightPerformancePanel extends JPanel
 	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
+	private static final int DEATH_ICON_SIDE_SPACING_PX = 12;
 
-	private static ImageIcon deathIcon;
+	// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
+	public static final ImageIcon deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
 
 	private static final Border paddingBorder;
 	// border size: 0px left, 0px right, 5px top, 4px bottom (plus extra 4px bottom invisible offset)
@@ -203,15 +207,12 @@ public class FightPerformancePanel extends JPanel
 	{
 		boolean pvpHubSynced = fight.hasPvpHubSyncedFight();
 		FightPerformance displayFight = fight.getPvpHubDisplayFight();
-		if (deathIcon == null)
-		{
-			// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
-			deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
-		}
 
 		// save Fighters temporarily for more direct access
 		Fighter competitor = displayFight.getCompetitor();
 		Fighter opponent = displayFight.getOpponent();
+		boolean competitorDied = competitor.isDead();
+		boolean opponentDied = opponent.isDead();
 
 		setLayout(new BorderLayout(0, 0));
 
@@ -239,6 +240,21 @@ public class FightPerformancePanel extends JPanel
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
+				// paint red skull for those who died
+//				if (competitorDied && deathIcon != null)
+//				{
+//					int x = DEATH_ICON_SIDE_SPACING_PX;
+//					int y = (getHeight() - deathIcon.getIconHeight()) / 2;
+//					deathIcon.paintIcon(this, g, x, y);
+//				}
+//
+//				if (opponentDied && deathIcon != null)
+//				{
+//					int x = getWidth() - deathIcon.getIconWidth() - DEATH_ICON_SIDE_SPACING_PX;
+//					int y = (getHeight() - deathIcon.getIconHeight()) / 2;
+//					deathIcon.paintIcon(this, g, x, y);
+//				}
+
 				if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.HIDDEN)
 				{
 					return;
@@ -257,7 +273,7 @@ public class FightPerformancePanel extends JPanel
 					{
 						if (isDisplayingWorldLabel)
 						{
-							g2.setColor(ColorUtil.colorWithAlpha(Color.WHITE, 165));
+							g2.setColor(ColorUtil.colorWithAlpha(Color.WHITE, 1));
 						}
 						int x = (getWidth() - worldIcon.getIconWidth()) / 2;
 						int y = (getHeight() - worldIcon.getIconHeight()) / 2;
@@ -293,8 +309,6 @@ public class FightPerformancePanel extends JPanel
 		};
 		playerNamesLine.setBackground(null);
 		playerNamesLine.setBorder(PanelFactory.bottomLineBorder);
-		boolean competitorDied = competitor.isDead();
-		boolean opponentDied = opponent.isDead();
 
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
@@ -305,20 +319,12 @@ public class FightPerformancePanel extends JPanel
 		opponentStatsName.setForeground(Color.WHITE);
 		opponentStatsName.setHorizontalAlignment(SwingConstants.CENTER);
 
-		// player name LEFT: player name
-		if (competitorDied)
-		{
-			playerStatsName.setIcon(deathIcon);
-		}
+		// player names line LEFT: player name
 		playerStatsName.setText(competitor.getName());
 		playerStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, playerStatsName.getPreferredSize().height));
 		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
 
-		// player name RIGHT: opponent name
-		if (opponentDied)
-		{
-			opponentStatsName.setIcon(deathIcon);
-		}
+		// player names line RIGHT: opponent name
 		opponentStatsName.setText(opponent.getName());
 		opponentStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, opponentStatsName.getPreferredSize().height));
 		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
@@ -332,8 +338,29 @@ public class FightPerformancePanel extends JPanel
 			{
 				continue;
 			}
+			JPanel statLine = stat.getPanelComponent(displayFight, oppFight);
+//			if (stat == TrackedStatistic.DMG_DEALT)
+//			{
+//				try
+//				{
+//					if (competitorDied && deathIcon != null)
+//					{
+//						JLabel cmpLabel = (JLabel)statLine.getComponents()[0];
+//						cmpLabel.setIcon(deathIcon);
+//					}
+//					if (opponentDied && deathIcon != null)
+//					{
+//						JLabel oppLabel = (JLabel)statLine.getComponents()[1];
+//						oppLabel.setIcon(deathIcon);
+//					}
+//				}
+//				catch (Exception e)
+//				{
+//
+//				}
+//			}
 
-			panelLines.add(stat.getPanelComponent(displayFight, oppFight));
+			panelLines.add(statLine);
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log

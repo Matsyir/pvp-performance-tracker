@@ -26,6 +26,7 @@
 package matsyir.pvpperformancetracker.views;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -42,6 +43,7 @@ public final class PanelFactory
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
+	public static final int STATS_LINE_ICON_MIDDLE_SPACING_PX = 8;
 	public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
 	public static final int HORIZONTAL_PADDING = 6;
 
@@ -84,7 +86,36 @@ public final class PanelFactory
 										 String rightText, String rightTooltip, Color rightColor,
 										 boolean includeBottomBorder)
 	{
-		JPanel statsLine = new JPanel(new GridBagLayout());
+		return createStatsLine(miniCenterLabelText, miniCenterLabelTooltip,
+			leftText, leftTooltip, leftColor,
+			rightText, rightTooltip, rightColor, true, null, null);
+	}
+	public static JPanel createStatsLine(String miniCenterLabelText, String miniCenterLabelTooltip,
+										 String leftText, String leftTooltip, Color leftColor,
+										 String rightText, String rightTooltip, Color rightColor,
+										 boolean includeBottomBorder, ImageIcon leftIcon, ImageIcon rightIcon)
+	{
+		JPanel statsLine = new JPanel(new GridBagLayout())
+		{
+			@Override
+			protected void paintComponent(Graphics g)
+			{
+				super.paintComponent(g);
+				// paint red skull for those who died
+				if (leftIcon != null)
+				{
+					int x = (getWidth() / 2) - leftIcon.getIconWidth() - STATS_LINE_ICON_MIDDLE_SPACING_PX;
+					int y = (getHeight() - leftIcon.getIconHeight()) / 2 - 1;
+					leftIcon.paintIcon(this, g, x, y);
+				}
+				if (rightIcon != null)
+				{
+					int x = (getWidth() / 2) + STATS_LINE_ICON_MIDDLE_SPACING_PX;
+					int y = (getHeight() - rightIcon.getIconHeight()) / 2 - 1;
+					rightIcon.paintIcon(this, g, x, y);
+				}
+			}
+		};
 		statsLine.setBackground(null);
 		int preferredLabelWidth;
 		if (includeBottomBorder)
@@ -126,12 +157,12 @@ public final class PanelFactory
 		// left
 		gbc.gridx = 0;
 		gbc.anchor = GridBagConstraints.WEST;
-		statsLine.add(leftLabel, gbc.clone());
+		statsLine.add(leftLabel, gbc.clone()); // index 0: left label
 
 		// right
 		gbc.gridx = 1;
 		gbc.anchor = GridBagConstraints.EAST;
-		statsLine.add(rightLabel, gbc.clone());
+		statsLine.add(rightLabel, gbc.clone()); // index 1: right label
 
 		// index/miniCenterLabel centered across full row
 		GridBagConstraints gbcIndex = new GridBagConstraints();
@@ -140,7 +171,7 @@ public final class PanelFactory
 		gbcIndex.gridwidth = 3;
 		gbcIndex.anchor = GridBagConstraints.CENTER;
 		gbcIndex.fill = GridBagConstraints.NONE;
-		statsLine.add(indexLabel, gbcIndex);
+		statsLine.add(indexLabel, gbcIndex); // index 2: miniCenterLabel
 
 		return statsLine;
 	}

@@ -28,6 +28,7 @@ import lombok.Getter;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
+import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.PanelFactory;
 import matsyir.pvpperformancetracker.views.TableComponent;
 import net.runelite.client.ui.ColorScheme;
@@ -148,6 +149,9 @@ public enum TrackedStatistic
 				, fight.opponent.getName() + " dealt " + fight.opponent.getDamageDealt() +
 					" damage (" + fight.opponent.getDmgDealtString(fight.competitor, true) + " vs you)"
 				, fight.opponentExpectedDmgIsGreater() ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR
+				, true
+				, fight.competitor.isDead() ? FightPerformancePanel.deathIcon : null
+				, fight.opponent.isDead() ? FightPerformancePanel.deathIcon : null
 
 			),
 			() -> PanelFactory.createOverlayStatsLine(DMG_DEALT.acronym, 70, 30,
