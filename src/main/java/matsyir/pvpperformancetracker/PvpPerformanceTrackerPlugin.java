@@ -132,7 +132,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.0";
+	public static final String PLUGIN_VERSION = "1.8.1";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1229,13 +1229,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// primary update message
-		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.8.0</u></col> <col=dc8a00>Update:</col></shad> ";
+		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.8.1</u></col> <col=dc8a00>Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
-				"<col=842b00>Massive UI rework for the panel. Display world flag/location instead of number by default. " +
-				"New border styles for different KO types: Spec KO, Max hit KO, and Spec Max Hit KO for now. More to come.<br>" +
-				"PvP-Hub: Fixes for fight merges, automatically fetch merged info from the website and display it locally (shown on the Fight Log)")
+				"<col=842b00>Fixes in regards to the recent UI changes - fixed fights not appearing when having an empty filter. " +
+				"Added new filter types, and clarified filter functionality via tooltip. Adjust death icon (red skull) placement " +
+				"in order to minimize clipping with names & flags.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
