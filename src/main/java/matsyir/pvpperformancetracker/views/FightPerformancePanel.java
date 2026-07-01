@@ -240,20 +240,6 @@ public class FightPerformancePanel extends JPanel
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				// paint red skull for those who died
-//				if (competitorDied && deathIcon != null)
-//				{
-//					int x = DEATH_ICON_SIDE_SPACING_PX;
-//					int y = (getHeight() - deathIcon.getIconHeight()) / 2;
-//					deathIcon.paintIcon(this, g, x, y);
-//				}
-//
-//				if (opponentDied && deathIcon != null)
-//				{
-//					int x = getWidth() - deathIcon.getIconWidth() - DEATH_ICON_SIDE_SPACING_PX;
-//					int y = (getHeight() - deathIcon.getIconHeight()) / 2;
-//					deathIcon.paintIcon(this, g, x, y);
-//				}
 
 				if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.HIDDEN)
 				{
@@ -338,29 +324,8 @@ public class FightPerformancePanel extends JPanel
 			{
 				continue;
 			}
-			JPanel statLine = stat.getPanelComponent(displayFight, oppFight);
-//			if (stat == TrackedStatistic.DMG_DEALT)
-//			{
-//				try
-//				{
-//					if (competitorDied && deathIcon != null)
-//					{
-//						JLabel cmpLabel = (JLabel)statLine.getComponents()[0];
-//						cmpLabel.setIcon(deathIcon);
-//					}
-//					if (opponentDied && deathIcon != null)
-//					{
-//						JLabel oppLabel = (JLabel)statLine.getComponents()[1];
-//						oppLabel.setIcon(deathIcon);
-//					}
-//				}
-//				catch (Exception e)
-//				{
-//
-//				}
-//			}
 
-			panelLines.add(statLine);
+			panelLines.add(stat.getPanelComponent(displayFight, oppFight));
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log

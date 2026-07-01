@@ -101,7 +101,7 @@ public final class PanelFactory
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				// paint red skull for those who died
+				// paint icons centered (currently only used for red skull)
 				if (leftIcon != null)
 				{
 					int x = (getWidth() / 2) - leftIcon.getIconWidth() - STATS_LINE_ICON_MIDDLE_SPACING_PX;
