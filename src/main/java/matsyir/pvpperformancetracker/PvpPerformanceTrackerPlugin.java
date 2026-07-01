@@ -1946,7 +1946,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	public String updateNameFilterConfig(String newFilterName)
 	{
-		String sanitizedFilterName = Text.toJagexName(newFilterName.trim().toLowerCase());
+		String sanitizedFilterName = Text.sanitize(newFilterName.stripLeading().toLowerCase());
 
 		configManager.setConfiguration(CONFIG_KEY, "nameFilter", sanitizedFilterName);
 

@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -812,16 +811,65 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
 	{
-		return filter.isEmpty()
-			|| (
+		boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them
+			|| ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
 				(CONFIG.exactNameFilter() ?
 					(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
 					: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
 				)
-			|| (
+			|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
 				bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
 				&& bgStyle.isEnabled()
-				&& bgStyle.getName().toLowerCase().replace(" ", "").startsWith(filter)
-			));
+				&& (bgStyle.getName().toLowerCase().startsWith(filter) ||
+					bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
+			)
+		);
+
+		// if it's already relevant from one of the first 2 filter types, skip checking for the 3rd.
+		if (isRelevant)
+		{
+			return isRelevant;
+		}
+
+		// third filter type: Filter by >, >=, <, or <= total number of attacks from the client player / competitor
+		// e.g, >60 will show fights with over 60 attacks by the client player.
+		// <=10 will show fights with <= 10 total attacks by the client player.
+		try
+		{
+			boolean isGtFilter = filter.startsWith(">") && filter.length() >= 2;
+			boolean isGteFilter = filter.startsWith(">=") && filter.length() >= 3;
+			boolean isLtFilter = filter.startsWith("<") && filter.length() >= 2;
+			boolean isLteFilter = filter.startsWith("<=") && filter.length() >= 3;
+			if (!isGtFilter && !isGteFilter && !isLtFilter && !isLteFilter)
+			{
+				return false;
+			}
+
+			boolean is2charStart = isGteFilter || isLteFilter;
+			StringBuilder sb = new StringBuilder();
+
+			// remove gt/gte symbol, remove all chars that aren't digits, append to string
+			filter.substring(is2charStart ? 2 : 1)
+				.chars()
+				.mapToObj(c -> (char)c)
+				.filter(Character::isDigit)
+				.forEach(sb::append);
+
+			// parse int from string, only compare if it's >0
+			int filterNumber = Integer.parseInt(sb.toString());
+			if (filterNumber <= 0)
+			{
+				return false;
+			}
+
+			return (isGtFilter && competitor.getAttackCount() > filterNumber) ||
+				(isGteFilter && competitor.getAttackCount() >= filterNumber) ||
+				(isLtFilter && competitor.getAttackCount() < filterNumber) ||
+				(isLteFilter && competitor.getAttackCount() <= filterNumber);
+		}
+		catch(Exception e)
+		{
+			return false;
+		}
 	}
 }

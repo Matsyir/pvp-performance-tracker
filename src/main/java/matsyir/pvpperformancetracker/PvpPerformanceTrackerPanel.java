@@ -215,6 +215,13 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		// add filter line with text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
+		String filterTooltip = "<html>" +
+			"You can filter the displayed fights as well as the total stats by typing in this textbox.<br><br>" +
+			"There are currently 3 different ways you can filter fights:<br>" +
+			"<b>1)</b> Searching for RSN, either yours or the opponent's<br>" +
+			"<b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"<br>" +
+			"<b>3)</b> Searching for <i>&gt;X</i>, <i>&gt;=X</i>, <i>&lt;X</i>, or <i>&lt;=X</i> &nbsp;total attacks by the client player<br>" +
+			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, <i>\"&gt;60\"</i> will only display fights with over 60 total attacks made by yourself (the client player)";
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
 		// filter textfield
@@ -299,6 +306,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		});
 
 		filterLine.add(nameFilter, BorderLayout.CENTER);
+		filterLine.setToolTipText(filterTooltip);
+		nameFilter.setToolTipText(filterTooltip);
 		add(filterLine);
 
 		// wrap mainContent with scrollpane so it's scrollable
