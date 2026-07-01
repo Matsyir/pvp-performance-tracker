@@ -32,6 +32,7 @@ import javax.inject.Inject;
 
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nfP1;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
@@ -85,7 +86,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		}
 
 		// weird overlay-only statistic that isn't on the panel
-		ovlLastKoChanceLine = PanelFactory.createOverlayStatsLine("pKO", 50, 50, NO_DATA, Color.WHITE, NO_DATA, Color.WHITE);
+		ovlLastKoChanceLine = PanelFactory.createOverlayStatsLine("pKO", 50, 50, NO_DATA, PvpColorScheme.neutralColor(), NO_DATA, PvpColorScheme.neutralColor());
 
 		setLines();
 	}

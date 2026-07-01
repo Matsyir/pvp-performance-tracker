@@ -61,6 +61,7 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
@@ -257,10 +258,6 @@ public class FightPerformancePanel extends JPanel
 
 					if (worldIcon != null)
 					{
-						if (isDisplayingWorldLabel)
-						{
-							g2.setColor(ColorUtil.colorWithAlpha(Color.WHITE, 1));
-						}
 						int x = (getWidth() - worldIcon.getIconWidth()) / 2;
 						int y = (getHeight() - worldIcon.getIconHeight()) / 2;
 						worldIcon.paintIcon(this, g2, x, y);
@@ -298,11 +295,11 @@ public class FightPerformancePanel extends JPanel
 
 		// player names
 		JShadowedLabel playerStatsName = new JShadowedLabel();
-		playerStatsName.setForeground(Color.WHITE);
+		playerStatsName.setForeground(PvpColorScheme.neutralColor());
 		playerStatsName.setHorizontalAlignment(SwingConstants.CENTER);
 
 		JShadowedLabel opponentStatsName = new JShadowedLabel();
-		opponentStatsName.setForeground(Color.WHITE);
+		opponentStatsName.setForeground(PvpColorScheme.neutralColor());
 		opponentStatsName.setHorizontalAlignment(SwingConstants.CENTER);
 
 		// player names line LEFT: player name
@@ -402,7 +399,7 @@ public class FightPerformancePanel extends JPanel
 				PLUGIN.removeFight(fight);
 			}
 		});
-		removeFight.setForeground(Color.RED);
+		removeFight.setForeground(PvpColorScheme.RED_TEXT_ACTION);
 
 		popupMenu.add(displayFightLog);
 		if (pvpHubSynced)

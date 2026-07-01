@@ -24,9 +24,11 @@
  */
 package matsyir.pvpperformancetracker;
 
+import java.awt.Color;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -87,6 +89,13 @@ public interface PvpPerformanceTrackerConfig extends Config
 		closedByDefault = false
 	)
 	String pvpHubSection = "pvpHubSection";
+
+	@ConfigSection(name = "Visual Styling",
+		description = "Contains settings which affect how fights in the panel are displayed.",
+		position = 1799,
+		closedByDefault = false
+	)
+	String visualStylingSection = "visualStylingSection";
 
 	@ConfigSection(name = "Overlay (5 lines max)",
 		description = "Contains overlay settings (MAX of 5 lines allowed)",
@@ -240,6 +249,104 @@ public interface PvpPerformanceTrackerConfig extends Config
 	{
 		return "";
 	}
+
+	// ============================= Visual Styling ==============================
+	// TODO: Text alignment - sides vs centered - default to side
+	@ConfigItem(
+		keyName = "centerPanelLabels", // controls text centering for FightPerformancePanel.
+		name = "Center Fight Panel Text",
+		description = "Controls whether the labels on the Fight Performance Panel are centered.<br>" +
+			"Defaults to being aligned to sides - left for your stats, right for the opponent.",
+		position = 1810,
+		section = visualStylingSection
+	)
+	default boolean centerPanelLabels()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "successfulColor",
+		name = "Successful Color",
+		description = "\"Successful\" or \"positive\" color, used for most general statistics.",
+		position = 1820,
+		section = visualStylingSection
+	)
+	default Color successColor()
+	{
+		return PvpColorScheme.DEFAULT_SUCCESS;
+	}
+	@ConfigItem(
+		keyName = "unsuccessfulColor",
+		name = "Unsuccessful Color",
+		description = "\"Unsuccessful\" or \"negative\" color, used for most general statistics.",
+		position = 1824,
+		section = visualStylingSection
+	)
+	default Color unsuccessColor()
+	{
+		return PvpColorScheme.DEFAULT_UNSUCCESS;
+	}
+	@ConfigItem(
+		keyName = "neutralColor",
+		name = "Neutral Color",
+		description = "\"Neutral\", \"undecided\", or \"unknown\" color, used for most general statistics.",
+		position = 1828,
+		section = visualStylingSection
+	)
+	default Color neutralColor()
+	{
+		return PvpColorScheme.DEFAULT_NEUTRAL;
+	}
+
+
+	@ConfigItem(
+		keyName = "successfulDmgColor",
+		name = "Successful Dmg Color",
+		description = "\"Successful\" or \"positive\" color, used for damage-related statistics (eD, D).",
+		position = 1832,
+		section = visualStylingSection
+	)
+	default Color successDmgColor()
+	{
+		return PvpColorScheme.DEFAULT_DMG_SUCCESS;
+	}
+	@ConfigItem(
+		keyName = "unsuccessfulDmgColor",
+		name = "Unsuccessful Dmg Color",
+		description = "\"Unsuccessful\" or \"negative\" color, used for damage-related statistics (eD, D).",
+		position = 1836,
+		section = visualStylingSection
+	)
+	default Color unsuccessDmgColor()
+	{
+		return PvpColorScheme.DEFAULT_DMG_UNSUCCESS;
+	}
+	@ConfigItem(
+		keyName = "neutralDmgColor",
+		name = "Neutral Dmg Color",
+		description = "\"Neutral\", \"undecided\", or \"unknown\" color, used for damage-related statistics (eD, D).",
+		position = 1840,
+		section = visualStylingSection
+	)
+	default Color neutralDmgColor()
+	{
+		return PvpColorScheme.DEFAULT_DMG_NEUTRAL;
+	}
+
+	@ConfigItem(
+		keyName = "gbColor",
+		name = "GB Successful Color",
+		description = "\"Successful\" or \"positive\" color, used for ghost-barrage.<br>" +
+			"Otherwise uses unsuccessful dmg color & neutral dmg color.",
+		position = 1810,
+		section = visualStylingSection
+	)
+	default Color gbColor()
+	{
+		return PvpColorScheme.DEFAULT_GHOST_BARRAGE;
+	}
+
 
 	// ================================= Overlay =================================
 
