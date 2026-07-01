@@ -1,4 +1,4 @@
-# PvP Performance Tracker (v1.7.8)
+# PvP Performance Tracker (v1.8.0)
 [![Active Installs](http://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/installs/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub/Matsyir) [![Plugin Rank](http://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/rank/plugin/pvp-performance-tracker)](https://runelite.net/plugin-hub)
 
 [_View patch notes & version history_](https://github.com/Matsyir/pvp-performance-tracker/wiki#version-history--patch-notes)

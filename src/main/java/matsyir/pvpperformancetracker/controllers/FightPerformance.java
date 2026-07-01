@@ -26,8 +26,6 @@ package matsyir.pvpperformancetracker.controllers;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,6 +43,7 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
 import matsyir.pvpperformancetracker.utils.FightIdGenerator;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
+import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
@@ -738,5 +737,91 @@ public class FightPerformance implements Comparable<FightPerformance>
 			opponentSurvivalProb *= (1.0 - koChance);
 			opponentTotalKoChance = 1.0 - opponentSurvivalProb;
 		}
+	}
+
+	public FightPerformancePanel.BackgroundStyle getBgStyle()
+	{
+		FightPerformancePanel.BackgroundStyle res = FightPerformancePanel.BackgroundStyle.DEFAULT;
+		boolean cmpDied = competitor.isDead();
+		boolean oppDied = opponent.isDead();
+		FightLogEntry lastCmpLog = null;
+		try
+		{
+			ArrayList<FightLogEntry> competitorLogs = new ArrayList<>(competitor.getFightLogEntries());;
+			lastCmpLog = competitorLogs.get(competitorLogs.size() - 1);
+		}
+		catch (Exception e) {}
+		FightLogEntry lastOppLog = null;
+		try
+		{
+			ArrayList<FightLogEntry> oppLogs = new ArrayList<>(opponent.getFightLogEntries());
+			lastOppLog = oppLogs.get(oppLogs.size() - 1);
+		}
+		catch (Exception e) {}
+
+		boolean validCmpLog = (lastCmpLog != null && lastCmpLog.getAnimationData() != null);
+		boolean validOppLog = (lastOppLog != null && lastOppLog.getAnimationData() != null);
+		if (!validCmpLog && !validOppLog)
+		{
+			return res;
+		}
+
+		boolean isCmpMaxHitKo = validCmpLog && oppDied && lastCmpLog.getMaxHit() == lastCmpLog.getActualDamageSum();;
+		boolean isCmpSpecKo = validCmpLog && oppDied && lastCmpLog.getAnimationData().isSpecial;
+		boolean isCmpSpecMaxHitKo = isCmpSpecKo && isCmpMaxHitKo;
+
+		boolean isCmpPunchKo = validCmpLog && oppDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_PUNCH;
+		boolean isCmpKickKo = validCmpLog && oppDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_KICK;
+		boolean isCmpStaffKo = validCmpLog && oppDied && lastCmpLog.getAnimationData().isStaffBash();
+
+		boolean isOppMaxHitKo = validOppLog && cmpDied && lastOppLog.getMaxHit() == lastOppLog.getActualDamageSum();
+		boolean isOppSpecKo = validOppLog && cmpDied && lastOppLog.getAnimationData().isSpecial;
+		boolean isOppSpecMaxHitKo = isOppSpecKo && isOppMaxHitKo;
+
+		boolean isOppPunchKo = validOppLog && cmpDied && lastOppLog.getAnimationData() == AnimationData.MELEE_PUNCH;
+		boolean isOppKickKo = validOppLog && cmpDied && lastOppLog.getAnimationData() == AnimationData.MELEE_KICK;
+		boolean isOppStaffKo = validOppLog && cmpDied && lastOppLog.getAnimationData().isStaffBash();
+
+		if (isCmpSpecMaxHitKo || isOppSpecMaxHitKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.MAX_SPEC_KO;
+		}
+		else if (isCmpSpecKo || isOppSpecKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.SPEC_KO;
+		}
+		else if (isCmpPunchKo || isOppPunchKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.PUNCH_KO;
+		}
+		else if (isCmpKickKo || isOppKickKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.KICK_KO;
+		}
+		else if (isCmpStaffKo || isOppStaffKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.STAFF_KO;
+		}
+		else if (isCmpMaxHitKo || isOppMaxHitKo)
+		{
+			res = FightPerformancePanel.BackgroundStyle.MAX_HIT_KO;
+		}
+
+		return res;
+	}
+
+	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
+	{
+		return !filter.isEmpty()
+			&& (
+				(CONFIG.exactNameFilter() ?
+					(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
+					: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
+				)
+			|| (
+				bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
+				&& bgStyle.isEnabled()
+				&& bgStyle.getName().toLowerCase().replace(" ", "").startsWith(filter)
+			));
 	}
 }

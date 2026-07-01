@@ -132,7 +132,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.7.8";
+	public static final String PLUGIN_VERSION = "1.8.0";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1229,43 +1229,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// primary update message
-		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.7.8</u></col> <col=dc8a00>Update:</col></shad> ";
+		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.8.0</u></col> <col=dc8a00>Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
-				"<col=842b00>New Level Change column in the fight log, to help see how often you attack while brewed " +
-				"down vs potted. Various QOLs and UI improvements. If opted into PvP hub, you can now right click a fight to open it there, " +
-				"and you can right click the Total Stats to reset your hidden name.")
+				"<col=842b00>Massive UI rework for the panel. Display world flag/location instead of number by default. " +
+				"New border styles for different KO types: Spec KO, Max hit KO, and Spec Max Hit KO for now. More to come.<br>" +
+				"PvP-Hub: Fixes for fight merges, automatically fetch merged info from the website and display it locally (shown on the Fight Log)")
 				.build());
-
-		// DELETE THIS CODE BLOCK ON THE NEXT UPDATE AFTER 1.7.8
-		// ====================================================================================================================================================
-		// if someone already opted into pvp hub, and still has the default random visibility option,
-		// show warning before updating their config (new default value => PvpHubVisibilityDelay.INSTANT)
-		if (config.uploadFightsToPvpHub() && config.pvpHubVisibilityDelay() == PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20)
-		{
-			// put a short delay on this warning message so it hopefully appears after other on-login messages.
-			// wouldn't want to abuse this for standard patch notes, but this is a fairly important notice IMO
-			executor.schedule(() -> chatMessageManager.queue(QueuedMessage.builder()
-					.type(ChatMessageType.GAMEMESSAGE)
-					.runeLiteFormattedMessage("<col=ff0000><shad=000000>===== Attention: PvP Performance Tracker <u>1.7.8</u> Update =====<br>" +
-						"<col=842b00>Your configuration option for the \"<u>PvP-Hub Upload Delay</u>\" has been updated to " +
-						"<u>INSTANT</u>. Your fights will now instantly be uploaded to the PvP-Hub website once they end. " +
-						"Your world is never publicly shown anywhere, so this shouldn't cause any concern. Feel free to " +
-						"change the setting if you'd like to revert this.")
-					.build())
-				, 678, TimeUnit.MILLISECONDS);
-		}
-
-		// force-change pvpHubVisibilityDelay to Instant, but only if they were still on the old default (RANDOM_6_20).
-		// So people who intentionally chose to interact with this config keep their chosen setting.
-		// this will only run once due to the updateMsgShown / updateMsgKey flag, which we set to true right after.
-		if (config.pvpHubVisibilityDelay() == PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.RANDOM_6_20)
-		{
-			configManager.setConfiguration(CONFIG_KEY, "pvpHubVisibilityDelay", PvpPerformanceTrackerConfig.PvpHubVisibilityDelay.INSTANT);
-		}
-		// ====================================================================================================================================================
-		// end of block to be deleted on next update
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
 

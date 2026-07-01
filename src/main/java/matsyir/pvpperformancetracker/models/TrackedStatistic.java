@@ -165,13 +165,15 @@ public enum TrackedStatistic
 				, String.valueOf(fight.competitor.getMagicHitStats())
 				, fight.competitor.getName() + " successfully hit " +
 					fight.competitor.getMagicHitCount() + " of " + fight.competitor.getMagicAttackCount() + " magic attacks, but expected to hit " +
-					nf2.format(fight.competitor.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
+					nf2.format(fight.competitor.getMagicHitCountExpected()) + " (" + fight.competitor.getMagicHitLuckPercentage(nf2) + "%).<br>" +
+					"Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky"
 				, fight.competitorMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR
 
 				, String.valueOf(fight.opponent.getMagicHitStats())
 				, fight.opponent.getName() + " successfully hit " +
 					fight.opponent.getMagicHitCount() + " of " + fight.opponent.getMagicAttackCount() + " magic attacks, but expected to hit " +
-					nf2.format(fight.opponent.getMagicHitCountExpected()) + ".<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
+					nf2.format(fight.opponent.getMagicHitCountExpected()) + " (" + fight.opponent.getMagicHitLuckPercentage(nf2) + "%)." +
+					"<br>Luck percentage: 100% = expected hits, &gt;100% = lucky, &lt;100% = unlucky" +
 					""
 				, fight.opponentMagicHitsLuckier() ? SUCCESS_COLOR : UNSUCCESSFUL_COLOR
 
@@ -230,7 +232,7 @@ public enum TrackedStatistic
 				// hp healed, right
 				String oppHpHealedStats = NO_DATA;
 				String oppHpHealedTooltip = "No data is available for the opponent's hp healed";
-				Color oppHpHealedColor = UNSUCCESSFUL_COLOR;
+				Color oppHpHealedColor = NEUTRAL_COLOR;
 				if (oppFight != null)
 				{
 					Fighter oppComp = oppFight.getCompetitor();

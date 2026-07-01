@@ -464,11 +464,15 @@ class Fighter
 		String stats = nf.format(magicHitCount);
 		long magicAttackCount = getMagicAttackCount();
 		stats += "/" + nf.format(magicAttackCount);
-		String luckPercentage = magicHitCountExpected != 0 ?
-			nf.format(((double) magicHitCount / magicHitCountExpected) * 100.0) :
-			"0";
-		stats += " (" + luckPercentage + "%)";
+
+		stats += " (" + getMagicHitLuckPercentage(nf) + "%)";
 		return stats;
+	}
+	public String getMagicHitLuckPercentage(NumberFormat customNf)
+	{
+		return magicHitCountExpected != 0 ?
+			customNf.format(((double) magicHitCount / magicHitCountExpected) * 100.0) :
+			"0";
 	}
 
 	public String getShortMagicHitStats()

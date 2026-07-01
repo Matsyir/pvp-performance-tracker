@@ -633,7 +633,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.
-	String updateMsgKey = "updateMsgShown1_7_8";
+	String updateMsgKey = "updateMsgShown1_8_0";
 	@ConfigItem(
 		keyName = updateMsgKey,
 		name = "Update Msg flag for most recent update",
@@ -647,6 +647,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	// throw any updateMsgShown keys into this as we change it. Or any other config we won't be using anymore.
 	public static final String[] UPDATE_MSG_KEY_GRAVEYARD = {
+		"updateMsgShown1_7_8",
 		"showWorldInSummary",
 		"updateMsgShown1_7_7",
 		"updateMsgShown1_7_6",

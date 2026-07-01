@@ -56,6 +56,7 @@ import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -249,22 +250,24 @@ public class TotalStatsPanel extends JPanel
 		// FIRST LINE
 		// basic label to display a title.
 		JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		titlePanel.setBackground(BG_COLOR);
 
 		JShadowedLabel titleLabel = new JShadowedLabel("PvP Performance Tracker ");
 		titlePanel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createEmptyBorder(0, 24, 0, 24), BorderFactory.createCompoundBorder(
 				BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
-				BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(
-					ColorScheme.BRAND_ORANGE.getRed(), ColorScheme.BRAND_ORANGE.getGreen(), ColorScheme.BRAND_ORANGE.getBlue(), 112)))));
+				BorderFactory.createMatteBorder(0, 0, 1, 0, ColorUtil.colorWithAlpha(ColorScheme.BRAND_ORANGE, 112)))));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(Color.WHITE);
 
 		JShadowedLabel titleVersionLabel = new JShadowedLabel("v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
 		titleVersionLabel.setFont(PanelFactory.getIndexFontFrom(titleVersionLabel.getFont()));
-		titleVersionLabel.setForeground(new Color(132, 43, 0));
+		titleVersionLabel.setForeground(ColorUtil.colorLerp(ColorScheme.BRAND_ORANGE, Color.RED, 0.5));//new Color(189, 64, 0));
 
 		titlePanel.add(titleLabel);
 		titlePanel.add(titleVersionLabel);
+
+		applyTooltipRecursively(titlePanel,"<html>PvP Performance Tracker <u><b>v" + PvpPerformanceTrackerPlugin.PLUGIN_VERSION);
 
 		add(titlePanel);
 
@@ -457,7 +460,7 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
 
 		ghostBarrageStatsLabel = new JShadowedLabel();
-		ghostBarrageStatsLabel.setForeground(ColorScheme.BRAND_ORANGE);
+		ghostBarrageStatsLabel.setForeground(TrackedStatistic.GHOST_BARRAGE_COLOR);
 
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
 		add(ghostBarrageStatsPanel);
@@ -487,7 +490,7 @@ public class TotalStatsPanel extends JPanel
 		String avgExpectedDmgDiffOneDecimal = nf1.format(avgExpectedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
 
-		String kdRatio = numDeaths == 0 ? "0" : nf1.format((double)numKills / (double)numDeaths);
+		String kdRatio = numDeaths == 0 ? "0" : nf2.format((double)numKills / (double)numDeaths);
 
 		String killDeathTooltip = "<html>From a total of " + numFights + " fights, you got <u>" + nf.format(numKills)
 			+ " kill" + (numKills != 1 ? "s" : "") + "</u>, and <u>died " +
@@ -623,10 +626,10 @@ public class TotalStatsPanel extends JPanel
 			applyTooltipRecursively(avgKoChanceStatsLabel.getParent(), "No KO chance data available for calculation.");
 		}
 
-		ghostBarrageStatsLabel.setText(nf.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageExpectedDamage) + ")");
+		ghostBarrageStatsLabel.setText(nf1.format(avgGhostBarrageCount) + " G.B. (" + nf.format(avgGhostBarrageExpectedDamage) + ")");
 		applyTooltipRecursively(ghostBarrageStatsLabel.getParent(),
-			"<html>You had an average of " + nf.format(avgGhostBarrageCount)
-			+ " Ghost Barrages per fight, each worth an extra " + nf.format(avgGhostBarrageExpectedDamage)
+			"<html>You had an average of " + nf1.format(avgGhostBarrageCount)
+			+ " Ghost Barrages per fight, each worth an extra " + nf1.format(avgGhostBarrageExpectedDamage)
 			+ " expected damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 			+ "Unless fighting in PvP Arena, your opponents likely had a similar value."
 			+ TrackedStatistic.GHOST_BARRAGES.getPrefixedAcronymTooltip());

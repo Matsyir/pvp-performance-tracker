@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -59,9 +58,6 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
-
-import matsyir.pvpperformancetracker.models.AnimationData;
-import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
@@ -103,10 +99,10 @@ public class FightPerformancePanel extends JPanel
 		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Default"),
 		MAX_HIT_KO("Max Hit KO", Color.RED, "GB_Red"),
 		SPEC_KO("Spec KO", new Color(57, 125, 59), "GB_Green"),
-		SPEC_MAX_HIT_KO("Spec Max Hit Ko", Color.MAGENTA.darker(), "GB_Purple"),
-		PUNCH_KO("Punch KO", ColorScheme.BRAND_ORANGE, "GB_Default", false),
-		KICK_KO("Kick KO", ColorScheme.BRAND_ORANGE, "GB_Default", false),
-		STAFF_KO("Staff KO", ColorScheme.BRAND_ORANGE, "GB_Default", false);
+		MAX_SPEC_KO("Max Spec Ko", Color.MAGENTA.darker(), "GB_Purple"),
+		PUNCH_KO("Punch KO", DEFAULT, false),
+		KICK_KO("Kick KO", DEFAULT, false),
+		STAFF_KO("Staff KO", DEFAULT, false);
 
 		final String name;
 		final Color highlightColor;
@@ -114,16 +110,29 @@ public class FightPerformancePanel extends JPanel
 		final BufferedImage hoverBgImg;
 		final boolean enabled;
 
+		BackgroundStyle(String name, BackgroundStyle copyingStyle, boolean enabled)
+		{
+			this(name, copyingStyle.highlightColor, copyingStyle.bgImg, copyingStyle.hoverBgImg, enabled);
+		}
 		BackgroundStyle(String name, Color highlightColor, String fname)
 		{
 			this(name, highlightColor, fname, true);
 		}
 		BackgroundStyle(String name, Color highlightColor, String fname, boolean enabled)
 		{
+			this(name,
+				highlightColor,
+				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png"),
+				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + "_Hovered.png"),
+				enabled
+			);
+		}
+		BackgroundStyle(String name, Color highlightColor, BufferedImage bgImg, BufferedImage hoverBgImg, boolean enabled)
+		{
 			this.name = name;
 			this.highlightColor = highlightColor;
-			this.bgImg = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png");
-			this.hoverBgImg = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + "_Hovered.png");
+			this.bgImg = bgImg;
+			this.hoverBgImg = hoverBgImg;
 			this.enabled = enabled;
 		}
 	}
@@ -428,69 +437,7 @@ public class FightPerformancePanel extends JPanel
 
 		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
 
-		FightLogEntry lastCmpLog = null;
-		try
-		{
-			ArrayList<FightLogEntry> competitorLogs = (ArrayList<FightLogEntry>) competitor.getFightLogEntries().stream().filter((e) -> e.attackerName.equals(competitor.getName())).collect(Collectors.toList());;
-			lastCmpLog = competitorLogs.get(competitorLogs.size() - 1);
-		}
-		catch (Exception e) {}
-		FightLogEntry lastOppLog = null;
-		try
-		{
-			ArrayList<FightLogEntry> oppLogs = (ArrayList<FightLogEntry>) opponent.getFightLogEntries().stream().filter((e) -> e.attackerName.equals(opponent.getName())).collect(Collectors.toList());
-			lastOppLog = oppLogs.get(oppLogs.size() - 1);
-		}
-		catch (Exception e) {}
-
-		boolean validCmpLog = (lastCmpLog != null && lastCmpLog.getAnimationData() != null);
-		boolean validOppLog = (lastOppLog != null && lastOppLog.getAnimationData() != null);
-		if (!validCmpLog && !validOppLog)
-		{
-			bgStyleDisplayTooltipText = "";
-			return;
-		}
-
-		boolean isCmpMaxHitKo = validCmpLog && opponentDied && lastCmpLog.getMaxHit() == lastCmpLog.getActualDamageSum();;
-		boolean isCmpSpecKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData().isSpecial;
-		boolean isCmpSpecMaxHitKo = isCmpSpecKo && isCmpMaxHitKo;
-
-		boolean isCmpPunchKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_PUNCH;
-		boolean isCmpKickKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData() == AnimationData.MELEE_KICK;
-		boolean isCmpStaffKo = validCmpLog && opponentDied && lastCmpLog.getAnimationData().isStaffBash();
-
-		boolean isOppMaxHitKo = validOppLog && competitorDied && lastOppLog.getMaxHit() == lastOppLog.getActualDamageSum();
-		boolean isOppSpecKo = validOppLog && competitorDied && lastOppLog.getAnimationData().isSpecial;
-		boolean isOppSpecMaxHitKo = isOppSpecKo && isOppMaxHitKo;
-
-		boolean isOppPunchKo = validOppLog && competitorDied && lastOppLog.getAnimationData() == AnimationData.MELEE_PUNCH;
-		boolean isOppKickKo = validOppLog && competitorDied && lastOppLog.getAnimationData() == AnimationData.MELEE_KICK;
-		boolean isOppStaffKo = validOppLog && competitorDied && lastOppLog.getAnimationData().isStaffBash();
-
-		if (isCmpSpecMaxHitKo || isOppSpecMaxHitKo)
-		{
-			this.bgStyle = BackgroundStyle.SPEC_MAX_HIT_KO;
-		}
-		else if (isCmpSpecKo || isOppSpecKo)
-		{
-			this.bgStyle = BackgroundStyle.SPEC_KO;
-		}
-		else if (isCmpPunchKo || isOppPunchKo)
-		{
-			this.bgStyle = BackgroundStyle.PUNCH_KO;
-		}
-		else if (isCmpKickKo || isOppKickKo)
-		{
-			this.bgStyle = BackgroundStyle.KICK_KO;
-		}
-		else if (isCmpStaffKo || isOppStaffKo)
-		{
-			this.bgStyle = BackgroundStyle.STAFF_KO;
-		}
-		else if (isCmpMaxHitKo || isOppMaxHitKo)
-		{
-			this.bgStyle = BackgroundStyle.MAX_HIT_KO;
-		}
+		bgStyle = fight.getBgStyle();
 
 		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
 		{
