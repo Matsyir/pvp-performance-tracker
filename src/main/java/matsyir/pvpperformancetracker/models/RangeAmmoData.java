@@ -31,6 +31,9 @@ import org.apache.commons.lang3.StringUtils;
 
 public interface RangeAmmoData
 {
+	int SEEKING_ARROW_ACCURACY_BONUS = 20;
+	int SEEKING_ARROW_MIN_HIT = 3;
+
 	RangeAmmoData[] DIAMOND_BOLTS = {
 		BoltAmmo.DIAMOND_BOLTS_E,
 		StrongBoltAmmo.DIAMOND_BOLTS_E,
@@ -39,6 +42,11 @@ public interface RangeAmmoData
 
 	RangeAmmoData[] OPAL_BOLTS = {
 		StrongBoltAmmo.OPAL_DRAGON_BOLTS_E
+	};
+
+	RangeAmmoData[] SEEKING_ARROW_AMMO = {
+		OtherAmmo.AMETHYST_ARROWS,
+		OtherAmmo.DRAGON_ARROW
 	};
 
 	static RangeAmmoData fromId(int itemId)
@@ -72,6 +80,21 @@ public interface RangeAmmoData
 			}
 		}
 		return null;
+	}
+
+	static boolean usesSeekingArrowUpgrade(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return !isLmsFight && Arrays.stream(SEEKING_ARROW_AMMO).anyMatch(seekingArrowAmmo -> seekingArrowAmmo == ammo);
+	}
+
+	static int getSeekingArrowAccuracyBonus(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return usesSeekingArrowUpgrade(ammo, isLmsFight) ? SEEKING_ARROW_ACCURACY_BONUS : 0;
+	}
+
+	static int getSeekingArrowMinimumHit(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return usesSeekingArrowUpgrade(ammo, isLmsFight) ? SEEKING_ARROW_MIN_HIT : 0;
 	}
 
 	int getItemId(); // itemIDs used for DISPLAYING bolts, not getting them.
@@ -261,7 +284,4 @@ public interface RangeAmmoData
 		}
 	}
 }
-
-
-
 

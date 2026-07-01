@@ -110,7 +110,7 @@ public enum AnimationData
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, scorching bow, craw's bow, dbow, dbow spec
 	RANGED_RUNE_KNIFE_PVP(929, AttackStyle.RANGED), // 1 tick animation, has 1 tick delay between attacks. likely same for all knives. Same for morrigan's javelins, both spec & normal attack.
-	RANGED_MAGIC_SHORTBOW_SPEC(1074, AttackStyle.RANGED, true),
+	RANGED_MAGIC_SHORTBOW_SPEC(1074, AttackStyle.RANGED, true, 2),
 	RANGED_CROSSBOW_PVP(4230, AttackStyle.RANGED), // Tested RCB & ACB w/ dragonstone bolts (e) & diamond bolts (e)
 	RANGED_BLOWPIPE(5061, AttackStyle.RANGED), // tested in PvP with all styles. Has 1 tick delay between animations in pvp.
 	RANGED_DARTS(6600, AttackStyle.RANGED), // tested w/ addy darts. Seems to be constant animation but sometimes stalls and doesn't animate

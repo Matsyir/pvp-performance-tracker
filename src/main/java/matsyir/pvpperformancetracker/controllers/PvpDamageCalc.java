@@ -36,6 +36,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.getExpectedHits;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -58,6 +59,13 @@ import net.runelite.api.Player;
 @Slf4j
 public class PvpDamageCalc
 {
+	public enum DamageRollDistribution
+	{
+		STANDARD,
+		CLAMPED_TO_MINIMUM,
+		MULTI_HIT_CLAMPED_TO_MINIMUM
+	}
+
 	private static final int STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3,
 		RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8;
 	public static final int RANGE_DEF = 9;
@@ -136,7 +144,12 @@ public class PvpDamageCalc
 	private int minHit = 0;
 	@Getter
 	private int maxHit = 0;
+	@Getter
+	private DamageRollDistribution damageRollDistribution = DamageRollDistribution.STANDARD;
+	@Getter
+	private int damageRollHitCount = 1;
 	private double rangedExpectedProcDamage = 0;
+	private int seekingArrowMinHit = 0;
 
 	private CombatLevels attackerLevels;
 	private CombatLevels defenderLevels;
@@ -163,7 +176,10 @@ public class PvpDamageCalc
 		accuracy = 0;
 		minHit = 0;
 		maxHit = 0;
+		damageRollDistribution = DamageRollDistribution.STANDARD;
+		damageRollHitCount = 1;
 		rangedExpectedProcDamage = 0;
+		seekingArrowMinHit = 0;
 
 		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
 		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
@@ -187,7 +203,7 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems, animationData);
 			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
@@ -224,7 +240,10 @@ public class PvpDamageCalc
 		accuracy = 0;
 		minHit = 0;
 		maxHit = 0;
+		damageRollDistribution = DamageRollDistribution.STANDARD;
+		damageRollHitCount = 1;
 		rangedExpectedProcDamage = 0;
+		seekingArrowMinHit = 0;
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
@@ -245,7 +264,7 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, animationData);
 			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
@@ -328,6 +347,13 @@ public class PvpDamageCalc
 			}
 
 			averageSuccessfulHit = (double) total / maxHit;
+		}
+		else if (seekingArrowMinHit > 0)
+		{
+			minHit = seekingArrowMinHit;
+			averageSuccessfulHit = damageRollDistribution == DamageRollDistribution.MULTI_HIT_CLAMPED_TO_MINIMUM ?
+				getAverageSuccessfulMultiHitWithMinimum(minHit, damageRollHitCount) :
+				getAverageSuccessfulHitWithMinimum(minHit);
 		}
 		else if (usingSpec && claws)
 		{
@@ -441,6 +467,34 @@ public class PvpDamageCalc
 		}
 	}
 
+	private double getAverageSuccessfulHitWithMinimum(int minimumHit)
+	{
+		minimumHit = Math.max(0, minimumHit);
+		maxHit = Math.max(maxHit, minimumHit);
+		return getAverageSuccessfulHitWithMinimum(minimumHit, maxHit);
+	}
+
+	private double getAverageSuccessfulMultiHitWithMinimum(int minimumHit, int hitCount)
+	{
+		hitCount = Math.max(1, hitCount);
+		int perHitMinimum = Math.max(0, minimumHit / hitCount);
+		int perHitMaximum = Math.max(perHitMinimum, maxHit / hitCount);
+		maxHit = Math.max(maxHit, perHitMaximum * hitCount);
+		minHit = perHitMinimum * hitCount;
+		return hitCount * getAverageSuccessfulHitWithMinimum(perHitMinimum, perHitMaximum);
+	}
+
+	private double getAverageSuccessfulHitWithMinimum(int minimumHit, int maximumHit)
+	{
+		int total = 0;
+		for (int i = 0; i <= maximumHit; i++)
+		{
+			total += Math.max(i, minimumHit);
+		}
+
+		return (double) total / (maximumHit + 1);
+	}
+
 	private int calculateBurningClawTotalDamage(int D)
 	{
 		return (int)Math.floor(0.25 * D) + (int)Math.floor(0.25 * D) + (int)Math.floor(0.5 * D);
@@ -493,7 +547,7 @@ public class PvpDamageCalc
 		maxHit = (int) (damageModifier * baseDamage);
 	}
 
-	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, AnimationData animationData)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, isLmsFight);
 		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
@@ -502,12 +556,24 @@ public class PvpDamageCalc
 
 		boolean ballista = weapon == EquipmentData.HEAVY_BALLISTA;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
+		boolean magicShortbow = weapon == EquipmentData.MAGIC_SHORTBOW || weapon == EquipmentData.MAGIC_SHORTBOW_I;
 		boolean dragonCbow = weapon == EquipmentData.DRAGON_CROSSBOW;
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 		boolean opals = ArrayUtils.contains(RangeAmmoData.OPAL_BOLTS, weaponAmmo);
 		boolean skipBoltProcEffects = dragonCbow && usingSpec;
+		boolean darkBowSpecial = dbow && usingSpec;
+		int expectedHits = Math.max(1, getExpectedHits(animationData));
+		boolean seekingArrowAttack = !darkBowSpecial && RangeAmmoData.usesSeekingArrowUpgrade(weaponAmmo, isLmsFight);
 
 		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
+		seekingArrowMinHit = seekingArrowAttack ? RangeAmmoData.getSeekingArrowMinimumHit(weaponAmmo, isLmsFight) * expectedHits : 0;
+		if (seekingArrowMinHit > 0)
+		{
+			damageRollHitCount = expectedHits;
+			damageRollDistribution = expectedHits > 1 ?
+				DamageRollDistribution.MULTI_HIT_CLAMPED_TO_MINIMUM :
+				DamageRollDistribution.CLAMPED_TO_MINIMUM;
+		}
 
 		rangeStrength += ammoStrength;
 
@@ -582,6 +648,10 @@ public class PvpDamageCalc
 			{
 				maxHit = cap;
 			}
+		}
+		else if (magicShortbow && usingSpec && expectedHits > 1)
+		{
+			maxHit *= expectedHits;
 		}
 	}
 
@@ -713,6 +783,7 @@ public class PvpDamageCalc
 	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
 	{
 		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, this.isLmsFight);
+		playerRangeAtt += RangeAmmoData.getSeekingArrowAccuracyBonus(weaponAmmo, this.isLmsFight);
 
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
 		boolean opals = ArrayUtils.contains(RangeAmmoData.OPAL_BOLTS, weaponAmmo);
