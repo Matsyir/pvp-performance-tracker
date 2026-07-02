@@ -84,6 +84,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	private final JShadowedLabel pvpHubHiddenNameBtn = new JShadowedLabel();
 	private boolean hiddenNameIsVisible = false;
 
+	private boolean needsRebuilt = true;
+
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
 	private final WorldService worldService;
@@ -94,10 +96,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 	private final Timer panelFilterTask = new javax.swing.Timer(NAME_FILTER_DELAY, e ->
 	{
-		if (PvpPerformanceTrackerPanel.this.isVisible())
-		{
-			PvpPerformanceTrackerPanel.this.rebuild(); // rebuild entire panel/fight history using new name filter.
-		}
+		PvpPerformanceTrackerPanel.this.enqueueRebuild(); // rebuild entire panel/fight history using new name filter.
 	});
 
 	@Inject
@@ -315,14 +314,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		scrollableContainer.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
 		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(FIGHT_HISTORY_SCROLL_WIDTH, 0));
 
-		scrollableContainer.getViewport().addChangeListener(new ChangeListener()
-		{
-			@Override
-			public void stateChanged(ChangeEvent e)
-			{
-				scrollableContainer.getViewport().repaint();
-			}
-		});
+		scrollableContainer.getViewport().addChangeListener(e -> scrollableContainer.getViewport().repaint());
 
 		mainContent.add(fightHistoryContainer, BorderLayout.NORTH);
 		add(scrollableContainer);
@@ -337,27 +329,23 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			return;
 		}
-
 		totalStatsPanel.addFight(fight.getPvpHubDisplayFight());
 
-		SwingUtilities.invokeLater(() ->
+		fightHistoryContainer.add(new FightPerformancePanel(fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
+
+		// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
+		if (fightHistoryContainer.getComponentCount() > config.fightHistoryRenderLimit())
 		{
-			fightHistoryContainer.add(new FightPerformancePanel(fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
-
-			// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
-			if (fightHistoryContainer.getComponentCount() > config.fightHistoryRenderLimit())
+			// this will probably only remove 1 fight in most cases, but just in case we need to remove more than that.
+			int numFightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit();
+			for (int i = 0; i < numFightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
 			{
-				// this will probably only remove 1 fight in most cases, but just in case we need to remove more than that.
-				int numFightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit();
-				for (int i = 0; i < numFightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
-				{
-					// remove from the last components since we add to 0
-					fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
-				}
+				// remove from the last components since we add to 0
+				fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
 			}
+		}
 
-			updateUI();
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void addFights(ArrayList<FightPerformance> fights)
@@ -374,38 +362,35 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		ArrayList<FightPerformance> displayFights = new ArrayList<>();
 		fights.forEach((FightPerformance f) -> displayFights.add(f.getPvpHubDisplayFight()));
 		totalStatsPanel.addFights(displayFights);
-		SwingUtilities.invokeLater(() ->
+
+		// if we're adding more fights than we want to render at all, then reduce the number of fights and clear all the existing ones
+		if (fights.size() > config.fightHistoryRenderLimit())
 		{
-			// if we're adding more fights than we want to render at all, then reduce the number of fights and clear all the existing ones
-			if (fights.size() > config.fightHistoryRenderLimit())
-			{
-				int numFightsToRemove = fights.size() - config.fightHistoryRenderLimit();
-				fights.removeIf((FightPerformance f) -> fights.indexOf(f) < numFightsToRemove);
-				fightHistoryContainer.removeAll();
-			}
-			// if we're adding a normal number of fights, then check if we actually need to remove existing fights to make room for it.
-			else
-			{
-				int fightsToAdd = fights.size();
-				int fightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit() + fightsToAdd;
+			int numFightsToRemove = fights.size() - config.fightHistoryRenderLimit();
+			fights.removeIf((FightPerformance f) -> fights.indexOf(f) < numFightsToRemove);
+			fightHistoryContainer.removeAll();
+		}
+		// if we're adding a normal number of fights, then check if we actually need to remove existing fights to make room for it.
+		else
+		{
+			int fightsToAdd = fights.size();
+			int fightsToRemove = fightHistoryContainer.getComponentCount() - config.fightHistoryRenderLimit() + fightsToAdd;
 
-				if (fightsToRemove > 0)
+			if (fightsToRemove > 0)
+			{
+				// Remove oldest fightHistory until the size is equal to the limit.
+				for (int i = 0; i < fightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
 				{
-					// Remove oldest fightHistory until the size is equal to the limit.
-					for (int i = 0; i < fightsToRemove && fightHistoryContainer.getComponentCount() > 0; i++)
-					{
-						// remove from the last components since we add to 0
-						fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
-					}
+					// remove from the last components since we add to 0
+					fightHistoryContainer.remove(fightHistoryContainer.getComponentCount() - 1);
 				}
-
 			}
+		}
 
-			fights.forEach((FightPerformance f) -> {
-				fightHistoryContainer.add(new FightPerformancePanel(f, worldService, getWorldLocationSupplier(f.getPvpHubDisplayFight().getWorld())), 0);
-			});
-			updateUI();
-		});
+		fights.forEach((FightPerformance f) -> fightHistoryContainer.add(new FightPerformancePanel(
+			f, worldService, getWorldLocationSupplier(f.getPvpHubDisplayFight().getWorld())), 0));
+
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	private IntSupplier getWorldLocationSupplier(int world)
@@ -446,6 +431,16 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			});
 		});
 	}
+	public void enqueueRebuild()
+	{
+		if (this.isVisible())
+		{
+			rebuild();
+			return;
+		}
+
+		this.needsRebuilt = true;
+	}
 
 	public void rebuild()
 	{
@@ -456,9 +451,12 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			// create new arraylist from the main one so we can't modify the fight history
 			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
 
-			addFights(fightsToAdd);
+			clientThread.invokeLater(() -> addFights(fightsToAdd)); // this calls updateUI at the end, in a SwingUtilities.invokeLater.
 		}
-		SwingUtilities.invokeLater(this::updateUI);
+		else
+		{
+			SwingUtilities.invokeLater(this::updateUI);
+		}
 	}
 
 	public void setConfigWarning(boolean enable)
@@ -479,5 +477,16 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void updatePopupMenuForPvpHubConfig()
 	{
 		totalStatsPanel.updatePopupMenuForPvpHubConfig();
+	}
+
+	@Override
+	public void onActivate()
+	{
+		super.onActivate();
+		if (needsRebuilt)
+		{
+			rebuild();
+			needsRebuilt = false;
+		}
 	}
 }

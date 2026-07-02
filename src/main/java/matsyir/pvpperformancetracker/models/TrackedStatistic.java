@@ -116,20 +116,20 @@ public enum TrackedStatistic
 				, fight.competitor.getExpectedDmgString(fight.opponent)
 				, "On average, " + (fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
 					" damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)")
-				, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 
 				, fight.opponent.getExpectedDmgString(fight.competitor)
 				, "On average, " + (fight.opponent.getName() + " could expect to deal " + nf2.format(fight.opponent.getExpectedDamage()) +
 					" damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you)")
-				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 			),
 			() -> PanelFactory.createOverlayStatsLine(EXPECTED_DMG.acronym, 70, 30,
-				NO_DATA_SHORT, PvpColorScheme.unsuccessColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessColor()),
+				NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor()),
 			(fight, component) -> component.updateLeftRightCells(
 				fight.getCompetitor().getExpectedDmgString(fight.getOpponent())
-				, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 				, String.valueOf((int) Math.round(fight.getOpponent().getExpectedDamage()))
-				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 			)
 		);
 
@@ -138,24 +138,24 @@ public enum TrackedStatistic
 				, fight.competitor.getDmgDealtString(fight.opponent)
 				, fight.competitor.getName() + " dealt " + fight.competitor.getDamageDealt() +
 					" damage (" + fight.competitor.getDmgDealtString(fight.opponent, true) + " vs opponent)"
-				, fight.competitorDmgDealtIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.competitorDmgDealtIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 
 				, fight.opponent.getDmgDealtString(fight.competitor)
 				, fight.opponent.getName() + " dealt " + fight.opponent.getDamageDealt() +
 					" damage (" + fight.opponent.getDmgDealtString(fight.competitor, true) + " vs you)"
-				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.opponentDmgDealtIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 				, true
 				, fight.competitor.isDead() ? FightPerformancePanel.deathIcon : null
 				, fight.opponent.isDead() ? FightPerformancePanel.deathIcon : null
 
 			),
 			() -> PanelFactory.createOverlayStatsLine(DMG_DEALT.acronym, 70, 30,
-				NO_DATA_SHORT, PvpColorScheme.unsuccessColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessColor()),
+				NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor()),
 			(fight, component) -> component.updateLeftRightCells(
 				String.valueOf(fight.getCompetitor().getDmgDealtString(fight.getOpponent()))
-				, fight.competitorDmgDealtIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.competitorDmgDealtIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 				, String.valueOf(fight.getOpponent().getDamageDealt())
-				, fight.opponentDmgDealtIsGreater() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor()
+				, fight.opponentDmgDealtIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 			)
 		);
 
@@ -372,7 +372,8 @@ public enum TrackedStatistic
 			(fight, oppFight) -> { // returns FightPerformancePanel component
 				String oppGhostBarrageText = NO_DATA;
 				String oppGhostBarrageTooltipText = "No data is available for the opponent's ghost barrages";
-				Color oppGhostBarrageColor = PvpColorScheme.getGbColor();
+				Color oppGhostBarrageColor = PvpColorScheme.neutralDmgColor();
+				Color cmpGbColor = PvpColorScheme.gbColor();
 
 				if (oppFight != null)
 				{
@@ -383,7 +384,9 @@ public enum TrackedStatistic
 						+ " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
 					oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
-						? PvpColorScheme.successColor() : PvpColorScheme.getGbColor());
+						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
+					cmpGbColor = (fight.competitor.getGhostBarrageExpectedDamage() > oppFight.getCompetitor().getGhostBarrageExpectedDamage()
+						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
 				}
 
 				return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
@@ -391,9 +394,7 @@ public enum TrackedStatistic
 					, ("(Advanced): " + fight.competitor.getName() + " hit " + fight.competitor.getGhostBarrageCount()
 						+ " ghost barrages during the fight, worth an extra " + nf2.format(fight.competitor.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.")
-					, ((oppFight != null
-						&& fight.competitor.getGhostBarrageExpectedDamage() > oppFight.getCompetitor().getGhostBarrageExpectedDamage())
-						? PvpColorScheme.successColor() : PvpColorScheme.getGbColor())
+					, cmpGbColor
 
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
@@ -403,7 +404,7 @@ public enum TrackedStatistic
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(GHOST_BARRAGES.acronym, 80, 20,
-				NO_DATA_SHORT, PvpColorScheme.getGbColor(), NO_DATA_SHORT, PvpColorScheme.getGbColor()),
+				NO_DATA_SHORT, PvpColorScheme.gbColor(), NO_DATA_SHORT, PvpColorScheme.gbColor()),
 			(fight, component) -> component.updateLeftCellText(fight.getCompetitor().getGhostBarrageStats())
 		);
 

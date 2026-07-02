@@ -251,12 +251,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	// ============================= Visual Styling ==============================
-	// TODO: Text alignment - sides vs centered - default to side
+	// Text alignment - sides vs centered - default to side
 	@ConfigItem(
 		keyName = "centerPanelLabels", // controls text centering for FightPerformancePanel.
-		name = "Center Fight Panel Text",
-		description = "Controls whether the labels on the Fight Performance Panel are centered.<br>" +
-			"Defaults to being aligned to sides - left for your stats, right for the opponent.",
+		name = "Center Fight Statistic Labels",
+		description = "Controls whether the player names & labels on the Fight Performance Panel are centered.<br>" +
+			"Otherwise, defaults to being aligned to sides - left for your stats, right for the opponent.",
 		position = 1810,
 		section = visualStylingSection
 	)
@@ -266,7 +266,25 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "successfulColor",
+		keyName = "panelColorPreset",
+		name = "Preset Color Style",
+		description = "Updates all of the below color options to a given preset." +
+			"<br><br>Beware that the config Color Pickers don't visually update when selecting a preset,<br>" +
+			"but it does work, you simply have to re-open the config to see the changes apply." +
+			"<br>You should immediately see your new colors in the fight history panel(s) when clicking into it." +
+			"<br><br><u>*(dmgOnly)</u>: These presets use the same colors as the original ones,<br>" +
+			"but only apply highlight colors on damage-related statistics (eD, D, GB), and otherwise<br>" +
+			"use neutral colors everywhere. You can achieve the same results by manually configuring the colors.",
+		position = 1814,
+		section = visualStylingSection
+	)
+	default PvpColorScheme.PanelColorPreset panelColorPreset()
+	{
+		return PvpColorScheme.PanelColorPreset.DEFAULT;
+	}
+
+	@ConfigItem(
+		keyName = "successColor",
 		name = "Successful Color",
 		description = "\"Successful\" or \"positive\" color, used for most general statistics.",
 		position = 1820,
@@ -274,10 +292,10 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default Color successColor()
 	{
-		return PvpColorScheme.DEFAULT_SUCCESS;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.success;
 	}
 	@ConfigItem(
-		keyName = "unsuccessfulColor",
+		keyName = "unsuccessColor",
 		name = "Unsuccessful Color",
 		description = "\"Unsuccessful\" or \"negative\" color, used for most general statistics.",
 		position = 1824,
@@ -285,23 +303,23 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default Color unsuccessColor()
 	{
-		return PvpColorScheme.DEFAULT_UNSUCCESS;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.unsuccess;
 	}
 	@ConfigItem(
 		keyName = "neutralColor",
 		name = "Neutral Color",
-		description = "\"Neutral\", \"undecided\", or \"unknown\" color, used for most general statistics.",
+		description = "\"Neutral\", \"undecided\", or \"unknown\" color, used for most general statistics, RSNs, as well as Total Stats.",
 		position = 1828,
 		section = visualStylingSection
 	)
 	default Color neutralColor()
 	{
-		return PvpColorScheme.DEFAULT_NEUTRAL;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.neutral;
 	}
 
 
 	@ConfigItem(
-		keyName = "successfulDmgColor",
+		keyName = "successDmgColor",
 		name = "Successful Dmg Color",
 		description = "\"Successful\" or \"positive\" color, used for damage-related statistics (eD, D).",
 		position = 1832,
@@ -309,10 +327,10 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default Color successDmgColor()
 	{
-		return PvpColorScheme.DEFAULT_DMG_SUCCESS;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.dmgSuccess;
 	}
 	@ConfigItem(
-		keyName = "unsuccessfulDmgColor",
+		keyName = "unsuccessDmgColor",
 		name = "Unsuccessful Dmg Color",
 		description = "\"Unsuccessful\" or \"negative\" color, used for damage-related statistics (eD, D).",
 		position = 1836,
@@ -320,7 +338,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default Color unsuccessDmgColor()
 	{
-		return PvpColorScheme.DEFAULT_DMG_UNSUCCESS;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.dmgUnsuccess;
 	}
 	@ConfigItem(
 		keyName = "neutralDmgColor",
@@ -331,7 +349,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	default Color neutralDmgColor()
 	{
-		return PvpColorScheme.DEFAULT_DMG_NEUTRAL;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.dmgNeutral;
 	}
 
 	@ConfigItem(
@@ -339,12 +357,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "GB Successful Color",
 		description = "\"Successful\" or \"positive\" color, used for ghost-barrage.<br>" +
 			"Otherwise uses unsuccessful dmg color & neutral dmg color.",
-		position = 1810,
+		position = 1844,
 		section = visualStylingSection
 	)
 	default Color gbColor()
 	{
-		return PvpColorScheme.DEFAULT_GHOST_BARRAGE;
+		return PvpColorScheme.PanelColorPreset.DEFAULT.gb;
 	}
 
 

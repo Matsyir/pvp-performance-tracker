@@ -73,9 +73,9 @@ import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
-import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -141,6 +141,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
 	public static final String FIGHT_HISTORY_BACKUP_FNAME = "FightHistoryData_autoBackup.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
+	public static final int PANEL_REBUILD_ON_CONFIG_CHANGE_DELAY = 5000;
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
 	public static Image PLUGIN_ICON;
@@ -291,7 +292,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// Explicitly rebuild panel after all setup and import.
         SwingUtilities.invokeLater(() -> {
             if (panel != null) {
-                panel.rebuild();
+                panel.enqueueRebuild();
             }
         });
 
@@ -306,6 +307,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		overlayManager.remove(overlay);
 	}
 
+	private boolean colorConfigEventsEnabled = true;
+	public void disableColorConfigEvents()
+	{
+		colorConfigEventsEnabled = false;
+	}
+	public void enableColorConfigEvents()
+	{
+		colorConfigEventsEnabled = true;
+	}
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
@@ -352,10 +362,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					// Should only remove one fight in most cases.
 					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
 				}
-				panel.rebuild();
+				panel.enqueueRebuild();
 				break;
 			case "exactNameFilter":
-				panel.rebuild();
+				panel.enqueueRebuild();
 				break;
 			case "settingsConfigured":
 				boolean enableConfigWarning = !config.settingsConfigured();
@@ -372,33 +382,30 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					panel.updatePopupMenuForPvpHubConfig();
 				}
 				break;
-				// potential future code for level presets/dynamic config if RL ever supports it.
-//			case "attackLevel":
-//			case "strengthLevel":
-//			case "defenceLevel":
-//			case "rangedLevel":
-//			case "magicLevel":
-//				log.info("TEST-just set a level");
-//				configManager.setConfiguration(CONFIG_KEY, "levelPresetChoice", LevelConfigPreset.CUSTOM);
-//				break;
-//			case "levelPresetChoice":
-//				log.info("TEST- just chose level preset choice");
-//				LevelConfigPreset p = config.levelPresetChoice();
-//				switch (p)
-//				{
-//					case CUSTOM:
-//						break;
-//					case LMS_STATS:
-//					case NH_STAKE:
-//						configManager.setConfiguration(CONFIG_KEY, "attackLevel", p.getAtk());
-//						configManager.setConfiguration(CONFIG_KEY, "strengthLevel", p.getStr());
-//						configManager.setConfiguration(CONFIG_KEY, "defenceLevel", p.getDef());
-//						configManager.setConfiguration(CONFIG_KEY, "rangedLevel", p.getRange());
-//						configManager.setConfiguration(CONFIG_KEY, "magicLevel", p.getMage());
-//						break;
-//
-//				}
-//				break;
+			// provide presets for panel Colors: It works, although the config doesn't update itself when we force values while it's visible.
+			case "panelColorPreset":
+				if (!colorConfigEventsEnabled || config.panelColorPreset() == null || config.panelColorPreset() == PvpColorScheme.PanelColorPreset.CUSTOM)
+				{
+					break;
+				}
+
+				config.panelColorPreset().applyToConfig(configManager);
+				panel.enqueueRebuild();
+				break;
+			case "successColor":
+			case "unsuccessColor":
+			case "neutralColor":
+			case "successDmgColor":
+			case "unsuccessDmgColor":
+			case "neutralDmgColor":
+			case "gbColor":
+				if (colorConfigEventsEnabled)
+				{
+					break;
+				}
+				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
+				panel.enqueueRebuild();
+				break;
 		}
 	}
 
@@ -1443,11 +1450,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// Remove oldest fightHistory until the size is equal to the limit.
 			// Should only remove one fight in most cases.
 			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-			panel.rebuild();
+			panel.enqueueRebuild();
 		}
 		else
 		{
-			panel.addFight(fight);
+			clientThread.invokeLater(() -> panel.addFight(fight));
 		}
 	}
 
@@ -1555,7 +1562,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 					SwingUtilities.invokeLater(() -> {
 						if (panel != null) {
-							panel.rebuild();
+							panel.enqueueRebuild();
 						}
 					});
 				});
@@ -1589,12 +1596,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			}
 			if (rebuildPanel)
 			{
-				// Explicitly rebuild panel after recalculation.
-				SwingUtilities.invokeLater(() -> {
-					if (panel != null) {
-						panel.rebuild();
-					}
-				});
+				if (panel != null)
+				{
+					panel.enqueueRebuild();
+				}
 			}
 		});
 	}
@@ -1650,7 +1655,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// read saved fights from the data string and import them
 			List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(data, FightPerformance[].class));
 			importFights(savedFights);
-			panel.rebuild();
+			panel.enqueueRebuild();
 			createConfirmationModal(true, "Successfully imported " + savedFights.size() + " fights.");
 		}
 		catch (Exception e)
@@ -1725,14 +1730,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		fightHistory.clear();
 		saveFightHistoryData();
-		panel.rebuild();
+		panel.enqueueRebuild();
 	}
 
 	// remove a fight from the loaded fight history
 	public void removeFight(FightPerformance fight)
 	{
 		fightHistory.remove(fight);
-		panel.rebuild();
+		panel.enqueueRebuild();
 	}
 
 	public boolean isAtLMS()

@@ -70,7 +70,7 @@ public class TotalStatsPanel extends JPanel
 
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
-	private static final Color BG_COLOR = ColorUtil.colorWithAlpha(PvpColorScheme.neutralColor(), 0);
+	private static final Color BG_COLOR = PvpColorScheme.EMPTY;
 	private static final int TOTAL_STATS_WIDTH = FULL_PANEL_WIDTH;
 	private static final int TOTAL_STATS_HEIGHT = 196;
 
@@ -461,7 +461,7 @@ public class TotalStatsPanel extends JPanel
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLeftLabel, BorderLayout.WEST);
 
 		ghostBarrageStatsLabel = new JShadowedLabel();
-		ghostBarrageStatsLabel.setForeground(PvpColorScheme.getGbColor());
+		ghostBarrageStatsLabel.setForeground(PvpColorScheme.gbColor());
 
 		ghostBarrageStatsPanel.add(ghostBarrageStatsLabel, BorderLayout.EAST);
 		add(ghostBarrageStatsPanel);

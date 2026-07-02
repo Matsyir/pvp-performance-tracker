@@ -811,24 +811,32 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
 	{
-		boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them
-			|| ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
-				(CONFIG.exactNameFilter() ?
-					(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
-					: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
-				)
-			|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
-				bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
-				&& bgStyle.isEnabled()
-				&& (bgStyle.getName().toLowerCase().startsWith(filter) ||
-					bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
-			)
-		);
-
-		// if it's already relevant from one of the first 2 filter types, skip checking for the 3rd.
-		if (isRelevant)
+		try
 		{
-			return isRelevant;
+			boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them
+				|| ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
+					(CONFIG.exactNameFilter() ?
+						(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
+						: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
+					)
+				|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
+					bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
+					&& bgStyle.isEnabled()
+					&& (bgStyle.getName().toLowerCase().startsWith(filter) ||
+						bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
+				)
+			);
+
+			// if it's already relevant from one of the first 2 filter types, skip checking for the 3rd.
+			if (isRelevant)
+			{
+				return isRelevant;
+			}
+		}
+		// if there's somehow an exception during this filter (shouldn't happen), just return false
+		catch (Exception e)
+		{
+			return false;
 		}
 
 		// third filter type: Filter by >, >=, <, or <= total number of attacks from the client player / competitor
