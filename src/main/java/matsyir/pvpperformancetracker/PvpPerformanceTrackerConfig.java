@@ -190,6 +190,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return WorldFlag.WorldDisplayChoice.FLAG;
 	}
 
+	// ============================= PvP-Hub Options ===============================
+
 	@ConfigItem(
 		keyName = "uploadFightsToPvpHub",
 		name = "Upload Fights to PvP-Hub.com",
@@ -266,7 +268,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "hidePanelBgImages", // controls text centering for FightPerformancePanel.
+		keyName = "hidePanelBgImages",
 		name = "Hide Panel Backgrounds",
 		description = "Hides the panel background images introduced in 1.8.0 to revert to a simpler look and feel.",
 		position = 1802,

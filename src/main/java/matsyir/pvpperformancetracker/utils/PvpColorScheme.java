@@ -62,7 +62,6 @@ public class PvpColorScheme
 		public final String name;
 
 		public final Color success;
-
 		public final Color unsuccess;
 		public final Color neutral;
 
@@ -72,10 +71,17 @@ public class PvpColorScheme
 
 		public final Color gb;
 
+		// create a Standard PanelColorPreset, which re-uses the same colors for standard/general colors & dmgColors
 		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color gb)
 		{
 			this(name, success, unsuccess, neutral, success, unsuccess, neutral, gb);
 		}
+		// create dmg-only highlighted version of a PanelColorPreset based on another given PanelColorPreset
+		PanelColorPreset(PanelColorPreset p, String name)
+		{
+			this(name, p.neutral, p.neutral, p.neutral, p.dmgSuccess, p.dmgUnsuccess, p.dmgNeutral, p.gb);
+		}
+		// init a PanelColorPreset by specifying all fields.
 		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color dmgSuccess, Color dmgUnsuccess, Color dmgNeutral, Color gb)
 		{
 			this.name = name;
@@ -89,12 +95,6 @@ public class PvpColorScheme
 			this.dmgNeutral = dmgNeutral;
 
 			this.gb = gb;
-		}
-
-		// create dmg-only highlighted version based on a given PanelColorPreset
-		PanelColorPreset(PanelColorPreset p, String name)
-		{
-			this(name, p.neutral, p.neutral, p.neutral, p.dmgSuccess, p.dmgUnsuccess, p.dmgNeutral, p.gb);
 		}
 
 		@Override

@@ -145,14 +145,17 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		Border paddedPanelActionBorder = BorderFactory.createCompoundBorder(
 			panelActionBorder,
 			panelActionPaddingBorder);
+
 		Border paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
 			panelActionBorderHovered,
 			panelActionPaddingBorder);
+
 		Border paddedPanelActionBorderNameVisible = BorderFactory.createCompoundBorder(
 			BorderFactory.createCompoundBorder(
 				panelActionBorderWarning,
 				BorderFactory.createLineBorder(new Color(255, 0, 0, 80))),
 			panelActionPaddingBorder);
+
 		Border paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
 				BorderFactory.createCompoundBorder(
 					BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
@@ -400,13 +403,13 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// especially when we're doing 200 or potentially more.
 		ArrayList<FightPerformancePanel> panelsToAdd = new ArrayList<>();
 		fights.forEach((f) -> panelsToAdd.add(new FightPerformancePanel(
-			f, worldService, getWorldLocationSupplier(f.getPvpHubDisplayFight().getWorld()))));
+			f, worldService, getWorldLocationSupplier(f.getWorld()))));
 
 		// for bulk addFights, don't just add them to 0, since this causes visual flickering while they all get added.
 		// instead, start at 0 and go upwards, so the first few panels simply get replaced, and then while the rest
 		// of the fights get initialized, the only visual change would be the scrollbar length changing, rather than
 		// entire panels flickering.
-		// run all of this on UI thread, since we're removing and adding containers in it.
+		// run all of this on UI thread, since we're removing and adding containers.
 		SwingUtilities.invokeLater(() ->
 		{
 			fightHistoryContainer.removeAll();
