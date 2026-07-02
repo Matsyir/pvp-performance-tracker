@@ -84,6 +84,39 @@ public class PvpPerformanceTrackerUtils
 		return Math.max(0.0, Math.min(chance, 1.0));
 	}
 
+	public static Double calculateClampedKoChance(double accuracy, int minHit, int maxHit, int estimatedOpponentHp)
+	{
+		return calculateMultiHitClampedKoChance(accuracy, minHit, maxHit, 1, estimatedOpponentHp);
+	}
+
+	public static Double calculateMultiHitClampedKoChance(double accuracy, int minHitTotal, int maxHitTotal, int hitCount, int estimatedOpponentHp)
+	{
+		if (maxHitTotal < estimatedOpponentHp || estimatedOpponentHp <= 0)
+		{
+			return null;
+		}
+
+		double[] dist = buildMultiHitClampedDamageDistribution(accuracy, minHitTotal, maxHitTotal, hitCount);
+		if (dist == null || dist.length == 0)
+		{
+			return null;
+		}
+
+		int hpNeeded = Math.max(0, estimatedOpponentHp);
+		if (hpNeeded >= dist.length)
+		{
+			return null;
+		}
+
+		double chance = 0.0;
+		for (int damage = hpNeeded; damage < dist.length; damage++)
+		{
+			chance += dist[damage];
+		}
+
+		return Math.max(0.0, Math.min(chance, 1.0));
+	}
+
 	/**
 	 * Returns how many splats an attack animation should produce based on its group pattern.
 	 */
@@ -366,6 +399,46 @@ public class PvpPerformanceTrackerUtils
 
 		dist[0] += 1.0 - acc;
 		return dist;
+	}
+
+	private static double[] buildMultiHitClampedDamageDistribution(double accuracy, int minHitTotal, int maxHitTotal, int hitCount)
+	{
+		hitCount = Math.max(1, hitCount);
+		int perHitMin = Math.max(0, minHitTotal / hitCount);
+		int perHitMax = Math.max(perHitMin, maxHitTotal / hitCount);
+
+		double[] perHit = buildCappedDamageDistribution(accuracy, perHitMin, perHitMax, perHitMax);
+		if (perHit == null || perHit.length == 0)
+		{
+			return null;
+		}
+
+		double[] total = new double[] {1.0};
+		for (int hit = 0; hit < hitCount; hit++)
+		{
+			total = convolve(total, perHit);
+		}
+		return total;
+	}
+
+	private static double[] convolve(double[] left, double[] right)
+	{
+		double[] result = new double[left.length + right.length - 1];
+		for (int i = 0; i < left.length; i++)
+		{
+			if (left[i] <= 0.0)
+			{
+				continue;
+			}
+			for (int j = 0; j < right.length; j++)
+			{
+				if (right[j] > 0.0)
+				{
+					result[i + j] += left[i] * right[j];
+				}
+			}
+		}
+		return result;
 	}
 
     public static int getSpriteForSkill(Skill skill)

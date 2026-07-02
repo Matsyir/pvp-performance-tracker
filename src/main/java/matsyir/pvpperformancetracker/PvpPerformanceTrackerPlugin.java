@@ -1168,12 +1168,41 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 								);
 							}
 						}
-						else
-						{
-							koChanceCurrent = (hpBeforeCurrent != null)
-								? PvpPerformanceTrackerUtils.calculateKoChance(entry.getAccuracy(), entry.getMinHit(), entry.getMaxHit(), hpBeforeCurrent)
-								: null;
-						}
+							else
+							{
+								if (hpBeforeCurrent != null)
+								{
+									switch (entry.getDamageRollDistribution())
+									{
+										case CLAMPED_TO_MINIMUM:
+											koChanceCurrent = PvpPerformanceTrackerUtils.calculateClampedKoChance(
+												entry.getAccuracy(),
+												entry.getMinHit(),
+												entry.getMaxHit(),
+												hpBeforeCurrent
+											);
+											break;
+										case MULTI_HIT_CLAMPED_TO_MINIMUM:
+											koChanceCurrent = PvpPerformanceTrackerUtils.calculateMultiHitClampedKoChance(
+												entry.getAccuracy(),
+												entry.getMinHit(),
+												entry.getMaxHit(),
+												entry.getDamageRollHitCount(),
+												hpBeforeCurrent
+											);
+											break;
+										case STANDARD:
+										default:
+											koChanceCurrent = PvpPerformanceTrackerUtils.calculateKoChance(
+												entry.getAccuracy(),
+												entry.getMinHit(),
+												entry.getMaxHit(),
+												hpBeforeCurrent
+											);
+											break;
+									}
+								}
+							}
 
 						if (koChanceCurrent != null && koChanceCurrent <= 0.0)
 						{
