@@ -145,9 +145,6 @@ public enum TrackedStatistic
 					" damage (" + fight.opponent.getDmgDealtString(fight.competitor, true) + " vs you)"
 				, fight.opponentDmgDealtIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 				, true
-				, fight.competitor.isDead() ? FightPerformancePanel.deathIcon : null
-				, fight.opponent.isDead() ? FightPerformancePanel.deathIcon : null
-
 			),
 			() -> PanelFactory.createOverlayStatsLine(DMG_DEALT.acronym, 70, 30,
 				NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor()),

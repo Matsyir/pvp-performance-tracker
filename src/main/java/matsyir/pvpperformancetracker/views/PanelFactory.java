@@ -25,6 +25,7 @@
 
 package matsyir.pvpperformancetracker.views;
 
+import java.util.function.BiConsumer;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -35,6 +36,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import javax.swing.border.Border;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
+import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 
@@ -43,25 +48,28 @@ public final class PanelFactory
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
-	public static final int STATS_LINE_ICON_MIDDLE_SPACING_PX = 8;
+	public static final int DEATH_ICON_MIDDLE_SPACING_PX = 14;
 	public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
-	public static final int HORIZONTAL_PADDING = 6;
+	public static final int HORIZONTAL_PADDING_OUTER = 4;
+	public static final int HORIZONTAL_PADDING_INNER_SIDE_ALIGNED = (HORIZONTAL_PADDING_OUTER / 2) + 1;
+	public static final int HORIZONTAL_PADDING_INNER_CENTERED = HORIZONTAL_PADDING_INNER_SIDE_ALIGNED;//HORIZONTAL_PADDING_OUTER * 2;
 
 	public static final Font COMPACT_INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
 
 	// borders for StatsLine on FightPerformancePanel, also reused on TotalStatsPanel
 	// border for left/right padding
-	public static final Border paddingBorder = BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING, 0, HORIZONTAL_PADDING);
+	public static final Border paddingBorder = BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING_OUTER, 0, HORIZONTAL_PADDING_OUTER);
 	public static final Border bottomLineBorderUnpadded = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
 		BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARKER_GRAY_HOVER_COLOR));
+	public static final int DEATH_ICON_SIDE_SPACING_PX = HORIZONTAL_PADDING_OUTER;
 
 	public static final Border bottomLineBorder = BorderFactory.createCompoundBorder(
 		paddingBorder, // left/right padding
 		bottomLineBorderUnpadded);
 
 	public static final int PREFERRED_LABEL_WIDTH_UNPADDED = (PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2);
-	public static final int PREFERRED_LABEL_WIDTH = PREFERRED_LABEL_WIDTH_UNPADDED - HORIZONTAL_PADDING;
+	public static final int PREFERRED_LABEL_WIDTH = PREFERRED_LABEL_WIDTH_UNPADDED - HORIZONTAL_PADDING_OUTER - HORIZONTAL_PADDING_INNER_SIDE_ALIGNED;
 
 	public static Font getIndexFontFrom(float initialFontSize)
 	{
@@ -79,7 +87,8 @@ public final class PanelFactory
 	{
 		return createStatsLine(miniCenterLabelText, miniCenterLabelTooltip,
 			leftText, leftTooltip, leftColor,
-			rightText, rightTooltip, rightColor, true);
+			rightText, rightTooltip, rightColor,
+			true);
 	}
 	public static JPanel createStatsLine(String miniCenterLabelText, String miniCenterLabelTooltip,
 										 String leftText, String leftTooltip, Color leftColor,
@@ -88,12 +97,14 @@ public final class PanelFactory
 	{
 		return createStatsLine(miniCenterLabelText, miniCenterLabelTooltip,
 			leftText, leftTooltip, leftColor,
-			rightText, rightTooltip, rightColor, true, null, null);
+			rightText, rightTooltip, rightColor,
+			includeBottomBorder, null);
 	}
+
 	public static JPanel createStatsLine(String miniCenterLabelText, String miniCenterLabelTooltip,
 										 String leftText, String leftTooltip, Color leftColor,
 										 String rightText, String rightTooltip, Color rightColor,
-										 boolean includeBottomBorder, ImageIcon leftIcon, ImageIcon rightIcon)
+										 boolean includeBottomBorder, BiConsumer<Component, Graphics> bgPaintCallback)
 	{
 		JPanel statsLine = new JPanel(new GridBagLayout())
 		{
@@ -101,32 +112,21 @@ public final class PanelFactory
 			protected void paintComponent(Graphics g)
 			{
 				super.paintComponent(g);
-				// paint icons centered (currently only used for red skull)
-				if (leftIcon != null)
+
+				if (bgPaintCallback != null)
 				{
-					int x = (getWidth() / 2) - leftIcon.getIconWidth() - STATS_LINE_ICON_MIDDLE_SPACING_PX;
-					int y = (getHeight() - leftIcon.getIconHeight()) / 2 - 1;
-					leftIcon.paintIcon(this, g, x, y);
-				}
-				if (rightIcon != null)
-				{
-					int x = (getWidth() / 2) + STATS_LINE_ICON_MIDDLE_SPACING_PX;
-					int y = (getHeight() - rightIcon.getIconHeight()) / 2 - 1;
-					rightIcon.paintIcon(this, g, x, y);
+					bgPaintCallback.accept(this, g.create());
 				}
 			}
 		};
 		statsLine.setBackground(null);
-		int preferredLabelWidth;
 		if (includeBottomBorder)
 		{
 			statsLine.setBorder(bottomLineBorder);
-			preferredLabelWidth = PREFERRED_LABEL_WIDTH;
 		}
 		else
 		{
 			statsLine.setBorder(paddingBorder);
-			preferredLabelWidth = PREFERRED_LABEL_WIDTH;
 		}
 
 
@@ -135,14 +135,18 @@ public final class PanelFactory
 		ForwardingLabel leftLabel = new ForwardingLabel(leftText);
 		leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);
 		leftLabel.setForeground(leftColor);
-		leftLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		leftLabel.setPreferredSize(new Dimension(preferredLabelWidth, leftLabel.getPreferredSize().height));
+		leftLabel.setHorizontalAlignment(CONFIG.centerPanelLabels() ? SwingConstants.CENTER : SwingConstants.LEFT);
 
 		ForwardingLabel rightLabel = new ForwardingLabel(rightText);
 		rightLabel.setToolTipText("<html>" + rightTooltip + tooltipSuffix);
 		rightLabel.setForeground(rightColor);
-		rightLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		rightLabel.setPreferredSize(new Dimension(preferredLabelWidth, leftLabel.getPreferredSize().height));
+		rightLabel.setHorizontalAlignment(CONFIG.centerPanelLabels() ? SwingConstants.CENTER : SwingConstants.RIGHT);
+
+		leftLabel.setBorder(BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING_INNER_SIDE_ALIGNED, 0, 0));
+		rightLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, HORIZONTAL_PADDING_INNER_SIDE_ALIGNED));
+
+		leftLabel.setPreferredSize(new Dimension(PREFERRED_LABEL_WIDTH, leftLabel.getPreferredSize().height));
+		rightLabel.setPreferredSize(new Dimension(PREFERRED_LABEL_WIDTH, rightLabel.getPreferredSize().height));
 
 		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
 		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
@@ -187,6 +191,87 @@ public final class PanelFactory
 		overlayStatsLine.setGutter(new Dimension(2, 0));
 
 		return overlayStatsLine;
+	}
+
+	public static JPanel createPlayerNamesStatsLine(FightPerformance fight, String tooltip, ImageIcon worldIcon)
+	{
+		return PanelFactory.createStatsLine("","",
+			fight.competitor.getName(), tooltip, PvpColorScheme.neutralColor(),
+			fight.opponent.getName(), tooltip, PvpColorScheme.neutralColor(),
+			true,
+			(Component c, Graphics g) ->
+			{
+				ImageIcon ico = FightPerformancePanel.deathIcon;
+				boolean skullsToRender = fight.competitor.isDead() || fight.opponent.isDead();
+				if (skullsToRender)
+				{
+					// first, center death icon onto labels
+					int centerX = (c.getWidth() - ico.getIconWidth()) / 2;
+					int centerY = ((c.getHeight() - ico.getIconHeight()) / 2) - bottomLineBorder.getBorderInsets(c).bottom;
+					if (fight.competitor.isDead())
+					{
+						// adjust the centering based on config
+						int nameStrWidth = g.getFontMetrics(g.getFont()).stringWidth(fight.competitor.getName());
+						int xOffset = CONFIG.centerPanelLabels()
+							? (c.getWidth() / 4) + ((nameStrWidth + ico.getIconWidth()) / 2)
+							: (c.getWidth() / 2) - nameStrWidth - ico.getIconWidth() - 2;
+						ico.paintIcon(c, g, centerX - xOffset, centerY);
+					}
+					if (fight.opponent.isDead())
+					{
+						// adjust the centering based on config
+						int nameStrWidth = g.getFontMetrics(g.getFont()).stringWidth(fight.opponent.getName());
+						int xOffset = CONFIG.centerPanelLabels()
+							? (c.getWidth() / 4) + ((nameStrWidth + ico.getIconWidth()) / 2)
+							: (c.getWidth() / 2) - nameStrWidth - ico.getIconWidth() - 2;
+						ico.paintIcon(c, g, centerX + xOffset, centerY);
+					}
+				}
+
+				// done painting death skull. Now we do flag/world display depending on config
+				if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.HIDDEN)
+				{
+					return;
+				}
+
+				if (fight.getWorld() > 0 && c instanceof JPanel)
+				{
+					//JPanel lineContainer = (JPanel)c;
+					//lineContainer.setToolTipText(tooltip);
+
+					if (worldIcon != null)
+					{
+						int x = (c.getWidth() - worldIcon.getIconWidth()) / 2;
+						int y = ((c.getHeight() - worldIcon.getIconHeight()) / 2) - bottomLineBorder.getBorderInsets(c).bottom;
+						worldIcon.paintIcon(c, g, x, y);
+					}
+
+					if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL)
+					{
+						String wText = String.valueOf(fight.getWorld());
+						g.setFont(PanelFactory.getIndexFontFrom(g.getFont()).deriveFont(13f));
+						FontMetrics fm = g.getFontMetrics(g.getFont());
+						int x = (c.getWidth() - fm.stringWidth(wText)) / 2;
+						int y = (c.getHeight() + fm.getAscent()) / 2 - fm.getDescent();
+
+						g.translate(1, 1);
+						g.setColor(Color.BLACK);
+						g.drawString(wText, x, y); // draw text shadow 1/3
+
+						g.translate(-2, 0);
+						g.drawString(wText, x, y); // draw text shadow 2/3
+						g.translate(1, 1);
+						g.drawString(wText, x, y); // draw text shadow 2/3
+
+						g.translate(0, -2);
+						g.setColor(Color.WHITE);
+
+						g.drawString(wText, x, y); // draw text
+
+						g.dispose();
+					}
+				}
+			});
 	}
 
 

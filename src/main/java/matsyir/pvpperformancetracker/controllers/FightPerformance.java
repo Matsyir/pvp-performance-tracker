@@ -811,6 +811,17 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
 	{
+		// temp dev filter for testing ui with long names
+//		try
+//		{
+//			boolean isNameLenFilter = filter.startsWith("thicc");
+//			if (isNameLenFilter)
+//			{
+//				return competitor.getName().length() >= 12 || opponent.getName().length() >= 12;
+//			}
+//		}
+//		catch (Exception e) { }
+
 		try
 		{
 			boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them

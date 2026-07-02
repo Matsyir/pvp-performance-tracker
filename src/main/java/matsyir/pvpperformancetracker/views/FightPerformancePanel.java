@@ -27,10 +27,8 @@ package matsyir.pvpperformancetracker.views;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
@@ -46,12 +44,10 @@ import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
@@ -65,8 +61,6 @@ import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
-import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -95,7 +89,7 @@ public class FightPerformancePanel extends JPanel
 	{
 		paddingBorder = BorderFactory.createCompoundBorder(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-			BorderFactory.createEmptyBorder(5, 0, 4, 0));
+			BorderFactory.createEmptyBorder(8, 0, 4, 0));
 	}
 
 	@Getter
@@ -212,20 +206,29 @@ public class FightPerformancePanel extends JPanel
 		// save Fighters temporarily for more direct access
 		Fighter competitor = displayFight.getCompetitor();
 		Fighter opponent = displayFight.getOpponent();
-		boolean competitorDied = competitor.isDead();
-		boolean opponentDied = opponent.isDead();
 
 		setLayout(new BorderLayout(0, 0));
-
+		setBorder(paddingBorder);
 
 		final String baseTooltipText = "<html>" + competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
 			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
-		final String worldDisplayTooltipText = (displayFight.getWorld() > 0 ?
-			" (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")" :
-			"");
-		setToolTipText(baseTooltipText);
+		final String worldDisplayTooltipText = (displayFight.getWorld() > 0
+			? " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")"
+			: "");
 
-		setBorder(paddingBorder);
+		bgStyle = fight.getBgStyle();
+
+		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
+		{
+			bgStyleDisplayTooltipText = "<br><br>" +
+				"<strong>Border Style: </strong><u>" + bgStyle.name + "</u>";
+			setToolTipText(baseTooltipText + bgStyleDisplayTooltipText);
+		}
+		else
+		{
+			bgStyleDisplayTooltipText = "";
+		}
+		setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
 
 		ArrayList<JPanel> panelLines = new ArrayList<>();
 
@@ -234,84 +237,15 @@ public class FightPerformancePanel extends JPanel
 		fightPanel.setLayout(new BoxLayout(fightPanel, BoxLayout.Y_AXIS));
 		fightPanel.setBackground(null);
 
-		// FIRST LINE: both player names, with centered world flag
-		JPanel playerNamesLine = new JPanel(new BorderLayout())
+		// FIRST LINE: both player names, with centered world flag or label/hidden depending on config
+		ImageIcon worldIcon = null;
+		if (displayFight.getWorld() > 0)
 		{
-			@Override
-			protected void paintComponent(Graphics g)
-			{
-				super.paintComponent(g);
-
-				if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.HIDDEN)
-				{
-					return;
-				}
-
-				if (displayFight.getWorld() > 0)
-				{
-					int worldLocation = worldLocationSupplier.getAsInt();
-					setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
-					ImageIcon worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
-					boolean isDisplayingWorldLabel = CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL;
-
-					Graphics g2 = g.create();
-
-					if (worldIcon != null)
-					{
-						int x = (getWidth() - worldIcon.getIconWidth()) / 2;
-						int y = (getHeight() - worldIcon.getIconHeight()) / 2;
-						worldIcon.paintIcon(this, g2, x, y);
-					}
-
-					if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.WORLD_LABEL)
-					{
-						String worldText = String.valueOf(fight.getWorld());
-						g2.setFont(PanelFactory.getIndexFontFrom(g2.getFont()).deriveFont(13f));
-						FontMetrics fm = g2.getFontMetrics(g2.getFont());
-						int x = (getWidth() - fm.stringWidth(worldText)) / 2;
-						int y = (getHeight() + fm.getAscent()) / 2 - fm.getDescent();
-
-						g2.translate(1, 1);
-						g2.setColor(Color.BLACK);
-						g2.drawString(worldText, x, y); // draw text shadow 1/3
-
-						g2.translate(-2, 0);
-						g2.drawString(worldText, x, y); // draw text shadow 2/3
-						g2.translate(1, 1);
-						g2.drawString(worldText, x, y); // draw text shadow 2/3
-
-						g2.translate(0, -2);
-						g2.setColor(Color.WHITE);
-
-						g2.drawString(worldText, x, y); // draw text
-
-						g2.dispose();
-					}
-				}
-			}
-		};
-		playerNamesLine.setBackground(null);
-		playerNamesLine.setBorder(PanelFactory.bottomLineBorder);
-
-		// player names
-		JShadowedLabel playerStatsName = new JShadowedLabel();
-		playerStatsName.setForeground(PvpColorScheme.neutralColor());
-		playerStatsName.setHorizontalAlignment(SwingConstants.CENTER);
-
-		JShadowedLabel opponentStatsName = new JShadowedLabel();
-		opponentStatsName.setForeground(PvpColorScheme.neutralColor());
-		opponentStatsName.setHorizontalAlignment(SwingConstants.CENTER);
-
-		// player names line LEFT: player name
-		playerStatsName.setText(competitor.getName());
-		playerStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, playerStatsName.getPreferredSize().height));
-		playerNamesLine.add(playerStatsName, BorderLayout.WEST);
-
-		// player names line RIGHT: opponent name
-		opponentStatsName.setText(opponent.getName());
-		opponentStatsName.setPreferredSize(new Dimension(PanelFactory.PREFERRED_LABEL_WIDTH, opponentStatsName.getPreferredSize().height));
-		playerNamesLine.add(opponentStatsName, BorderLayout.EAST);
-
+			int worldLocation = worldLocationSupplier.getAsInt();
+			setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
+			worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
+		}
+		JPanel playerNamesLine = PanelFactory.createPlayerNamesStatsLine(fight, getToolTipText(), worldIcon);
 		panelLines.add(playerNamesLine);
 
 		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;
@@ -425,20 +359,6 @@ public class FightPerformancePanel extends JPanel
 		add(fightPanel, BorderLayout.NORTH);
 
 		setMaximumSize(new Dimension(PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH, (int) getPreferredSize().getHeight()));
-
-		bgStyle = fight.getBgStyle();
-
-		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
-		{
-			bgStyleDisplayTooltipText = "<br><br>" +
-				"<strong>Border Style: </strong><u>" + bgStyle.name + "</u>";
-			setToolTipText(baseTooltipText + bgStyleDisplayTooltipText);
-		}
-		else
-		{
-			bgStyleDisplayTooltipText = "";
-		}
-
 	}
 
 	private void setFullBackgroundColor(Color color)
