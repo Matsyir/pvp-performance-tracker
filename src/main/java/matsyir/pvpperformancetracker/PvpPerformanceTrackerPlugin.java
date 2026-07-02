@@ -289,10 +289,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		TotalStatsPanel.loadBackgroundImages();
 		
-		// Explicitly rebuild panel after all setup and import.
+		// Explicitly force rebuild panel after all setup and import.
         SwingUtilities.invokeLater(() -> {
             if (panel != null) {
-                panel.enqueueRebuild();
+                panel.enqueueRebuild(true);
             }
         });
 
@@ -399,12 +399,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "unsuccessDmgColor":
 			case "neutralDmgColor":
 			case "gbColor":
-				if (colorConfigEventsEnabled)
+				if (!colorConfigEventsEnabled)
 				{
 					break;
 				}
-				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
 				panel.enqueueRebuild();
+				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
 				break;
 			case "centerPanelLabels":
 				panel.enqueueRebuild();

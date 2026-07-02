@@ -1,6 +1,7 @@
 package matsyir.pvpperformancetracker.utils;
 
 import java.awt.Color;
+import java.awt.Panel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -17,8 +18,9 @@ public class PvpColorScheme
 
 	// won't copy all ColorScheme values here, but this one should see a lot of use/save an import in many cases
 	public static final Color BRAND_ORANGE = ColorScheme.BRAND_ORANGE;
-	// a slightly darker WHITE, similar to ColorScheme.TEXT_COLOR, but a bit brighter
-	public static final Color BRIGHTER_TEXT_COLOR = new Color(222, 224, 228);
+	public static final Color TITLE_COLOR = ColorUtil.colorLerp(BRAND_ORANGE, Color.WHITE, 0.4f);
+	// a slightly darker WHITE, similar to ColorScheme.TEXT_COLOR, but a bit brighter, and slightly blueish
+	public static final Color BRIGHTER_TEXT_COLOR = new Color(225, 230, 255);
 
 	public static final Color BLOOD_RED_ORANGE = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.5f);
 	public static final Color BLOOD_RED_ORANGE_DARKER = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.75f);
@@ -30,23 +32,30 @@ public class PvpColorScheme
 	// the dmg colors use the same ones for now.
 	public static final Color DEFAULT_SUCCESS = GREEN_TEXT_ACTION;
 	public static final Color DEFAULT_UNSUCCESS = BLOOD_RED_ORANGE_DARKER;
-	public static final Color DEFAULT_NEUTRAL = Color.WHITE;
+	public static final Color DEFAULT_NEUTRAL = BRIGHTER_TEXT_COLOR;
+
+	public static final Color DEFAULT_MODERN_SUCCESS = new Color(24, 120, 255);
+	public static final Color DEFAULT_MODERN_UNSUCCESS = new Color(239, 25, 57);
+	public static final Color DEFAULT_MODERN_NEUTRAL = BRIGHTER_TEXT_COLOR;
 
 	public static final Color DEFAULT_GHOST_BARRAGE = new Color(163, 165, 251); // ice barrage-y light-cyan
 
 	@Getter
 	public enum PanelColorPreset
 	{
-		DEFAULT("Default", DEFAULT_SUCCESS, DEFAULT_UNSUCCESS, DEFAULT_NEUTRAL, DEFAULT_GHOST_BARRAGE),
-		CLASSIC("Classic", Color.GREEN, Color.WHITE, Color.WHITE, BRAND_ORANGE),
-		HIGH_CONTRAST("High Contrast", Color.GREEN, Color.RED, Color.WHITE, Color.CYAN),
-
-		DMGONLY_DEFAULT("<html>Default <font size='2'><u>*(dmgOnly)</u></font>", DEFAULT_NEUTRAL, DEFAULT_NEUTRAL, DEFAULT_NEUTRAL,
+		DEFAULT("<html>Default <font size='2'>(Green, Red, White)</font>",
 			DEFAULT_SUCCESS, DEFAULT_UNSUCCESS, DEFAULT_NEUTRAL, DEFAULT_GHOST_BARRAGE),
-		DMGONLY_CLASSIC("<html>Classic <font size='2'><u>*(dmgOnly)</u></font>", Color.WHITE, Color.WHITE, Color.WHITE,
+		MODERN("<html>Modern <font size='2'>(Blue, Red, White)</font>",
+			DEFAULT_MODERN_SUCCESS, DEFAULT_MODERN_UNSUCCESS, DEFAULT_MODERN_NEUTRAL, DEFAULT_GHOST_BARRAGE),
+		CLASSIC("<html>Classic <font size='2'>(Green, White)</font>",
 			Color.GREEN, Color.WHITE, Color.WHITE, BRAND_ORANGE),
-		DMGONLY_HIGH_CONTRAST("<html>High Contrast <font size='2'><u>*(dmgOnly)</u></font>", Color.WHITE, Color.WHITE, Color.WHITE,
+		HIGH_CONTRAST("High Contrast",
 			Color.GREEN, Color.RED, Color.WHITE, Color.CYAN),
+
+		DMGONLY_DEFAULT(DEFAULT, "<html>Default <font size='2'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_MODERN(MODERN, "<html>Modern <font size='2'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_CLASSIC(CLASSIC, "<html>Classic <font size='2'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_HIGH_CONTRAST(HIGH_CONTRAST, "<html>High Contrast <font size='2'><u>*(dmgOnly)</u></font>"),
 
 		CUSTOM("Custom", null, null, null, null);
 
@@ -80,6 +89,12 @@ public class PvpColorScheme
 			this.dmgNeutral = dmgNeutral;
 
 			this.gb = gb;
+		}
+
+		// create dmg-only highlighted version based on a given PanelColorPreset
+		PanelColorPreset(PanelColorPreset p, String name)
+		{
+			this(name, p.neutral, p.neutral, p.neutral, p.dmgSuccess, p.dmgUnsuccess, p.dmgNeutral, p.gb);
 		}
 
 		@Override
@@ -128,22 +143,21 @@ public class PvpColorScheme
 					"You should close and re-open the config before attempting to change colors or presets again."
 			);
 		}
-	}
+	} // End of PanelColorPreset
 
+	// getters for color values which are also config fields
 	public static Color successColor()
 	{
 		return CONFIG == null || CONFIG.successColor() == null
 			? PanelColorPreset.DEFAULT.success
 			: CONFIG.successColor();
 	}
-
 	public static Color unsuccessColor()
 	{
 		return CONFIG == null || CONFIG.unsuccessColor() == null
 			? PanelColorPreset.DEFAULT.unsuccess
 			: CONFIG.unsuccessColor();
 	}
-
 	public static Color neutralColor()
 	{
 		return CONFIG == null || CONFIG.neutralColor() == null
@@ -157,14 +171,12 @@ public class PvpColorScheme
 			? PanelColorPreset.DEFAULT.dmgSuccess
 			: CONFIG.successDmgColor();
 	}
-
 	public static Color unsuccessDmgColor()
 	{
 		return CONFIG == null || CONFIG.unsuccessDmgColor() == null
 			? PanelColorPreset.DEFAULT.dmgUnsuccess
 			: CONFIG.unsuccessDmgColor();
 	}
-
 	public static Color neutralDmgColor()
 	{
 		return CONFIG == null || CONFIG.neutralDmgColor() == null

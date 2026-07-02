@@ -814,7 +814,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// temp dev filter for testing ui with long names
 //		try
 //		{
-//			boolean isNameLenFilter = filter.startsWith("thicc");
+//			boolean isNameLenFilter = filter.startsWith("long");
 //			if (isNameLenFilter)
 //			{
 //				return competitor.getName().length() >= 12 || opponent.getName().length() >= 12;
@@ -855,10 +855,19 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// <=10 will show fights with <= 10 total attacks by the client player.
 		try
 		{
-			boolean isGtFilter = filter.startsWith(">") && filter.length() >= 2;
-			boolean isGteFilter = filter.startsWith(">=") && filter.length() >= 3;
-			boolean isLtFilter = filter.startsWith("<") && filter.length() >= 2;
-			boolean isLteFilter = filter.startsWith("<=") && filter.length() >= 3;
+			if (filter.length() < 2)
+			{
+				return false;
+			}
+			boolean isGtFilter = filter.startsWith(">");
+			boolean isLtFilter = filter.startsWith("<");
+			if (!isGtFilter && !isLtFilter && filter.length() < 3)
+			{
+				return false;
+			}
+			boolean isGteFilter = filter.startsWith(">=");
+			boolean isLteFilter = filter.startsWith("<=");
+
 			if (!isGtFilter && !isGteFilter && !isLtFilter && !isLteFilter)
 			{
 				return false;
