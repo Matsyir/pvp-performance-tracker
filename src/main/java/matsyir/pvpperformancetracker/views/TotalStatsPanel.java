@@ -1088,8 +1088,11 @@ public class TotalStatsPanel extends JPanel
 	@Override
 	protected void paintComponent(Graphics g)
 	{
-		// Draw bgImage scaled to panel size (ideally should be the same anyway)
-		g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+		if (!CONFIG.hidePanelBgImages())
+		{
+			// Draw bgImage scaled to panel size (ideally should be the same anyway)
+			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+		}
 
 		super.paintComponent(g);
 	}

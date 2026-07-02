@@ -73,10 +73,19 @@ public class FightPerformancePanel extends JPanel
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
 
-	private static final Color BG_COLOR = new Color(0, 0, 0, 0);
+	public static final Color BG_COLOR_FOR_IMG = PvpColorScheme.EMPTY;
+	public static final Color BG_COLOR = ColorScheme.DARKER_GRAY_COLOR;
+	public static Color CURRENT_BG_COLOR = BG_COLOR_FOR_IMG;
+	public static void updateCurrentBgColor()
+	{
+		if (CONFIG == null) { return; }
+
+		CURRENT_BG_COLOR = !CONFIG.hidePanelBgImages()
+			? BG_COLOR_FOR_IMG
+			: BG_COLOR;
+	}
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
-	private static final int DEATH_ICON_SIDE_SPACING_PX = 12;
 
 	// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
 	public static final ImageIcon deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
@@ -235,7 +244,7 @@ public class FightPerformancePanel extends JPanel
 		// boxlayout panel to hold each of the lines.
 		JPanel fightPanel = new JPanel();
 		fightPanel.setLayout(new BoxLayout(fightPanel, BoxLayout.Y_AXIS));
-		fightPanel.setBackground(null);
+		fightPanel.setBackground(CURRENT_BG_COLOR);
 
 		// FIRST LINE: both player names, with centered world flag or label/hidden depending on config
 		ImageIcon worldIcon = null;
@@ -298,7 +307,7 @@ public class FightPerformancePanel extends JPanel
 		// We are setting the background colors to transparent here,
 		// this is required even with the image background, otherwise some of the backgrounds are opaque by default and
 		// cover the image. This ensures everything is transparent and doesn't cover the image.
-		setFullBackgroundColor(BG_COLOR);
+		setFullBackgroundColor(CURRENT_BG_COLOR);
 
 		JPopupMenu popupMenu = new JPopupMenu();
 
@@ -410,11 +419,11 @@ public class FightPerformancePanel extends JPanel
 	protected void paintComponent(Graphics g)
 	{
 		// Draw bgImage scaled to panel size (ideally should be the same anyway)
-		if (hovered && bgStyle.hoverBgImg != null)
+		if (!CONFIG.hidePanelBgImages() && hovered && bgStyle.hoverBgImg != null)
 		{
 			g.drawImage(bgStyle.hoverBgImg, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}
-		else if (bgStyle.bgImg != null)
+		else if (!CONFIG.hidePanelBgImages() && bgStyle.bgImg != null)
 		{
 			g.drawImage(bgStyle.bgImg, 0, 0, getWidth(), getHeight() - BOTTOM_SPACING_PX, this);
 		}

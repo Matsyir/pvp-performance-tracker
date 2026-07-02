@@ -257,10 +257,22 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Center Fight Statistic Labels",
 		description = "Controls whether the player names & labels on the Fight Performance Panel are centered.<br>" +
 			"Otherwise, defaults to being aligned to sides - left for your stats, right for the opponent.",
-		position = 1810,
+		position = 1800,
 		section = visualStylingSection
 	)
 	default boolean centerPanelLabels()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "hidePanelBgImages", // controls text centering for FightPerformancePanel.
+		name = "Hide Panel Backgrounds",
+		description = "Hides the panel background images introduced in 1.8.0 to revert to a simpler look and feel.",
+		position = 1802,
+		section = visualStylingSection
+	)
+	default boolean hidePanelBgImages()
 	{
 		return false;
 	}

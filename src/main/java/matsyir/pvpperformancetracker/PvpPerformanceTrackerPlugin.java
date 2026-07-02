@@ -40,6 +40,7 @@ import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -76,6 +77,7 @@ import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -215,7 +217,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private OkHttpClient httpClient;
 
 	// custom fields/props
-	public ArrayList<FightPerformance> fightHistory;
+	public ArrayDeque<FightPerformance> fightHistory;
 	@Getter
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
@@ -242,7 +244,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down or injecting
-		fightHistory = new ArrayList<>();
+		fightHistory = new ArrayDeque<>();
 
 		GSON = injectedGson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
@@ -354,17 +356,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				break;
 			// If the user updates the fight history limit, remove fights as necessary
 			case "fightHistoryLimit":
-			case "fightHistoryRenderLimit":
-				if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+				while (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 				{
-					int numToRemove = fightHistory.size() - config.fightHistoryLimit();
-					// Remove oldest fightHistory until the size is smaller than the limit.
-					// Should only remove one fight in most cases.
-					fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+					fightHistory.removeFirst();
 				}
-				panel.enqueueRebuild();
+
 				break;
-			case "exactNameFilter":
+			case "fightHistoryRenderLimit":
 				panel.enqueueRebuild();
 				break;
 			case "settingsConfigured":
@@ -406,7 +404,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				panel.enqueueRebuild();
 				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
 				break;
+			case "exactNameFilter":
 			case "centerPanelLabels":
+			case "hidePanelBgImages":
 				panel.enqueueRebuild();
 				break;
 		}
@@ -1433,7 +1433,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	void addToFightHistory(FightPerformance fight)
 	{
 		if (fight == null) { return; }
-		fightHistory.add(fight);
+		fightHistory.addLast(fight);
 		// no need to sort, since they sort chronologically, but they should automatically be added that way.
 		try {
 			fight.calculateRobeHits(config.robeHitFilter());
@@ -1447,18 +1447,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// remove fights as necessary to respect the fightHistoryLimit.
-		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		while (config.fightHistoryLimit() > 0 && fightHistory.size() >= config.fightHistoryLimit())
 		{
-			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
-			// Remove oldest fightHistory until the size is equal to the limit.
-			// Should only remove one fight in most cases.
-			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
-			panel.enqueueRebuild();
+			fightHistory.removeFirst();
 		}
-		else
-		{
-			clientThread.invokeLater(() -> panel.addFight(fight));
-		}
+
+		panel.addFight(fight);
+		//panel.enqueueRebuild();
 	}
 
 	private void syncExistingPvpHubFightsOnce()
@@ -1712,16 +1707,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (fights == null || fights.isEmpty()) { return; }
 
 		fights.removeIf(Objects::isNull);
+		fights.sort(FightPerformance::compareTo);
 		fightHistory.addAll(fights);
-		fightHistory.sort(FightPerformance::compareTo);
 
 		// remove fights to respect the fightHistoryLimit.
-		if (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
+		while (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
-			int numToRemove = fightHistory.size() - config.fightHistoryLimit();
-			// Remove oldest fightHistory until the size is equal to the limit.
-			// Should only remove one fight in most cases.
-			fightHistory.removeIf((FightPerformance f) -> fightHistory.indexOf(f) < numToRemove);
+			fightHistory.removeFirst();
 		}
 
 		// set fight log names since they aren't serialized but are on the parent class

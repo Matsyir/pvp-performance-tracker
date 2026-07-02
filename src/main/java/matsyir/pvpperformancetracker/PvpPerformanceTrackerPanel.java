@@ -32,6 +32,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -357,7 +358,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		});
 	}
 
-	public void addFights(ArrayList<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
+	public void addFights(ArrayDeque<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
 	{
 		// skip adding any fights to panels if they don't respect the name filter
 		// see FightPerformance.isRelevantForFilter for filter behavior details
@@ -374,19 +375,27 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		}
 
 		filteredFightCount = fights.size();
-		fights.replaceAll(FightPerformance::getPvpHubDisplayFight);
 
 		totalStatsPanel.reset();
-		totalStatsPanel.addFights(fights);
+		ArrayList<FightPerformance> displayFights = new ArrayList<>();
+		for (FightPerformance fight : fights)
+		{
+			displayFights.add(fight.getPvpHubDisplayFight());
+		}
+		totalStatsPanel.addFights(displayFights);
+
+		fights.clear();
+		fights.addAll(displayFights);
+		displayFights.clear();
 
 		// if we're adding more fights than we want to render at all, then reduce the number of fights we're adding
 		while(fights.size() > config.fightHistoryRenderLimit())
 		{
-			fights.remove(0);
+			fights.removeFirst();
 		}
 
 		// initializing all the panels on the client thread before the UI thread call helps a lot,
-		// especially when when we're doing 200 or potentially more.
+		// especially when we're doing 200 or potentially more.
 		ArrayList<FightPerformancePanel> panelsToAdd = new ArrayList<>();
 		fights.forEach((f) -> panelsToAdd.add(new FightPerformancePanel(
 			f, worldService, getWorldLocationSupplier(f.getPvpHubDisplayFight().getWorld()))));
@@ -481,13 +490,14 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		enqueueRebuildTask.stop();
 		panelFilterTask.stop();
 
+		FightPerformancePanel.updateCurrentBgColor();
+
 		if (!plugin.fightHistory.isEmpty())
 		{
-			// create new arraylist from the main one so we can't modify the fight history
-			ArrayList<FightPerformance> fightsToAdd = new ArrayList<>(plugin.fightHistory);
 
-			// addFights calls updateUI at the end, in a SwingUtilities.invokeLater.
-			addFights(fightsToAdd, skipUpdatesIfFightCountUnchanged);
+			// create new arrayDeque here from the main one so we can't/don't modify the fight history
+			// addFights handles UI updates on its own.
+			addFights(new ArrayDeque<>(plugin.fightHistory), skipUpdatesIfFightCountUnchanged);
 		}
 		else
 		{
