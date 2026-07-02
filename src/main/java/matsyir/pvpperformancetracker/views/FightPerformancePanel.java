@@ -87,9 +87,6 @@ public class FightPerformancePanel extends JPanel
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
-	// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
-	public static final ImageIcon deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
-
 	private static final Border paddingBorder;
 	// border size: 0px left, 0px right, 5px top, 4px bottom (plus extra 4px bottom invisible offset)
 	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,

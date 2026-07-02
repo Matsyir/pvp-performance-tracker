@@ -37,6 +37,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.border.Border;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
@@ -70,6 +71,20 @@ public final class PanelFactory
 
 	public static final int PREFERRED_LABEL_WIDTH_UNPADDED = (PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH / 2);
 	public static final int PREFERRED_LABEL_WIDTH = PREFERRED_LABEL_WIDTH_UNPADDED - HORIZONTAL_PADDING_OUTER - HORIZONTAL_PADDING_INNER_SIDE_ALIGNED;
+
+	// pre-loaded icons
+	// load & rescale red skull icon used to show if a player/opponent died in a fight and as the frame icon.
+	private static ImageIcon deathIcon;
+
+	public static ImageIcon getDeathIcon()
+	{
+		if (deathIcon == null)
+		{
+			deathIcon = new ImageIcon(PLUGIN_ICON.getScaledInstance(12, 12, Image.SCALE_DEFAULT));
+		}
+
+		return deathIcon;
+	}
 
 	public static Font getIndexFontFrom(float initialFontSize)
 	{
@@ -201,7 +216,7 @@ public final class PanelFactory
 			true,
 			(Component c, Graphics g) ->
 			{
-				ImageIcon ico = FightPerformancePanel.deathIcon;
+				ImageIcon ico = getDeathIcon();
 				boolean skullsToRender = fight.competitor.isDead() || fight.opponent.isDead();
 				if (skullsToRender)
 				{

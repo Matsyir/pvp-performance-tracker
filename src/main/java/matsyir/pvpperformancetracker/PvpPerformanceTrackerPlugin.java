@@ -134,7 +134,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.1";
+	public static final String PLUGIN_VERSION = "1.8.2";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1239,13 +1239,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// primary update message
-		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.8.1</u></col> <col=dc8a00>Update:</col></shad> ";
+		String updatePrefix = "<shad=000000><col=dc8a00>PvP Performance Tracker</col> <col=ff0000><u>1.8.2</u></col> <col=dc8a00>Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
-				"<col=842b00>Fixes in regards to the recent UI changes - fixed fights not appearing when having an empty filter. " +
-				"Added new filter types, and clarified filter functionality via tooltip. Adjust death icon (red skull) placement " +
-				"in order to minimize clipping with names & flags.")
+				"<col=842b00>Once again, many fixes & improvements in regards to the recent UI changes. Improved filter behavior, " +
+				"Improved overall performance & responsiveness - various UI threading optimizations. " +
+				"New config options to: hide panel BG images, center vs. side-align text, and customize nearly all colors. " +
+				"Adjusted death icon (red skull) placement.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);

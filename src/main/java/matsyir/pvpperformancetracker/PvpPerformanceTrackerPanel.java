@@ -356,6 +356,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				fightHistoryContainer.remove(c - 1);
 			}
 		});
+
+		updateUI();
 	}
 
 	public void addFights(ArrayDeque<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
@@ -491,6 +493,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		panelFilterTask.stop();
 
 		FightPerformancePanel.updateCurrentBgColor();
+		totalStatsPanel.updateBgColor();
 
 		if (!plugin.fightHistory.isEmpty())
 		{

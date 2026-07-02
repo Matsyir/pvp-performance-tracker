@@ -56,6 +56,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
+import static matsyir.pvpperformancetracker.views.FightPerformancePanel.CURRENT_BG_COLOR;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.ColorUtil;
@@ -71,7 +72,6 @@ public class TotalStatsPanel extends JPanel
 
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
-	private static final Color BG_COLOR = PvpColorScheme.EMPTY;
 	private static final int TOTAL_STATS_WIDTH = FULL_PANEL_WIDTH;
 	private static final int TOTAL_STATS_HEIGHT = 196;
 
@@ -252,7 +252,6 @@ public class TotalStatsPanel extends JPanel
 		// FIRST LINE
 		// basic label to display a title.
 		JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		titlePanel.setBackground(BG_COLOR);
 
 		JShadowedLabel titleLabel = new JShadowedLabel("PvP Performance Tracker ");
 		titlePanel.setBorder(BorderFactory.createCompoundBorder(
@@ -453,11 +452,7 @@ public class TotalStatsPanel extends JPanel
 
 		setLabels(); // update labels for all lines
 
-		this.setBackground(BG_COLOR);
-		for (Component c : getComponents())
-		{
-			c.setBackground(BG_COLOR);
-		}
+		updateBgColor();
 
 		setPreferredSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
 		setMinimumSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
@@ -1085,10 +1080,19 @@ public class TotalStatsPanel extends JPanel
 		}
 	}
 
+	public void updateBgColor()
+	{
+		this.setBackground(CURRENT_BG_COLOR);
+		for (Component c : getComponents())
+		{
+			c.setBackground(CURRENT_BG_COLOR);
+		}
+	}
+
 	@Override
 	protected void paintComponent(Graphics g)
 	{
-		if (!CONFIG.hidePanelBgImages())
+		if (!CONFIG.hidePanelBgImages() && backgroundImage != null)
 		{
 			// Draw bgImage scaled to panel size (ideally should be the same anyway)
 			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
