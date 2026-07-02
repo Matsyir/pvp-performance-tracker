@@ -634,6 +634,8 @@ public class TotalStatsPanel extends JPanel
 			+ " expected damage.<br>In total, you had " + totalStats.getGhostBarrageStats() + ".<br>"
 			+ "Unless fighting in PvP Arena, your opponents likely had a similar value."
 			+ TrackedStatistic.GHOST_BARRAGES.getPrefixedAcronymTooltip());
+
+		updateUI();
 	}
 
 	// number format which adds K (representing 1,000) if the given number is over the threshold (10k),
@@ -906,6 +908,7 @@ public class TotalStatsPanel extends JPanel
 		SwingUtilities.invokeLater(this::setLabels);
 	}
 
+	// resets only data, not ui
 	public void reset()
 	{
 		numFights = 0;
@@ -964,7 +967,6 @@ public class TotalStatsPanel extends JPanel
 		avgGhostBarrageExpectedDamage = 0;
 
 		totalStats = new Fighter("Player");
-		SwingUtilities.invokeLater(this::setLabels);
 	}
 
 	public void setConfigWarning(boolean enable)

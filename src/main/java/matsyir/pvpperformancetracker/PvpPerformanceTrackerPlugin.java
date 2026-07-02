@@ -406,6 +406,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
 				panel.enqueueRebuild();
 				break;
+			case "centerPanelLabels":
+				panel.enqueueRebuild();
+				break;
 		}
 	}
 
@@ -1404,9 +1407,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
 		File fightHistoryDataBackup = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_BACKUP_FNAME);
 
-		// skip the backup if the backup is already the same size as the core fight history.
+		// skip the backup if the backup is already a larger size than the core fight history.
 		if (fightHistoryData.exists() && fightHistoryDataBackup.exists() &&
-			fightHistoryData.length() == fightHistoryDataBackup.length())
+			fightHistoryData.length() <= fightHistoryDataBackup.length())
 		{
 			return;
 		}
@@ -1634,7 +1637,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 			// auto backup fights if they successfully loaded on plugin launch, just in case
 			// any strange bug or crash happens which causes the json to corrupt itself.
-			autoBackupFightHistoryData();
+			if (!fightHistory.isEmpty())
+			{
+				autoBackupFightHistoryData();
+			}
 		}
 		catch (Exception e)
 		{
