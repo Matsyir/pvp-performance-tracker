@@ -67,6 +67,7 @@ import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.controllers.PvpHubFightSync;
+import matsyir.pvpperformancetracker.controllers.PvpHubSyncRetryState;
 import matsyir.pvpperformancetracker.controllers.PvpHubUploader;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -151,6 +152,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// Last man standing map regions, including ferox enclave
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12344, 12600, 13658, 13659, 13660, 13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
+	private static final int PVP_HUB_SYNC_MAX_ATTEMPTS = 5;
+	private static final long PVP_HUB_SYNC_RETRY_DELAY_MILLIS = TimeUnit.MINUTES.toMillis(1);
 
 	static
 	{
@@ -224,7 +227,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
-	private final Set<String> pendingPvpHubSyncFightIds = ConcurrentHashMap.newKeySet();
+	private final PvpHubSyncRetryState pendingPvpHubSyncs = new PvpHubSyncRetryState(PVP_HUB_SYNC_MAX_ATTEMPTS, PVP_HUB_SYNC_RETRY_DELAY_MILLIS);
 	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 	private File pvpHubSyncedFightsDir;
 
@@ -270,7 +273,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.build();
 
 		importFightHistoryData();
-		syncExistingPvpHubFightsOnce();
 		executor.scheduleWithFixedDelay(this::syncPendingPvpHubFights, 60, 60, TimeUnit.SECONDS);
 
 		// add the panel's nav button depending on config
@@ -367,10 +369,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "robeHitFilter":
 				recalculateAllRobeHits(true);
 				break;
-			case "uploadFightsToPvpHub":
-			case "hideRsnOnPvpHub":
-				if (panel != null)
-				{
+				case "uploadFightsToPvpHub":
+					if (!config.uploadFightsToPvpHub())
+					{
+						pendingPvpHubSyncs.clear();
+					}
+					if (panel != null)
+					{
+						panel.updatePvpHubHiddenName();
+						panel.updatePopupMenuForPvpHubConfig();
+					}
+					break;
+				case "hideRsnOnPvpHub":
+					if (panel != null)
+					{
 					panel.updatePvpHubHiddenName();
 					panel.updatePopupMenuForPvpHubConfig();
 				}
@@ -1454,23 +1466,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		//panel.enqueueRebuild();
 	}
 
-	private void syncExistingPvpHubFightsOnce()
-	{
-		if (!CONFIG.uploadFightsToPvpHub())
-		{
-			return;
-		}
-
-		for (FightPerformance fight : fightHistory)
-		{
-			attachPvpHubSyncedFight(fight);
-			if (!fight.hasPvpHubSyncedFight() && fight.getFightId() != null && !fight.getFightId().trim().isEmpty())
-			{
-				requestPvpHubSync(fight);
-			}
-		}
-	}
-
 	private void enqueuePvpHubSync(FightPerformance fight)
 	{
 		if (fight == null || fight.getFightId() == null || fight.getFightId().trim().isEmpty() || fight.hasPvpHubSyncedFight())
@@ -1478,26 +1473,36 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
-		pendingPvpHubSyncFightIds.add(fight.getFightId().trim());
+		pendingPvpHubSyncs.enqueue(fight.getFightId(), System.currentTimeMillis());
 	}
 
 	private void syncPendingPvpHubFights()
 	{
-		if (!CONFIG.uploadFightsToPvpHub() || pendingPvpHubSyncFightIds.isEmpty())
+		if (!CONFIG.uploadFightsToPvpHub())
+		{
+			pendingPvpHubSyncs.clear();
+			return;
+		}
+
+		if (pendingPvpHubSyncs.isEmpty())
 		{
 			return;
 		}
 
-		for (String fightId : new ArrayList<>(pendingPvpHubSyncFightIds))
+		long nowMillis = System.currentTimeMillis();
+		for (String fightId : pendingPvpHubSyncs.dueFightIds(nowMillis))
 		{
 			FightPerformance fight = findFightById(fightId);
 			if (fight == null || fight.hasPvpHubSyncedFight())
 			{
-				pendingPvpHubSyncFightIds.remove(fightId);
+				pendingPvpHubSyncs.remove(fightId);
 				continue;
 			}
 
-			requestPvpHubSync(fight);
+			if (pendingPvpHubSyncs.markAttemptStarted(fightId, nowMillis))
+			{
+				requestPvpHubSync(fight);
+			}
 		}
 	}
 
@@ -1534,10 +1539,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 				try
 				{
-					PvpHubFightSync.saveSyncedFight(pvpHubSyncedFightsDir, fight.getFightId(), responseJson);
-					fight.setPvpHubSyncedFight(syncedFight);
-					pendingPvpHubSyncFightIds.remove(fight.getFightId());
-				}
+						PvpHubFightSync.saveSyncedFight(pvpHubSyncedFightsDir, fight.getFightId(), responseJson);
+						fight.setPvpHubSyncedFight(syncedFight);
+						pendingPvpHubSyncs.remove(fight.getFightId());
+					}
 				catch (Exception e)
 				{
 					fight.setPvpHubSyncInProgress(false);
@@ -1565,11 +1570,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			}
 
 			@Override
-			public void onNotSynced(String reason)
-			{
-				fight.setPvpHubSyncInProgress(false);
-				log.debug("PvP-Hub sync unavailable for fight {}: {}", fight.getFightId(), reason);
-			}
+				public void onNotSynced(String reason)
+				{
+					fight.setPvpHubSyncInProgress(false);
+					pendingPvpHubSyncs.markUnavailable(fight.getFightId());
+					log.debug("PvP-Hub sync unavailable for fight {}: {}", fight.getFightId(), reason);
+				}
 		});
 	}
 
