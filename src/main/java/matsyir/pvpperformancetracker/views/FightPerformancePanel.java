@@ -97,6 +97,16 @@ public class FightPerformancePanel extends JPanel
 			BorderFactory.createEmptyBorder(8, 0, 4, 0));
 	}
 
+	// enum of background styles "bgStyle" images to be rendered as backgrounds, below all of the stats.
+	// currently sized for what the panel size is with all statistics shown (so including GB). This is so
+	// that we only ever scale the image down, instead of stretch it. Scaling it down can still come with
+	// its issues, but since we're only doing it a bit, it seems fine so far. We could always include a normal
+	// version alongside the GB version in the future, if we really want.
+	//
+	// Uses a basic background by default, detects "special" or "rare" events in fights to apply fancier
+	// backgrounds or borders. You can also filter/search for these names (bgStyle.name) in the filter
+	// textbox on the panel. For example, you can search for "maxhit" or "max hit" to see max hit KOs.
+	// You could also search for just "max" to see max hit ko + max spec hit ko
 	@Getter
 	public enum BackgroundStyle
 	{
@@ -107,6 +117,9 @@ public class FightPerformancePanel extends JPanel
 		PUNCH_KO("Punch KO", DEFAULT, false),
 		KICK_KO("Kick KO", DEFAULT, false),
 		STAFF_KO("Staff KO", DEFAULT, false);
+
+		//
+		public static final String[] SHOW_ALL_FILTER_WORDS = { "border", "background", "bgstyle", "special" };
 
 		final String name;
 		final Color highlightColor;

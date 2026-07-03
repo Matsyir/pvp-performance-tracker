@@ -74,8 +74,13 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
-	public static final int BASE_NAME_FILTER_DELAY = 65; // delay in ms
-	public static final int NAME_FILTER_DELAY_PER_100_SAVED_FIGHTS = 4;
+	public static final int BASE_NAME_FILTER_DELAY = 65; // base delay in ms
+	// additional delay of 4ms per 100 fights saved
+	// this would be +400ms if you have the max of 10,000 fights saved. Would be a bit long/appear a bit stuttery, but
+	// it likely wouldn't be ideal to try filtering 10,000 fights every 50ms while typing
+	private static final double nameFilterDelayPer100fights = 4;
+	private static final double nameFilterDelayForFightCount = 100;
+	public static final double NAME_FILTER_DELAY_PER_SAVED_FIGHT = nameFilterDelayPer100fights / nameFilterDelayForFightCount; // 4ms per 100 fights
 
 	// prevent spamming rebuilds too quickly for no reason if the panel isn't visible anyways.
 	// For example if people are changing multiple configs which require rebuild, like the colors.
@@ -325,7 +330,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		enqueueRebuildTask.setRepeats(false);
 
 		// wrap mainContent with scrollpane so it's scrollable
-		JScrollPane scrollableContainer = new JScrollPane(mainContent);
+		JScrollPane scrollableContainer = new JScrollPane(mainContent,
+			JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollableContainer.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
 		scrollableContainer.getVerticalScrollBar().setPreferredSize(new Dimension(FIGHT_HISTORY_SCROLL_WIDTH, 0));
 
@@ -487,8 +493,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			skipUpdatesIfFightCountUnchanged = false;
 		}
-		int newFilterDelay = BASE_NAME_FILTER_DELAY +
-			(NAME_FILTER_DELAY_PER_100_SAVED_FIGHTS * (PvpPerformanceTrackerPlugin.PLUGIN.fightHistory.size() / 100));
+		int newFilterDelay = BASE_NAME_FILTER_DELAY + (int)(NAME_FILTER_DELAY_PER_SAVED_FIGHT * PvpPerformanceTrackerPlugin.PLUGIN.fightHistory.size());
 		panelFilterTask.setInitialDelay(newFilterDelay);
 		panelFilterTask.setDelay(newFilterDelay);
 

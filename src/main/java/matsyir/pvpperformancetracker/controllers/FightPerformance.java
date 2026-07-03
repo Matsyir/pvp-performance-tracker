@@ -826,15 +826,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them
 				|| ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
-					(CONFIG.exactNameFilter() ?
-						(competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
+					(CONFIG.exactNameFilter()
+						? (competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
 						: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
 					)
 				|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
-					bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
-					&& bgStyle.isEnabled()
-					&& (bgStyle.getName().toLowerCase().startsWith(filter) ||
-						bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
+					// you can also search for exactly any of the BackgroundStyle.SHOW_ALL_FILTER_WORDS to see any non-default, enabled bgStyle
+					(bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
+						&& bgStyle.isEnabled()
+						&& (Arrays.asList(FightPerformancePanel.BackgroundStyle.SHOW_ALL_FILTER_WORDS).contains(filter)
+						|| bgStyle.getName().toLowerCase().startsWith(filter)
+						|| bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
+					)
 				)
 			);
 

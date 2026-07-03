@@ -697,8 +697,10 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryRenderLimit",
 		name = "Max Rendered Fights",
-		description = "Maximum number of previous fights to be displayed and searchable in the fight history side-panel." +
-			"<br>WILL cause lag spikes at very high numbers. This should be small if you have low RAM",
+		description = "Maximum number of previous fights to be displayed in the fight history side-panel. You do <b><u>not</b></u> need" +
+			"<br>to increase this in order to see more filtered results, or total stats, that's via the Max Saved Fights config." +
+			"<br><br>WILL cause lag spikes at very high numbers. This should be small if you have low RAM or a lower-end PC." +
+			"<br>You should probably avoid increasing this from the default of 200,",
 		position = 20500
 	)
 	default int fightHistoryRenderLimit()
@@ -707,25 +709,26 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@Range(
-		max = 1000000
+		min = 1,
+		max = 10000
 	)
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Max Saved Fights",
-		description = "Maximum number of previous fights to be saved to a local file and used for total/avg stats." +
-			"<br>0 means unlimited. May cause lag spikes at extreme numbers on low-end PCs",
+		description = "Maximum number of previous fights to be saved to a local file, included in filters, and used for total/avg stats." +
+			"<br>May cause occasional lag spikes on lower-end PCs once you reach 1,000+ fights saved.",
 		position = 21000
 	)
 	default int fightHistoryLimit()
 	{
-		return 10000;
+		return 2000;
 	}
 
 	@ConfigItem(
 		keyName = "exactNameFilter",
 		name = "Exact Name Filter",
 		description = "Makes the username filter look for an exact match (case-insensitive), rather than any name starting with the filter.<br>" +
-			"This can help reduce lag while searching, especially if you've increased your Max Rendered Fights.",
+			"This can help reduce clutter or lag while searching, especially if you've increased your Max Rendered Fights.",
 		position = 22000
 	)
 	default boolean exactNameFilter()

@@ -1457,7 +1457,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// remove fights as necessary to respect the fightHistoryLimit.
-		while (config.fightHistoryLimit() > 0 && fightHistory.size() >= config.fightHistoryLimit())
+		while (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
 			fightHistory.removeFirst();
 		}
