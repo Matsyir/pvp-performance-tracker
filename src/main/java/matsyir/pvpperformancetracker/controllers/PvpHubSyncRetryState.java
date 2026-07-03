@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, LogicalSolutions <https://github.com/LogicalSolutions>
+ * Copyright (c) 2026, LogicalSolutions <https://github.com/LogicalSoIutions>
  * Copyright (c) 2026, Matsyir <https://github.com/Matsyir>
  * All rights reserved.
  *
