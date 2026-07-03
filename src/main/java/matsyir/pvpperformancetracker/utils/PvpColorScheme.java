@@ -1,7 +1,6 @@
 package matsyir.pvpperformancetracker.utils;
 
 import java.awt.Color;
-import java.awt.Panel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -43,19 +42,19 @@ public class PvpColorScheme
 	@Getter
 	public enum PanelColorPreset
 	{
-		DEFAULT("<html>Default <font size='2'>(Green, Red, White)</font>",
-			DEFAULT_SUCCESS, DEFAULT_UNSUCCESS, DEFAULT_NEUTRAL, DEFAULT_GHOST_BARRAGE),
-		MODERN("<html>Modern <font size='2'>(Blue, Red, White)</font>",
-			DEFAULT_MODERN_SUCCESS, DEFAULT_MODERN_UNSUCCESS, DEFAULT_MODERN_NEUTRAL, DEFAULT_GHOST_BARRAGE),
-		CLASSIC("<html>Classic <font size='2'>(Green, White)</font>",
-			Color.GREEN, Color.WHITE, Color.WHITE, BRAND_ORANGE),
-		HIGH_CONTRAST("High Contrast",
-			Color.GREEN, Color.RED, Color.WHITE, Color.CYAN),
+		DEFAULT("Default",
+			DEFAULT_SUCCESS, DEFAULT_UNSUCCESS, DEFAULT_NEUTRAL, DEFAULT_GHOST_BARRAGE, true),
+		MODERN("Modern",
+			DEFAULT_MODERN_SUCCESS, DEFAULT_MODERN_UNSUCCESS, DEFAULT_MODERN_NEUTRAL, DEFAULT_GHOST_BARRAGE, true),
+		CLASSIC("Classic",
+			Color.GREEN, Color.WHITE, Color.WHITE, BRAND_ORANGE, true),
+		HIGH_CONTRAST("+Contrast",
+			Color.GREEN, Color.RED, Color.WHITE, Color.CYAN, true),
 
-		DMGONLY_DEFAULT(DEFAULT, "<html>Default <font size='2'><u>*(dmgOnly)</u></font>"),
-		DMGONLY_MODERN(MODERN, "<html>Modern <font size='2'><u>*(dmgOnly)</u></font>"),
-		DMGONLY_CLASSIC(CLASSIC, "<html>Classic <font size='2'><u>*(dmgOnly)</u></font>"),
-		DMGONLY_HIGH_CONTRAST(HIGH_CONTRAST, "<html>High Contrast <font size='2'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_DEFAULT(DEFAULT, "<html>Default <font size='3'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_MODERN(MODERN, "<html>Modern <font size='3'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_CLASSIC(CLASSIC, "<html>Classic <font size='3'><u>*(dmgOnly)</u></font>"),
+		DMGONLY_HIGH_CONTRAST(HIGH_CONTRAST, "<html>+Contrast <font size='3'><u>*(dmgOnly)</u></font>"),
 
 		CUSTOM("Custom", null, null, null, null);
 
@@ -74,17 +73,32 @@ public class PvpColorScheme
 		// create a Standard PanelColorPreset, which re-uses the same colors for standard/general colors & dmgColors
 		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color gb)
 		{
-			this(name, success, unsuccess, neutral, success, unsuccess, neutral, gb);
+			this(name, success, unsuccess, neutral, success, unsuccess, neutral, gb, false);
+		}
+		// same as above, but also allow to specify bool for includeColorPreviewSymbolsInName
+		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color gb, boolean includeColorPreviewSymbolsInName)
+		{
+			this(name, success, unsuccess, neutral, success, unsuccess, neutral, gb, includeColorPreviewSymbolsInName);
 		}
 		// create dmg-only highlighted version of a PanelColorPreset based on another given PanelColorPreset
 		PanelColorPreset(PanelColorPreset p, String name)
 		{
-			this(name, p.neutral, p.neutral, p.neutral, p.dmgSuccess, p.dmgUnsuccess, p.dmgNeutral, p.gb);
+			this(name, p.neutral, p.neutral, p.neutral, p.dmgSuccess, p.dmgUnsuccess, p.dmgNeutral, p.gb, false);
 		}
+
+		private static final String HTML_SPACER = "&#xbb;";
+		private static final String HTML_COLOR_DISPLAY = "&#9679;";
 		// init a PanelColorPreset by specifying all fields.
-		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color dmgSuccess, Color dmgUnsuccess, Color dmgNeutral, Color gb)
+		PanelColorPreset(String name, Color success, Color unsuccess, Color neutral, Color dmgSuccess, Color dmgUnsuccess, Color dmgNeutral, Color gb, boolean includeColorPreviewSymbolsInName)
 		{
-			this.name = name;
+
+			this.name = includeColorPreviewSymbolsInName
+				? "<html>" + name + "&nbsp;" + HTML_SPACER + "&nbsp;" +
+					"<font color='#" + ColorUtil.colorToHexCode(success) + "'><u>" + HTML_COLOR_DISPLAY + "</u></font>" +
+					"<font color='#" + ColorUtil.colorToHexCode(unsuccess) + "'><u>" + HTML_COLOR_DISPLAY + "</u></font>" +
+					"<font color='#" + ColorUtil.colorToHexCode(neutral) + "'><u>" + HTML_COLOR_DISPLAY + "</u></font>&nbsp;&nbsp;" +
+					"<font color='#" + ColorUtil.colorToHexCode(gb) + "'><u>" + HTML_COLOR_DISPLAY + "</u></font>"
+				: name;
 
 			this.success = success;
 			this.unsuccess = unsuccess;
