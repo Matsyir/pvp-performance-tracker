@@ -51,7 +51,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
-import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
@@ -144,7 +143,6 @@ public class FightPerformancePanel extends JPanel
 
 	private boolean hovered = false;
 	private BackgroundStyle bgStyle = BackgroundStyle.DEFAULT;
-	private final String bgStyleDisplayTooltipText;
 
 	// Panel to display previous fight performance data.
 	// intended layout:
@@ -216,7 +214,7 @@ public class FightPerformancePanel extends JPanel
 		setLayout(new BorderLayout(0, 0));
 		setBorder(paddingBorder);
 
-		final String baseTooltipText = "<html>" + competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
+		final String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
 			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
 		final String worldDisplayTooltipText = (displayFight.getWorld() > 0
 			? " (" + WorldFlag.getTooltip(displayFight.getWorld(), worldService, worldLocationSupplier.getAsInt()) + ")"
@@ -224,17 +222,18 @@ public class FightPerformancePanel extends JPanel
 
 		bgStyle = fight.getBgStyle();
 
+		final String bgStyleDisplayTooltipText;
 		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
 		{
 			bgStyleDisplayTooltipText = "<br><br>" +
 				"<strong>Border Style: </strong><u>" + bgStyle.name + "</u>";
-			setToolTipText(baseTooltipText + bgStyleDisplayTooltipText);
 		}
 		else
 		{
 			bgStyleDisplayTooltipText = "";
 		}
-		setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
+		final String fullTooltipText = (baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
+		setToolTipText("<html>" + fullTooltipText);
 
 		ArrayList<JPanel> panelLines = new ArrayList<>();
 
@@ -248,10 +247,9 @@ public class FightPerformancePanel extends JPanel
 		if (displayFight.getWorld() > 0)
 		{
 			int worldLocation = worldLocationSupplier.getAsInt();
-			setToolTipText(baseTooltipText + worldDisplayTooltipText + bgStyleDisplayTooltipText);
 			worldIcon = WorldFlag.getIcon(displayFight.getWorld(), worldService, worldLocation);
 		}
-		JPanel playerNamesLine = PanelFactory.createPlayerNamesStatsLine(fight, getToolTipText(), worldIcon);
+		JPanel playerNamesLine = PanelFactory.createPlayerNamesStatsLine(fight, fullTooltipText, worldIcon);
 		panelLines.add(playerNamesLine);
 
 		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;

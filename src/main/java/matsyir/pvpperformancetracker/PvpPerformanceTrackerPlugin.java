@@ -77,7 +77,6 @@ import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
-import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -360,10 +359,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				{
 					fightHistory.removeFirst();
 				}
-
-				break;
-			case "fightHistoryRenderLimit":
-				panel.enqueueRebuild();
 				break;
 			case "settingsConfigured":
 				boolean enableConfigWarning = !config.settingsConfigured();
@@ -404,9 +399,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				panel.enqueueRebuild();
 				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
 				break;
+			case "fightHistoryRenderLimit":
 			case "exactNameFilter":
 			case "centerPanelLabels":
 			case "hidePanelBgImages":
+			case "worldDisplayChoice":
 				panel.enqueueRebuild();
 				break;
 		}

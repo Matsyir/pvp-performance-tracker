@@ -145,7 +145,10 @@ public final class PanelFactory
 		}
 
 
-		String tooltipSuffix = "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
+		boolean skipMiniLabel = (miniCenterLabelText == null || miniCenterLabelText.isEmpty())
+			&& (miniCenterLabelTooltip == null || miniCenterLabelTooltip.isEmpty());
+		String tooltipSuffix = skipMiniLabel ? ""
+			: "<br><br><b><i>" + miniCenterLabelText + "</i></b>: " + miniCenterLabelTooltip;
 
 		ForwardingLabel leftLabel = new ForwardingLabel(leftText);
 		leftLabel.setToolTipText("<html>" + leftTooltip + tooltipSuffix);
@@ -160,13 +163,13 @@ public final class PanelFactory
 		leftLabel.setBorder(BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING_INNER_SIDE_ALIGNED, 0, 0));
 		rightLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, HORIZONTAL_PADDING_INNER_SIDE_ALIGNED));
 
+		if (leftTooltip.equals(rightTooltip))
+		{
+			statsLine.setToolTipText("<html>" + leftTooltip);
+		}
+
 		leftLabel.setPreferredSize(new Dimension(PREFERRED_LABEL_WIDTH, leftLabel.getPreferredSize().height));
 		rightLabel.setPreferredSize(new Dimension(PREFERRED_LABEL_WIDTH, rightLabel.getPreferredSize().height));
-
-		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
-		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
-		indexLabel.setFont(PanelFactory.getIndexFontFrom(indexLabel.getFont()));
-		indexLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridy = 0;
@@ -182,6 +185,17 @@ public final class PanelFactory
 		gbc.gridx = 1;
 		gbc.anchor = GridBagConstraints.EAST;
 		statsLine.add(rightLabel, gbc.clone()); // index 1: right label
+
+
+		if (skipMiniLabel)
+		{
+			return statsLine;
+		}
+
+		JLabel indexLabel = new ForwardingLabel(miniCenterLabelText);
+		indexLabel.setForeground(STATS_LINE_INDEX_COLOR);
+		indexLabel.setFont(PanelFactory.getIndexFontFrom(indexLabel.getFont()));
+		indexLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		// index/miniCenterLabel centered across full row
 		GridBagConstraints gbcIndex = new GridBagConstraints();
