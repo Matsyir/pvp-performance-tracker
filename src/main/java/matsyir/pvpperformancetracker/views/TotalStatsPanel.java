@@ -46,7 +46,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
-import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel.FULL_PANEL_WIDTH;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;

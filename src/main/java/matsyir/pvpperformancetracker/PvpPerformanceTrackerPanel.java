@@ -28,7 +28,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -180,14 +179,15 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"Click to toggle visibility.<br><br>" +
 			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
 		pvpHubHiddenNameBtn.setComponentPopupMenu(new JPopupMenu());
+		// seems to break if we just popupMenu.add(totalStatsPanel.resetPvpHubHiddenNameMenuItem),
+		// so copy fields into  a new JMenuItem
 		JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getText());
 		resetPvpHubHiddenNameMenuItem.setForeground(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getForeground());
 		for (ActionListener actionListener : totalStatsPanel.resetPvpHubHiddenNameMenuItem.getActionListeners())
 		{
-			resetPvpHubHiddenNameMenuItem.addActionListener(actionListener::actionPerformed);
+			resetPvpHubHiddenNameMenuItem.addActionListener(actionListener);
 		}
 		pvpHubHiddenNameBtn.getComponentPopupMenu().add(resetPvpHubHiddenNameMenuItem);
-		log.info("PvpPerformanceTrackerPanel ctor - we are copying the totalStatsPanel.resetPvpHubHiddenNameMenuItem");
 
 		pvpHubHiddenNameBtn.addMouseListener(new MouseListener()
 		{
