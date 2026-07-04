@@ -36,9 +36,13 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -55,6 +59,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -141,6 +147,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// "pvp-performance-tracker2": From 1.5.9 update, until present
 	public static final String DATA_FOLDER = "pvp-performance-tracker2";
 	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
+	public static final String FIGHT_HISTORY_DATA_FNAME_GZ = FIGHT_HISTORY_DATA_FNAME + ".gz";
 	public static final String FIGHT_HISTORY_BACKUP_FNAME = "FightHistoryData_autoBackup.json";
 	public static final File FIGHT_HISTORY_DATA_DIR;
 	public static final int PANEL_REBUILD_ON_CONFIG_CHANGE_DELAY = 5000;
@@ -1392,22 +1399,24 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		incomingHitsplatsBuffer.clear();
 	}
 
-	// save the currently loaded fightHistory to the local json data so it is saved for the next client launch.
+	// Save the currently loaded fightHistory to local gzipped JSON.
 	private void saveFightHistoryData()
 	{
-		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
-		// from continuing to work, even if there are issues saving the data.
 		try
 		{
-			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
-			Writer writer = new FileWriter(fightHistoryData);
-			GSON.toJson(fightHistory, writer);
-			writer.flush();
-			writer.close();
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_GZ);
+
+			try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(fightHistoryData.toPath())))
+			{
+				try (OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8))
+				{
+					GSON.toJson(fightHistory, writer);
+				}
+			}
 		}
 		catch (Exception e)
 		{
-			log.warn("Error ignored while updating fight history data: " + e.getMessage());
+			log.warn("Error ignored while updating fight history data: {}", e.getMessage());
 		}
 	}
 
@@ -1617,7 +1626,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		try
 		{
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
-			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_GZ);
 
 			// if the fight history data file doesn't exist, create it with an empty array.
 			if (!fightHistoryData.exists())
@@ -1627,18 +1636,26 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				writer.close();
 			}
 
-			// read the saved fights from the file
-			List<FightPerformance> savedFights = Arrays.asList(
-				GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
-
-			fightHistory.clear();
-			importFights(savedFights);
-
-			// auto backup fights if they successfully loaded on plugin launch, just in case
-			// any strange bug or crash happens which causes the json to corrupt itself.
-			if (!fightHistory.isEmpty())
+			try (
+				GZIPInputStream gzip = new GZIPInputStream(Files.newInputStream(fightHistoryData.toPath()));
+				InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)
+			)
 			{
-				autoBackupFightHistoryData();
+				List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(reader, FightPerformance[].class));
+
+//				// read the saved fights from the file
+//				List<FightPerformance> savedFights = Arrays.asList(
+//					GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
+
+				fightHistory.clear();
+				importFights(savedFights);
+
+				// auto backup fights if they successfully loaded on plugin launch, just in case
+				// any strange bug or crash happens which causes the json to corrupt itself.
+				if (!fightHistory.isEmpty())
+				{
+					autoBackupFightHistoryData();
+				}
 			}
 		}
 		catch (Exception e)
