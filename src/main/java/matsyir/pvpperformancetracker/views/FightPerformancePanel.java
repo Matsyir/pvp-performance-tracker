@@ -112,13 +112,14 @@ public class FightPerformancePanel extends JPanel
 	{
 		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Default"),
 		MAX_HIT_KO("Max Hit KO", Color.RED, "GB_Red"),
-		SPEC_KO("Spec KO", new Color(57, 125, 59), "GB_Green"),
+		SPEC_KO("Spec KO", new Color(17, 146, 178), "GB_Cyan"),
 		MAX_SPEC_KO("Max Spec Ko", Color.MAGENTA.darker(), "GB_Purple"),
 		PUNCH_KO("Punch KO", DEFAULT, false),
 		KICK_KO("Kick KO", DEFAULT, false),
 		STAFF_KO("Staff KO", DEFAULT, false);
 
-		//
+		// if your filter is exactly equal to one of these filter words, then we'll display any fights with a
+		// BackgroundStyle, provided it's enabled & not Default.
 		public static final String[] SHOW_ALL_FILTER_WORDS = { "border", "background", "bgstyle", "special" };
 
 		final String name;

@@ -740,7 +740,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public FightPerformancePanel.BackgroundStyle getBgStyle()
 	{
-		FightPerformancePanel.BackgroundStyle res = FightPerformancePanel.BackgroundStyle.DEFAULT;
 		boolean cmpDied = competitor.isDead();
 		boolean oppDied = opponent.isDead();
 		FightLogEntry lastCmpLog = null;
@@ -762,7 +761,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		boolean validOppLog = (lastOppLog != null && lastOppLog.getAnimationData() != null);
 		if (!validCmpLog && !validOppLog)
 		{
-			return res;
+			return FightPerformancePanel.BackgroundStyle.DEFAULT;
 		}
 
 		boolean isCmpMaxHitKo = validCmpLog && oppDied && lastCmpLog.getMaxHit() == lastCmpLog.getActualDamageSum();;
@@ -783,30 +782,30 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		if (isCmpSpecMaxHitKo || isOppSpecMaxHitKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.MAX_SPEC_KO;
+			return FightPerformancePanel.BackgroundStyle.MAX_SPEC_KO;
 		}
 		else if (isCmpSpecKo || isOppSpecKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.SPEC_KO;
+			return FightPerformancePanel.BackgroundStyle.SPEC_KO;
 		}
 		else if (isCmpPunchKo || isOppPunchKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.PUNCH_KO;
+			return FightPerformancePanel.BackgroundStyle.PUNCH_KO;
 		}
 		else if (isCmpKickKo || isOppKickKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.KICK_KO;
+			return FightPerformancePanel.BackgroundStyle.KICK_KO;
 		}
 		else if (isCmpStaffKo || isOppStaffKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.STAFF_KO;
+			return FightPerformancePanel.BackgroundStyle.STAFF_KO;
 		}
 		else if (isCmpMaxHitKo || isOppMaxHitKo)
 		{
-			res = FightPerformancePanel.BackgroundStyle.MAX_HIT_KO;
+			return FightPerformancePanel.BackgroundStyle.MAX_HIT_KO;
 		}
 
-		return res;
+		return FightPerformancePanel.BackgroundStyle.DEFAULT;
 	}
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
