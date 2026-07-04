@@ -84,12 +84,12 @@ public class BrewState
 		if (this.category == BrewStateCategory.POTTED || this.category == BrewStateCategory.BREWED_DOWN)
 		{
 			return "<html><strong>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
-				"</u></strong>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
+				"</strong>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
 		}
 		else
 		{
-			return "<html><u>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
-				"</u>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
+			return "<html>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
+				"&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
 		}
 	}
 

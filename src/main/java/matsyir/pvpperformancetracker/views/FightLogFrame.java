@@ -190,9 +190,11 @@ public class FightLogFrame extends JFrame
 			BrewState brewState = attacker.getBrewState(fightEntry);
 			JLabel brewStateLabel = new JLabel();
 			brewStateLabel.setForeground(brewState.getCategory().getTextColor());
-			brewStateLabel.setToolTipText("<html>Amount of levels below the max potted level.<br>For example, " +
-				"if ranging with 110 range, it will display -2 since 112 is max potted (at level 99).<br>" +
-				"You want this to stay as close to 0 as possible.");
+			brewStateLabel.setToolTipText("<html>Amount of levels below the max potted level." +
+				"<br>For example, if ranging with 110 range, it will display -2 since 112 is max potted (at level 99)." +
+				"<br>You want this to stay as close to 0 as possible." +
+				"<br>This does look at your actual potted/brewed level, although it isn't used for Expected Damage" +
+				"<br>calculations, unless the fight is merged/synced");
 
 			brewStateLabel.setText(brewState.getFightLogText());
 

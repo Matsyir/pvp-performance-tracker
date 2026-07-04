@@ -25,6 +25,7 @@
 package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
@@ -32,12 +33,16 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
 import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.prependPlusIfPositive;
 import matsyir.pvpperformancetracker.models.AnimationData;
@@ -54,11 +59,14 @@ import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.game.ItemEquipmentStats;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ColorUtil;
 
 @Slf4j
 class FightLogDetailFrame extends JFrame
 {
 	public static final int DEFAULT_WIDTH = 400;
+	public static final int DEFAULT_HEIGHT = 640;
 
 	public int rowIdx;
 
@@ -97,8 +105,8 @@ class FightLogDetailFrame extends JFrame
 
 		this.rowIdx = rowIdx;
 
-		setSize(DEFAULT_WIDTH, 640);
-		setMinimumSize(new Dimension(DEFAULT_WIDTH, 200));
+		setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		setMinimumSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		setLayout(new BorderLayout());
 		setLocation(location);
 		setIconImage(PLUGIN_ICON);
@@ -110,10 +118,11 @@ class FightLogDetailFrame extends JFrame
 			setAlwaysOnTop(PLUGIN.getRuneliteConfig().gameAlwaysOnTop());
 		}
 
-		JPanel mainPanel = new JPanel(); //new GridLayout(0, 2)
+		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setVisible(true);
-		mainPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+		Border mainBorder = BorderFactory.createEmptyBorder(8, 12, 8, 12);
+		mainPanel.setBorder(mainBorder);
 
 		isCompetitorLog = log.attackerName.equals(fight.getCompetitor().getName());
 		attacker = isCompetitorLog ? fight.getCompetitor() : fight.getOpponent();
@@ -171,6 +180,7 @@ class FightLogDetailFrame extends JFrame
 		}
 
 		attackerPrays.add(attackerOffensiveLabel);
+
 		praysUsedLine.add(attackerPrays, BorderLayout.WEST);
 
 		GridLayout defenderPrayLayout = new GridLayout(1, 2);
@@ -260,7 +270,6 @@ class FightLogDetailFrame extends JFrame
 		defenderCombatLevels.add(defenderHpLvl);
 		combatLevelsLine.add(defenderCombatLevels, BorderLayout.EAST);
 
-
 		// equipment stats line (stab attack, slash attack, etc)
 		JPanel equipmentStatsLine = new JPanel(new BorderLayout());
 		JLabel attackerStatsLabel = new JLabel();
@@ -284,6 +293,47 @@ class FightLogDetailFrame extends JFrame
 		equipmentRenderLine.add(attackerEquipmentRender, BorderLayout.WEST);
 		equipmentRenderLine.add(defenderEquipmentRender, BorderLayout.EAST);
 
+		// add warning to clarify level/stats assumptions used here, and the difference between
+		// this panel & level change in the fight log table
+		// put it on this line because it has the most free space in the middle.
+		JShadowedLabel levelAssumptionWarning = new JShadowedLabel("<html>&nbsp;<b><u>Warning</u></b><br>" +
+			"<font size='3'>Lvls assumed</font><br><font size='18' color='" +
+			ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_DARKER) + "'>" + "&nbsp;&nbsp;&nbsp;&#9888;</font><br>See tooltip!");
+		final String levelWarningTooltip = "<html>" +
+			"Beware that the Levels shown above on this panel <u>do not</u> reflect your in-game brewed/potted Levels." +
+			"<br>The Levels shown here are the Levels that were used for the Expected Damage (eD) calculation, which" +
+			"<br>assumes both players are always potted, in order to be as fair as possible for both players. These" +
+			"<br>Levels are pulled from your config outside of LMS, and are hardcoded to potted LMS stats inside of LMS." +
+			"<br><br>Offensive prayers are also assumed to always be correct while attacking," +
+			"<br>and assumed to be piety or rigour while defending (for both players)." +
+			"<br><br>This has always been the case." +
+			"<br><u>You can toggle the visibility of this warning by right clicking it.</u>";
+		JPopupMenu warningTogglePopupMenu = new JPopupMenu();
+		JMenuItem warningToggleMenuItem = new JMenuItem("Toggle Warning Visibility");
+		warningToggleMenuItem.addActionListener(e ->
+		{
+			PLUGIN.toggleFightLogDetailFrameWarning();
+			levelAssumptionWarning.setVisible(CONFIG.displayFightLogDetailWarning());
+		});
+		warningTogglePopupMenu.add(warningToggleMenuItem);
+
+		mainPanel.setToolTipText(levelWarningTooltip);
+		levelAssumptionWarning.setToolTipText(levelWarningTooltip);
+		levelAssumptionWarning.setHorizontalAlignment(SwingConstants.CENTER);
+		levelAssumptionWarning.setForeground(Color.WHITE);
+		int offsetToTop = 21;
+		levelAssumptionWarning.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createCompoundBorder(
+				BorderFactory.createEmptyBorder(28 - offsetToTop, 12, 28 + offsetToTop, 12),
+				BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_DARKER, 1)),
+			BorderFactory.createMatteBorder(4,4,4,4, PvpColorScheme.BLOOD_RED_ORANGE_DARKER.darker())));
+
+		levelAssumptionWarning.setComponentPopupMenu(warningTogglePopupMenu);
+		levelAssumptionWarning.setVisible(CONFIG.displayFightLogDetailWarning());
+		equipmentRenderLine.add(levelAssumptionWarning, BorderLayout.CENTER);
+
+		equipmentRenderLine.setComponentPopupMenu(warningTogglePopupMenu);
+
 		// Animation detected line
 		JPanel animationDetectedLine = new JPanel(new BorderLayout());
 		JLabel attackerAnimationDetected = new JLabel();
@@ -304,7 +354,6 @@ class FightLogDetailFrame extends JFrame
 		this.add(mainPanel, BorderLayout.CENTER);
 		this.setVisible(true);
 	}
-
 
 	private JPanel getEquipmentRender(int[] itemIds, FightLogEntry log, boolean isAttacker, boolean isLmsFight)
 	{

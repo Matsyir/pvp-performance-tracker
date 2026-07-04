@@ -1976,4 +1976,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		configManager.unsetConfiguration(CONFIG_KEY, "pvpHubAnonymousId");
 	}
+
+	public void toggleFightLogDetailFrameWarning()
+	{
+		configManager.setConfiguration(CONFIG_KEY, "displayFightLogDetailWarning", !config.displayFightLogDetailWarning());
+	}
 }

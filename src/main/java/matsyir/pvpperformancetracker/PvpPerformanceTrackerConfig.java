@@ -772,6 +772,19 @@ public interface PvpPerformanceTrackerConfig extends Config
 		return "";
 	}
 
+	@ConfigItem(
+		keyName = "displayFightLogDetailWarning",
+		name = "Display Fight Log Detail Warning",
+		description = "Hidden config used to determine if the Warning on the FightLogDetailFrame should be visible or hidden." +
+			"Can be toggled by right clicking the panel its in (between the equipment or the equipment itself, anywhere on that whole row)",
+		position = 100000,
+		hidden = true
+	)
+	default boolean displayFightLogDetailWarning()
+	{
+		return true;
+	}
+
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.
