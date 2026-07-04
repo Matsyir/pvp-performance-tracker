@@ -5,7 +5,7 @@
 
 Tracks PvP performance by keeping track of various stats. Mostly useful for 1v1 PvP fights that involve overhead prayers and/or gear switching, Last Man Standing & PvP arena "NHing" being the perfect examples. Multi will cause problems. **Potentially inaccurate:** there are some imperfections and assumptions in this plugin, but it is generally accurate for most popular gear setups & spec weapons. 
 
-We now have a discord to discuss the PvP Performance Tracker - feel free to join here: https://discord.gg/6akJbmgdme
+We now have a discord to discuss the PvP Performance Tracker - feel free to join here: https://discord.gg/hg26xeJnY5
 
 This plugin is a bit of a community project at this point. Special thanks to some of the most notable/frequent contributors & helpers:
 - [Mazhar](https://twitter.com/maz_rs) for collaborating with me on this plugin during its initial release. He's inspired many of the ideas and helped with a lot of the implementation - expected damage was mostly done by him, and that is definitely the most informative statistic of the plugin.
@@ -68,6 +68,6 @@ that hidden identity private, do not show the panel on stream, screenshots, or s
 To change your hidden name, reset the stored anonymous ID. You can do this by right-clicking the Total Stats and clicking the "Regenerate PvP-Hub Hidden Name" button. You can find the same right-click menu on the button which displays your hidden name.
 
 -------------------------------
-I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well. If you have any problems or questions that don't warrant a whole issue, feel free to join the dedicated PvP Performance Tracker discord (https://discord.gg/6akJbmgdme), or just DM me: `matsyir` (don't add, just DM - if you need a common server to DM, you can join the official Runelite discord, or the tracker discord linked above).
+I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well. If you have any problems or questions that don't warrant a whole issue, feel free to join the dedicated PvP Performance Tracker discord (https://discord.gg/hg26xeJnY5), or just DM me: `matsyir` (don't add, just DM - if you need a common server to DM, you can join the official Runelite discord, or the tracker discord linked above).
 
 Note that I'm not super active on RS lately myself, so this project is not among my highest priorities - but I'm happy to keep supporting it, especially for significant issues that may affect most average users with average gear setups in places like LMS.
