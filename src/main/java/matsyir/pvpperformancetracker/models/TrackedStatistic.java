@@ -29,10 +29,8 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
-import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.PanelFactory;
 import matsyir.pvpperformancetracker.views.TableComponent;
-
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.security.InvalidParameterException;

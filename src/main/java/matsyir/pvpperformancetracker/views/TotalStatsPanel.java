@@ -68,7 +68,9 @@ import net.runelite.client.util.LinkBrowser;
 public class TotalStatsPanel extends JPanel
 {
 	// will be re-used directly on panel's show hidden name button. we already have the logic for hiding/showing it here.
-	public static final JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
+	// well, it seems to cause issues to literally reference it on 2 JPopupMenus, but we can still copy its fields into
+	// a new JMenuItem
+	public final JMenuItem resetPvpHubHiddenNameMenuItem;
 
 	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
@@ -167,9 +169,7 @@ public class TotalStatsPanel extends JPanel
 	private double avgGhostBarrageExpectedDamage = 0;
 
 	private final JPopupMenu popupMenu;
-	private final int pvpHupPopupMenuItemIdx = 1;
-	private int popupMenuDefaultItemCount;
-	private int popupMenuItemCountWithPvpHub;
+	private final int popupMenuItemCountWithPvpHub;
 
 	public TotalStatsPanel()
 	{
@@ -199,6 +199,7 @@ public class TotalStatsPanel extends JPanel
 			}
 		});
 
+		resetPvpHubHiddenNameMenuItem = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
 		// create "reset PvP-Hub hidden name" right click option. Only display this if opted-in + name hidden.
 		resetPvpHubHiddenNameMenuItem.setForeground(PvpColorScheme.GREEN_TEXT_ACTION);
 		resetPvpHubHiddenNameMenuItem.addActionListener(e ->
@@ -219,33 +220,36 @@ public class TotalStatsPanel extends JPanel
 		//configureSettings.addActionListener(e -> );
 
 		// Create "Copy Fight History Data" popup menu/context menu item
-		final JMenuItem exportFightHistory = new JMenuItem("Copy Fight History Data");
-		exportFightHistory.addActionListener(e -> PLUGIN.exportFightHistory());
+//		final JMenuItem exportFightHistory = new JMenuItem("Copy Fight History Data");
+//		exportFightHistory.addActionListener(e -> PLUGIN.exportFightHistory());
 
 		// Create "Import Fight History Data" popup menu/context menu item
-		final JMenuItem importFightHistory = new JMenuItem("Import Fight History Data");
-		importFightHistory.addActionListener(e ->
-		{
-			// display a simple input dialog to request json data to import.
-			String fightHistoryData = JOptionPane.showInputDialog(this, "Enter the fight history data you wish to import:", "Import Fight History", JOptionPane.INFORMATION_MESSAGE);
-
-			// if the string is less than 2 chars, it is definitely invalid (or they pressed Cancel), so skip.
-			if (fightHistoryData == null || fightHistoryData.length() < 2)
-			{
-				return;
-			}
-
-			PLUGIN.importUserFightHistoryData(fightHistoryData);
-		});
+		// we may re-add this, but this wouldn't really work anymore due to .gz being binary files now anyway,
+		// would have to support .json + .json.gz and i cba atm
+		// most people probably weren't using this anyway - you can still import fights by copying files.
+//		final JMenuItem importFightHistory = new JMenuItem("Import Fight History Data");
+//		importFightHistory.addActionListener(e ->
+//		{
+//			// display a simple input dialog to request json data to import.
+//			String fightHistoryData = JOptionPane.showInputDialog(this, "Enter the fight history data you wish to import:", "Import Fight History", JOptionPane.INFORMATION_MESSAGE);
+//
+//			// if the string is less than 2 chars, it is definitely invalid (or they pressed Cancel), so skip.
+//			if (fightHistoryData == null || fightHistoryData.length() < 2)
+//			{
+//				return;
+//			}
+//
+//			PLUGIN.importUserFightHistoryData(fightHistoryData);
+//		});
 
 		// don't include the resetPvpHubAnonymousId menu item by default, it will be added dynamically if needed,
 		// via this.updatePopupMenuForPvpHubConfig()
 		popupMenu.add(viewWiki);
 		// resetPvpHubAnonymousId goes here (to help with visualizing index)
-		popupMenu.add(exportFightHistory);
-		popupMenu.add(importFightHistory);
+		//popupMenu.add(exportFightHistory);
+		//popupMenu.add(importFightHistory);
 		popupMenu.add(removeAllFights);
-		popupMenuDefaultItemCount = popupMenu.getComponentCount();
+		int popupMenuDefaultItemCount = popupMenu.getComponentCount();
 		popupMenuItemCountWithPvpHub = popupMenuDefaultItemCount + 1;
 
 		// Now initializing all lines:
@@ -450,21 +454,17 @@ public class TotalStatsPanel extends JPanel
 
 		// end of initializing lines
 
-		setLabels(); // update labels for all lines
-
 		updateBgColor();
 
 		setPreferredSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
 		setMinimumSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
 		setMaximumSize(new Dimension(TOTAL_STATS_WIDTH, TOTAL_STATS_HEIGHT));
 
-		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
-		// tried to fix this 1000 cleaner ways but i could only get it to work with this
-		applyPopupRecursively(this, popupMenu);
 		updatePopupMenuForPvpHubConfig();
+		SwingUtilities.invokeLater(this::setLabels); // update labels for all lines + updateUI
 	}
 
-	private void setLabels()
+	public void setLabels()
 	{
 		String avgExpectedDmgDiffOneDecimal = nf1.format(avgExpectedDmgDiff);
 		String avgDmgDealtDiffOneDecimal = nf1.format(avgDmgDealtDiff);
@@ -1007,15 +1007,19 @@ public class TotalStatsPanel extends JPanel
 	public void updatePopupMenuForPvpHubConfig()
 	{
 		// it should have the pvp hub option, so make sure it does
+		int pvpHupPopupMenuItemIdx = 1;
 		if (CONFIG.uploadFightsToPvpHub() && CONFIG.hideRsnOnPvpHub() && popupMenu.getComponentCount() < popupMenuItemCountWithPvpHub)
 		{
 			popupMenu.add(resetPvpHubHiddenNameMenuItem, pvpHupPopupMenuItemIdx);
 		}
-		else if (popupMenu.getComponentCount() >= popupMenuItemCountWithPvpHub)
+		else if ((!CONFIG.uploadFightsToPvpHub() || !CONFIG.hideRsnOnPvpHub()) && popupMenu.getComponentCount() >= popupMenuItemCountWithPvpHub)
 		{
 			popupMenu.remove(pvpHupPopupMenuItemIdx);
 		}
 
+		// set the popup for all children recursively, since the components seem to consume the mouse events somehow
+		// tried to fix this 1000 cleaner ways but i could only get it to work with this
+		applyPopupRecursively(this, popupMenu);
 	}
 	private void applyPopupRecursively(Component c, JPopupMenu menu)
 	{

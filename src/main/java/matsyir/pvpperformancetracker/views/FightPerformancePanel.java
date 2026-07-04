@@ -30,7 +30,6 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -338,7 +337,7 @@ public class FightPerformancePanel extends JPanel
 
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
-		copyFight.addActionListener(e -> PLUGIN.exportFight(fight));
+		copyFight.addActionListener(e -> PLUGIN.exportFightAsJson(fight));
 		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
 
 		// Create "Remove Fight" popup menu/context menu

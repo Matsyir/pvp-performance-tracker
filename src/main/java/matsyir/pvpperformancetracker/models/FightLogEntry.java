@@ -28,8 +28,6 @@ package matsyir.pvpperformancetracker.models;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.awt.Color;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
