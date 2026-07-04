@@ -146,11 +146,24 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
 	// "pvp-performance-tracker2": From 1.5.9 update, until present
 	public static final String DATA_FOLDER = "pvp-performance-tracker2";
-	public static final String FIGHT_HISTORY_DATA_FNAME = "FightHistoryData.json";
-	public static final String FIGHT_HISTORY_DATA_FNAME_GZ = FIGHT_HISTORY_DATA_FNAME + ".gz";
-	public static final String FIGHT_HISTORY_BACKUP_FNAME = "FightHistoryData_autoBackup.json";
+	public static final String FIGHT_HISTORY_DATA_FOLDER = "FightHistoryData"; // subfolder of DATA_FOLDER
+
+	// fname prefix used for fights imported from 1.8.1 -> 1.8.2 (going from 1 big .json to .json.gz chunks)
+	// will get number added to it, e.g FightHistoryData-c1.json.gz
+	public static final String FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK = "FightHistoryData-c";
+
+	// prefix for newly generated .json.gz files
+	// will get epoch/timestamp long added to it, e.g Fights_1783190645201.json.gz
+	// via sessionStartTime, so only 1 file per plugin launch (1 file per client session with normal use)
+	public static final String FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK = "Fights_";
+
+	// old/original fightHistoryData .json file, to be imported 1.8.1 -> 1.8.2 (1 big .json to .json.gz chunks)
+	public static final String _OLD_FIGHT_HISTORY_DATA_FNAME_JSON = "FightHistoryData.json";
+
+	public static final File BASE_DATA_DIR;
 	public static final File FIGHT_HISTORY_DATA_DIR;
-	public static final int PANEL_REBUILD_ON_CONFIG_CHANGE_DELAY = 5000;
+	private static final long sessionStartTime = Instant.now().toEpochMilli();
+
 	public static PvpPerformanceTrackerConfig CONFIG;
 	public static PvpPerformanceTrackerPlugin PLUGIN;
 	public static Image PLUGIN_ICON;
@@ -164,7 +177,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	static
 	{
-		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER);
+		BASE_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER);
+		BASE_DATA_DIR.mkdirs();
+
+		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER + "/" + FIGHT_HISTORY_DATA_FOLDER);
 		FIGHT_HISTORY_DATA_DIR.mkdirs();
 	}
 
@@ -227,6 +243,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// custom fields/props
 	public ArrayDeque<FightPerformance> fightHistory;
+	private ArrayDeque<FightPerformance> sessionFightHistory;
 	@Getter
 	private FightPerformance currentFight;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
@@ -254,6 +271,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		CONFIG = config; // save static instances of config/plugin to easily use in
 		PLUGIN = this;   // other contexts without passing them all the way down or injecting
 		fightHistory = new ArrayDeque<>();
+		sessionFightHistory = new ArrayDeque<>();
 
 		GSON = injectedGson.newBuilder()
 			.excludeFieldsWithoutExposeAnnotation()
@@ -261,7 +279,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				value.isNaN() ? new JsonPrimitive(0) // Convert NaN to zero, otherwise, return as BigDecimal with scale of 3.
 					: new JsonPrimitive(BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP))
 			).create();
-		pvpHubSyncedFightsDir = new File(FIGHT_HISTORY_DATA_DIR, PvpHubFightSync.SYNCED_FIGHTS_DIR_NAME);
+		pvpHubSyncedFightsDir = new File(BASE_DATA_DIR, PvpHubFightSync.SYNCED_FIGHTS_DIR_NAME);
 		pvpHubSyncedFightsDir.mkdirs();
 
 		if (!config.pluginVersion().equals(PLUGIN_VERSION))
@@ -1298,9 +1316,78 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "1.6.2":
 				updateFrom1_6_2to1_6_3();
 				break;
+			case "1.8.1":
+				updateFrom1_8_1to1_8_2();
+				break;
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
+	}
+
+	// convert saved fight history to chunked .gz files instead of 1 massive JSON
+	private void updateFrom1_8_1to1_8_2()
+	{
+		log.info("PvpPerformanceTracker - starting update process - updateFrom1_8_1to1_8_2()");
+		boolean success = true;
+		final int MAX_FIGHTS_PER_UPDATED_GZ_CHUNK = 100;
+		try
+		{
+			BASE_DATA_DIR.mkdirs();
+			File originalJsonData = new File(BASE_DATA_DIR, _OLD_FIGHT_HISTORY_DATA_FNAME_JSON);
+			FIGHT_HISTORY_DATA_DIR.mkdirs();
+
+			// if the fight history data file doesn't exist, don't need to do anything.
+			if (!originalJsonData.exists())
+			{
+				return;
+			}
+
+			 // read the saved fights from the JSON file
+			List<FightPerformance> savedFights = Arrays.asList(
+				GSON.fromJson(new FileReader(originalJsonData), FightPerformance[].class));
+			if (!savedFights.isEmpty())
+			{
+				ArrayList<FightPerformance> chunkedFights = new ArrayList<>();
+				for (int i = 0; i < savedFights.size(); i++)
+				{
+					chunkedFights.add(savedFights.get(i));
+
+					// 100 fights max per chunk, so once it hits >= 100, write it, clear, and continue to next chunk
+					if (chunkedFights.size() >= MAX_FIGHTS_PER_UPDATED_GZ_CHUNK)
+					{
+						try
+						{
+							int i100 = (int)((double)i / (double)MAX_FIGHTS_PER_UPDATED_GZ_CHUNK) + 1; // index-per-100-fights
+							File newGzChunkFile = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK + i100 + ".json.gz");
+
+							try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(newGzChunkFile.toPath())))
+							{
+								try (OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8))
+								{
+									GSON.toJson(chunkedFights, writer);
+								}
+							}
+						}
+						catch (Exception e)
+						{
+							log.warn("updateFrom1_8_1to1_8_2: Error ignored while writing updated fight history data gz chunk: {}", e.getMessage());
+							success = false;
+						}
+
+						chunkedFights.clear();
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			log.warn("updateFrom1_8_1to1_8_2: Error while reading or writing fight history data: " + e.getMessage());
+			success = false;
+			// Display no modal for this error since it could happen on client load and that has odd behavior.
+			return;
+		}
+
+		log.info("PvpPerformanceTracker - completed update process - updateFrom1_8_1to1_8_2() - success=" + success);
 	}
 
 	// very basic update: We added the new hit on robe statistic, instantly recalculate it on launch,
@@ -1322,8 +1409,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			log.info("Updating data from 1.5.5 (or earlier) to 1.5.6...");
 
-			FIGHT_HISTORY_DATA_DIR.mkdirs();
-			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
+			BASE_DATA_DIR.mkdirs();
+			File fightHistoryData = new File(BASE_DATA_DIR, _OLD_FIGHT_HISTORY_DATA_FNAME_JSON);
 
 			// if the fight history data file doesn't exist, create it with an empty array.
 			if (!fightHistoryData.exists())
@@ -1399,52 +1486,31 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		incomingHitsplatsBuffer.clear();
 	}
 
-	// Save the currently loaded fightHistory to local gzipped JSON.
+	// Save the currently loaded sessionFightHistory to local gzipped JSON.
 	private void saveFightHistoryData()
 	{
+		// skip any data writing if no fights were added in this session.
+		if (sessionFightHistory.isEmpty())
+		{
+			return;
+		}
+
 		try
 		{
-			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_GZ);
+			FIGHT_HISTORY_DATA_DIR.mkdirs();
+			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK + sessionStartTime + ".json.gz");
 
 			try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(fightHistoryData.toPath())))
 			{
 				try (OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8))
 				{
-					GSON.toJson(fightHistory, writer);
+					GSON.toJson(sessionFightHistory, writer);
 				}
 			}
 		}
 		catch (Exception e)
 		{
-			log.warn("Error ignored while updating fight history data: {}", e.getMessage());
-		}
-	}
-
-	// basically same as saveFightHistoryData, but for another file. Only written once on plugin launch, as a backup.
-	private void autoBackupFightHistoryData()
-	{
-		File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME);
-		File fightHistoryDataBackup = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_BACKUP_FNAME);
-
-		// skip the backup if the backup is already a larger size than the core fight history.
-		if (fightHistoryData.exists() && fightHistoryDataBackup.exists() &&
-			fightHistoryData.length() <= fightHistoryDataBackup.length())
-		{
-			return;
-		}
-
-		// silently ignore errors, which shouldn't really happen - but if they do, don't prevent the plugin
-		// from continuing to work, even if there are issues saving the data.
-		try
-		{
-			Writer writer = new FileWriter(fightHistoryDataBackup);
-			GSON.toJson(fightHistory, writer);
-			writer.flush();
-			writer.close();
-		}
-		catch (Exception e)
-		{
-			log.warn("Error ignored while backing up fight history data: " + e.getMessage());
+			log.warn("saveFightHistoryData(): Error ignored while writing fight history data: {}", e.getMessage());
 		}
 	}
 
@@ -1453,6 +1519,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		if (fight == null) { return; }
 		fightHistory.addLast(fight);
+		sessionFightHistory.addLast(fight);
 		// no need to sort, since they sort chronologically, but they should automatically be added that way.
 		try {
 			fight.calculateRobeHits(config.robeHitFilter());
@@ -1471,8 +1538,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			fightHistory.removeFirst();
 		}
 
+		// unlikely to happen for the sessionFightHistory, but do the same limit validation to it.
+		while (config.fightHistoryLimit() > 0 && sessionFightHistory.size() > config.fightHistoryLimit())
+		{
+			sessionFightHistory.removeFirst();
+		}
+
 		panel.addFight(fight);
-		//panel.enqueueRebuild();
 	}
 
 	private void enqueuePvpHubSync(FightPerformance fight)
@@ -1615,9 +1687,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		});
 	}
 
-	// import complete fight history data from the saved json data file
-	// this function only handles the direct file processing and json deserialization.
-	// more specific FightPerformance processing is done in importFights()
+	// import complete fight history data from the saved .json.gz data file
+	// this function only handles the direct file processing and .json.gz deserialization.
+	// more specific FightPerformance processing, and the addition to fightHistory is done in importFights()
 	void importFightHistoryData()
 	{
 		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
@@ -1626,66 +1698,52 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		try
 		{
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
-			File fightHistoryData = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_GZ);
+			List<File> fightDataChunkFiles = Arrays.stream(Objects.requireNonNull(FIGHT_HISTORY_DATA_DIR.listFiles(pathname ->
+				pathname.length() < (10 * 1024 * 1024) // ignore chunks greater than 10mb, they really shouldn't be going > 1-2MB with normal use.
+				&& pathname.getName().endsWith(".json.gz")
+				&& (pathname.getName().startsWith(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK)
+					|| pathname.getName().startsWith(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK))))
+			).sorted(Comparator.comparingLong(File::lastModified)).collect(Collectors.toList());
 
-			// if the fight history data file doesn't exist, create it with an empty array.
-			if (!fightHistoryData.exists())
+			// if there's no data files, then skip reading/importing data.
+			if (fightDataChunkFiles.isEmpty())
 			{
-				Writer writer = new FileWriter(fightHistoryData);
-				writer.write("[]");
-				writer.close();
+				return;
 			}
 
-			try (
-				GZIPInputStream gzip = new GZIPInputStream(Files.newInputStream(fightHistoryData.toPath()));
-				InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)
-			)
+			ArrayList<FightPerformance> savedFights = new ArrayList<>();
+
+			for (File fightDataChunk : fightDataChunkFiles)
 			{
-				List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(reader, FightPerformance[].class));
-
-//				// read the saved fights from the file
-//				List<FightPerformance> savedFights = Arrays.asList(
-//					GSON.fromJson(new FileReader(fightHistoryData), FightPerformance[].class));
-
-				fightHistory.clear();
-				importFights(savedFights);
-
-				// auto backup fights if they successfully loaded on plugin launch, just in case
-				// any strange bug or crash happens which causes the json to corrupt itself.
-				if (!fightHistory.isEmpty())
+				try (
+					GZIPInputStream gzip = new GZIPInputStream(Files.newInputStream(fightDataChunk.toPath()));
+					InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)
+				)
 				{
-					autoBackupFightHistoryData();
+					savedFights.addAll(Arrays.asList(GSON.fromJson(reader, FightPerformance[].class)));
+
+					// skip reading remaining older chunks if we've already hit the fightHistoryLimit
+					if (savedFights.size() >= CONFIG.fightHistoryLimit())
+					{
+						break;
+					}
+				}
+				catch (Exception e)
+				{
+					log.warn("importFightHistoryData(): Error while deserializing fight history data chunk (path=" + fightDataChunk.getAbsolutePath() + "), errorMsg=" + e.getMessage());
 				}
 			}
-		}
-		catch (Exception e)
-		{
-			log.warn("Error while deserializing fight history data: " + e.getMessage());
-			// Display no modal for this error since it could happen on client load and that has odd behavior.
-			return;
-		}
-	}
 
-	// import additional/extra fight history data supplied by the user
-	// this only does the direct json deserialization and success response (modals)
-	// more specific FightPerformance processing is done in importFights()
-	public void importUserFightHistoryData(String data)
-	{
-		if (data == null || data.trim().isEmpty()) { return; }
-		try
-		{
-			// read saved fights from the data string and import them
-			List<FightPerformance> savedFights = Arrays.asList(GSON.fromJson(data, FightPerformance[].class));
-			importFights(savedFights);
-			panel.enqueueRebuild();
-			createConfirmationModal(true, "Successfully imported " + savedFights.size() + " fights.");
+			if (!savedFights.isEmpty())
+			{
+				fightHistory.clear();
+				importFights(savedFights);
+			}
 		}
 		catch (Exception e)
 		{
-			log.warn("Error while importing user's fight history data: " + e.getMessage());
-			// If an error was detected while deserializing fights, display that as a message dialog.
-			createConfirmationModal(false, "Fight history data was invalid, and could not be imported.");
-			return;
+			log.warn("importFightHistoryData() Unexpected error while listing data files or deserializing fight history data: " + e.getMessage());
+			// Display no modal for this error since it could happen on client load and that has odd behavior.
 		}
 	}
 
@@ -1728,10 +1786,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (fights == null || fights.isEmpty()) { return; }
 
 		fights.removeIf(Objects::isNull);
-		fights.sort(FightPerformance::compareTo);
+		fights.sort(FightPerformance::compareTo); // ensure sorted by date, though this should happen automatically as well
 		fightHistory.addAll(fights);
 
-		// remove fights to respect the fightHistoryLimit.
+		// remove fights to respect the fightHistoryLimit if we're above it.
 		while (config.fightHistoryLimit() > 0 && fightHistory.size() > config.fightHistoryLimit())
 		{
 			fightHistory.removeFirst();
@@ -1748,6 +1806,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void resetFightHistory()
 	{
 		fightHistory.clear();
+		sessionFightHistory.clear();
 		saveFightHistoryData();
 		panel.enqueueRebuild();
 	}
@@ -1804,17 +1863,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		});
 	}
 
-	// save the complete fight history data to the clipboard.
-	public void exportFightHistory()
-	{
-		String fightHistoryDataJson = GSON.toJson(fightHistory.toArray(new FightPerformance[0]), FightPerformance[].class);
-		final StringSelection contents = new StringSelection(fightHistoryDataJson);
-		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(contents, null);
-
-		createConfirmationModal(true, "Fight history data was copied to the clipboard.");
-	}
-
-	public void exportFight(FightPerformance fight)
+	public void exportFightAsJson(FightPerformance fight)
 	{
 		if (fight == null) { return; }
 		String fightDataJson = GSON.toJson(fight, FightPerformance.class);
@@ -1828,7 +1877,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			success = true;
 			confirmMessage = "Fight data of " + fight.getCompetitor().getName() + " vs " +
-				fight.getOpponent().getName() + " was copied to the clipboard.";
+				fight.getOpponent().getName() + " was copied to the clipboard as JSON data.";
 		}
 		else
 		{
@@ -1992,6 +2041,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void resetPvpHubHiddenName()
 	{
 		configManager.unsetConfiguration(CONFIG_KEY, "pvpHubAnonymousId");
+		panel.updatePvpHubHiddenName();
 	}
 
 	public void toggleFightLogDetailFrameWarning()

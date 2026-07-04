@@ -28,6 +28,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
@@ -41,6 +43,7 @@ import java.util.function.IntSupplier;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -90,7 +93,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
-	private final TotalStatsPanel totalStatsPanel = new TotalStatsPanel();
+	private final TotalStatsPanel totalStatsPanel;
 	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
 	private final JShadowedLabel pvpHubHiddenNameBtn = new JShadowedLabel();
 	private boolean hiddenNameIsVisible = false;
@@ -131,6 +134,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
+		totalStatsPanel = new TotalStatsPanel();
 		add(totalStatsPanel);
 
 		// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
@@ -176,7 +180,15 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"Click to toggle visibility.<br><br>" +
 			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
 		pvpHubHiddenNameBtn.setComponentPopupMenu(new JPopupMenu());
-		pvpHubHiddenNameBtn.getComponentPopupMenu().add(TotalStatsPanel.resetPvpHubHiddenNameMenuItem);
+		JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getText());
+		resetPvpHubHiddenNameMenuItem.setForeground(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getForeground());
+		for (ActionListener actionListener : totalStatsPanel.resetPvpHubHiddenNameMenuItem.getActionListeners())
+		{
+			resetPvpHubHiddenNameMenuItem.addActionListener(actionListener::actionPerformed);
+		}
+		pvpHubHiddenNameBtn.getComponentPopupMenu().add(resetPvpHubHiddenNameMenuItem);
+		log.info("PvpPerformanceTrackerPanel ctor - we are copying the totalStatsPanel.resetPvpHubHiddenNameMenuItem");
+
 		pvpHubHiddenNameBtn.addMouseListener(new MouseListener()
 		{
 			private boolean hovered;
@@ -514,7 +526,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			totalStatsPanel.reset();
 			fightHistoryContainer.removeAll();
-			SwingUtilities.invokeLater(this::updateUI);
+			SwingUtilities.invokeLater(() -> {
+				totalStatsPanel.setLabels();
+				this.updateUI();
+			});
 		}
 	}
 
