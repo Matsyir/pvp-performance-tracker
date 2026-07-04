@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -474,6 +475,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			return;
 		}
+		alignSyncedFightPerspective(localFight);
 		if (competitor != null && localFight.competitor != null)
 		{
 			competitor.setName(localFight.competitor.getName());
@@ -494,6 +496,49 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			pluginVersion = localFight.pluginVersion;
 		}
+	}
+
+	private void alignSyncedFightPerspective(FightPerformance localFight)
+	{
+		if (localFight.competitor == null || localFight.opponent == null || competitor == null || opponent == null)
+		{
+			return;
+		}
+
+		String localCompetitorName = normalizeName(localFight.competitor.getName());
+		String localOpponentName = normalizeName(localFight.opponent.getName());
+		String syncedCompetitorName = normalizeName(competitor.getName());
+		String syncedOpponentName = normalizeName(opponent.getName());
+
+		if (localCompetitorName == null || localOpponentName == null ||
+			syncedCompetitorName == null || syncedOpponentName == null)
+		{
+			return;
+		}
+
+		boolean syncedCompetitorIsLocalCompetitor = localCompetitorName.equals(syncedCompetitorName);
+		boolean syncedOpponentIsLocalCompetitor = localCompetitorName.equals(syncedOpponentName);
+		boolean syncedCompetitorIsLocalOpponent = localOpponentName.equals(syncedCompetitorName);
+		boolean syncedOpponentIsLocalOpponent = localOpponentName.equals(syncedOpponentName);
+
+		if ((syncedOpponentIsLocalCompetitor && syncedCompetitorIsLocalOpponent) ||
+			(syncedCompetitorIsLocalOpponent && !syncedOpponentIsLocalOpponent && !syncedCompetitorIsLocalCompetitor))
+		{
+			Fighter originalCompetitor = competitor;
+			competitor = opponent;
+			opponent = originalCompetitor;
+		}
+	}
+
+	private static String normalizeName(String name)
+	{
+		if (name == null)
+		{
+			return null;
+		}
+
+		String normalizedName = name.trim();
+		return normalizedName.isEmpty() ? null : normalizedName.toLowerCase(Locale.ROOT);
 	}
 
 	// Count the fight as started if either:
