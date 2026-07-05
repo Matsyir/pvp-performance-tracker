@@ -1687,14 +1687,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		});
 	}
 
-	// import complete fight history data from the saved .json.gz data file
+	// import complete fight history data from the saved .json.gz data files
 	// this function only handles the direct file processing and .json.gz deserialization.
 	// more specific FightPerformance processing, and the addition to fightHistory is done in importFights()
 	void importFightHistoryData()
 	{
 		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
-		// The user will be notified by a modal if this happens.
 		try
 		{
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
@@ -1703,7 +1702,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				&& pathname.getName().endsWith(".json.gz")
 				&& (pathname.getName().startsWith(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK)
 					|| pathname.getName().startsWith(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK))))
-			).sorted(Comparator.comparingLong(File::lastModified)).collect(Collectors.toList());
+			).sorted(Comparator.comparingLong(File::lastModified).reversed()).collect(Collectors.toList());
 
 			// if there's no data files, then skip reading/importing data.
 			if (fightDataChunkFiles.isEmpty())
@@ -1720,7 +1719,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)
 				)
 				{
-					savedFights.addAll(Arrays.asList(GSON.fromJson(reader, FightPerformance[].class)));
+					List<FightPerformance> fightsFromChunk = Arrays.asList(GSON.fromJson(reader, FightPerformance[].class));
+					fightsFromChunk.removeIf((f) -> Objects.isNull(f) || Objects.isNull(f.competitor) || Objects.isNull(f.opponent));
+					savedFights.addAll(fightsFromChunk);
 
 					// skip reading remaining older chunks if we've already hit the fightHistoryLimit
 					if (savedFights.size() >= CONFIG.fightHistoryLimit())
@@ -1743,7 +1744,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		catch (Exception e)
 		{
 			log.warn("importFightHistoryData() Unexpected error while listing data files or deserializing fight history data: " + e.getMessage());
-			// Display no modal for this error since it could happen on client load and that has odd behavior.
+			// Display no popup for this error since it could happen on client load and that has odd behavior.
 		}
 	}
 
