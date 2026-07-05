@@ -1477,6 +1477,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 				final FightPerformance fightToUpload = currentFight;
 				final String hiddenName = config.hideRsnOnPvpHub() ? getPvpHubHiddenName() : null;
+				fightToUpload.recordPvpHubUploadName(hiddenName != null ? hiddenName : fightToUpload.getCompetitor().getName());
 				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName,
 					() -> enqueuePvpHubSync(fightToUpload)));
 			}
