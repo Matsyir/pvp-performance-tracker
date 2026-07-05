@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +89,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@SerializedName("v")
 	@Getter
 	private String pluginVersion;
+	@Expose
+	@SerializedName("pn")
+	private String pvpHubUploadName;
 
 	@Getter
 	private transient FightPerformance pvpHubSyncedFight;
@@ -427,6 +431,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 	}
 
+	public void recordPvpHubUploadName(String uploadName)
+	{
+		pvpHubUploadName = normalizeName(uploadName) == null ? null : uploadName.trim();
+	}
+
 	public FightPerformance getPvpHubDisplayFight()
 	{
 		if (pvpHubSyncedFight == null)
@@ -445,6 +454,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			return;
 		}
+		alignSyncedFightPerspective(localFight);
 		if (competitor != null && localFight.competitor != null)
 		{
 			competitor.setName(localFight.competitor.getName());
@@ -465,6 +475,122 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			pluginVersion = localFight.pluginVersion;
 		}
+	}
+
+	private void alignSyncedFightPerspective(FightPerformance localFight)
+	{
+		if (localFight.competitor == null || localFight.opponent == null || competitor == null || opponent == null)
+		{
+			return;
+		}
+
+		String localCompetitorName = normalizeName(localFight.competitor.getName());
+		String localOpponentName = normalizeName(localFight.opponent.getName());
+		String localUploadName = normalizeName(localFight.pvpHubUploadName);
+		String syncedCompetitorName = normalizeName(competitor.getName());
+		String syncedOpponentName = normalizeName(opponent.getName());
+
+		int nameOrientation = resolveNameOrientation(localCompetitorName, localOpponentName, localUploadName,
+			syncedCompetitorName, syncedOpponentName);
+		if (nameOrientation > 0 || (nameOrientation == 0 && shouldSwapByFingerprint(localFight)))
+		{
+			swapFighters();
+		}
+	}
+
+	private int resolveNameOrientation(String localCompetitorName, String localOpponentName, String localUploadName,
+		String syncedCompetitorName, String syncedOpponentName)
+	{
+		if (syncedCompetitorName == null || syncedOpponentName == null)
+		{
+			return 0;
+		}
+
+		boolean syncedCompetitorIsLocalCompetitor = nameMatchesLocalCompetitor(syncedCompetitorName, localCompetitorName, localUploadName);
+		boolean syncedOpponentIsLocalCompetitor = nameMatchesLocalCompetitor(syncedOpponentName, localCompetitorName, localUploadName);
+		boolean syncedCompetitorIsLocalOpponent = localOpponentName != null && localOpponentName.equals(syncedCompetitorName);
+		boolean syncedOpponentIsLocalOpponent = localOpponentName != null && localOpponentName.equals(syncedOpponentName);
+
+		if (syncedCompetitorIsLocalCompetitor && !syncedOpponentIsLocalCompetitor)
+		{
+			return -1;
+		}
+		if (syncedOpponentIsLocalCompetitor && !syncedCompetitorIsLocalCompetitor)
+		{
+			return 1;
+		}
+		if (syncedCompetitorIsLocalOpponent && !syncedOpponentIsLocalOpponent && !syncedCompetitorIsLocalCompetitor)
+		{
+			return 1;
+		}
+		if (syncedOpponentIsLocalOpponent && !syncedCompetitorIsLocalOpponent && !syncedOpponentIsLocalCompetitor)
+		{
+			return -1;
+		}
+
+		return 0;
+	}
+
+	private boolean nameMatchesLocalCompetitor(String syncedName, String localCompetitorName, String localUploadName)
+	{
+		return syncedName != null && ((localCompetitorName != null && localCompetitorName.equals(syncedName)) ||
+			(localUploadName != null && localUploadName.equals(syncedName)));
+	}
+
+	private boolean shouldSwapByFingerprint(FightPerformance localFight)
+	{
+		int currentScore = fighterFingerprintDistance(competitor, localFight.competitor) +
+			fighterFingerprintDistance(opponent, localFight.opponent);
+		int swappedScore = fighterFingerprintDistance(competitor, localFight.opponent) +
+			fighterFingerprintDistance(opponent, localFight.competitor);
+		return swappedScore + 5 < currentScore;
+	}
+
+	private int fighterFingerprintDistance(Fighter syncedFighter, Fighter localFighter)
+	{
+		if (syncedFighter == null || localFighter == null)
+		{
+			return 1_000_000;
+		}
+
+		int score = 0;
+		score += Math.abs(syncedFighter.getDamageDealt() - localFighter.getDamageDealt()) * 4;
+		score += Math.abs(syncedFighter.getAttackCount() - localFighter.getAttackCount()) * 3;
+		score += Math.abs(syncedFighter.getOffPraySuccessCount() - localFighter.getOffPraySuccessCount()) * 2;
+		score += Math.abs(syncedFighter.getOffensivePraySuccessCount() - localFighter.getOffensivePraySuccessCount()) * 2;
+		score += Math.abs(syncedFighter.getTotalMagicAttackCount() - localFighter.getTotalMagicAttackCount()) * 2;
+		score += Math.abs(syncedFighter.getMagicHitCount() - localFighter.getMagicHitCount()) * 2;
+		score += Math.abs(syncedFighter.getHpHealed() - localFighter.getHpHealed());
+		score += Math.abs(syncedFighter.getGhostBarrageCount() - localFighter.getGhostBarrageCount()) * 2;
+		score += Math.abs(fightLogCount(syncedFighter) - fightLogCount(localFighter)) * 3;
+		if (syncedFighter.isDead() != localFighter.isDead())
+		{
+			score += 25;
+		}
+		return score;
+	}
+
+	private int fightLogCount(Fighter fighter)
+	{
+		return fighter.getFightLogEntries() == null ? 0 : fighter.getFightLogEntries().size();
+	}
+
+	private void swapFighters()
+	{
+		Fighter originalCompetitor = competitor;
+		competitor = opponent;
+		opponent = originalCompetitor;
+	}
+
+	private static String normalizeName(String name)
+	{
+		if (name == null)
+		{
+			return null;
+		}
+
+		String normalizedName = name.trim();
+		return normalizedName.isEmpty() ? null : normalizedName.toLowerCase(Locale.ROOT);
 	}
 
 	// Count the fight as started if either:
