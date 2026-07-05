@@ -93,6 +93,35 @@ public class FightPerformanceSerializer
 		{
 			this.startsWith = startsWith;
 		}
+
+		public static boolean isFileValidChunk(File file)
+		{
+			// ignore any chunks greater than 10mb, they really shouldn't be going > 1-2MB with normal use.
+			// also ignore any that don't end with .json.gz
+			if (file.length() > (10 * 1024 * 1024) || !file.getName().endsWith(JSON_GZ_CHUNK_ENDSWITH))
+			{
+				return false;
+			}
+
+			JsonGzChunkType chunkType = null;
+			for (JsonGzChunkType cType : JsonGzChunkType.values())
+			{
+				if (file.getName().startsWith(cType.startsWith))
+				{
+					chunkType = cType;
+					break;
+				}
+			}
+
+			return chunkType != null;
+		}
+	}
+	private static List<File> listAllDataChunks()
+	{
+		return Arrays.stream(Objects.requireNonNull(
+				FIGHT_HISTORY_DATA_DIR.listFiles(JsonGzChunkType::isFileValidChunk))
+			).sorted(Comparator.comparingLong(File::lastModified).reversed())
+			.collect(Collectors.toList());
 	}
 
 	// import complete fight history data from the saved .json.gz data files
@@ -105,28 +134,9 @@ public class FightPerformanceSerializer
 		try
 		{
 			FIGHT_HISTORY_DATA_DIR.mkdirs();
-			List<File> fightDataChunkFiles = Arrays.stream(Objects.requireNonNull(FIGHT_HISTORY_DATA_DIR.listFiles(file ->
-			{
-				// ignore any chunks greater than 10mb, they really shouldn't be going > 1-2MB with normal use.
-				// also ignore any that don't end with .json.gz
-				if (file.length() > (10 * 1024 * 1024) || !file.getName().endsWith(JSON_GZ_CHUNK_ENDSWITH))
-				{
-					return false;
-				}
 
-				JsonGzChunkType chunkType = null;
-				for (JsonGzChunkType cType : JsonGzChunkType.values())
-				{
-					if (file.getName().startsWith(cType.startsWith))
-					{
-						chunkType = cType;
-						break;
-					}
-				}
 
-				return chunkType != null;
-			}))).sorted(Comparator.comparingLong(File::lastModified).reversed()).collect(Collectors.toList());
-
+			List<File> fightDataChunkFiles = listAllDataChunks();
 			// if there's no data files, then skip reading/importing data.
 			if (fightDataChunkFiles.isEmpty())
 			{
@@ -203,7 +213,16 @@ public class FightPerformanceSerializer
 		}
 	}
 
-	// TODO add function to remove all fights
+	public static void removeAllFights()
+	{
+		try
+		{
+			listAllDataChunks().forEach(file -> file.delete());
+		}
+		catch (Exception e)
+		{
+		}
+	}
 
 	// in importFightHistory, we set the loadedFromFname field to save which chunk the fight was loaded from.
 	// Then find it by comparing a few fields, and re-write the chunk without it.

@@ -672,11 +672,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// When the config is reset, also reset the fight history data, as a way to restart
 	// if the current data is causing problems.
+	// allow players to choose if they want to reset fight history.
 	@Override
 	public void resetConfiguration()
 	{
 		super.resetConfiguration();
-		resetFightHistory();
+		int dialogResult = JOptionPane.showConfirmDialog(panel, "Your configuration was successfully reset " +
+			"to default settings. Do you also want to remove all saved fight data?",
+			"Warning - also remove fight history?", JOptionPane.YES_NO_OPTION);
+		if (dialogResult == JOptionPane.YES_OPTION)
+		{
+			resetFightHistory();
+		}
 	}
 
 	// when the client shuts down, save the fight history data locally.
@@ -1555,19 +1562,31 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// reset the loaded fight history as well as the saved json data
+	// todo, add options to also delete but not persistently. guess it could be kinda useful?
 	public void resetFightHistory()
+	{
+		resetFightHistory(true);
+	}
+	// reset the loaded fight history as well as the saved json data
+	public void resetFightHistory(boolean deleteForever)
 	{
 		fightHistory.clear();
 		sessionFightHistory.clear();
-		//FightPerformanceSerializer.removeAllFights(); // TODO
+		FightPerformanceSerializer.removeAllFights();
 		panel.enqueueRebuild();
 	}
 
 	// remove a fight from the loaded fight history
 	public void removeFight(FightPerformance fight)
 	{
-		clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
+		removeFight(fight, true);
+	}
+	public void removeFight(FightPerformance fight, boolean deleteForever)
+	{
+		if (deleteForever)
+		{
+			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
+		}
 		fightHistory.remove(fight);
 		panel.enqueueRebuild();
 	}
