@@ -407,10 +407,6 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		}
 		totalStatsPanel.addFights(displayFights);
 
-		fights.clear();
-		fights.addAll(displayFights);
-		displayFights.clear();
-
 		// if we're adding more fights than we want to render at all, then reduce the number of fights we're adding
 		while(fights.size() > config.fightHistoryRenderLimit())
 		{
