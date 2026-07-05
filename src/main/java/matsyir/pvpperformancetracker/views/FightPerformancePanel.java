@@ -184,38 +184,8 @@ public class FightPerformancePanel extends JPanel
 	//     2 (110.0%)         1 (65.0%) // ko chances
 	//     4 G.B. (37)				N/A // ghost barrages
 	//
-	// these are the params to use for a normal panel.
-	public FightPerformancePanel(FightPerformance fight)
-	{
-		this(fight, null);
-	}
-
-	public FightPerformancePanel(FightPerformance fight, WorldService worldService)
-	{
-		this(fight, false, null, worldService, -1);
-	}
-
-	public FightPerformancePanel(FightPerformance fight, WorldService worldService, int worldLocation)
-	{
-		this(fight, false, null, worldService, worldLocation);
-	}
 
 	public FightPerformancePanel(FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier)
-	{
-		this(fight, false, null, worldService, worldLocationSupplier);
-	}
-
-	public FightPerformancePanel(FightPerformance fight, boolean showActions, boolean showBorders, boolean showOpponentClientStats, FightPerformance oppFight)
-	{
-		this(fight, showOpponentClientStats, oppFight, null, -1);
-	}
-
-	public FightPerformancePanel(FightPerformance fight, boolean showOpponentClientStats, FightPerformance oppFight, WorldService worldService, int worldLocation)
-	{
-		this(fight, showOpponentClientStats, oppFight, worldService, () -> worldLocation);
-	}
-
-	public FightPerformancePanel(FightPerformance fight, boolean showOpponentClientStats, FightPerformance oppFight, WorldService worldService, IntSupplier worldLocationSupplier)
 	{
 		boolean pvpHubSynced = fight.hasPvpHubSyncedFight();
 		FightPerformance displayFight = fight.getPvpHubDisplayFight();
@@ -273,7 +243,7 @@ public class FightPerformancePanel extends JPanel
 				continue;
 			}
 
-			panelLines.add(stat.getPanelComponent(displayFight, oppFight));
+			panelLines.add(stat.getPanelComponent(displayFight));
 		}
 
 		// setup mouse events for hovering and clicking to open the fight log

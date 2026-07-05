@@ -197,20 +197,6 @@ class Fighter
 			baseLevels);
 	}
 
-	// add an attack to the counters depending if it is successful or not.
-	// also update the success rate with the new counts.
-	// Used for regular, ongoing fights
-	void addAttack(Player opponent, AnimationData animationData, int offensivePray)
-	{
-		addAttack(opponent, animationData, offensivePray, null, PLUGIN.getClient().getTickCount(), System.currentTimeMillis());
-	}
-
-	// Levels can be null
-	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
-	{
-		addAttack(opponent, animationData, offensivePray, levels, PLUGIN.getClient().getTickCount(), System.currentTimeMillis());
-	}
-
 	// Levels can be null
 	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels, int attackTick, long attackTime)
 	{
@@ -307,33 +293,6 @@ class Fighter
 		}
 		fightLogEntries.add(fightLogEntry);
 		pendingAttacks.add(fightLogEntry);
-	}
-
-	// add an attack from fight log, without player references, for merging fight logs (fight analysis)
-	void addAttack(FightLogEntry logEntry, FightLogEntry defenderLog)
-	{
-		attackCount++;
-		if (logEntry.success())
-		{
-			offPraySuccessCount++;
-		}
-		if (logEntry.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(logEntry.getAttackerOffensivePray()))
-		{
-			offensivePraySuccessCount++;
-		}
-
-		pvpDamageCalc.updateDamageStats(logEntry, defenderLog);
-		expectedDamage += pvpDamageCalc.getAverageHit();
-
-		if (logEntry.getAnimationData().attackStyle == AnimationData.AttackStyle.MAGIC)
-		{
-			totalMagicAttackCount++;
-			magicHitCountExpected += pvpDamageCalc.getAccuracy();
-			// actual magicHitCount is directly added, as it can no longer
-			// be detected and should have been accurate initially.
-		}
-
-		fightLogEntries.add(new FightLogEntry(logEntry, pvpDamageCalc));
 	}
 
 	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)

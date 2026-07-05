@@ -98,7 +98,7 @@ public class AttackSummaryFrame extends JFrame
 	int opponentRangeCount = 0;
 	int opponentMageCount = 0;
 
-	public static JFrame createAttackSummaryFrame(FightPerformance fight, JRootPane rootPane)
+	public static void createAttackSummaryFrame(FightPerformance fight, JRootPane rootPane)
 	{
 		// destroy current frame if it exists so we only have one at a time (static field)
 		if (attackSummaryFrame != null)
@@ -111,12 +111,10 @@ public class AttackSummaryFrame extends JFrame
 		if (fightLogEntries.isEmpty())
 		{
 			PLUGIN.createConfirmationModal(false, "This fight has no attack summary to display, or the data is outdated.");
-			return attackSummaryFrame;
+			return;
 		}
 
 		attackSummaryFrame = new AttackSummaryFrame(fight, fightLogEntries, rootPane);
-
-		return attackSummaryFrame;
 	}
 
 	private AttackSummaryFrame(FightPerformance fight, ArrayList<FightLogEntry> fightLogEntries, JRootPane rootPane)

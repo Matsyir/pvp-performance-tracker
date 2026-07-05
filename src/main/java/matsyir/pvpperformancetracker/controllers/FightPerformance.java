@@ -77,7 +77,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	public long lastFightTime; // last fight time saved as epochMilli timestamp (serializing an Instant was a bad time)
 	@Expose
 	@SerializedName("l")
-	public FightType fightType; // save a boolean if the fight was done in LMS, so we can know those stats/rings/ammo are used.
+	public FightType fightType; // save a FightType if the fight was done in LMS, and with what build
 	@Expose
 	@SerializedName("w")
 	private int world;
@@ -95,6 +95,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	@Getter
 	private transient FightPerformance pvpHubSyncedFight;
+	@Getter
+	// returns true if this IS the pvpHubSyncedFight, rather than the core/parent fight containing it.
+	private transient boolean isSyncedFight = false;
 	@Getter
 	private transient boolean pvpHubSyncInProgress = false;
 	private transient boolean fightIdGenerated = false;
@@ -426,6 +429,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		pvpHubSyncInProgress = false;
 		if (pvpHubSyncedFight != null)
 		{
+			syncedFight.isSyncedFight = true;
 			pvpHubSyncedFight.applyLocalDisplayIdentityFrom(this);
 			pvpHubSyncedFight.initializeFightLogNames();
 		}

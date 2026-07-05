@@ -115,12 +115,12 @@ public class FightLogFrame extends JFrame
 	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
-	public static JFrame createFightLogFrame(FightPerformance fight, JRootPane rootPane)
+	public static void createFightLogFrame(FightPerformance fight, JRootPane rootPane)
 	{
-		return createFightLogFrame(fight, rootPane, false);
+		createFightLogFrame(fight, rootPane, false);
 	}
 
-	public static JFrame createFightLogFrame(FightPerformance fight, JRootPane rootPane, boolean pvpHubSynced)
+	public static void createFightLogFrame(FightPerformance fight, JRootPane rootPane, boolean pvpHubSynced)
 	{
 		// destroy current frame if it exists so we only have one at a time (static field)
 		if (fightLogFrame != null)
@@ -142,8 +142,6 @@ public class FightLogFrame extends JFrame
 				rootPane,
 				pvpHubSynced);
 		}
-
-		return fightLogFrame;
 	}
 
 	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
@@ -193,8 +191,8 @@ public class FightLogFrame extends JFrame
 			brewStateLabel.setToolTipText("<html>Amount of levels below the max potted level." +
 				"<br>For example, if ranging with 110 range, it will display -2 since 112 is max potted (at level 99)." +
 				"<br>You want this to stay as close to 0 as possible." +
-				"<br><br>This does look at your actual potted/brewed level, although it isn't used for Expected Damage" +
-				"<br>calculations, unless the fight is merged/synced");
+				"<br><br>This does look at your actual potted/brewed level" + (pvpHubSynced ? "." :
+				", although it isn't used for Expected Damage<br>calculations, unless the fight is merged/synced"));
 
 			brewStateLabel.setText(brewState.getFightLogText());
 

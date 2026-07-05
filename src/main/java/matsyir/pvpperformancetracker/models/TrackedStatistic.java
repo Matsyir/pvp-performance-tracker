@@ -24,9 +24,9 @@
  */
 package matsyir.pvpperformancetracker.models;
 
+import java.util.function.Function;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
-import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.views.PanelFactory;
@@ -36,7 +36,6 @@ import java.awt.Color;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public enum TrackedStatistic
@@ -85,7 +84,7 @@ public enum TrackedStatistic
 		// 3) Update TableComponent from step 2 from ongoing fight data
 		// these have to be static in order to self-reference themselves and use things like numberFormats
 		OFF_PRAY.init(
-			(fight, oppFight) -> PanelFactory.createStatsLine(
+			(fight) -> PanelFactory.createStatsLine(
 				OFF_PRAY.acronym, OFF_PRAY.acronymTooltip
 				, fight.competitor.getOffPrayStats()
 				, (fight.competitor.getName() + " hit " + fight.competitor.getOffPraySuccessCount() + " successful off-pray attacks out of " +
@@ -110,7 +109,7 @@ public enum TrackedStatistic
 		);
 
 		EXPECTED_DMG.init(
-			(fight, oppFight) -> PanelFactory.createStatsLine(EXPECTED_DMG.acronym, EXPECTED_DMG.acronymTooltip
+			(fight) -> PanelFactory.createStatsLine(EXPECTED_DMG.acronym, EXPECTED_DMG.acronymTooltip
 				, fight.competitor.getExpectedDmgString(fight.opponent)
 				, "On average, " + (fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
 					" damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)")
@@ -132,7 +131,7 @@ public enum TrackedStatistic
 		);
 
 		DMG_DEALT.init(
-			(fight, oppFight) -> PanelFactory.createStatsLine(DMG_DEALT.acronym, DMG_DEALT.acronymTooltip
+			(fight) -> PanelFactory.createStatsLine(DMG_DEALT.acronym, DMG_DEALT.acronymTooltip
 				, fight.competitor.getDmgDealtString(fight.opponent)
 				, fight.competitor.getName() + " dealt " + fight.competitor.getDamageDealt() +
 					" damage (" + fight.competitor.getDmgDealtString(fight.opponent, true) + " vs opponent)"
@@ -155,7 +154,7 @@ public enum TrackedStatistic
 		);
 
 		MAGIC_HITS.init(
-			(fight, oppFight) -> PanelFactory.createStatsLine(MAGIC_HITS.acronym, MAGIC_HITS.acronymTooltip
+			(fight) -> PanelFactory.createStatsLine(MAGIC_HITS.acronym, MAGIC_HITS.acronymTooltip
 				, String.valueOf(fight.competitor.getMagicHitStats())
 				, fight.competitor.getName() + " successfully hit " +
 					fight.competitor.getMagicHitCount() + " of " + fight.competitor.getMagicAttackCount() + " magic attacks, but expected to hit " +
@@ -183,32 +182,30 @@ public enum TrackedStatistic
 		);
 
 		OFFENSIVE_PRAY.init(
-			(fight, oppFight) -> { // returns FightPerformancePanel component
+			(fight) -> { // returns FightPerformancePanel component
 				// OFFENSIVE PRAYS RIGHT: prepare opponent data if its available
 				String oppOffensivePrayStats = NO_DATA;
 				String oppOffensivePrayTooltip = "No data is available for the opponent's offensive prayers";
 				Color oppOffensivePrayColor = PvpColorScheme.neutralColor();
-				if (oppFight != null)
+				if (fight.isSyncedFight())
 				{
-					Fighter oppComp = oppFight.getCompetitor();
-
-					oppOffensivePrayStats = String.valueOf(oppComp.getOffensivePrayStats());
-					oppOffensivePrayTooltip = (oppComp.getName() + " did " + oppComp.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
-						oppComp.getAttackCount() + " total attacks (" +
-						nf2.format(oppComp.calculateOffensivePraySuccessPercentage()) + "%)");
+					oppOffensivePrayStats = String.valueOf(fight.opponent.getOffensivePrayStats());
+					oppOffensivePrayTooltip = (fight.opponent.getName() + " did " + fight.opponent.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
+						fight.opponent.getAttackCount() + " total attacks (" +
+						nf2.format(fight.opponent.calculateOffensivePraySuccessPercentage()) + "%)");
 					oppOffensivePrayColor = (
-						oppFight.getCompetitor().calculateOffensivePraySuccessPercentage() > fight.competitor.calculateOffensivePraySuccessPercentage()
+						fight.opponent.calculateOffensivePraySuccessPercentage() > fight.competitor.calculateOffensivePraySuccessPercentage()
 							? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor());
 				}
 
-				// OFFENSIVE PRAYS: player's offensive pray stats (only player's, usually no data for opponent)
+				// OFFENSIVE PRAYS: player's offensive pray stats (no data for opponent without sync/merge)
 				return PanelFactory.createStatsLine(OFFENSIVE_PRAY.acronym, OFFENSIVE_PRAY.acronymTooltip
 					, String.valueOf(fight.competitor.getOffensivePrayStats())
 					, (fight.competitor.getName() + " did " + fight.competitor.getOffensivePraySuccessCount() + " successful offensive prayers out of " +
 						fight.competitor.getAttackCount() + " total attacks (" +
 						nf2.format(fight.competitor.calculateOffensivePraySuccessPercentage()) + "%)")
-					, oppFight == null ? PvpColorScheme.neutralColor() : (fight.competitor.calculateOffensivePraySuccessPercentage() >
-						oppFight.getCompetitor().calculateOffensivePraySuccessPercentage() ?
+					, !fight.isSyncedFight() ? PvpColorScheme.neutralColor() : (fight.competitor.calculateOffensivePraySuccessPercentage() >
+						fight.opponent.calculateOffensivePraySuccessPercentage() ?
 						PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor())
 
 					, oppOffensivePrayStats
@@ -222,25 +219,23 @@ public enum TrackedStatistic
 		);
 
 		HP_HEALED.init(
-			(fight, oppFight) -> { // returns FightPerformancePanel component
+			(fight) -> { // returns FightPerformancePanel component
 				// hp healed, right
 				String oppHpHealedStats = NO_DATA;
 				String oppHpHealedTooltip = "No data is available for the opponent's hp healed";
 				Color oppHpHealedColor = PvpColorScheme.neutralColor();
-				if (oppFight != null)
+				if (fight.isSyncedFight())
 				{
-					Fighter oppComp = oppFight.getCompetitor();
-
-					oppHpHealedStats = (String.valueOf(oppComp.getHpHealed()));
-					oppHpHealedTooltip = (oppComp.getName() + " recovered " + oppComp.getHpHealed() + " hitpoints during the fight");
-					oppHpHealedColor = (oppFight.getCompetitor().getHpHealed() > fight.competitor.getHpHealed() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor());
+					oppHpHealedStats = (String.valueOf(fight.opponent.getHpHealed()));
+					oppHpHealedTooltip = (fight.opponent.getName() + " recovered " + fight.opponent.getHpHealed() + " hitpoints during the fight");
+					oppHpHealedColor = (fight.opponent.getHpHealed() > fight.competitor.getHpHealed() ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor());
 				}
 
-				// HP healed (only player's, no data for opponent usually)
+				// HP healed (no data for opponent without sync/merge)
 				return PanelFactory.createStatsLine(HP_HEALED.acronym, HP_HEALED.acronymTooltip
 					, String.valueOf(fight.competitor.getHpHealed())
 					, (fight.competitor.getName() + " recovered " + fight.competitor.getHpHealed() + " hitpoints during the fight")
-					, oppFight == null ? PvpColorScheme.neutralColor() : (fight.competitor.getHpHealed() > oppFight.getCompetitor().getHpHealed() ?
+					, !fight.isSyncedFight() ? PvpColorScheme.neutralColor() : (fight.competitor.getHpHealed() > fight.opponent.getHpHealed() ?
 						PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor())
 
 					, oppHpHealedStats
@@ -254,7 +249,7 @@ public enum TrackedStatistic
 		);
 
 		ROBE_HITS.init(
-			(fight, oppFight) -> { // returns FightPerformancePanel component
+			(fight) -> { // returns FightPerformancePanel component
 				// Competitor's hits on robes
 				int compHits = fight.getCompetitor().getRobeHits();
 				int compTotal = fight.getOpponent().getAttackCount() - fight.getOpponent().getTotalMagicAttackCount();
@@ -303,7 +298,7 @@ public enum TrackedStatistic
 		);
 
 		KO_CHANCES.init(
-			(fight, oppFight) -> { // returns FightPerformancePanel component
+			(fight) -> { // returns FightPerformancePanel component
 				// Total KO Chances
 				// Calculate total KO chances and overall probability // MODIFIED Calculation
 				int competitorKoChances = 0;
@@ -364,23 +359,21 @@ public enum TrackedStatistic
 		);
 
 		GHOST_BARRAGES.init(
-			(fight, oppFight) -> { // returns FightPerformancePanel component
+			(fight) -> { // returns FightPerformancePanel component
 				String oppGhostBarrageText = NO_DATA;
 				String oppGhostBarrageTooltipText = "No data is available for the opponent's ghost barrages";
 				Color oppGhostBarrageColor = PvpColorScheme.neutralDmgColor();
 				Color cmpGbColor = PvpColorScheme.gbColor();
 
-				if (oppFight != null)
+				if (fight.hasPvpHubSyncedFight())
 				{
-					Fighter oppComp = oppFight.getCompetitor();
-
-					oppGhostBarrageText = (oppComp.getGhostBarrageStats());
-					oppGhostBarrageTooltipText = ("(Advanced): " + oppComp.getName() + " hit " + oppComp.getGhostBarrageCount()
-						+ " ghost barrages during the fight, worth an extra " + nf2.format(oppComp.getGhostBarrageExpectedDamage())
+					oppGhostBarrageText = (fight.opponent.getGhostBarrageStats());
+					oppGhostBarrageTooltipText = ("(Advanced): " + fight.opponent.getName() + " hit " + fight.opponent.getGhostBarrageCount()
+						+ " ghost barrages during the fight, worth an extra " + nf2.format(fight.opponent.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
-					oppGhostBarrageColor = (oppFight.getCompetitor().getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
+					oppGhostBarrageColor = (fight.opponent.getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
 						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
-					cmpGbColor = (fight.competitor.getGhostBarrageExpectedDamage() > oppFight.getCompetitor().getGhostBarrageExpectedDamage()
+					cmpGbColor = (fight.competitor.getGhostBarrageExpectedDamage() > fight.opponent.getGhostBarrageExpectedDamage()
 						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
 				}
 
@@ -394,8 +387,9 @@ public enum TrackedStatistic
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
 					, oppGhostBarrageColor
-					, false // TODO: if we move ghost barrage from being the bottom-most statistic,
-					// then move this to only exclude the bottom border on the new last line.
+					, false
+					// TODO: if we move ghost barrage from being the bottom-most statistic,
+					//  then move this to only exclude the bottom border on the new last line.
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(GHOST_BARRAGES.acronym, 80, 20,
@@ -423,11 +417,11 @@ public enum TrackedStatistic
 	@Getter
 	private String acronymTooltip;
 
-	private BiFunction<FightPerformance, FightPerformance, JPanel> getPanelComponent;
+	private Function<FightPerformance, JPanel> getPanelComponent;
 
-	public JPanel getPanelComponent(FightPerformance f, FightPerformance oppFight)
+	public JPanel getPanelComponent(FightPerformance f)
 	{
-		return this.getPanelComponent.apply(f, oppFight);
+		return this.getPanelComponent.apply(f);
 	}
 
 	private Supplier<TableComponent> getOverlayComponent;
@@ -452,7 +446,7 @@ public enum TrackedStatistic
 
 	}
 
-	private void init(BiFunction<FightPerformance, FightPerformance, JPanel> getPanelComponent,
+	private void init(Function<FightPerformance, JPanel> getPanelComponent,
 					  Supplier<TableComponent> getOverlayComponent,
 					  BiConsumer<FightPerformance, TableComponent> updateOverlayComponent)
 	{
