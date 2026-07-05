@@ -29,6 +29,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import java.awt.Color;
 import java.time.Instant;
+import joptsimple.internal.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import matsyir.pvpperformancetracker.controllers.PvpDamageCalc;
@@ -454,7 +455,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		// result when comparing 2 clients, even if the result is the same. This should help keep it more consistent.
 		// note that this is when comparing 2 different fight logs, so when processing same-tick attacks, it should
 		// never be comparing the attacker name with itself, always the opponent name.
-		if (diff == 0)
+		if (diff == 0 && !Strings.isNullOrEmpty(attackerName) && !Strings.isNullOrEmpty(o.attackerName))
 		{
 			diff = attackerName.compareTo(o.attackerName);
 		}

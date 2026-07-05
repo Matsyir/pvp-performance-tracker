@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -122,6 +123,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	private transient int opponentKoChanceCount = 0;
 	private transient double competitorSurvivalProb = 1.0;
 	private transient double opponentSurvivalProb = 1.0;
+	@Getter
+	@Setter
+	private transient String loadedFromFname;
 
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
