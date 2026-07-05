@@ -41,7 +41,6 @@ import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
 import matsyir.pvpperformancetracker.utils.FightIdGenerator;
-import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Player;
@@ -149,34 +148,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.competitor.setLastGhostBarrageCheckedMageXp(PLUGIN.getClient().getSkillExperience(Skill.MAGIC));
 
 		this.pluginVersion = PLUGIN.PLUGIN_VERSION;
-	}
-
-	// create a FightPerformance using an old 1.5.5 or earlier version.
-	public FightPerformance(FightPerformance__1_5_5 old)
-	{
-		this.competitor = old.competitor;
-		this.opponent = old.opponent;
-		this.lastFightTime = old.lastFightTime;
-		this.initialTime = old.lastFightTime;
-		if (old.isLmsFight)
-		{
-			if (!competitor.getFightLogEntries().isEmpty())
-			{
-				int defLvl = competitor.getFightLogEntries().get(0).getAttackerLevels().def;
-				this.fightType =
-					defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
-					defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
-					FightType.LMS_MAXMED;
-			}
-			else
-			{
-				this.fightType = FightType.LMS_MAXMED;
-			}
-		}
-		else
-		{
-			this.fightType = FightType.NORMAL;
-		}
 	}
 
 	// return a random fightPerformance used for testing UI

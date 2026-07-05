@@ -35,10 +35,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -80,7 +78,6 @@ import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
-import matsyir.pvpperformancetracker.models.oldVersions.FightPerformance__1_5_5;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
@@ -1294,31 +1291,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void update(String oldVersion)
 	{
-		switch (oldVersion)
+		if (oldVersion.startsWith("1.7.") || List.of("1.8.0", "1.8.1", "1.8.2").contains(oldVersion))
 		{
-			case "1.4.0":
-			case "1.4.1":
-			case "1.4.2":
-			case "1.4.3":
-			case "1.4.4":
-			case "1.4.5":
-			case "1.4.6":
-			case "1.4.7":
-			case "1.4.8":
-			case "1.5.0":
-			case "1.5.1":
-			case "1.5.2":
-			case "1.5.3":
-			case "1.5.4":
-			case "1.5.5":
-				updateFrom1_5_5to1_5_6();
-				break;
-			case "1.6.2":
-				updateFrom1_6_2to1_6_3();
-				break;
-			case "1.8.1":
-				updateFrom1_8_1to1_8_2();
-				break;
+			updateFrom1_8_1to1_8_2();
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
@@ -1348,17 +1323,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (!savedFights.isEmpty())
 			{
 				ArrayList<FightPerformance> chunkedFights = new ArrayList<>();
+				int fileIdx = 1; // number to be appended to filename
 				for (int i = 0; i < savedFights.size(); i++)
 				{
 					chunkedFights.add(savedFights.get(i));
 
 					// 100 fights max per chunk, so once it hits >= 100, write it, clear, and continue to next chunk
-					if (chunkedFights.size() >= MAX_FIGHTS_PER_UPDATED_GZ_CHUNK)
+					// ensure we also write when we get to the end
+					if (chunkedFights.size() >= MAX_FIGHTS_PER_UPDATED_GZ_CHUNK || (i+1) == savedFights.size())
 					{
 						try
 						{
-							int i100 = (int)((double)i / (double)MAX_FIGHTS_PER_UPDATED_GZ_CHUNK) + 1; // index-per-100-fights
-							File newGzChunkFile = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK + i100 + ".json.gz");
+							File newGzChunkFile = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK + fileIdx + ".json.gz");
+							fileIdx++;
 
 							try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(newGzChunkFile.toPath())))
 							{
@@ -1388,56 +1365,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		log.info("PvpPerformanceTracker - completed update process - updateFrom1_8_1to1_8_2() - success=" + success);
-	}
-
-	// very basic update: We added the new hit on robe statistic, instantly recalculate it on launch,
-	// so that the statistic will be visible for new players (without having to change the config)
-	private void updateFrom1_6_2to1_6_3()
-	{
-		importFightHistoryData();
-
-		// don't rebuild the panel since it doesn't exist yet at this point, will be rebuilt after this update() call.
-		recalculateAllRobeHits(false);
-
-		// re-save the fights that were populated with robe hit statistics
-		saveFightHistoryData();
-	}
-
-	private void updateFrom1_5_5to1_5_6()
-	{
-		try
-		{
-			log.info("Updating data from 1.5.5 (or earlier) to 1.5.6...");
-
-			BASE_DATA_DIR.mkdirs();
-			File fightHistoryData = new File(BASE_DATA_DIR, _OLD_FIGHT_HISTORY_DATA_FNAME_JSON);
-
-			// if the fight history data file doesn't exist, create it with an empty array.
-			if (!fightHistoryData.exists())
-			{
-				Writer writer = new FileWriter(fightHistoryData);
-				writer.write("[]");
-				writer.close();
-				return;
-			}
-
-			fightHistory.clear();
-
-			// read the old saved fights from the file into an array, and add them as an updated
-			// fight to the fightHistory list.
-			Arrays.asList(GSON.fromJson(new FileReader(fightHistoryData), FightPerformance__1_5_5[].class))
-				.forEach((oldFight) -> fightHistory.add(new FightPerformance(oldFight)));
-
-			// now that the fights were deserialized and updated to the newest version, simply save them.
-			// afterwards, they will be re-loaded normally. Bit inefficient but not a big deal
-			saveFightHistoryData();
-			log.info("Successfully updated from 1.5.5 to 1.5.6");
-		}
-		catch (Exception e)
-		{
-			log.warn("Error while updating fight history data from 1.5.5 to 1.5.6: " + e.getMessage());
-			// Display no modal for this error since it could happen on client load and that has odd behavior.
-		}
 	}
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()
