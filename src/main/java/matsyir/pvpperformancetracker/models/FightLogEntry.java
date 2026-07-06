@@ -100,6 +100,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("l") // l for lowest hit
 	private int minHit;
+	private PvpDamageCalc.DamageRollDistribution damageRollDistribution = PvpDamageCalc.DamageRollDistribution.STANDARD;
+	private int damageRollHitCount = 1;
 	@Expose
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed
@@ -255,6 +257,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.accuracy = pvpDamageCalc.getAccuracy();
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
+		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
+		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
 		this.attackerRingItemId = getLocalPlayerRingItemId(attacker);
@@ -309,6 +313,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.accuracy = pvpDamageCalc.getAccuracy();
 		this.minHit = pvpDamageCalc.getMinHit();
 		this.maxHit = pvpDamageCalc.getMaxHit();
+		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
+		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
 		this.splash = e.splash;
 		this.defenderElyProc = e.defenderElyProc;
 		this.defenderSotdMeleeReductionProc = e.defenderSotdMeleeReductionProc;
@@ -416,6 +422,16 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	public boolean success()
 	{
 		return animationData.attackStyle.getProtection() != defenderOverhead;
+	}
+
+	public PvpDamageCalc.DamageRollDistribution getDamageRollDistribution()
+	{
+		return damageRollDistribution != null ? damageRollDistribution : PvpDamageCalc.DamageRollDistribution.STANDARD;
+	}
+
+	public int getDamageRollHitCount()
+	{
+		return Math.max(1, damageRollHitCount);
 	}
 
 	public String toChatMessage()

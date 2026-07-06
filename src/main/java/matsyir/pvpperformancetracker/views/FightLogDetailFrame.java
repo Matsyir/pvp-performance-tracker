@@ -495,12 +495,14 @@ class FightLogDetailFrame extends JFrame
 			.mdmg(bonuses[12])	// 12
 			.build();
 		int ammoRangeStr = 0;
+		int ammoRangeAtt = 0;
 		if (ammoId != null && ammoId > 0)
 		{
 			RangeAmmoData ammoData = RangeAmmoData.fromId(ammoId);
 			if (ammoData != null)
 			{
 				ammoRangeStr = ammoData.getRangeStr();
+				ammoRangeAtt = RangeAmmoData.getSeekingArrowAccuracyBonus(ammoData, isLmsFight);
 			}
 		}
 		else
@@ -509,6 +511,7 @@ class FightLogDetailFrame extends JFrame
 			if (weaponAmmo != null)
 			{
 				ammoRangeStr = weaponAmmo.getRangeStr();
+				ammoRangeAtt = RangeAmmoData.getSeekingArrowAccuracyBonus(weaponAmmo, isLmsFight);
 			}
 		}
 		String sep = "<br/>&nbsp;&nbsp;";
@@ -517,7 +520,7 @@ class FightLogDetailFrame extends JFrame
 			"Slash: " + prependPlusIfPositive(stats.getAslash()) + sep +
 			"Crush: " + prependPlusIfPositive(stats.getAcrush()) + sep +
 			"Magic: " + prependPlusIfPositive(stats.getAmagic()) + sep +
-			"Range: " + prependPlusIfPositive(stats.getArange()) +
+			"Range: " + prependPlusIfPositive(stats.getArange() + ammoRangeAtt) +
 			"<br/><strong>Defence bonus</strong>" + sep +
 			"Stab: " + prependPlusIfPositive(stats.getDstab()) + sep +
 			"Slash: " + prependPlusIfPositive(stats.getDslash()) + sep +

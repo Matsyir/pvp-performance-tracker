@@ -31,6 +31,9 @@ import org.apache.commons.lang3.StringUtils;
 
 public interface RangeAmmoData
 {
+	int SEEKING_ARROW_ACCURACY_BONUS = 20;
+	int SEEKING_ARROW_MIN_HIT = 3;
+
 	RangeAmmoData[] DIAMOND_BOLTS = {
 		BoltAmmo.DIAMOND_BOLTS_E,
 		StrongBoltAmmo.DIAMOND_BOLTS_E,
@@ -39,6 +42,18 @@ public interface RangeAmmoData
 
 	RangeAmmoData[] OPAL_BOLTS = {
 		StrongBoltAmmo.OPAL_DRAGON_BOLTS_E
+	};
+
+	RangeAmmoData[] SEEKING_ARROW_AMMO = {
+		OtherAmmo.SEEKING_BRONZE_ARROW,
+		OtherAmmo.SEEKING_IRON_ARROW,
+		OtherAmmo.SEEKING_STEEL_ARROW,
+		OtherAmmo.SEEKING_MITHRIL_ARROW,
+		OtherAmmo.SEEKING_ADAMANT_ARROW,
+		OtherAmmo.SEEKING_RUNE_ARROW,
+		OtherAmmo.SEEKING_AMETHYST_ARROW,
+		OtherAmmo.SEEKING_DRAGON_ARROW,
+		OtherAmmo.SEEKING_BROAD_ARROWS
 	};
 
 	static RangeAmmoData fromId(int itemId)
@@ -72,6 +87,21 @@ public interface RangeAmmoData
 			}
 		}
 		return null;
+	}
+
+	static boolean usesSeekingArrowUpgrade(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return !isLmsFight && Arrays.stream(SEEKING_ARROW_AMMO).anyMatch(seekingArrowAmmo -> seekingArrowAmmo == ammo);
+	}
+
+	static int getSeekingArrowAccuracyBonus(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return usesSeekingArrowUpgrade(ammo, isLmsFight) ? SEEKING_ARROW_ACCURACY_BONUS : 0;
+	}
+
+	static int getSeekingArrowMinimumHit(RangeAmmoData ammo, boolean isLmsFight)
+	{
+		return usesSeekingArrowUpgrade(ammo, isLmsFight) ? SEEKING_ARROW_MIN_HIT : 0;
 	}
 
 	int getItemId(); // itemIDs used for DISPLAYING bolts, not getting them.
@@ -228,6 +258,15 @@ public interface RangeAmmoData
 	{
 		AMETHYST_ARROWS(21326, 55),
 		DRAGON_ARROW(11212, 60),
+		SEEKING_BRONZE_ARROW(33553, 7),
+		SEEKING_IRON_ARROW(33559, 10),
+		SEEKING_STEEL_ARROW(33565, 16),
+		SEEKING_MITHRIL_ARROW(33571, 22),
+		SEEKING_ADAMANT_ARROW(33577, 31),
+		SEEKING_RUNE_ARROW(33583, 49),
+		SEEKING_AMETHYST_ARROW(33589, 55),
+		SEEKING_DRAGON_ARROW(33595, 60),
+		SEEKING_BROAD_ARROWS(33601, 28),
 		DRAGON_JAVELIN(19484, 150),
 		BOLT_RACK(4740, 55),
 		MOONLIGHT_ANTLER_BOLTS(28878, 60);
@@ -261,7 +300,3 @@ public interface RangeAmmoData
 		}
 	}
 }
-
-
-
-
