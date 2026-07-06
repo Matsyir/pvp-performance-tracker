@@ -111,7 +111,7 @@ public class FightPerformancePanel extends JPanel
 	@Getter
 	public enum BackgroundStyle
 	{
-		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Default"),
+		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Grayscale", "GB_Orange_Hovered"),
 		MAX_HIT_KO("Max Hit KO", Color.RED, "GB_Red"),
 		SPEC_KO("Spec KO", new Color(17, 146, 178), "GB_Cyan"),
 		MAX_SPEC_KO("Max Spec Ko", Color.MAGENTA.darker(), "GB_Purple"),
@@ -135,14 +135,18 @@ public class FightPerformancePanel extends JPanel
 		}
 		BackgroundStyle(String name, Color highlightColor, String fname)
 		{
-			this(name, highlightColor, fname, true);
+			this(name, highlightColor, fname, fname + "_Hovered");
 		}
-		BackgroundStyle(String name, Color highlightColor, String fname, boolean enabled)
+		BackgroundStyle(String name, Color highlightColor, String fname, String fnameHovered)
+		{
+			this(name, highlightColor, fname, fnameHovered, true);
+		}
+		BackgroundStyle(String name, Color highlightColor, String fname, String fnameHovered, boolean enabled)
 		{
 			this(name,
 				highlightColor,
 				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png"),
-				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + "_Hovered.png"),
+				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fnameHovered + ".png"),
 				enabled
 			);
 		}

@@ -148,6 +148,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		add(totalStatsPanel);
 
 		wikiAndDiscordButtonsLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
+		wikiAndDiscordButtonsLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, SOCIAL_BTN_HEIGHT));
 		JPopupMenu socialButtonsPopupMenu = new JPopupMenu();
 		// use different text here, since from this context the action is always "Hide Social Buttons",
 		// rather than "Toggle Social Button Visibility"
@@ -214,6 +215,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
 		pvpHubHiddenNameLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
 		pvpHubHiddenNameLine.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.BORDER_COLOR));
+		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, PVP_HUB_HIDDEN_NAME_BTN_HEIGHT));
 		updatePvpHubHiddenName();
 
 		add(pvpHubHiddenNameLine);
@@ -235,7 +237,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
 		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
 		nameFilter.setBorder(paddedPanelActionBorder);
-		filterLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) filterLine.getPreferredSize().getHeight()));
+		filterLine.setMaximumSize(
+			new Dimension(FULL_PANEL_WIDTH,
+			Math.max((int) filterLine.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
+		filterLine.setPreferredSize(filterLine.getMaximumSize());
 
 		panelFilterTask.setRepeats(false);
 		((AbstractDocument) nameFilter.getDocument()).setDocumentFilter(new DocumentFilter()
