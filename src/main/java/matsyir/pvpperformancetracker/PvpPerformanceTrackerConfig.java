@@ -707,12 +707,12 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Maximum number of previous fights to be displayed in the fight history side-panel. You do <b><u>not</b></u> need" +
 			"<br>to increase this in order to see more filtered results, or total stats, that's via the Max Saved Fights config." +
 			"<br><br>WILL cause lag spikes at very high numbers. This should be small if you have low RAM or a lower-end PC." +
-			"<br>You should probably avoid increasing this from the default of 200,",
+			"<br>You should probably avoid increasing this above 200 or so.",
 		position = 20500
 	)
 	default int fightHistoryRenderLimit()
 	{
-		return 200;
+		return 30;
 	}
 
 	@Range(
