@@ -36,9 +36,11 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import lombok.Getter;
 import lombok.Setter;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ColorUtil;
 
 // if we add mouse listeners onto a button, it breaks some default hover/right click events,
 // so we have to re-add a bunch of stuff anyways, use this to fix that while being able to use mouse listeners
@@ -54,31 +56,31 @@ public class JShadowedButton extends JShadowedLabel
 	public static final Border panelActionBorderHovered = BorderFactory.createCompoundBorder(
 		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
 		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
+
 	public static final Border panelActionBorderWarning = BorderFactory.createCompoundBorder(
-		BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
-		BorderFactory.createLineBorder(new Color(255, 0, 0, 128), 1));
-	public static final Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 3, 0);
+		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 1),
+		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_DARKER, 2)); //ColorUtil.colorWithAlpha(PvpColorScheme.BLOOD_RED_ORANGE, (int)(255.0 * 0.65))
+	public static final Border panelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
+		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 2));
+
+	public static final Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 2, 0);
 
 	// paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
 	// both pvpHubHiddenNameBtn and the name filter.
 	public static final Border paddedPanelActionBorder = BorderFactory.createCompoundBorder(
 		panelActionBorder,
 		panelActionPaddingBorder);
-
 	public static final Border paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
 		panelActionBorderHovered,
 		panelActionPaddingBorder);
 
 	public static final Border paddedPanelActionBorderWarning = BorderFactory.createCompoundBorder(
-		BorderFactory.createCompoundBorder(
-			panelActionBorderWarning,
-			BorderFactory.createLineBorder(new Color(255, 0, 0, 80))),
+		panelActionBorderWarning,
 		panelActionPaddingBorder);
 
 	public static final Border paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
-		BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
-			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 2)),
+		panelActionBorderWarningHovered,
 		panelActionPaddingBorder);
 
 	private boolean hovered = false;
@@ -109,19 +111,24 @@ public class JShadowedButton extends JShadowedLabel
 
 		addMouseListener(new MouseListener()
 		{
+			private void updateBorder()
+			{
+				if (hovered)
+				{
+					JShadowedButton.this.setBorder(warning ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
+				}
+				else
+				{
+					JShadowedButton.this.setBorder(warning ? paddedPanelActionBorderWarning : paddedPanelActionBorder);
+				}
+			}
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
 				if (e.getButton() == MouseEvent.BUTTON1 && onLeftClick != null) // left click: run onLeftClick
 				{
 					onLeftClick.run();
-				}
-				else if (e.getButton() == MouseEvent.BUTTON3) // right click: show popup menu
-				{
-					if (popupMenu != null)
-					{
-						popupMenu.show(e.getComponent(), e.getX(), e.getY());
-					}
+					updateBorder(); // update border in case onLeftClick updated this.warning
 				}
 			}
 
@@ -129,17 +136,26 @@ public class JShadowedButton extends JShadowedLabel
 			public void mouseEntered(MouseEvent e)
 			{
 				hovered = true;
-				setBorder(warning ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
-				setCursor(new Cursor(Cursor.HAND_CURSOR));
+				updateBorder();
+				JShadowedButton.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
 			}
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
 				hovered = false;
-				setBorder(warning ? paddedPanelActionBorderWarning : paddedPanelActionBorder);
-				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				updateBorder();
+				JShadowedButton.this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 			}
-			@Override public void mousePressed(MouseEvent e){}
+			@Override public void mousePressed(MouseEvent e)
+			{
+				if (e.getButton() == MouseEvent.BUTTON3) // right click: show popup menu
+				{
+					if (popupMenu != null && e.getComponent() != null)
+					{
+						popupMenu.show(e.getComponent(), e.getX(), e.getY());
+					}
+				}
+			}
 			@Override public void mouseReleased(MouseEvent e){}
 		});
 	}

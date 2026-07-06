@@ -55,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
 import static matsyir.pvpperformancetracker.views.JShadowedButton.paddedPanelActionBorder;
@@ -78,8 +79,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH;
 	public static final int FIGHT_HISTORY_SCROLL_WIDTH = 5;
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
-	public static final int SOCIAL_BTN_HEIGHT = 32;
-	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
+	public static final int SOCIAL_BTN_HEIGHT = 34;
+	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 26;
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
 	public static final int BASE_NAME_FILTER_DELAY = 65; // base delay in ms
@@ -101,7 +102,6 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel;
-	private final JPopupMenu socialButtonsPopupMenu = new JPopupMenu();
 	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
 	private final JPanel wikiAndDiscordButtonsLine = new JPanel(new BorderLayout());
 	private JShadowedButton pvpHubHiddenNameBtn;
@@ -148,13 +148,15 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		add(totalStatsPanel);
 
 		wikiAndDiscordButtonsLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
-		JMenuItem toggleSocialButtonsMenuItem = new JMenuItem("Hide Social Buttons");
-		toggleSocialButtonsMenuItem.setForeground(ColorScheme.TEXT_COLOR);
-		toggleSocialButtonsMenuItem.addActionListener(e ->
+		JPopupMenu socialButtonsPopupMenu = new JPopupMenu();
+		// use different text here, since from this context the action is always "Hide Social Buttons",
+		// rather than "Toggle Social Button Visibility"
+		JMenuItem toggleSocialButtonsMenuItem = new JMenuItem("<html>&#128065;&nbsp;Hide Social Buttons");
+		toggleSocialButtonsMenuItem.setForeground(TotalStatsPanel.toggleSocialButtonsMenuItem.getForeground());
+		for (ActionListener actionListener : TotalStatsPanel.toggleSocialButtonsMenuItem.getActionListeners())
 		{
-			wikiAndDiscordButtonsLine.setVisible(false);
-			PLUGIN.toggleSocialButtonsVisibility();
-		});
+			toggleSocialButtonsMenuItem.addActionListener(actionListener);
+		}
 		socialButtonsPopupMenu.add(toggleSocialButtonsMenuItem);
 
 		JShadowedButton wikiButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Wiki</u>&nbsp;&#8599",
@@ -180,10 +182,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		JPopupMenu pvpHubHiddenNameBtnPopupMenu = new JPopupMenu();
 		// seems to break if we just popupMenu.add(totalStatsPanel.resetPvpHubHiddenNameMenuItem),
-		// so copy fields into  a new JMenuItem
-		JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getText());
-		resetPvpHubHiddenNameMenuItem.setForeground(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getForeground());
-		for (ActionListener actionListener : totalStatsPanel.resetPvpHubHiddenNameMenuItem.getActionListeners())
+		// so copy fields into a new JMenuItem
+		JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem(TotalStatsPanel.resetPvpHubHiddenNameMenuItem.getText());
+		resetPvpHubHiddenNameMenuItem.setForeground(TotalStatsPanel.resetPvpHubHiddenNameMenuItem.getForeground());
+		for (ActionListener actionListener : TotalStatsPanel.resetPvpHubHiddenNameMenuItem.getActionListeners())
 		{
 			resetPvpHubHiddenNameMenuItem.addActionListener(actionListener);
 		}

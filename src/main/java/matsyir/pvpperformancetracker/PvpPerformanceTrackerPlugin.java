@@ -1868,5 +1868,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void toggleSocialButtonsVisibility()
 	{
 		configManager.setConfiguration(CONFIG_KEY, "displayPanelSocialButtons", !config.displayPanelSocialButtons());
+		// this will call panel.updateSocialButtons() via onConfigChanged event
 	}
 }
