@@ -101,11 +101,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("l") // l for lowest hit
 	private int minHit;
-	@Expose
-	@SerializedName("dD") // damage distribution
 	private PvpDamageCalc.DamageRollDistribution damageRollDistribution = PvpDamageCalc.DamageRollDistribution.STANDARD;
-	@Expose
-	@SerializedName("dHC") // damage hit count
 	private int damageRollHitCount = 1;
 	@Expose
 	@SerializedName("s")

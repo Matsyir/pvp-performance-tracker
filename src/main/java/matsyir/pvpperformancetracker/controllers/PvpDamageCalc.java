@@ -42,6 +42,10 @@ import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
@@ -189,6 +193,7 @@ public class PvpDamageCalc
 		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
 		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
+		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
@@ -203,8 +208,8 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems, animationData);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems, animationData, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems, attackerAmmoItemId);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -250,6 +255,7 @@ public class PvpDamageCalc
 		int[] playerStats = this.calculateBonuses(attackerItems);
 		int[] opponentStats = this.calculateBonuses(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
+		Integer attackerAmmoItemId = atkLog.getAttackerAmmoItemId();
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
@@ -264,8 +270,8 @@ public class PvpDamageCalc
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, animationData);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, animationData, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, attackerAmmoItemId);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -547,9 +553,38 @@ public class PvpDamageCalc
 		maxHit = (int) (damageModifier * baseDamage);
 	}
 
-	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, AnimationData animationData)
+	private RangeAmmoData getWeaponAmmo(EquipmentData weapon, Integer attackerAmmoItemId)
 	{
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, isLmsFight);
+		RangeAmmoData attackerAmmo = attackerAmmoItemId == null ? null : RangeAmmoData.fromId(attackerAmmoItemId);
+		return attackerAmmo == null ? EquipmentData.getWeaponAmmo(weapon, isLmsFight) : attackerAmmo;
+	}
+
+	private Integer getLocalPlayerAmmoItemId(Player attacker)
+	{
+		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		if (attacker == null || localPlayer == null || attacker.getName() == null || !attacker.getName().equals(localPlayer.getName()))
+		{
+			return null;
+		}
+
+		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
+		if (worn == null)
+		{
+			return null;
+		}
+
+		Item ammo = worn.getItem(EquipmentInventorySlot.AMMO.getSlotIdx());
+		if (ammo == null || ammo.getId() <= 0)
+		{
+			return null;
+		}
+
+		return ammo.getId();
+	}
+
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
+	{
+		RangeAmmoData weaponAmmo = getWeaponAmmo(weapon, attackerAmmoItemId);
 		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
 		EquipmentData body = EquipmentData.fromId(fixItemId(attackerComposition[KitType.TORSO.getIndex()]));
 		EquipmentData legs = EquipmentData.fromId(fixItemId(attackerComposition[KitType.LEGS.getIndex()]));
@@ -780,9 +815,9 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, Integer attackerAmmoItemId)
 	{
-		RangeAmmoData weaponAmmo = EquipmentData.getWeaponAmmo(weapon, this.isLmsFight);
+		RangeAmmoData weaponAmmo = getWeaponAmmo(weapon, attackerAmmoItemId);
 		playerRangeAtt += RangeAmmoData.getSeekingArrowAccuracyBonus(weaponAmmo, this.isLmsFight);
 
 		boolean diamonds = ArrayUtils.contains(RangeAmmoData.DIAMOND_BOLTS, weaponAmmo);
