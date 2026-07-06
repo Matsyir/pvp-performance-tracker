@@ -325,7 +325,7 @@ class FightLogDetailFrame extends JFrame
 		{
 			JShadowedLabel levelAssumptionWarning = new JShadowedLabel("<html>&nbsp;<b><u>Warning</u></b><br>" +
 				"<font size='3'>Lvls assumed</font><br><font size='18' color='" +
-				ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_DARKER) + "'>" + "&nbsp;&nbsp;&nbsp;&#9888;</font><br>See tooltip!");
+				ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) + "'>" + "&nbsp;&nbsp;&nbsp;&#9888;</font><br>See tooltip!");
 			final String levelWarningTooltip = "<html>" +
 				"Beware that the Levels shown above on this panel <u>do not</u> reflect your in-game brewed/potted Levels." +
 				"<br>The Levels shown here are the Levels that were used for the Expected Damage (eD) calculation, which" +
@@ -353,8 +353,8 @@ class FightLogDetailFrame extends JFrame
 			levelAssumptionWarning.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createCompoundBorder(
 					BorderFactory.createEmptyBorder(28 - offsetToTop, 12, 28 + offsetToTop, 12),
-					BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_DARKER, 1)),
-				BorderFactory.createMatteBorder(4,4,4,4, PvpColorScheme.BLOOD_RED_ORANGE_DARKER.darker())));
+					BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 1)),
+				BorderFactory.createMatteBorder(4,4,4,4, PvpColorScheme.BLOOD_RED_ORANGE_REDDER.darker())));
 
 			levelAssumptionWarning.setComponentPopupMenu(warningTogglePopupMenu);
 			levelAssumptionWarning.setVisible(CONFIG.displayFightLogDetailWarning());

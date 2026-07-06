@@ -58,7 +58,7 @@ public class JShadowedButton extends JShadowedLabel
 
 	public static final Border panelActionBorderWarning = BorderFactory.createCompoundBorder(
 		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 1),
-		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_DARKER, 2)); //ColorUtil.colorWithAlpha(PvpColorScheme.BLOOD_RED_ORANGE, (int)(255.0 * 0.65))
+		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 2)); //ColorUtil.colorWithAlpha(PvpColorScheme.BLOOD_RED_ORANGE, (int)(255.0 * 0.65))
 	public static final Border panelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
 		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
 		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 2));
