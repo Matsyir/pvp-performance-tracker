@@ -57,6 +57,7 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
@@ -305,6 +306,11 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem openOnPvpHub = new JMenuItem("<html>&#8599;&nbsp;<u>Open on PvP-Hub Website</u></html>");
 		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
 		openOnPvpHub.setForeground(PvpColorScheme.BLUE_TEXT_URL);
+		try
+		{
+			openOnPvpHub.setToolTipText(PvpPerformanceTrackerUtils.getUrlButtonTooltip(buildPvpHubUrl(fight)));
+		}
+		catch (Exception ignored) { }
 
 		// Create "Copy Fight Data" popup menu/context menu
 		final JMenuItem copyFight = new JMenuItem("<html>&#10063;&nbsp;Copy Fight JSON (Advanced)");

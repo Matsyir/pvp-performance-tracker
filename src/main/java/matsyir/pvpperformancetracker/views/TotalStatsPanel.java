@@ -56,12 +56,12 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
+import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import static matsyir.pvpperformancetracker.views.FightPerformancePanel.CURRENT_BG_COLOR;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.util.LinkBrowser;
 
 // basic panel with 3 rows to show a title, total fight performance stats, and kills/deaths
 @Slf4j
@@ -182,7 +182,7 @@ public class TotalStatsPanel extends JPanel
 		JPopupMenu popupMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
 		final JMenuItem viewWiki = new JMenuItem("<html>&#8599;&nbsp;<u>View Wiki</u></html>");
-		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
+		PvpPerformanceTrackerUtils.setMenuItemUrlAction(viewWiki, WIKI_HELP_URL);
 		viewWiki.setForeground(PvpColorScheme.BLUE_TEXT_URL);
 
 		// Create "Hide All Fights" popup menu/context menu item

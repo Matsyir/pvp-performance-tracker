@@ -40,7 +40,6 @@ import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
-import net.runelite.client.util.ColorUtil;
 
 // if we add mouse listeners onto a button, it breaks some default hover/right click events,
 // so we have to re-add a bunch of stuff anyways, use this to fix that while being able to use mouse listeners

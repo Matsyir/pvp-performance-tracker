@@ -25,14 +25,16 @@
 
 package matsyir.pvpperformancetracker.utils;
 
+import javax.swing.JMenuItem;
+import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
-
 import java.util.Arrays;
+import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 public class PvpPerformanceTrackerUtils
@@ -501,5 +503,19 @@ public class PvpPerformanceTrackerUtils
 		}
 
 		return String.valueOf(number);
+	}
+
+	public static String getUrlButtonTooltip(String url)
+	{
+		return "<html><b>Opens URL:</b><br><i><u>" + url;
+	}
+
+	public static void setMenuItemUrlAction(JMenuItem item, String url)
+	{
+		item.addActionListener(e -> LinkBrowser.browse(url));
+		if (Strings.isNullOrEmpty(item.getToolTipText()))
+		{
+			item.setToolTipText(getUrlButtonTooltip(url));
+		}
 	}
 }
