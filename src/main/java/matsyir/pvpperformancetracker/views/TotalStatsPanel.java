@@ -72,7 +72,7 @@ public class TotalStatsPanel extends JPanel
 	// a new JMenuItem
 	public final JMenuItem resetPvpHubHiddenNameMenuItem;
 
-	private static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
+	public static final String WIKI_HELP_URL = "https://github.com/Matsyir/pvp-performance-tracker/wiki#pvp-performance-tracker-wiki";
 	private static BufferedImage backgroundImage;
 	private static final int TOTAL_STATS_WIDTH = FULL_PANEL_WIDTH;
 	private static final int TOTAL_STATS_HEIGHT = 196;

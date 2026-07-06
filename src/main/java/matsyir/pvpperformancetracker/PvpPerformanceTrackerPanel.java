@@ -25,8 +25,6 @@
 package matsyir.pvpperformancetracker;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -49,16 +47,22 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.border.Border;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import lombok.extern.slf4j.Slf4j;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
+import matsyir.pvpperformancetracker.views.JShadowedButton;
+import static matsyir.pvpperformancetracker.views.JShadowedButton.paddedPanelActionBorder;
+import static matsyir.pvpperformancetracker.views.JShadowedButton.paddedPanelActionBorderHovered;
 import matsyir.pvpperformancetracker.views.PlaceholderTextField;
+import matsyir.pvpperformancetracker.utils.SocialIcon;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
+import static matsyir.pvpperformancetracker.views.TotalStatsPanel.WIKI_HELP_URL;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
@@ -66,7 +70,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
 public class PvpPerformanceTrackerPanel extends PluginPanel
@@ -74,6 +78,8 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FULL_PANEL_WIDTH = PANEL_WIDTH + SCROLLBAR_WIDTH;
 	public static final int FIGHT_HISTORY_SCROLL_WIDTH = 5;
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
+	public static final int SOCIAL_BTN_HEIGHT = 32;
+	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
 	public static final int BASE_NAME_FILTER_DELAY = 65; // base delay in ms
@@ -90,11 +96,15 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	// "watching the rebuild" isn't ideal, although it's reasonable with the recent improvements
 	public static final int REBUILD_DELAY = 4000; // delay in ms
 
+	private static final String DISCORD_INVITE_URL = "https://discord.gg/hg26xeJnY5";
+
 	// The main fight history container, this will hold all the individual FightPerformancePanels.
 	private final JPanel fightHistoryContainer = new JPanel();
 	private final TotalStatsPanel totalStatsPanel;
+	private final JPopupMenu socialButtonsPopupMenu = new JPopupMenu();
 	private final JPanel pvpHubHiddenNameLine = new JPanel(new BorderLayout());
-	private final JShadowedLabel pvpHubHiddenNameBtn = new JShadowedLabel();
+	private final JPanel wikiAndDiscordButtonsLine = new JPanel(new BorderLayout());
+	private JShadowedButton pvpHubHiddenNameBtn;
 	private boolean hiddenNameIsVisible = false;
 	private int filteredFightCount = 0;
 
@@ -105,6 +115,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	private final ClientThread clientThread;
 	private final Map<Integer, Integer> worldLocations = new ConcurrentHashMap<>();
 	private final Set<Integer> pendingWorldLocationLoads = ConcurrentHashMap.newKeySet();
+
 
 	private final Timer panelFilterTask = new Timer(BASE_NAME_FILTER_DELAY, e ->
 	{
@@ -136,49 +147,38 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		totalStatsPanel = new TotalStatsPanel();
 		add(totalStatsPanel);
 
-		// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
-		Border panelActionBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
-			BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2));
-		Border panelActionBorderHovered = BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
-			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
-		Border panelActionBorderWarning = BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
-			BorderFactory.createLineBorder(new Color(255, 0, 0, 128), 1));
-		Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 3, 0);
+		wikiAndDiscordButtonsLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
+		JMenuItem toggleSocialButtonsMenuItem = new JMenuItem("Hide Social Buttons");
+		toggleSocialButtonsMenuItem.setForeground(ColorScheme.TEXT_COLOR);
+		toggleSocialButtonsMenuItem.addActionListener(e ->
+		{
+			wikiAndDiscordButtonsLine.setVisible(false);
+			PLUGIN.toggleSocialButtonsVisibility();
+		});
+		socialButtonsPopupMenu.add(toggleSocialButtonsMenuItem);
 
-		// paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
-		// both pvpHubHiddenNameBtn and the name filter.
-		Border paddedPanelActionBorder = BorderFactory.createCompoundBorder(
-			panelActionBorder,
-			panelActionPaddingBorder);
+		JShadowedButton wikiButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Wiki</u>&nbsp;&#8599",
+			FULL_PANEL_WIDTH / 2,
+			SOCIAL_BTN_HEIGHT,
+			SocialIcon.GITHUB,
+			socialButtonsPopupMenu,
+			() -> LinkBrowser.browse(WIKI_HELP_URL));
 
-		Border paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
-			panelActionBorderHovered,
-			panelActionPaddingBorder);
+		JShadowedButton discordButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Discord</u>&nbsp;&#8599",
+			FULL_PANEL_WIDTH / 2,
+			SOCIAL_BTN_HEIGHT,
+			SocialIcon.DISCORD,
+			socialButtonsPopupMenu,
+			() -> LinkBrowser.browse(DISCORD_INVITE_URL));
 
-		Border paddedPanelActionBorderNameVisible = BorderFactory.createCompoundBorder(
-			BorderFactory.createCompoundBorder(
-				panelActionBorderWarning,
-				BorderFactory.createLineBorder(new Color(255, 0, 0, 80))),
-			panelActionPaddingBorder);
+		wikiAndDiscordButtonsLine.add(wikiButton, BorderLayout.WEST);
+		wikiAndDiscordButtonsLine.add(discordButton, BorderLayout.EAST);
 
-		Border paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
-				BorderFactory.createCompoundBorder(
-					BorderFactory.createLineBorder(new Color(255, 0, 0, 160), 1),
-					BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 2)),
-			panelActionPaddingBorder);
+		add(wikiAndDiscordButtonsLine);
 
-		pvpHubHiddenNameBtn.setBorder(paddedPanelActionBorder);
-		pvpHubHiddenNameBtn.setForeground(ColorScheme.TEXT_COLOR);
-		pvpHubHiddenNameBtn.setShadow(Color.BLACK);
-		pvpHubHiddenNameBtn.setBackground(ColorScheme.BORDER_COLOR);
-		pvpHubHiddenNameBtn.setHorizontalAlignment(SwingConstants.CENTER);
-		pvpHubHiddenNameBtn.setToolTipText("<html>Your private, read-only \"hidden name\" used when \"Hide RSN on PvP-Hub\" is enabled. " +
-			"Click to toggle visibility.<br><br>" +
-			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
-		pvpHubHiddenNameBtn.setComponentPopupMenu(new JPopupMenu());
+		updateSocialButtons();
+
+		JPopupMenu pvpHubHiddenNameBtnPopupMenu = new JPopupMenu();
 		// seems to break if we just popupMenu.add(totalStatsPanel.resetPvpHubHiddenNameMenuItem),
 		// so copy fields into  a new JMenuItem
 		JMenuItem resetPvpHubHiddenNameMenuItem = new JMenuItem(totalStatsPanel.resetPvpHubHiddenNameMenuItem.getText());
@@ -187,56 +187,28 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			resetPvpHubHiddenNameMenuItem.addActionListener(actionListener);
 		}
-		pvpHubHiddenNameBtn.getComponentPopupMenu().add(resetPvpHubHiddenNameMenuItem);
-
-		pvpHubHiddenNameBtn.addMouseListener(new MouseListener()
-		{
-			private boolean hovered;
-			@Override
-			public void mouseClicked(MouseEvent e)
-			{
-				if (e.getButton() == MouseEvent.BUTTON1) // left click: toggle hidden name visibility
+		pvpHubHiddenNameBtnPopupMenu.add(resetPvpHubHiddenNameMenuItem);
+		pvpHubHiddenNameBtn = null;
+		pvpHubHiddenNameBtn = new JShadowedButton("",
+			FULL_PANEL_WIDTH,
+			PVP_HUB_HIDDEN_NAME_BTN_HEIGHT,
+			null,
+			ColorScheme.TEXT_COLOR,
+			pvpHubHiddenNameBtnPopupMenu,
+			() -> {
+				hiddenNameIsVisible = !hiddenNameIsVisible;
+				if (pvpHubHiddenNameBtn != null)
 				{
-					hiddenNameIsVisible = !hiddenNameIsVisible;
-					updatePvpHubHiddenName();
-					if (hovered)
-					{
-						pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
-					}
-					else
-					{
-						pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
-					}
+					pvpHubHiddenNameBtn.setWarning(hiddenNameIsVisible);
 				}
-				else if (e.getButton() == MouseEvent.BUTTON3) // right click: popup menu to reset hidden name
-				{
-					pvpHubHiddenNameBtn.getComponentPopupMenu().show(e.getComponent(), e.getX(), e.getY());
-				}
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e)
-			{
-				hovered = true;
-				pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderWarningHovered : paddedPanelActionBorderHovered);
-				setCursor(new Cursor(Cursor.HAND_CURSOR));
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e)
-			{
-				hovered = false;
-				pvpHubHiddenNameBtn.setBorder(hiddenNameIsVisible ? paddedPanelActionBorderNameVisible : paddedPanelActionBorder);
-				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-			}
-
-			@Override public void mousePressed(MouseEvent e) {}
-			@Override public void mouseReleased(MouseEvent e) {}
+				updatePvpHubHiddenName();
 		});
+		pvpHubHiddenNameBtn.setToolTipText("<html>Your private, read-only \"hidden name\" used when \"Hide RSN on PvP-Hub\" is enabled. " +
+			"Click to toggle visibility.<br><br>" +
+			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
 
 		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
-		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, (int) pvpHubHiddenNameLine.getPreferredSize().getHeight()));
-		pvpHubHiddenNameLine.setBackground(ColorScheme.BORDER_COLOR);
+		pvpHubHiddenNameLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
 		pvpHubHiddenNameLine.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.BORDER_COLOR));
 		updatePvpHubHiddenName();
 
@@ -254,7 +226,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
 		// filter textfield
-		PlaceholderTextField nameFilter = new PlaceholderTextField("Filter Usernames:", config.nameFilter());
+		PlaceholderTextField nameFilter = new PlaceholderTextField("Filter Fights:", config.nameFilter());
 		nameFilter.setHorizontalAlignment(SwingConstants.CENTER);
 		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
 		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
@@ -501,7 +473,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		{
 			skipUpdatesIfFightCountUnchanged = false;
 		}
-		int newFilterDelay = BASE_NAME_FILTER_DELAY + (int)(NAME_FILTER_DELAY_PER_SAVED_FIGHT * PvpPerformanceTrackerPlugin.PLUGIN.fightHistory.size());
+		int newFilterDelay = BASE_NAME_FILTER_DELAY + (int)(NAME_FILTER_DELAY_PER_SAVED_FIGHT * PLUGIN.fightHistory.size());
 		panelFilterTask.setInitialDelay(newFilterDelay);
 		panelFilterTask.setDelay(newFilterDelay);
 
@@ -510,6 +482,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		FightPerformancePanel.updateCurrentBgColor();
 		totalStatsPanel.updateBgColor();
+		updateSocialButtons();
 
 		if (!plugin.fightHistory.isEmpty())
 		{
@@ -547,6 +520,11 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void updatePopupMenuForPvpHubConfig()
 	{
 		totalStatsPanel.updatePopupMenuForPvpHubConfig();
+	}
+
+	public void updateSocialButtons()
+	{
+		wikiAndDiscordButtonsLine.setVisible(CONFIG.displayPanelSocialButtons());
 	}
 
 	@Override

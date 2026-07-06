@@ -120,6 +120,13 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	String levelsSection = "levels";
 
+	@ConfigSection(name = "Visibility toggles",
+		description = "Contains toggles regarding visibility of certain elements or warnings.",
+		position = 35000,
+		closedByDefault = true
+	)
+	String visibilitySection = "visibility";
+
 	// ================================= General =================================
 
 	@ConfigItem(
@@ -753,7 +760,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		name = "Fight Log In Chat",
 		description = "Display basic fight logs in trade chat during a fight." +
 			"<br><strong>This is very excessive, mostly for testing/verification.<strong>",
-		position = 50000
+		position = 24000
 	)
 	default boolean fightLogInChat()
 	{
@@ -761,30 +768,42 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "nameFilter",
-		name = "Name Filter",
-		description = "Hidden config used to save user's selected name/RSN filter for the panel views.",
-		position = 100000,
-		hidden = true
+		keyName = "displayPanelSocialButtons",
+		name = "Show Panel Social Buttons",
+		description = "Config used to determine if the Social Buttons on the panel should be visible or not (Github wiki, Discord)." +
+			"<br>They can be hidden by right clicking the buttons, can only be shown again via this config.",
+		position = 35100,
+		section = visibilitySection
 	)
-	default String nameFilter()
+	default boolean displayPanelSocialButtons()
 	{
-		return "";
+		return true;
 	}
 
 	@ConfigItem(
 		keyName = "displayFightLogDetailWarning",
-		name = "Display Fight Log Detail Warning",
-		description = "Hidden config used to determine if the Warning on the FightLogDetailFrame should be visible or hidden." +
-			"Can be toggled by right clicking the panel its in (between the equipment or the equipment itself, anywhere on that whole row)",
-		position = 100000,
-		hidden = true
+		name = "Show Fight Log Detail Warning",
+		description = "Config used to determine if the Warning on the FightLogDetailFrame should be visible or hidden. " +
+			"<br>Can be toggled by right clicking the panel its in (between the equipment or the equipment itself, anywhere on that whole row)",
+		position = 35110,
+		section = visibilitySection
 	)
 	default boolean displayFightLogDetailWarning()
 	{
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "nameFilter",
+		name = "Name Filter",
+		description = "Hidden config used to save user's selected name/RSN filter for the panel views.",
+		position = 200000,
+		hidden = true
+	)
+	default String nameFilter()
+	{
+		return "";
+	}
 
 	// ================================= On-update flags for chat message update summaries =================================
 	// to avoid spamming multiple update messages for a user who was inactive, just use and overwrite one at a time.

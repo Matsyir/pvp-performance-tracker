@@ -132,16 +132,16 @@ public final class WorldFlag
 
 	private enum Region
 	{
-		UNITED_STATES("/United_States_flag.png", "United States"),
-		UNITED_STATES_EAST("/United_States_(east)_flag.png", "United States east"),
-		UNITED_STATES_WEST("/United_States_(west)_flag.png", "United States west"),
-		UNITED_KINGDOM("/United_Kingdom_flag.png", "United Kingdom"),
-		GERMANY("/Germany_flag.png", "Germany"),
-		AUSTRALIA("/Australia_flag.png", "Australia"),
-		SINGAPORE("/Singapore_flag.png", "Singapore"),
-		SOUTH_AFRICA("/South_Africa_flag.png", "South Africa"),
-		BRAZIL("/Brazil_flag.png", "Brazil"),
-		JAPAN("/Japan_flag.png", "Japan");
+		UNITED_STATES("/worldFlags/United_States_flag.png", "United States"),
+		UNITED_STATES_EAST("/worldFlags/United_States_(east)_flag.png", "United States east"),
+		UNITED_STATES_WEST("/worldFlags/United_States_(west)_flag.png", "United States west"),
+		UNITED_KINGDOM("/worldFlags/United_Kingdom_flag.png", "United Kingdom"),
+		GERMANY("/worldFlags/Germany_flag.png", "Germany"),
+		AUSTRALIA("/worldFlags/Australia_flag.png", "Australia"),
+		SINGAPORE("/worldFlags/Singapore_flag.png", "Singapore"),
+		SOUTH_AFRICA("/worldFlags/South_Africa_flag.png", "South Africa"),
+		BRAZIL("/worldFlags/Brazil_flag.png", "Brazil"),
+		JAPAN("/worldFlags/Japan_flag.png", "Japan");
 
 		private final String resourcePath;
 		private final String displayName;

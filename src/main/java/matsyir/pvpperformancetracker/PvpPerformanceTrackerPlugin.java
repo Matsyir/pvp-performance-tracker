@@ -261,7 +261,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		panel = injector.getInstance(PvpPerformanceTrackerPanel.class);
-		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/skull_red.png");
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/worldFlags/skull_red.png");
 		PLUGIN_ICON = new ImageIcon(icon).getImage();
 		navButton = NavigationButton.builder()
 			.tooltip("PvP Fight History")
@@ -412,6 +412,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				}
 				panel.enqueueRebuild();
 				configManager.setConfiguration(CONFIG_KEY, "panelColorPreset", PvpColorScheme.PanelColorPreset.CUSTOM);
+				break;
+			case "displayPanelSocialButtons":
+				panel.updateSocialButtons();
 				break;
 			case "fightHistoryRenderLimit":
 			case "exactNameFilter":
@@ -1832,5 +1835,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void toggleFightLogDetailFrameWarning()
 	{
 		configManager.setConfiguration(CONFIG_KEY, "displayFightLogDetailWarning", !config.displayFightLogDetailWarning());
+	}
+	public void toggleSocialButtonsVisibility()
+	{
+		configManager.setConfiguration(CONFIG_KEY, "displayPanelSocialButtons", !config.displayPanelSocialButtons());
 	}
 }

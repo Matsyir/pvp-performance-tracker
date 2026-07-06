@@ -1,6 +1,7 @@
 package matsyir.pvpperformancetracker.views;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -53,7 +54,7 @@ public class PlaceholderTextField extends JTextField
 				boolean drawingShadow = i == 0;
 				Graphics2D g2 = (Graphics2D) g.create();
 				g2.setColor(drawingShadow ? placeholderShadowColor : placeholderColor);
-				//g2.setFont(getFont().deriveFont(Font.ITALIC));
+				g2.setFont(getFont().deriveFont(Font.ITALIC));
 
 				Insets insets = getInsets();
 				FontMetrics fm = g2.getFontMetrics();
