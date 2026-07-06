@@ -1317,8 +1317,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void update(String oldVersion)
 	{
-		if (oldVersion.startsWith("1.7.") || List.of("1.8.0", "1.8.1", "1.8.2").contains(oldVersion))
+		boolean oldIs1_7to1_8_2 = oldVersion.startsWith("1.7.") || List.of("1.8.0", "1.8.1", "1.8.2").contains(oldVersion);
+		if (oldIs1_7to1_8_2)
 		{
+			// force-change default maxRenderedFights 200 -> 30, most people probably dont even need 30,
+			// with how the rendered vs. saved fights work its totally unnecessary to have 200
+			configManager.setConfiguration(CONFIG_KEY, "fightHistoryRenderLimit", 30);
+
 			FightPerformanceSerializer.updateFrom1_8_1to1_8_2(GSON);
 		}
 

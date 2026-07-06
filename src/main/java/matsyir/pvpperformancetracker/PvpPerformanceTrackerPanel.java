@@ -82,18 +82,18 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
-	public static final int BASE_NAME_FILTER_DELAY = 65; // base delay in ms
-	// additional delay of 4ms per 100 fights saved
-	// this would be +400ms if you have the max of 10,000 fights saved. Would be a bit long/appear a bit stuttery, but
+	public static final int BASE_NAME_FILTER_DELAY = 45; // base delay in ms
+	// additional delay of 3ms per 100 fights saved
+	// this would be +300ms if you have the max of 10,000 fights saved. Would be a bit long/appear a bit stuttery, but
 	// it likely wouldn't be ideal to try filtering 10,000 fights every 50ms while typing
-	private static final double nameFilterDelayPer100fights = 4;
+	private static final double nameFilterDelayPer100fights = 3;
 	private static final double nameFilterDelayForFightCount = 100;
-	public static final double NAME_FILTER_DELAY_PER_SAVED_FIGHT = nameFilterDelayPer100fights / nameFilterDelayForFightCount; // 4ms per 100 fights
+	public static final double NAME_FILTER_DELAY_PER_SAVED_FIGHT = nameFilterDelayPer100fights / nameFilterDelayForFightCount; // 3ms per 100 fights
 
 	// prevent spamming rebuilds too quickly for no reason if the panel isn't visible anyways.
 	// For example if people are changing multiple configs which require rebuild, like the colors.
 	// Will also call rebuild instantly in this.onActivate, if it's queued.
-	// "watching the rebuild" isn't ideal, although it's reasonable with the recent improvements
+	// "watching the rebuild" isn't perfect, although it's very reasonable with the recent improvements 1.8+
 	public static final int REBUILD_DELAY = 4000; // delay in ms
 
 	private static final String DISCORD_INVITE_URL = "https://discord.gg/hg26xeJnY5";
