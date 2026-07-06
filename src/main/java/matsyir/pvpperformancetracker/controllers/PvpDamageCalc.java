@@ -70,6 +70,10 @@ public class PvpDamageCalc
 		MULTI_HIT_CLAMPED_TO_MINIMUM
 	}
 
+	private static final int TOURNAMENT_CLAMP_ITEM_ID = 12345;
+	private static final double TOURNAMENT_CLAMP_MIN_HIT_MODIFIER = 0.15;
+	private static final double TOURNAMENT_CLAMP_MAX_HIT_MODIFIER = 0.85;
+
 	private static final int STAB_ATTACK = 0, SLASH_ATTACK = 1, CRUSH_ATTACK = 2, MAGIC_ATTACK = 3,
 		RANGE_ATTACK = 4, STAB_DEF = 5, SLASH_DEF = 6, CRUSH_DEF = 7, MAGIC_DEF = 8;
 	public static final int RANGE_DEF = 9;
@@ -158,11 +162,13 @@ public class PvpDamageCalc
 	private CombatLevels attackerLevels;
 	private CombatLevels defenderLevels;
 
+	private final FightPerformance relatedFight;
 	private RingData ringUsed;
 	boolean isLmsFight;
 
 	public PvpDamageCalc(FightPerformance relatedFight)
 	{
+		this.relatedFight = relatedFight;
 		isLmsFight = relatedFight.fightType.isLmsFight();
 		this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
 		this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
@@ -321,6 +327,7 @@ public class PvpDamageCalc
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
 	{
+		boolean tournamentClamp = hasTournamentClampItem();
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
 		boolean dbow = weapon == EquipmentData.DARK_BOW;
 		boolean claws = weapon == EquipmentData.DRAGON_CLAWS;
@@ -339,6 +346,7 @@ public class PvpDamageCalc
 			minHit = dbow ? DBOW_SPEC_MIN_HIT : 0;
 			minHit = vls ? (int) (maxHit * VLS_SPEC_MIN_DMG_MODIFIER) : minHit;
 			minHit = swh ? (int) (maxHit * SWH_SPEC_MIN_DMG_MODIFIER) : minHit;
+			applyTournamentClamp(usingSpec);
 
 			int total = 0;
 
@@ -357,6 +365,7 @@ public class PvpDamageCalc
 		else if (seekingArrowMinHit > 0)
 		{
 			minHit = seekingArrowMinHit;
+			applyTournamentClamp(usingSpec);
 			averageSuccessfulHit = damageRollDistribution == DamageRollDistribution.MULTI_HIT_CLAMPED_TO_MINIMUM ?
 				getAverageSuccessfulMultiHitWithMinimum(minHit, damageRollHitCount) :
 				getAverageSuccessfulHitWithMinimum(minHit);
@@ -369,7 +378,8 @@ public class PvpDamageCalc
 
 			// inverted accuracy is used to calculate the chances of missing specifically 1, 2 or 3 times in a row
 			double invertedAccuracy = 1 - accuracy;
-			double averageSuccessfulRegularHit = maxHit / 2;
+			applyTournamentClamp(usingSpec);
+			double averageSuccessfulRegularHit = tournamentClamp ? (minHit + maxHit) / 2.0 : maxHit / 2.0;
 			double higherModifierChance = (accuracy + (accuracy * invertedAccuracy));
 			double lowerModifierChance = ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
 			double averageSpecialHit = ((higherModifierChance * 2) + (lowerModifierChance * 1.5)) * averageSuccessfulRegularHit;
@@ -443,6 +453,7 @@ public class PvpDamageCalc
 		}
 		else
 		{
+			applyTournamentClamp(usingSpec);
 			// divide by double to get accurate decimals, since this is the averageHit result,
 			// not a core OSRS damage calc that is meant to be rounded down by int
 			// If reaching this part of the code, the minHit should always be 0, but include it anyways
@@ -470,6 +481,44 @@ public class PvpDamageCalc
 		if (usingSpec && ancientGs)
 		{
 			averageHit += ANCIENT_GS_FIXED_DAMAGE;
+		}
+	}
+
+	private boolean hasTournamentClampItem()
+	{
+		if (relatedFight == null || relatedFight.getInventorySnapshots() == null)
+		{
+			return false;
+		}
+
+		int[] startInventory = relatedFight.getInventorySnapshots().getStart();
+		if (startInventory == null)
+		{
+			return false;
+		}
+
+		for (int itemId : startInventory)
+		{
+			if (itemId == TOURNAMENT_CLAMP_ITEM_ID)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void applyTournamentClamp(boolean usingSpec)
+	{
+		if (!hasTournamentClampItem() || maxHit <= 0)
+		{
+			return;
+		}
+
+		int baseMaxHit = maxHit;
+		minHit = Math.max(minHit, (int)Math.ceil(baseMaxHit * TOURNAMENT_CLAMP_MIN_HIT_MODIFIER));
+		if (!usingSpec)
+		{
+			maxHit = Math.min(maxHit, (int)Math.floor(baseMaxHit * TOURNAMENT_CLAMP_MAX_HIT_MODIFIER));
 		}
 	}
 

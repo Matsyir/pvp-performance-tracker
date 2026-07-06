@@ -703,6 +703,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// We should have enough extra ticks to calc any hitsplats during death animations and empty these queues.
 		if (!hasOpponent()) { return; }
 
+		currentFight.recordCurrentInventorySnapshot();
+
 		// Process hitsplats from the previous tick
 		int currentTick = client.getTickCount();
 		int tickToProcess = currentTick - 1;
@@ -1347,6 +1349,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// add fight to fight history if it actually started
 		if (currentFight.fightStarted())
 		{
+			currentFight.recordEndingInventorySnapshot();
 			currentFight.makeLogTicksRelativeToFightStart();
 			addToFightHistory(currentFight);
 
