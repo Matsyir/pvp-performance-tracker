@@ -699,7 +699,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 
 	@Range(
 		min = 1,
-		max = 1000
+		max = 250
 	)
 	@ConfigItem(
 		keyName = "fightHistoryRenderLimit",
@@ -707,7 +707,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Maximum number of previous fights to be displayed in the fight history side-panel. You do <b><u>not</b></u> need" +
 			"<br>to increase this in order to see more filtered results, or total stats, that's via the Max Saved Fights config." +
 			"<br><br>WILL cause lag spikes at very high numbers. This should be small if you have low RAM or a lower-end PC." +
-			"<br>You should probably avoid increasing this above 200 or so.",
+			"<br>You should probably avoid increasing this above 100 unless you really need to.",
 		position = 20500
 	)
 	default int fightHistoryRenderLimit()
@@ -722,8 +722,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "fightHistoryLimit",
 		name = "Max Saved Fights",
-		description = "Maximum number of previous fights to be saved to a local file, included in filters, and used for total/avg stats." +
-			"<br>May cause occasional lag spikes on lower-end PCs once you reach 1,000+ fights saved.",
+		description = "Maximum number of previous fights to be saved to local files, included in filters, and used for total/avg stats.",
 		position = 21000
 	)
 	default int fightHistoryLimit()
@@ -735,7 +734,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "exactNameFilter",
 		name = "Exact Name Filter",
 		description = "Makes the username filter look for an exact match (case-insensitive), rather than any name starting with the filter.<br>" +
-			"This can help reduce clutter or lag while searching, especially if you've increased your Max Rendered Fights.",
+			"This can help reduce clutter while searching, especially if you fight a lot of similar RSNs",
 		position = 22000
 	)
 	default boolean exactNameFilter()
