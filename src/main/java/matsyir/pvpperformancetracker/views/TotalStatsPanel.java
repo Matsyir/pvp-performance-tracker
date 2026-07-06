@@ -183,23 +183,31 @@ public class TotalStatsPanel extends JPanel
 		// Create right click popup menu/context menu with various general actions
 		popupMenu = new JPopupMenu();
 		// Create "View Wiki" URL popup menu/context menu item
-		final JMenuItem viewWiki = new JMenuItem("<html><u>View Wiki</u>&nbsp;&#8599;</html>");
+		final JMenuItem viewWiki = new JMenuItem("<html>&#8599;&nbsp;<u>View Wiki</u></html>");
 		viewWiki.addActionListener(e -> LinkBrowser.browse(WIKI_HELP_URL));
-		viewWiki.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
+		viewWiki.setForeground(PvpColorScheme.BLUE_TEXT_URL);
 
-		// Create "Reset All" popup menu/context menu item
-		final JMenuItem removeAllFights = new JMenuItem("Remove All Fights");
-		removeAllFights.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+		// Create "Hide All Fights" popup menu/context menu item
+		final JMenuItem removeAllFights = new JMenuItem("<html>&#128065;&nbsp;Hide All Fights (until reload)");
+		removeAllFights.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
 		removeAllFights.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all fight history data? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			PLUGIN.resetFightHistory(false);
+		});
+
+		// Create "Remove All Fights Forever" popup menu/context menu item
+		final JMenuItem removeAllFightsForever = new JMenuItem("<html><b>&#128465;&nbsp;Delete All Fights Forever</b>");
+		removeAllFightsForever.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+		removeAllFightsForever.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete all fight history data, forever? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.resetFightHistory();
 			}
 		});
 
-		resetPvpHubHiddenNameMenuItem = new JMenuItem("<html>&#8635; Regenerate <u>PvP-Hub</u> Hidden Name");
+		resetPvpHubHiddenNameMenuItem = new JMenuItem("<html>&#8635;&nbsp;Regenerate <u>PvP-Hub</u> Hidden Name");
 		// create "reset PvP-Hub hidden name" right click option. Only display this if opted-in + name hidden.
 		resetPvpHubHiddenNameMenuItem.setForeground(PvpColorScheme.GREEN_TEXT_ACTION);
 		resetPvpHubHiddenNameMenuItem.addActionListener(e ->
@@ -249,6 +257,7 @@ public class TotalStatsPanel extends JPanel
 		//popupMenu.add(exportFightHistory);
 		//popupMenu.add(importFightHistory);
 		popupMenu.add(removeAllFights);
+		popupMenu.add(removeAllFightsForever);
 		int popupMenuDefaultItemCount = popupMenu.getComponentCount();
 		popupMenuItemCountWithPvpHub = popupMenuDefaultItemCount + 1;
 

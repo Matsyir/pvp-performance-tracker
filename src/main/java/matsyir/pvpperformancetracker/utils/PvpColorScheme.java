@@ -25,7 +25,11 @@ public class PvpColorScheme
 	public static final Color BLOOD_RED_ORANGE_DARKER = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.75f);
 
 	public static final Color GREEN_TEXT_ACTION = new Color(30, 230, 30);
+	public static final Color GREEN_TEXT_ACTION_WHITER = ColorUtil.colorLerp(GREEN_TEXT_ACTION, Color.WHITE, 0.4f);
 	public static final Color RED_TEXT_ACTION = BLOOD_RED_ORANGE_DARKER;
+	public static final Color BLUE_TEXT_URL = new Color(48, 160, 255);
+	public static final Color ORANGE_TEXT_ACTION = ColorUtil.colorLerp(BRAND_ORANGE, Color.WHITE, 0.4f);
+
 
 	// default colors used for config fields. Ideally don't directly use these unless we really have to, use the static getters to get the config instead.
 	// the dmg colors use the same ones for now.

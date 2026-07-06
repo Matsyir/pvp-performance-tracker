@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.border.Border;
+import joptsimple.internal.Strings;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
@@ -301,26 +302,35 @@ public class FightPerformancePanel extends JPanel
 		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(displayFight, getRootPane()));
 
 		// Create "Open on PvP-Hub" popup menu/context menu
-		final JMenuItem openOnPvpHub = new JMenuItem("<html><u>Open on PvP-Hub Website</u>&nbsp;&#8599;</html>");
+		final JMenuItem openOnPvpHub = new JMenuItem("<html>&#8599;&nbsp;<u>Open on PvP-Hub Website</u></html>");
 		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
-		openOnPvpHub.setForeground(ColorScheme.GRAND_EXCHANGE_LIMIT);
+		openOnPvpHub.setForeground(PvpColorScheme.BLUE_TEXT_URL);
 
 		// Create "Copy Fight Data" popup menu/context menu
-		final JMenuItem copyFight = new JMenuItem("Copy Fight Data (Advanced)");
+		final JMenuItem copyFight = new JMenuItem("<html>&#10063;&nbsp;Copy Fight JSON (Advanced)");
 		copyFight.addActionListener(e -> PLUGIN.exportFightAsJson(fight));
-		copyFight.setForeground(ColorScheme.BRAND_ORANGE);
+		copyFight.setForeground(PvpColorScheme.GREEN_TEXT_ACTION_WHITER);
 
 		// Create "Remove Fight" popup menu/context menu
-		final JMenuItem removeFight = new JMenuItem("Remove Fight");
+		final JMenuItem removeFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
 		removeFight.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			PLUGIN.removeFight(fight, false);
+		});
+		removeFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
+
+		// Create "Remove Fight" popup menu/context menu
+		final JMenuItem removeFightForever = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Forever</b>");
+		removeFightForever.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight, forever? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.removeFight(fight);
 			}
 		});
-		removeFight.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+		removeFightForever.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+
 
 		popupMenu.add(displayFightLog);
 		if (pvpHubSynced)
@@ -333,7 +343,13 @@ public class FightPerformancePanel extends JPanel
 			popupMenu.add(openOnPvpHub);
 		}
 		popupMenu.add(copyFight);
-		popupMenu.add(removeFight);
+
+		// if the fight wasn't loaded from file, then it's not saved yet, and can only be deleted forever at this moment
+		if (!Strings.isNullOrEmpty(fight.getLoadedFromFname()))
+		{
+			popupMenu.add(removeFight);
+		}
+		popupMenu.add(removeFightForever);
 		setComponentPopupMenu(popupMenu);
 
 		for (JPanel line : panelLines)

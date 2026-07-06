@@ -270,7 +270,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		FightPerformanceSerializer.importFightHistoryData(GSON, (importedFights) ->
+		FightPerformanceSerializer.deserializeFightHistory(GSON, (importedFights) ->
 		{
 			fightHistory.clear();
 			importFights(importedFights);
@@ -306,7 +306,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		FightPerformanceSerializer.saveFightHistoryData(GSON);
+		FightPerformanceSerializer.serializeFightHistory(GSON);
 
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
@@ -690,7 +690,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onClientShutdown(ClientShutdown event)
 	{
-		event.waitFor(executor.submit(() -> FightPerformanceSerializer.saveFightHistoryData(GSON)));
+		event.waitFor(executor.submit(() -> FightPerformanceSerializer.serializeFightHistory(GSON)));
 	}
 
 	@Subscribe
@@ -1562,7 +1562,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	// todo, add options to also delete but not persistently. guess it could be kinda useful?
 	public void resetFightHistory()
 	{
 		resetFightHistory(true);
@@ -1570,9 +1569,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// reset the loaded fight history as well as the saved json data
 	public void resetFightHistory(boolean deleteForever)
 	{
+
+		if (deleteForever)
+		{
+			FightPerformanceSerializer.removeAllFights();
+		}
+		else // if we're just hiding the fights temporarily (as opposed to deleting forever), we should save the session
+		// fights if there are any, so those aren't lost, this action shouldn't delete anything.
+		{
+			FightPerformanceSerializer.serializeFightHistory(GSON);
+		}
 		fightHistory.clear();
 		sessionFightHistory.clear();
-		FightPerformanceSerializer.removeAllFights();
 		panel.enqueueRebuild();
 	}
 
@@ -1583,10 +1591,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 	public void removeFight(FightPerformance fight, boolean deleteForever)
 	{
+		// if the fight wasn't loaded from a file, it won't have its fileName set, so this won't really do anything.
+		// don't have to do much validation for this call.
 		if (deleteForever)
 		{
 			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
 		}
+
+		// we add to the global fight history along with the session history though, so also remove it from there.
 		fightHistory.remove(fight);
 		panel.enqueueRebuild();
 	}

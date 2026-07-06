@@ -73,7 +73,7 @@ public class FightPerformanceSerializer
 	public static final File BASE_DATA_DIR;
 	public static final File FIGHT_HISTORY_DATA_DIR;
 
-	private static final long sessionStartTime = Instant.now().toEpochMilli();
+	private static long sessionStartTime = Instant.now().toEpochMilli();
 
 	static
 	{
@@ -127,7 +127,7 @@ public class FightPerformanceSerializer
 	// import complete fight history data from the saved .json.gz data files
 	// this function only handles the direct file processing and .json.gz deserialization.
 	// more specific FightPerformance processing, and the addition to fightHistory is done in importFights()
-	public static void importFightHistoryData(Gson gson, Consumer<ArrayList<FightPerformance>> onReadCallback)
+	public static void deserializeFightHistory(Gson gson, Consumer<ArrayList<FightPerformance>> onReadCallback)
 	{
 		// catch and ignore any errors we may have forgotten to handle - the import will fail but at least the plugin
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
@@ -140,7 +140,7 @@ public class FightPerformanceSerializer
 			// if there's no data files, then skip reading/importing data.
 			if (fightDataChunkFiles.isEmpty())
 			{
-				log.info("Skipping importFightHistoryData due to no files");
+				log.info("FightPerformanceSerializer.deserializeFightHistory: Skipping deserialization due to no files found.");
 				return;
 			}
 
@@ -169,7 +169,7 @@ public class FightPerformanceSerializer
 				}
 				catch (Exception e)
 				{
-					log.warn("importFightHistoryData(): Error while deserializing fight history data chunk (path=" + fightDataChunk.getAbsolutePath() + "), errorMsg=" + e.getMessage());
+					log.warn("FightPerformanceSerializer.deserializeFightHistory: Error while deserializing fight history data chunk (path={}), errorMsg={}", fightDataChunk.getAbsolutePath(), e.getMessage());
 				}
 			}
 
@@ -180,15 +180,15 @@ public class FightPerformanceSerializer
 		}
 		catch (Exception e)
 		{
-			log.warn("importFightHistoryData() Unexpected error while listing data files or deserializing fight history data: " + e.getMessage());
 			// Display no popup for this error since it could happen on client load and that has odd behavior.
+			log.warn("FightPerformanceSerializer.deserializeFightHistory: Unexpected error while listing data files or deserializing fight history data: {}", e.getMessage());
 		}
 	}
 
 	// Save the currently loaded sessionFightHistory to local gzipped JSON.
-	public static void saveFightHistoryData(Gson gson)
+	public static void serializeFightHistory(Gson gson)
 	{
-		// skip any data writing if no fights were added in this session.
+		// skip any data serialization if no fights were added in this session.
 		if (PLUGIN.sessionFightHistory.isEmpty())
 		{
 			return;
@@ -206,13 +206,17 @@ public class FightPerformanceSerializer
 					gson.toJson(PLUGIN.sessionFightHistory, writer);
 				}
 			}
+
+			sessionStartTime = Instant.now().toEpochMilli();;
+
 		}
 		catch (Exception e)
 		{
-			log.warn("saveFightHistoryData(): Error ignored while writing fight history data: {}", e.getMessage());
+			log.warn("FightPerformanceSerializer.serializeFightHistory: Error ignored while writing fight history data: {}", e.getMessage());
 		}
 	}
 
+	// simply delete all data chunks that match our expected naming scheme
 	public static void removeAllFights()
 	{
 		try
@@ -221,6 +225,7 @@ public class FightPerformanceSerializer
 		}
 		catch (Exception e)
 		{
+			log.warn("FightPerformanceSerializer.removeAllFights: Unexpected error while removing one of the data chunk files.");
 		}
 	}
 
@@ -253,7 +258,7 @@ public class FightPerformanceSerializer
 			}
 			catch (Exception e)
 			{
-				log.warn("removeFight(): Error while deserializing fight history data chunk (path=" + loadedFromChunk.getAbsolutePath() + "), errorMsg=" + e.getMessage());
+				log.warn("FightPerformanceSerializer.removeFight: Error while deserializing fight history data chunk (path={}), errorMsg={}", loadedFromChunk.getAbsolutePath(), e.getMessage());
 			}
 			if (fightsFromChunk == null || fightsFromChunk.isEmpty())
 			{
@@ -270,7 +275,7 @@ public class FightPerformanceSerializer
 
 			if (fightsFromChunk.size() != (initialFightCount - 1))
 			{
-				log.debug("removeFight(): Was going to delete more than 1 fight when attempting to only remove 1?");
+				log.debug("FightPerformanceSerializer.removeFight: Was going to delete more than 1 fight when attempting to only remove 1? Skipping removal - shouldn't happen - possible duplicate fight(s)?");
 				return;
 			}
 
@@ -297,7 +302,7 @@ public class FightPerformanceSerializer
 							{
 								Files.move(updatedChunkFile.toPath(), loadedFromChunk.toPath(), StandardCopyOption.REPLACE_EXISTING);
 							}
-							log.debug("removeFight(): Successfully re-wrote chunk - " + loadedFromChunk.getName());
+							log.debug("FightPerformanceSerializer.removeFight: Successfully re-wrote chunk - " + loadedFromChunk.getName());
 						}
 					}
 				}
@@ -305,13 +310,13 @@ public class FightPerformanceSerializer
 			}
 			catch (Exception e)
 			{
-				log.warn("removeFight(): Error ignored while writing updated fight chunk: {}", e.getMessage());
+				log.warn("FightPerformanceSerializer.removeFight: Error ignored while writing updated fight chunk: {}", e.getMessage());
 			}
 
 		}
 		catch (Exception e)
 		{
-			log.warn("removeFight(): Unexpected error while listing data files or deserializing fight history data: " + e.getMessage());
+			log.warn("FightPerformanceSerializer.removeFight: Unexpected error while listing data files or deserializing fight history data: {}", e.getMessage());
 			throw e;
 		}
 	}
@@ -319,6 +324,8 @@ public class FightPerformanceSerializer
 	// Update functions
 
 	// convert saved fight history to chunked .gz files instead of 1 massive JSON
+	// will also be re-applied onto 1.8.3 since we had a bug which made it so
+	// the data migration didn't run if you had under 100 fights
 	public static void updateFrom1_8_1to1_8_2(Gson gson)
 	{
 		log.info("PvpPerformanceTracker - starting update process - updateFrom1_8_1to1_8_2()");
@@ -377,12 +384,12 @@ public class FightPerformanceSerializer
 		}
 		catch (Exception e)
 		{
-			log.warn("updateFrom1_8_1to1_8_2: Error while reading or writing fight history data: " + e.getMessage());
+			log.warn("updateFrom1_8_1to1_8_2: Error while reading or writing fight history data: {}", e.getMessage());
 			success = false;
 			// Display no modal for this error since it could happen on client load and that has odd behavior.
 			return;
 		}
 
-		log.info("PvpPerformanceTracker - completed update process - updateFrom1_8_1to1_8_2() - success=" + success);
+		log.info("PvpPerformanceTracker - completed update process - updateFrom1_8_1to1_8_2() - success={}", success);
 	}
 }
