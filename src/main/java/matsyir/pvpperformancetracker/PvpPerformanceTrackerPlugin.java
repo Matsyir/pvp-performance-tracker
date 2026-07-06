@@ -57,6 +57,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import joptsimple.internal.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -1629,14 +1630,22 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 	public void removeFight(FightPerformance fight, boolean deleteForever)
 	{
-		// if the fight wasn't loaded from a file, it won't have its fileName set, so this won't really do anything.
-		// don't have to do much validation for this call.
+
 		if (deleteForever)
 		{
+			// if the fight wasn't loaded from a file, it won't have its fileName set,
+			// so this won't really do anything. Don't have to do much validation outside this call.
 			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
+
+			// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
+			// remove it from there, or it will get saved next time we write.
+			if (Strings.isNullOrEmpty(fight.getLoadedFromFname()))
+			{
+				sessionFightHistory.remove(fight);
+			}
 		}
 
-		// we add to the global fight history along with the session history though, so also remove it from there.
+		// we add to the global fight history along with the session history though, so remove it from there regardless
 		fightHistory.remove(fight);
 		panel.enqueueRebuild();
 	}
