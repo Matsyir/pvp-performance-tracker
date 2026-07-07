@@ -70,7 +70,7 @@ public class PvpDamageCalc
 		MULTI_HIT_CLAMPED_TO_MINIMUM
 	}
 
-	private static final int TOURNAMENT_CLAMP_ITEM_ID = 12345;
+	private static final int TOURNAMENT_CLAMP_ITEM_ID = 33380;
 	private static final double TOURNAMENT_CLAMP_MIN_HIT_MODIFIER = 0.15;
 	private static final double TOURNAMENT_CLAMP_MAX_HIT_MODIFIER = 0.85;
 
@@ -468,10 +468,10 @@ public class PvpDamageCalc
 				maxHit *= 2; // Double the max hit for display
 			}
 
-			if (minHit > 0)
+			if (minHit > 0 && !tournamentClamp)
 			{
 				log.info("PvpDamageCalc:getAverageHit: Fell into default avg hit calculation with a minHit > 0 (" +
-					minHit + "). Shouldn't happen. Weapon: " + weapon.toString());
+					minHit + "). Shouldn't happen. Weapon: " + String.valueOf(weapon));
 			}
 		}
 
