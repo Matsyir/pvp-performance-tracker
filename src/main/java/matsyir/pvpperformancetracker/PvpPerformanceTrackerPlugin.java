@@ -272,7 +272,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		FightPerformanceSerializer.deserializeFightHistory(GSON, (importedFights) ->
+		FightPerformanceSerializer.deserializeFightHistory((importedFights) ->
 		{
 			fightHistory.clear();
 			importFights(importedFights);
@@ -308,7 +308,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		FightPerformanceSerializer.serializeFightHistory(GSON);
+		FightPerformanceSerializer.serializeSessionFightHistory();
 
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
@@ -695,7 +695,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onClientShutdown(ClientShutdown event)
 	{
-		event.waitFor(executor.submit(() -> FightPerformanceSerializer.serializeFightHistory(GSON)));
+		event.waitFor(executor.submit(() -> FightPerformanceSerializer.serializeSessionFightHistory()));
 	}
 
 	@Subscribe
@@ -1324,7 +1324,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// with how the rendered vs. saved fights work its totally unnecessary to have 200
 			configManager.setConfiguration(CONFIG_KEY, "fightHistoryRenderLimit", 30);
 
-			FightPerformanceSerializer.updateFrom1_8_1to1_8_2(GSON);
+			FightPerformanceSerializer.updateFrom1_8_1to1_8_2();
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
@@ -1621,7 +1621,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		else // if we're just hiding the fights temporarily (as opposed to deleting forever), we should save the session
 		// fights if there are any, so those aren't lost, this action shouldn't delete anything.
 		{
-			FightPerformanceSerializer.serializeFightHistory(GSON);
+			FightPerformanceSerializer.serializeSessionFightHistory();
 		}
 		fightHistory.clear();
 		sessionFightHistory.clear();
@@ -1640,7 +1640,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			// if the fight wasn't loaded from a file, it won't have its fileName set,
 			// so this won't really do anything. Don't have to do much validation outside this call.
-			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
+			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight));
 
 			// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
 			// remove it from there, or it will get saved next time we write.

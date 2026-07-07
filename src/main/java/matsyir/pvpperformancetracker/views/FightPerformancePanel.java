@@ -71,7 +71,7 @@ import net.runelite.client.util.LinkBrowser;
 public class FightPerformancePanel extends JPanel
 {
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy/MM/dd");
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss 'on' yyyy-MM-dd");
 
 	public static final Color BG_COLOR_FOR_IMG = PvpColorScheme.EMPTY;
 	public static final Color BG_COLOR = ColorScheme.DARKER_GRAY_COLOR;
@@ -145,8 +145,10 @@ public class FightPerformancePanel extends JPanel
 		{
 			this(name,
 				highlightColor,
-				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png"),
-				ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/fightPerformancePanelBgStyles/" + fnameHovered + ".png"),
+				ImageUtil.loadImageResource(PLUGIN.getClass(),
+					"/panelBackgrounds/fightPerformancePanelBgStyles/" + fname + ".png"),
+				ImageUtil.loadImageResource(PLUGIN.getClass(),
+					"/panelBackgrounds/fightPerformancePanelBgStyles/" + fnameHovered + ".png"),
 				enabled
 			);
 		}

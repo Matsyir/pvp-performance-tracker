@@ -104,8 +104,8 @@ public interface PvpPerformanceTrackerConfig extends Config
 	)
 	String overlaySection = "overlay";
 
-	@ConfigSection(name = "Gear/Ammo",
-		description = "Contains gear/ammo settings for fights outside LMS.<br>" +
+	@ConfigSection(name = "Gear & Ammo",
+		description = "Contains gear & ammo settings for fights outside LMS.<br>" +
 			"This is what's used for expected damage if the fight isn't merged.",
 		position = 11000,
 		closedByDefault = false

@@ -74,8 +74,7 @@ public class TotalStatsPanel extends JPanel
 
 	public static void loadBackgroundImages()
 	{
-		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(),
-			"/panelBackgrounds/totalStatsPanel.png");
+		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/totalStatsPanel.png");
 	}
 
 	// excluding title row
