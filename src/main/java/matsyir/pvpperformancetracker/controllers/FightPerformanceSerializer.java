@@ -58,21 +58,7 @@ public class FightPerformanceSerializer
 	// ============================================== Constants & init ==============================================
 	public static final String DATA_FOLDER = PvpPerformanceTrackerPlugin.DATA_FOLDER;
 	public static final String FIGHT_HISTORY_DATA_FOLDER = "FightHistoryData"; // subfolder of DATA_FOLDER
-	public static final String FAV_FIGHTS_FOLDER = "FavoritedFights"; // subfolder of DATA_FOLDER
-
-	// fname prefix used for fights imported from 1.8.1 -> 1.8.2 (going from 1 big .json to .json.gz chunks)
-	// will get number added to it, e.g FightHistoryData-c1.json.gz
-	public static final String FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK = "FightHistoryData-c";
-
-	// prefix for newly generated .json.gz files
-	// will get epoch/timestamp long added to it, e.g Fights_1783190645201.json.gz
-	// via sessionStartTime, so only 1 file per plugin launch (1 file per client session with normal use)
-	public static final String FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK = "Fights_";
-
-	// fname prefix for favorited fight
-	public static final String FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_FAVCHUNK = "Fav_";
-
-	public static final String JSON_GZ_CHUNK_ENDSWITH = ".json.gz";
+	public static final String FAV_FIGHTS_FOLDER = "FavFights"; // subfolder of DATA_FOLDER
 
 	public static final File BASE_DATA_DIR;
 	public static final File FIGHT_HISTORY_DATA_DIR;
@@ -88,38 +74,32 @@ public class FightPerformanceSerializer
 
 		try
 		{
-			tryMkdir(BASE_DATA_DIR);
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
-			tryMkdir(FAV_FIGHTS_DIR);
+			tryMkdirs(BASE_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(FAV_FIGHTS_DIR);
 		}
 		catch (FileNotFoundException ignored) { }
 	}
 
 	public enum JsonGzChunkType
 	{
-		IMPORTED_FROM_JSON(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK),
-		NEW_CHUNK(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK),
-		FAVORITE_FIGHT_CHUNK(FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_FAVCHUNK);
+		IMPORTED_FROM_JSON("FightHistoryData-c", FIGHT_HISTORY_DATA_DIR),
+		NEW_CHUNK("Fights_", FIGHT_HISTORY_DATA_DIR),
+		FAVORITE_FIGHT_CHUNK("Fav_", FAV_FIGHTS_DIR);
 
-		final String fnamePrefix;
-
-		JsonGzChunkType(String fnamePrefix)
-		{
-			this.fnamePrefix = fnamePrefix;
-		}
+		static final String DATA_CHUNK_FILE_EXT = ".json.gz";
 
 		public static boolean isFileValidChunk(File file)
 		{
 			// ignore any chunks greater than 10mb, they really shouldn't be going > 1-2MB with normal use.
 			// also ignore any that don't end with .json.gz
-			if (file.length() > (10 * 1024 * 1024) || !file.getName().endsWith(JSON_GZ_CHUNK_ENDSWITH))
+			if (file.length() > (10 * 1024 * 1024) || !file.getName().endsWith(DATA_CHUNK_FILE_EXT))
 			{
 				return false;
 			}
 
 			return getChunkType(file.getName()) != null;
 		}
-
 		public static JsonGzChunkType getChunkType(String fname)
 		{
 			for (JsonGzChunkType cType : JsonGzChunkType.values())
@@ -131,6 +111,20 @@ public class FightPerformanceSerializer
 			}
 			return null;
 		}
+
+		final String fnamePrefix;
+		final File directory;
+
+		JsonGzChunkType(String fnamePrefix, File directory)
+		{
+			this.fnamePrefix = fnamePrefix;
+			this.directory = directory;
+		}
+
+		public File generateNewChunkFile(String appendedToPrefix)
+		{
+			return new File(this.directory, this.fnamePrefix + appendedToPrefix + DATA_CHUNK_FILE_EXT);
+		}
 	}
 
 	// ============================================== SERIALIZATION ================================================
@@ -138,28 +132,41 @@ public class FightPerformanceSerializer
 	// Save the currently loaded sessionFightHistory to local gzipped JSON.
 	public static void serializeSessionFightHistory()
 	{
-		serializeFightArray(PLUGIN.sessionFightHistory,
-			FIGHT_HISTORY_DATA_DIR,
-			FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_NEWCHUNK + sessionStartTime + ".json.gz");
+		boolean written = serializeFightArray(PLUGIN.sessionFightHistory,
+			JsonGzChunkType.NEW_CHUNK.generateNewChunkFile(String.valueOf(sessionStartTime)));
+
+		if (written)
+		{
+			sessionStartTime = Instant.now().toEpochMilli();
+		}
 	}
 
+	// TODO Actually use this + deserialize + UI
+	// 	deserialize will just be a call to deserializeFightArray(), just need to include that in deserializeFightHistory
+	//  to check both dirs instead of only main one
 	public static void serializeFavoriteFight(FightPerformance fav)
 	{
 		// 1: copy fight to its own unique file
-		// todo make name more readable (usernames)
-		serializeFightArray(List.of(fav),
-			FAV_FIGHTS_DIR,
-			JsonGzChunkType.FAVORITE_FIGHT_CHUNK.fnamePrefix + sessionStartTime + ".json.gz");
+		String fightName = String.valueOf(fav.lastFightTime / 1000);
+		try
+		{
+			fightName = fav.getCompetitor().getName() + "_vs_" + fav.getOpponent().getName() + "_" + fightName;
+		}
+		catch (Exception ignored) {}
+
+		File newFavFightFile = JsonGzChunkType.FAVORITE_FIGHT_CHUNK.generateNewChunkFile(fightName);
+		serializeFightArray(List.of(fav), newFavFightFile);
 
 
 		// 2: remove fight from the chunk it was loaded from. can skip this if it's not saved yet / is from this session.
+		// ensure we keep setLoadedFromFname set for any written files for later use
 		removeFight(fav);
-		// todo update loadedFromFname for any later use
+		fav.setLoadedFromFname(newFavFightFile.getName());
 	}
 
 	// returns true if we wrote to the file.
 	// if returns false, doesn't necessarily mean there was an exception.
-	private static boolean serializeFightArray(Collection<FightPerformance> fights, File fileDir, String fileName)
+	private static boolean serializeFightArray(Collection<FightPerformance> fights, File newDataChunk)
 	{
 		// skip any data serialization if no fights were added in this session.
 		if (fights.isEmpty())
@@ -169,11 +176,9 @@ public class FightPerformanceSerializer
 
 		try
 		{
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(newDataChunk);
 
-			File fightHistoryData = new File(fileDir, fileName);
-
-			try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(fightHistoryData.toPath())))
+			try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(newDataChunk.toPath())))
 			{
 				try (OutputStreamWriter writer = new OutputStreamWriter(gzip, StandardCharsets.UTF_8))
 				{
@@ -203,7 +208,7 @@ public class FightPerformanceSerializer
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
 		try
 		{
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
 
 			List<File> fightDataChunkFiles = listAllDataChunks();
 			// if there's no data files, then skip reading/importing data.
@@ -280,7 +285,7 @@ public class FightPerformanceSerializer
 
 		try
 		{
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
 
 			File loadedFromChunk = new File(FIGHT_HISTORY_DATA_DIR, fight.getLoadedFromFname());
 
@@ -331,7 +336,7 @@ public class FightPerformanceSerializer
 		return false;
 	}
 
-	// simply delete all data chunks that match our expected naming scheme inside the core
+	// simply delete all data chunks that match our expected naming scheme inside the fight history data folder
 	public static boolean removeAllFights()
 	{
 		try
@@ -351,7 +356,7 @@ public class FightPerformanceSerializer
 	{
 		try
 		{
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
 			return Arrays.stream(Objects.requireNonNull(
 					FIGHT_HISTORY_DATA_DIR.listFiles(JsonGzChunkType::isFileValidChunk))
 				).sorted(Comparator.comparingLong(File::lastModified).reversed())
@@ -369,7 +374,7 @@ public class FightPerformanceSerializer
 		{
 
 			String newChunkName = original.getName() + ".tmp";
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
 			File updatedChunkFile = new File(FIGHT_HISTORY_DATA_DIR, newChunkName);
 
 			try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(updatedChunkFile.toPath())))
@@ -425,11 +430,12 @@ public class FightPerformanceSerializer
 	}
 
 	// try directory.mkdirs, log & throw if it returns false. To be used in try-catch of a larger process
-	private static void tryMkdir(File directory) throws FileNotFoundException
+	private static void tryMkdirs(File directory) throws FileNotFoundException
 	{
-		if (directory != null && !directory.mkdirs())
+		if (directory == null || (!directory.exists() && !directory.mkdirs()))
 		{
-			log.warn("FightPerformanceSerializer.tryPrepareDir: directory.mkdirs failed on dir: " + directory.getAbsolutePath());
+
+			log.warn("FightPerformanceSerializer.tryPrepareDir: directory.mkdirs failed on dir: " + (directory != null ? directory.getAbsolutePath() : ""));
 			throw new FileNotFoundException("FightPerformanceSerializer.tryPrepareDir: Failed to prepare directory");
 		}
 	}
@@ -448,8 +454,8 @@ public class FightPerformanceSerializer
 		final int MAX_FIGHTS_PER_UPDATED_GZ_CHUNK = 100;
 		try
 		{
-			tryMkdir(BASE_DATA_DIR);
-			tryMkdir(FIGHT_HISTORY_DATA_DIR);
+			tryMkdirs(BASE_DATA_DIR);
+			tryMkdirs(FIGHT_HISTORY_DATA_DIR);
 
 			File originalJsonData = new File(BASE_DATA_DIR, _OLD_FIGHT_HISTORY_DATA_FNAME_JSON);
 
@@ -476,7 +482,7 @@ public class FightPerformanceSerializer
 					{
 						try
 						{
-							File newGzChunkFile = new File(FIGHT_HISTORY_DATA_DIR, FIGHT_HISTORY_DATA_FNAME_PREFIX_GZ_IMPORT_CHUNK + fileIdx + ".json.gz");
+							File newGzChunkFile = new File(FIGHT_HISTORY_DATA_DIR, JsonGzChunkType.IMPORTED_FROM_JSON.fnamePrefix + fileIdx + ".json.gz");
 							fileIdx++;
 
 							try (GZIPOutputStream gzip = new GZIPOutputStream(Files.newOutputStream(newGzChunkFile.toPath())))
