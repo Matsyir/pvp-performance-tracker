@@ -30,6 +30,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.IntSupplier;
+import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -47,18 +49,20 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import joptsimple.internal.Strings;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.FightPerformanceSerializer;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
@@ -66,8 +70,7 @@ import net.runelite.client.util.LinkBrowser;
 
 // Panel to display fight performance. The first line shows player stats while the second is the opponent.
 // There is a skull icon beside a player's name if they died. The usernames are fixed to the left and the
-// stats are fixed to the right.
-
+// stats are fixed to the right
 public class FightPerformancePanel extends JPanel
 {
 	private static final String PVP_HUB_HOST = "osrs.pvp-hub.com";
@@ -162,6 +165,10 @@ public class FightPerformancePanel extends JPanel
 		}
 	}
 
+	@Getter
+	@Inject
+	private ClientThread clientThread;
+
 	private boolean hovered = false;
 	private BackgroundStyle bgStyle = BackgroundStyle.DEFAULT;
 
@@ -193,7 +200,7 @@ public class FightPerformancePanel extends JPanel
 	//     4 G.B. (37)				N/A // ghost barrages
 	//
 
-	public FightPerformancePanel(FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier)
+	public FightPerformancePanel(PvpPerformanceTrackerPanel pluginPanel, FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier)
 	{
 		boolean pvpHubSynced = fight.hasPvpHubSyncedFight();
 		FightPerformance displayFight = fight.getPvpHubDisplayFight();
@@ -308,6 +315,28 @@ public class FightPerformancePanel extends JPanel
 		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
 		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(displayFight, getRootPane()));
 
+		// Create "Favorite/De-Favorite fight" menu
+		final JMenuItem favoriteFightToggleMenuItem = new JMenuItem();
+		updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
+		ActionListener favoriteFightAction = e ->
+		{
+			PLUGIN.getClientThread().invokeLater(() ->
+			{
+				if (!fight.isFavorite())
+				{
+					FightPerformanceSerializer.serializeFavoriteFight(fight);
+				}
+				else
+				{
+					FightPerformanceSerializer.deFavoriteFight(fight);
+					pluginPanel.enqueueRebuild();
+				}
+
+				updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
+			});
+		};
+		favoriteFightToggleMenuItem.addActionListener(favoriteFightAction);
+
 		// Create "Open on PvP-Hub" popup menu/context menu
 		final JMenuItem openOnPvpHub = new JMenuItem("<html>&#8599;&nbsp;<u>Open on PvP-Hub Website</u></html>");
 		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
@@ -323,25 +352,25 @@ public class FightPerformancePanel extends JPanel
 		copyFight.addActionListener(e -> PLUGIN.exportFightAsJson(fight));
 		copyFight.setForeground(PvpColorScheme.GREEN_TEXT_ACTION_WHITER);
 
-		// Create "Remove Fight" popup menu/context menu
-		final JMenuItem removeFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
-		removeFight.addActionListener(e ->
+		// Create "Hide Fight (until reload)" popup menu/context menu
+		final JMenuItem hideFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
+		hideFight.addActionListener(e ->
 		{
 			PLUGIN.removeFight(fight, false);
 		});
-		removeFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
+		hideFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
 
 		// Create "Remove Fight" popup menu/context menu
-		final JMenuItem removeFightForever = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Forever</b>");
-		removeFightForever.addActionListener(e ->
+		final JMenuItem removeFightPermanently = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Permanently</b>");
+		removeFightPermanently.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight, forever? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight, permanently? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.removeFight(fight);
 			}
 		});
-		removeFightForever.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+		removeFightPermanently.setForeground(PvpColorScheme.RED_TEXT_ACTION);
 
 
 		popupMenu.add(displayFightLog);
@@ -350,18 +379,20 @@ public class FightPerformancePanel extends JPanel
 			popupMenu.add(displayOriginalFightLog);
 		}
 		popupMenu.add(displayAttackSummary);
+		popupMenu.add(favoriteFightToggleMenuItem);
 		if (hasPvpHubUrl(fight))
 		{
 			popupMenu.add(openOnPvpHub);
 		}
 		popupMenu.add(copyFight);
 
-		// if the fight wasn't loaded from file, then it's not saved yet, and can only be deleted forever at this moment
-		if (!Strings.isNullOrEmpty(fight.getLoadedFromFname()))
+		// if the fight wasn't loaded from file, then it's not saved yet, and can only be deleted permanently
+		// at this moment, so only display the "hide fight (until reload)" option if it's already written
+		if (fight.isSavedToFile())
 		{
-			popupMenu.add(removeFight);
+			popupMenu.add(hideFight);
 		}
-		popupMenu.add(removeFightForever);
+		popupMenu.add(removeFightPermanently);
 		setComponentPopupMenu(popupMenu);
 
 		for (JPanel line : panelLines)
@@ -419,6 +450,23 @@ public class FightPerformancePanel extends JPanel
 			: fight.getCompetitor().getName();
 		String path = "/" + playerName.trim() + "/" + fight.getFightId().trim();
 		return new URI("https", PVP_HUB_HOST, path, null).toASCIIString();
+	}
+
+	private void updateFavoriteFightMenuItem(JMenuItem item, FightPerformance fight)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			if (fight.isFavorite())
+			{
+				item.setText("<html>&#9734;&nbsp;<i>Un-Favorite Fight");
+				item.setForeground(PvpColorScheme.FAVORITE_GOLD.darker());
+			}
+			else
+			{
+				item.setText("<html>&#9733;&nbsp;Favorite Fight");
+				item.setForeground(PvpColorScheme.FAVORITE_GOLD);
+			}
+		});
 	}
 
 	@Override

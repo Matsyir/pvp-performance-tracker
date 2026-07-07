@@ -372,7 +372,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// run all of this on UI thread, since we're adding and removing containers in it.
 		SwingUtilities.invokeLater(() ->
 		{
-			fightHistoryContainer.add(new FightPerformancePanel(fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
+			fightHistoryContainer.add(new FightPerformancePanel(this, fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
 
 			// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
 			int c;
@@ -420,7 +420,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// initializing all the panels on the client thread before the UI thread call helps a lot,
 		// especially when we're doing 200 or potentially more.
 		ArrayList<FightPerformancePanel> panelsToAdd = new ArrayList<>();
-		fights.forEach((f) -> panelsToAdd.add(new FightPerformancePanel(
+		fights.forEach((f) -> panelsToAdd.add(new FightPerformancePanel(this,
 			f, worldService, getWorldLocationSupplier(f.getWorld()))));
 
 		// for bulk addFights, don't just add them to 0, since this causes visual flickering while they all get added.

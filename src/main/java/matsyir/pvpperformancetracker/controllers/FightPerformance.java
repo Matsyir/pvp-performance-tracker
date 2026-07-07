@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
+import joptsimple.internal.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +127,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Getter
 	@Setter
 	private transient String loadedFromFname;
+	@Getter
+	@Setter
+	private transient boolean isFavorite;
 
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
@@ -915,11 +919,15 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
 	{
+		// empty is a valid filter, it means display every fight - don't filter them
+		if (Strings.isNullOrEmpty(filter))
+		{
+			return true;
+		}
 		// temp dev filter for testing ui with long names
 //		try
 //		{
-//			boolean isNameLenFilter = filter.startsWith("long");
-//			if (isNameLenFilter)
+//			if (filter.startsWith("long"))
 //			{
 //				return competitor.getName().length() >= 12 || opponent.getName().length() >= 12;
 //			}
@@ -928,18 +936,43 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		try
 		{
-			boolean isRelevant = filter.isEmpty() // empty is a valid filter, it means display every fight - don't filter them
-				|| ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
+			// before even checking for normal results, see if the filter is a "preset hardcoded filter", in which case
+			// we won't include other kinds of results along with those, only the desired filter.
+			// skip all these checks if length<4 since our shortest hardcoded filter is 4 characters (kill)
+			if (filter.length() >= 4)
+			{
+				if (filter.equals("favorite"))
+				{
+					return this.isFavorite;
+				}
+				if (filter.equals("kill"))
+				{
+					return opponent.isDead();
+				}
+				if (filter.equals("death"))
+				{
+					return competitor.isDead();
+				}
+				if (filter.equals("double") || filter.equals("doubledeath"))
+				{
+					return competitor.isDead() && opponent.isDead();
+				}
+				if (Arrays.asList(FightPerformancePanel.BackgroundStyle.SHOW_ALL_FILTER_WORDS).contains(filter))
+				{
+					return bgStyle.isEnabled() && bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT;
+				}
+			}
+
+
+			boolean isRelevant = ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
 					(CONFIG.exactNameFilter()
 						? (competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
 						: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
 					)
 				|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
-					// you can also search for exactly any of the BackgroundStyle.SHOW_ALL_FILTER_WORDS to see any non-default, enabled bgStyle
 					(bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
 						&& bgStyle.isEnabled()
-						&& (Arrays.asList(FightPerformancePanel.BackgroundStyle.SHOW_ALL_FILTER_WORDS).contains(filter)
-						|| bgStyle.getName().toLowerCase().startsWith(filter)
+						&& (bgStyle.getName().toLowerCase().startsWith(filter)
 						|| bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
 					)
 				)
@@ -1006,5 +1039,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			return false;
 		}
+	}
+
+	public boolean isSavedToFile()
+	{
+		return !Strings.isNullOrEmpty(loadedFromFname);
 	}
 }

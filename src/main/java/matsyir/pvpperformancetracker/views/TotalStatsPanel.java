@@ -192,12 +192,12 @@ public class TotalStatsPanel extends JPanel
 			PLUGIN.resetFightHistory(false);
 		});
 
-		// Create "Remove All Fights Forever" popup menu/context menu item
-		final JMenuItem removeAllFightsForever = new JMenuItem("<html><b>&#128465;&nbsp;Delete All Fights Forever</b>");
-		removeAllFightsForever.setForeground(PvpColorScheme.RED_TEXT_ACTION);
-		removeAllFightsForever.addActionListener(e ->
+		// Create "Remove All Fights Permanently" popup menu/context menu item
+		final JMenuItem removeAllFightsPermanently = new JMenuItem("<html><b>&#128465;&nbsp;Delete All Fights Permanently</b>");
+		removeAllFightsPermanently.setForeground(PvpColorScheme.RED_TEXT_ACTION);
+		removeAllFightsPermanently.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete all fight history data, forever? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete all fight history data, permanently? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.resetFightHistory();
@@ -231,7 +231,7 @@ public class TotalStatsPanel extends JPanel
 		popupMenu.add(toggleSocialButtonsMenuItem);
 		popupMenu.add(resetPvpHubHiddenNameMenuItem);
 		popupMenu.add(removeAllFights);
-		popupMenu.add(removeAllFightsForever);
+		popupMenu.add(removeAllFightsPermanently);
 
 		// Now initializing all lines:
 		// FIRST LINE

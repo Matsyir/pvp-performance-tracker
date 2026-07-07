@@ -17,13 +17,16 @@ public class PvpColorScheme
 
 	// won't copy all ColorScheme values here, but this one should see a lot of use/save an import in many cases
 	public static final Color BRAND_ORANGE = ColorScheme.BRAND_ORANGE;
-	public static final Color TITLE_COLOR = ColorUtil.colorLerp(BRAND_ORANGE, Color.WHITE, 0.4f);
+
 	// a slightly darker WHITE, similar to ColorScheme.TEXT_COLOR, but a bit brighter, and slightly blueish
-	public static final Color BRIGHTER_TEXT_COLOR = new Color(225, 230, 255);
+	public static final Color BRIGHTER_TEXT_COLOR = new Color(230, 242, 255);
 
 	public static final Color BLOOD_RED_ORANGE = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.5f);
 	public static final Color BLOOD_RED_ORANGE_REDDER = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.75f);
 
+	public static final Color FAVORITE_GOLD = new Color(251, 204, 19);
+
+	// text / action / button colors
 	public static final Color GREEN_TEXT_ACTION = new Color(30, 230, 30);
 	public static final Color GREEN_TEXT_ACTION_WHITER = ColorUtil.colorLerp(GREEN_TEXT_ACTION, Color.WHITE, 0.4f);
 	public static final Color RED_TEXT_ACTION = BLOOD_RED_ORANGE_REDDER;
