@@ -196,6 +196,9 @@ public class PvpHubUploader
 		@SerializedName("w")
 		final int w;
 		@Expose
+		@SerializedName("i")
+		final FightPerformance.InventorySnapshots i;
+		@Expose
 		final int publicDelaySeconds;
 
 		FightUploadPayload(FightPerformance fight, int publicDelaySeconds)
@@ -206,6 +209,7 @@ public class PvpHubUploader
 			this.fightID = fight.getFightId();
 			this.l = fight.getFightType();
 			this.w = fight.getWorld();
+			this.i = fight.getInventorySnapshots();
 			this.publicDelaySeconds = publicDelaySeconds;
 		}
 	}

@@ -45,6 +45,9 @@ import matsyir.pvpperformancetracker.models.FightType;
 import matsyir.pvpperformancetracker.utils.FightIdGenerator;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.AnimationID;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
@@ -93,6 +96,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Expose
 	@SerializedName("pn")
 	private String pvpHubUploadName;
+	@Expose
+	@SerializedName("i")
+	private InventorySnapshots inventorySnapshots;
 
 	@Getter
 	private transient FightPerformance pvpHubSyncedFight;
@@ -105,6 +111,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	private transient long initialTime = 0;
 	private transient int initialFightTick = -1;
 	private transient boolean logTicksRelative = false;
+	private transient int[] lastNonEmptyInventorySnapshot;
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -151,6 +158,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 		// determine the opponent from is not fully reliable.
 		lastFightTime = Instant.now().minusSeconds(NEW_FIGHT_DELAY.getSeconds() - 5).toEpochMilli();
 		initialTime = Instant.now().toEpochMilli();
+		int[] startInventory = captureInventoryItemIds();
+		this.inventorySnapshots = new InventorySnapshots(startInventory, null);
+		recordNonEmptyInventorySnapshot(startInventory);
 
 		this.competitor = new Fighter(this, competitor);
 		this.opponent = new Fighter(this, opponent);
@@ -444,6 +454,70 @@ public class FightPerformance implements Comparable<FightPerformance>
 		pvpHubUploadName = normalizeName(uploadName) == null ? null : uploadName.trim();
 	}
 
+	public void recordEndingInventorySnapshot()
+	{
+		if (inventorySnapshots == null)
+		{
+			inventorySnapshots = new InventorySnapshots(null, null);
+		}
+		int[] endingInventory = captureInventoryItemIds();
+		if (hasAnyItem(endingInventory))
+		{
+			inventorySnapshots.end = endingInventory;
+			recordNonEmptyInventorySnapshot(endingInventory);
+			return;
+		}
+
+		inventorySnapshots.end = lastNonEmptyInventorySnapshot != null ? lastNonEmptyInventorySnapshot : endingInventory;
+	}
+
+	public void recordCurrentInventorySnapshot()
+	{
+		recordNonEmptyInventorySnapshot(captureInventoryItemIds());
+	}
+
+	private void recordNonEmptyInventorySnapshot(int[] inventory)
+	{
+		if (hasAnyItem(inventory))
+		{
+			lastNonEmptyInventorySnapshot = inventory;
+		}
+	}
+
+	private boolean hasAnyItem(int[] inventory)
+	{
+		if (inventory == null)
+		{
+			return false;
+		}
+		for (int itemId : inventory)
+		{
+			if (itemId > 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int[] captureInventoryItemIds()
+	{
+		ItemContainer inventory = PLUGIN.getClient().getItemContainer(InventoryID.INVENTORY);
+		if (inventory == null)
+		{
+			return new int[0];
+		}
+
+		Item[] items = inventory.getItems();
+		int[] itemIds = new int[items.length];
+		for (int i = 0; i < items.length; i++)
+		{
+			Item item = items[i];
+			itemIds[i] = item == null ? -1 : item.getId();
+		}
+		return itemIds;
+	}
+
 	public FightPerformance getPvpHubDisplayFight()
 	{
 		if (pvpHubSyncedFight == null)
@@ -588,6 +662,23 @@ public class FightPerformance implements Comparable<FightPerformance>
 		Fighter originalCompetitor = competitor;
 		competitor = opponent;
 		opponent = originalCompetitor;
+	}
+
+	@Getter
+	public static class InventorySnapshots
+	{
+		@Expose
+		@SerializedName("s")
+		private int[] start;
+		@Expose
+		@SerializedName("e")
+		private int[] end;
+
+		private InventorySnapshots(int[] start, int[] end)
+		{
+			this.start = start;
+			this.end = end;
+		}
 	}
 
 	private static String normalizeName(String name)

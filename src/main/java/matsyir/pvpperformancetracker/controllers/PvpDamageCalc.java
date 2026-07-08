@@ -369,7 +369,7 @@ public class PvpDamageCalc
 
 			// inverted accuracy is used to calculate the chances of missing specifically 1, 2 or 3 times in a row
 			double invertedAccuracy = 1 - accuracy;
-			double averageSuccessfulRegularHit = maxHit / 2;
+			double averageSuccessfulRegularHit = maxHit / 2.0;
 			double higherModifierChance = (accuracy + (accuracy * invertedAccuracy));
 			double lowerModifierChance = ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
 			double averageSpecialHit = ((higherModifierChance * 2) + (lowerModifierChance * 1.5)) * averageSuccessfulRegularHit;
@@ -460,7 +460,7 @@ public class PvpDamageCalc
 			if (minHit > 0)
 			{
 				log.info("PvpDamageCalc:getAverageHit: Fell into default avg hit calculation with a minHit > 0 (" +
-					minHit + "). Shouldn't happen. Weapon: " + weapon.toString());
+					minHit + "). Shouldn't happen. Weapon: " + String.valueOf(weapon));
 			}
 		}
 

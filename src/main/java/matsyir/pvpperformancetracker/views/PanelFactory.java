@@ -268,7 +268,7 @@ public final class PanelFactory
 					//JPanel lineContainer = (JPanel)c;
 					//lineContainer.setToolTipText(tooltip);
 
-					if (worldIcon != null)
+					if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.FLAG && worldIcon != null)
 					{
 						int x = (c.getWidth() - worldIcon.getIconWidth()) / 2;
 						int y = ((c.getHeight() - worldIcon.getIconHeight()) / 2) - bottomLineBorder.getBorderInsets(c).bottom;
