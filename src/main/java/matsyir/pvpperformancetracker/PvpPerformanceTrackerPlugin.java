@@ -131,7 +131,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.3";
+	public static final String PLUGIN_VERSION = "1.8.4";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1307,19 +1307,23 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 
 		// primary update message
+
+		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
+		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
+		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
+		String updateMsgForVersion = "1.8.4";
 		String updatePrefix = "<shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
-			"><u>v1.8.3</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
+			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Support for seeking arrows. Fixed fight deletions not persisting. " +
-				"Fixed synced fight statistics being visually inverted. " +
-				"Include buttons to wiki + discord on panel (hide via right-click). " +
-				"Various fixes & improvements regarding recent UI changes. " +
-				"Replaced default orange fight border with white, keep orange only for hover. ")
+				"Ability to favorite fights, and to filter fights by favorites (& more - clarified filter options & functionality on filter tooltip). " +
+				"Fix gmaul detection for KO chance: improved hitsplat matching accuracy. " +
+				"New feature to hide fights until plugin or client reload - like a temporary delete. " +
+				"Various tooltip & config clarifications. Various background optimizations for UI & recent file format update.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);

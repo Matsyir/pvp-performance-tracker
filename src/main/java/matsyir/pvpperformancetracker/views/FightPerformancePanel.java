@@ -124,7 +124,7 @@ public class FightPerformancePanel extends JPanel
 
 		// if your filter is exactly equal to one of these filter words, then we'll display any fights with a
 		// BackgroundStyle, provided it's enabled & not Default.
-		public static final String[] SHOW_ALL_FILTER_WORDS = { "border", "background", "bgstyle", "special" };
+		public static final String[] SHOW_ALL_FILTER_WORDS = { "border", "background", "borderstyle" };
 
 		final String name;
 		final Color highlightColor;

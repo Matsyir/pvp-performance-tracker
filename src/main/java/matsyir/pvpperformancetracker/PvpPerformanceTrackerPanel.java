@@ -31,6 +31,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -229,12 +230,20 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// add filter line with text field.
 		JPanel filterLine = new JPanel(new BorderLayout());
 		String filterTooltip = "<html>" +
-			"You can filter the displayed fights as well as the total stats by typing in this textbox.<br><br>" +
-			"There are currently 3 different ways you can filter fights:<br>" +
-			"<b>1)</b> Searching for RSN, either yours or the opponent's<br>" +
-			"<b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"<br>" +
-			"<b>3)</b> Searching for <i>&gt;X</i>, <i>&gt;=X</i>, <i>&lt;X</i>, or <i>&lt;=X</i> &nbsp;total attacks by the client player<br>" +
-			"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, <i>\"&gt;60\"</i> will only display fights with over 60 total attacks made by yourself (the client player)";
+			"You can filter the displayed fights as well as the total stats by typing in this textbox." +
+			"<br><br>There are a few different ways you can filter fights:" +
+			"<br><b>1)</b> Searching for RSN, either yours or the opponent's" +
+			"<br><b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"" +
+			"<br><b>3)</b> Searching for <i>&gt;X</i>, <i>&gt;=X</i>, <i>&lt;X</i>, or <i>&lt;=X</i> &nbsp;total attacks by the client player" +
+			"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, <i>\"&gt;60\"</i> will only display fights with over 60 total attacks made by yourself (the client player)" +
+			"<br><br>There are also a few preset filters you can search for:" +
+			"<br>&nbsp;- <u>favorite</u> (shows any fights you favorited)" +
+			"<br>&nbsp;- <u>kill</u> (shows any fights where your opponent died)" +
+			"<br>&nbsp;- <u>death</u> (shows any fights where you died)" +
+			"<br>&nbsp;- <u>double</u> | <u>doubledeath</u> (shows any double-death fights)" +
+			"<br>&nbsp;- <u>border</u> | <u>background</u> | <u>borderstyle</u> (shows any fight which has a non-default border style)";
+		// to view these preset filters, see FightPerformance.isRelevantForFilter
+
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
 		// filter textfield
