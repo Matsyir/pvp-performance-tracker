@@ -28,9 +28,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
@@ -39,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntSupplier;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -47,6 +46,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.border.Border;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -55,11 +55,10 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
-import static matsyir.pvpperformancetracker.views.JShadowedButton.paddedPanelActionBorder;
-import static matsyir.pvpperformancetracker.views.JShadowedButton.paddedPanelActionBorderHovered;
 import matsyir.pvpperformancetracker.views.PlaceholderTextField;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
@@ -80,21 +79,21 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FIGHT_HISTORY_SCROLL_WIDTH = 5;
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
 	public static final int SOCIAL_BTN_HEIGHT = 34;
-	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 26;
+	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
-	public static final int BASE_NAME_FILTER_DELAY = 65; // base delay in ms
-	// additional delay of 4ms per 100 fights saved
-	// this would be +400ms if you have the max of 10,000 fights saved. Would be a bit long/appear a bit stuttery, but
+	public static final int BASE_NAME_FILTER_DELAY = 45; // base delay in ms
+	// additional delay of 3ms per 100 fights saved
+	// this would be +300ms if you have the max of 10,000 fights saved. Would be a bit long/appear a bit stuttery, but
 	// it likely wouldn't be ideal to try filtering 10,000 fights every 50ms while typing
-	private static final double nameFilterDelayPer100fights = 4;
+	private static final double nameFilterDelayPer100fights = 3;
 	private static final double nameFilterDelayForFightCount = 100;
-	public static final double NAME_FILTER_DELAY_PER_SAVED_FIGHT = nameFilterDelayPer100fights / nameFilterDelayForFightCount; // 4ms per 100 fights
+	public static final double NAME_FILTER_DELAY_PER_SAVED_FIGHT = nameFilterDelayPer100fights / nameFilterDelayForFightCount; // 3ms per 100 fights
 
 	// prevent spamming rebuilds too quickly for no reason if the panel isn't visible anyways.
 	// For example if people are changing multiple configs which require rebuild, like the colors.
 	// Will also call rebuild instantly in this.onActivate, if it's queued.
-	// "watching the rebuild" isn't ideal, although it's reasonable with the recent improvements
+	// "watching the rebuild" isn't perfect, although it's very reasonable with the recent improvements 1.8+
 	public static final int REBUILD_DELAY = 4000; // delay in ms
 
 	private static final String DISCORD_INVITE_URL = "https://discord.gg/hg26xeJnY5";
@@ -146,9 +145,14 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		totalStatsPanel = new TotalStatsPanel();
 		add(totalStatsPanel);
+		add(Box.createVerticalStrut(1));
 
-		wikiAndDiscordButtonsLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
+		Border leftBorder = BorderFactory.createMatteBorder(0, 1, 0, 0, ColorScheme.BORDER_COLOR);
+
+		wikiAndDiscordButtonsLine.setBorder(leftBorder);
+		wikiAndDiscordButtonsLine.setBackground(ColorScheme.BORDER_COLOR);
 		wikiAndDiscordButtonsLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, SOCIAL_BTN_HEIGHT));
+		wikiAndDiscordButtonsLine.setPreferredSize(wikiAndDiscordButtonsLine.getMaximumSize());
 		JPopupMenu socialButtonsPopupMenu = new JPopupMenu();
 		// use different text here, since from this context the action is always "Hide Social Buttons",
 		// rather than "Toggle Social Button Visibility"
@@ -161,7 +165,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		socialButtonsPopupMenu.add(toggleSocialButtonsMenuItem);
 
 		JShadowedButton wikiButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Wiki</u>&nbsp;&#8599",
-			FULL_PANEL_WIDTH / 2,
+			(FULL_PANEL_WIDTH / 2) - 1,
 			SOCIAL_BTN_HEIGHT,
 			SocialIcon.GITHUB,
 			socialButtonsPopupMenu,
@@ -169,7 +173,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		wikiButton.setToolTipText(PvpPerformanceTrackerUtils.getUrlButtonTooltip(WIKI_HELP_URL));
 
 		JShadowedButton discordButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Discord</u>&nbsp;&#8599",
-			FULL_PANEL_WIDTH / 2,
+			(FULL_PANEL_WIDTH / 2) - 1,
 			SOCIAL_BTN_HEIGHT,
 			SocialIcon.DISCORD,
 			socialButtonsPopupMenu,
@@ -180,6 +184,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		wikiAndDiscordButtonsLine.add(discordButton, BorderLayout.EAST);
 
 		add(wikiAndDiscordButtonsLine);
+		add(Box.createVerticalStrut(1));
 
 		updateSocialButtons();
 
@@ -213,9 +218,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"You can reset this hidden name by right-clicking this button or the Total Stats just above.");
 
 		pvpHubHiddenNameLine.add(pvpHubHiddenNameBtn, BorderLayout.CENTER);
-		pvpHubHiddenNameLine.setBackground(ColorScheme.SCROLL_TRACK_COLOR);
-		pvpHubHiddenNameLine.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.BORDER_COLOR));
+		pvpHubHiddenNameLine.setBorder(leftBorder);
+		pvpHubHiddenNameLine.setBackground(ColorScheme.BORDER_COLOR);
 		pvpHubHiddenNameLine.setMaximumSize(new Dimension(FULL_PANEL_WIDTH, PVP_HUB_HIDDEN_NAME_BTN_HEIGHT));
+		pvpHubHiddenNameLine.setPreferredSize(pvpHubHiddenNameLine.getMaximumSize());
 		updatePvpHubHiddenName();
 
 		add(pvpHubHiddenNameLine);
@@ -236,7 +242,9 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		nameFilter.setHorizontalAlignment(SwingConstants.CENTER);
 		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
 		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
-		nameFilter.setBorder(paddedPanelActionBorder);
+		Border nameFilterBorder = pvpHubHiddenNameBtn.getPaddedPanelActionBorder();
+		Border nameFilterBorderHovered = pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered();
+		nameFilter.setBorder(nameFilterBorder);
 		filterLine.setMaximumSize(
 			new Dimension(FULL_PANEL_WIDTH,
 			Math.max((int) filterLine.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
@@ -282,43 +290,58 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				panelFilterTask.restart();
 			}
 		});
-		nameFilter.addFocusListener(new FocusListener()
+		MouseAndFocusListener mouseAndFocusListener = new MouseAndFocusListener()
 		{
+			boolean nameFilterHovered = false;
+			boolean nameFilterFocused = false;
 			@Override
 			public void focusGained(FocusEvent e)
 			{
-				nameFilter.setBorder(paddedPanelActionBorderHovered);
+				nameFilterFocused = true;
+				nameFilter.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
 			public void focusLost(FocusEvent e)
 			{
-				nameFilter.setBorder(paddedPanelActionBorder);
+				nameFilterFocused = false;
+				if (!nameFilterHovered)
+				{
+					nameFilter.setBorder(nameFilterBorder);
+				}
 			}
-		});
-		nameFilter.addMouseListener(new MouseListener()
-		{
+
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				nameFilter.setBorder(paddedPanelActionBorderHovered);
+				nameFilterHovered = true;
+				nameFilter.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
-				nameFilter.setBorder(paddedPanelActionBorder);
+				nameFilterHovered = false;
+				if (!nameFilterFocused)
+				{
+					nameFilter.setBorder(nameFilterBorder);
+				}
 			}
 
 			@Override public void mouseClicked(MouseEvent e) {}
 			@Override public void mousePressed(MouseEvent e) {}
 			@Override public void mouseReleased(MouseEvent e) {}
-		});
+		};
+		nameFilter.addFocusListener(mouseAndFocusListener);
+		nameFilter.addMouseListener(mouseAndFocusListener);
 
 		filterLine.add(nameFilter, BorderLayout.CENTER);
 		filterLine.setToolTipText(filterTooltip);
+		filterLine.setBorder(leftBorder);
 		nameFilter.setToolTipText(filterTooltip);
+
 		add(filterLine);
+		add(Box.createVerticalStrut(1));
 
 		enqueueRebuildTask.setRepeats(false);
 

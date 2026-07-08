@@ -45,57 +45,70 @@ import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 // so we have to re-add a bunch of stuff anyways, use this to fix that while being able to use mouse listeners
 // without spamming so much boilerplate everywhere
 @Getter
-@Setter
 public class JShadowedButton extends JShadowedLabel
 {
+	public final Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 2, 0);
+
 	// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
-	public static final Border panelActionBorder = BorderFactory.createCompoundBorder(
-		BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
-		BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2));
-	public static final Border panelActionBorderHovered = BorderFactory.createCompoundBorder(
-		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
-		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
-
-	public static final Border panelActionBorderWarning = BorderFactory.createCompoundBorder(
-		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 1),
-		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 2)); //ColorUtil.colorWithAlpha(PvpColorScheme.BLOOD_RED_ORANGE, (int)(255.0 * 0.65))
-	public static final Border panelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
-		BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
-		BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 2));
-
-	public static final Border panelActionPaddingBorder = BorderFactory.createEmptyBorder(2, 0, 2, 0);
+	private Border panelActionBorder;
+	private Border panelActionBorderHovered;
+	private Border panelActionBorderWarning;
+	private Border panelActionBorderWarningHovered;
 
 	// paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
 	// both pvpHubHiddenNameBtn and the name filter.
-	public static final Border paddedPanelActionBorder = BorderFactory.createCompoundBorder(
-		panelActionBorder,
-		panelActionPaddingBorder);
-	public static final Border paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
-		panelActionBorderHovered,
-		panelActionPaddingBorder);
+	private Border paddedPanelActionBorder;
+	private Border paddedPanelActionBorderHovered;
+	private Border paddedPanelActionBorderWarning;
+	private Border paddedPanelActionBorderWarningHovered;
 
-	public static final Border paddedPanelActionBorderWarning = BorderFactory.createCompoundBorder(
-		panelActionBorderWarning,
-		panelActionPaddingBorder);
-
-	public static final Border paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
-		panelActionBorderWarningHovered,
-		panelActionPaddingBorder);
-
+	@Setter
 	private boolean hovered = false;
+	@Setter
 	private boolean warning = false;
 
 	public JShadowedButton()
 	{
-		super();
+		this("", 0, 0, null, null);
 	}
 	public JShadowedButton(String text)
 	{
-		super(text);
+		this(text, 0, 0, null, null);
 	}
 	private JShadowedButton(String text, int desiredWidth, int desiredHeight, JPopupMenu popupMenu, Runnable onLeftClick)
 	{
 		super(text);
+		// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
+		panelActionBorder = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
+			BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2));
+		panelActionBorderHovered = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
+			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
+
+		panelActionBorderWarning = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 1),
+			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 2));
+		panelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
+			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 2));
+
+// paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
+// both pvpHubHiddenNameBtn and the name filter.
+		paddedPanelActionBorder = BorderFactory.createCompoundBorder(
+			panelActionBorder,
+			panelActionPaddingBorder);
+		paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
+			panelActionBorderHovered,
+			panelActionPaddingBorder);
+
+		paddedPanelActionBorderWarning = BorderFactory.createCompoundBorder(
+			panelActionBorderWarning,
+			panelActionPaddingBorder);
+
+		paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+			panelActionBorderWarningHovered,
+			panelActionPaddingBorder);
 
 		setText(text);
 		setOpaque(false);

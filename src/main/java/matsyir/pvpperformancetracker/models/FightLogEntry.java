@@ -191,6 +191,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Getter
 	@Setter
 	private int hitsplatTick = -1;
+	@Getter
+	@Setter
+	private transient int hitsplatMatchTick = -1;
 
 	// Display/Transient fields calculated during post-processing in onGameTick
 	@Expose
@@ -246,6 +249,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerName = attacker.getName();
 		this.time = time;
 		this.tick = tick;
+		this.hitsplatMatchTick = PLUGIN.getClient().getTickCount();
 
 		this.animationData = animationData;
 
@@ -287,6 +291,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerName = attackerName;
 		this.time = time;
 		this.tick = tick;
+		this.hitsplatMatchTick = PLUGIN.getClient().getTickCount();
 
 		this.attackerLevels = levels;
 		this.attackerOffensivePray = attackerOffensivePray;
@@ -304,6 +309,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerName = e.attackerName;
 		this.time = e.time;
 		this.tick = e.tick;
+		this.hitsplatMatchTick = e.hitsplatMatchTick;
 
 		// attacker data
 		this.attackerGear = e.attackerGear;

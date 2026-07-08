@@ -207,8 +207,9 @@ public class FightPerformanceSerializer
 				}
 			}
 
-			sessionStartTime = Instant.now().toEpochMilli();;
-
+			// reset sessionStartTime so we don't overwrite this fight data with the next one
+			// it won't only write data when you close client, but also potentially when removing
+			sessionStartTime = Instant.now().toEpochMilli();
 		}
 		catch (Exception e)
 		{
@@ -278,7 +279,6 @@ public class FightPerformanceSerializer
 				log.debug("FightPerformanceSerializer.removeFight: Was going to delete more than 1 fight when attempting to only remove 1? Skipping removal - shouldn't happen - possible duplicate fight(s)?");
 				return;
 			}
-
 
 			try
 			{

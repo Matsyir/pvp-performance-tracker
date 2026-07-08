@@ -285,7 +285,7 @@ class Fighter
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
 		if (animationData.isSpecial && animationData != AnimationData.MELEE_GRANITE_MAUL_SPEC)
 		{
-			PvpPerformanceTrackerPlugin.PLUGIN.recordNonGmaulSpecial(player.getName(), fightLogEntry.getTick());
+			PvpPerformanceTrackerPlugin.PLUGIN.recordNonGmaulSpecial(player.getName(), fightLogEntry.getHitsplatMatchTick());
 		}
 		if (PvpPerformanceTrackerPlugin.CONFIG.fightLogInChat())
 		{

@@ -57,6 +57,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import joptsimple.internal.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -725,7 +726,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (currentFight.getOpponent() != null)
 			{
 				totalExpectedAttackHits += currentFight.getOpponent().getPendingAttacks().stream()
-					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() &&
+						(tickToProcess - getHitsplatMatchTick(e) <= Math.max(5, getAttackLookback(e)))) // Check if attack could land now
 					.mapToInt(FightLogEntry::getExpectedHits)
 					.sum();
 			}
@@ -733,7 +735,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (currentFight.getCompetitor() != null)
 			{
 				totalExpectedAttackHits += currentFight.getCompetitor().getPendingAttacks().stream()
-					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() &&
+						(tickToProcess - getHitsplatMatchTick(e) <= Math.max(5, getAttackLookback(e)))) // Check if attack could land now
 					.mapToInt(FightLogEntry::getExpectedHits)
 					.sum();
 			}
@@ -905,8 +908,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// Get all potentially relevant, unprocessed entries sorted by animation tick
 			List<FightLogEntry> candidateEntries = attacker.getPendingAttacks().stream()
 				.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash())
-				.filter(e -> (client.getTickCount() - e.getTick()) <= 5)
-				.sorted(Comparator.comparingInt(FightLogEntry::getTick))
+				.filter(e -> (client.getTickCount() - getHitsplatMatchTick(e)) <= Math.max(5, getAttackLookback(e)))
+				.sorted(Comparator.comparingInt(this::getHitsplatMatchTick).thenComparingInt(FightLogEntry::getTick))
 				.collect(Collectors.toList());
 
 			List<FightLogEntry> gmaulsMatchedThisTick = new ArrayList<>();
@@ -917,14 +920,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 
 				// Apply specific lookback for the entry's style
-				int lookback;
-				switch (entry.getAnimationData().attackStyle)
-				{
-					case STAB: case SLASH: case CRUSH: lookback = 3; break;
-					case MAGIC: lookback = 5; break;
-					case RANGED: default: lookback = 3; break;
-				}
-				if (client.getTickCount() - entry.getTick() > lookback)
+				int lookback = getAttackLookback(entry);
+				int hitsplatMatchTick = getHitsplatMatchTick(entry);
+				if (client.getTickCount() - hitsplatMatchTick > lookback)
 				{
 					entry.setKoChanceCalculated(true);
 					attacker.getPendingAttacks().remove(entry);
@@ -939,7 +937,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					continue;
 				}
 
-				boolean isInstantGmaulCheck = entry.isGmaulSpecial() && entry.getTick() == tickToProcess;
+				boolean isInstantGmaulCheck = entry.isGmaulSpecial() && hitsplatMatchTick == tickToProcess;
 				boolean isDelayedAttack = !isInstantGmaulCheck;
 
 				// Only try to match if it's either an instant GMaul or a delayed attack landing now
@@ -967,7 +965,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						if (attackerName != null)
 						{
 							Integer lastSpec = lastNonGmaulSpecTickByAttacker.get(attackerName);
-							if (lastSpec != null && lastSpec == entry.getTick() - 1)
+							if (lastSpec != null && lastSpec == hitsplatMatchTick - 1)
 							{
 								hitsToFind = Math.min(hitsToFind, 1);
 							}
@@ -1279,6 +1277,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		lastNonGmaulSpecTickByAttacker.put(attackerName, tick);
 	}
 
+	private int getHitsplatMatchTick(FightLogEntry entry)
+	{
+		return entry.getHitsplatMatchTick() >= 0 ? entry.getHitsplatMatchTick() : entry.getTick();
+	}
+
+	private int getAttackLookback(FightLogEntry entry)
+	{
+		switch (entry.getAnimationData().attackStyle)
+		{
+			case STAB:
+			case SLASH:
+			case CRUSH:
+				return 3;
+			case MAGIC:
+				return 6;
+			case RANGED:
+			default:
+				return 4;
+		}
+	}
+
 	// #################################################################################################################
 	// ################################## Plugin-specific functions & global helpers ###################################
 	// #################################################################################################################
@@ -1318,8 +1337,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void update(String oldVersion)
 	{
-		if (oldVersion.startsWith("1.7.") || List.of("1.8.0", "1.8.1", "1.8.2").contains(oldVersion))
+		boolean oldIs1_7to1_8_2 = oldVersion.startsWith("1.7.") || List.of("1.8.0", "1.8.1", "1.8.2").contains(oldVersion);
+		if (oldIs1_7to1_8_2)
 		{
+			// force-change default maxRenderedFights 200 -> 30, most people probably dont even need 30,
+			// with how the rendered vs. saved fights work its totally unnecessary to have 200
+			configManager.setConfiguration(CONFIG_KEY, "fightHistoryRenderLimit", 30);
+
 			FightPerformanceSerializer.updateFrom1_8_1to1_8_2(GSON);
 		}
 
@@ -1632,14 +1656,22 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 	public void removeFight(FightPerformance fight, boolean deleteForever)
 	{
-		// if the fight wasn't loaded from a file, it won't have its fileName set, so this won't really do anything.
-		// don't have to do much validation for this call.
+
 		if (deleteForever)
 		{
+			// if the fight wasn't loaded from a file, it won't have its fileName set,
+			// so this won't really do anything. Don't have to do much validation outside this call.
 			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
+
+			// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
+			// remove it from there, or it will get saved next time we write.
+			if (Strings.isNullOrEmpty(fight.getLoadedFromFname()))
+			{
+				sessionFightHistory.remove(fight);
+			}
 		}
 
-		// we add to the global fight history along with the session history though, so also remove it from there.
+		// we add to the global fight history along with the session history though, so remove it from there regardless
 		fightHistory.remove(fight);
 		panel.enqueueRebuild();
 	}
