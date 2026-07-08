@@ -724,7 +724,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (currentFight.getOpponent() != null)
 			{
 				totalExpectedAttackHits += currentFight.getOpponent().getPendingAttacks().stream()
-					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() &&
+						(tickToProcess - getHitsplatMatchTick(e) <= Math.max(5, getAttackLookback(e)))) // Check if attack could land now
 					.mapToInt(FightLogEntry::getExpectedHits)
 					.sum();
 			}
@@ -732,7 +733,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (currentFight.getCompetitor() != null)
 			{
 				totalExpectedAttackHits += currentFight.getCompetitor().getPendingAttacks().stream()
-					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() && (tickToProcess - e.getTick() <= 5)) // Check if attack could land now
+					.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash() &&
+						(tickToProcess - getHitsplatMatchTick(e) <= Math.max(5, getAttackLookback(e)))) // Check if attack could land now
 					.mapToInt(FightLogEntry::getExpectedHits)
 					.sum();
 			}
@@ -904,8 +906,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// Get all potentially relevant, unprocessed entries sorted by animation tick
 			List<FightLogEntry> candidateEntries = attacker.getPendingAttacks().stream()
 				.filter(e -> !e.isKoChanceCalculated() && e.isFullEntry() && !e.isSplash())
-				.filter(e -> (client.getTickCount() - e.getTick()) <= 5)
-				.sorted(Comparator.comparingInt(FightLogEntry::getTick))
+				.filter(e -> (client.getTickCount() - getHitsplatMatchTick(e)) <= Math.max(5, getAttackLookback(e)))
+				.sorted(Comparator.comparingInt(this::getHitsplatMatchTick).thenComparingInt(FightLogEntry::getTick))
 				.collect(Collectors.toList());
 
 			List<FightLogEntry> gmaulsMatchedThisTick = new ArrayList<>();
@@ -916,14 +918,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			{
 
 				// Apply specific lookback for the entry's style
-				int lookback;
-				switch (entry.getAnimationData().attackStyle)
-				{
-					case STAB: case SLASH: case CRUSH: lookback = 3; break;
-					case MAGIC: lookback = 5; break;
-					case RANGED: default: lookback = 3; break;
-				}
-				if (client.getTickCount() - entry.getTick() > lookback)
+				int lookback = getAttackLookback(entry);
+				int hitsplatMatchTick = getHitsplatMatchTick(entry);
+				if (client.getTickCount() - hitsplatMatchTick > lookback)
 				{
 					entry.setKoChanceCalculated(true);
 					attacker.getPendingAttacks().remove(entry);
@@ -938,7 +935,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					continue;
 				}
 
-				boolean isInstantGmaulCheck = entry.isGmaulSpecial() && entry.getTick() == tickToProcess;
+				boolean isInstantGmaulCheck = entry.isGmaulSpecial() && hitsplatMatchTick == tickToProcess;
 				boolean isDelayedAttack = !isInstantGmaulCheck;
 
 				// Only try to match if it's either an instant GMaul or a delayed attack landing now
@@ -966,7 +963,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						if (attackerName != null)
 						{
 							Integer lastSpec = lastNonGmaulSpecTickByAttacker.get(attackerName);
-							if (lastSpec != null && lastSpec == entry.getTick() - 1)
+							if (lastSpec != null && lastSpec == hitsplatMatchTick - 1)
 							{
 								hitsToFind = Math.min(hitsToFind, 1);
 							}
@@ -1276,6 +1273,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 		lastNonGmaulSpecTickByAttacker.put(attackerName, tick);
+	}
+
+	private int getHitsplatMatchTick(FightLogEntry entry)
+	{
+		return entry.getHitsplatMatchTick() >= 0 ? entry.getHitsplatMatchTick() : entry.getTick();
+	}
+
+	private int getAttackLookback(FightLogEntry entry)
+	{
+		switch (entry.getAnimationData().attackStyle)
+		{
+			case STAB:
+			case SLASH:
+			case CRUSH:
+				return 3;
+			case MAGIC:
+				return 6;
+			case RANGED:
+			default:
+				return 4;
+		}
 	}
 
 	// #################################################################################################################

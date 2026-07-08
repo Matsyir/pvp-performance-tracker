@@ -210,11 +210,13 @@ public class FightLogFrame extends JFrame
 				int splashIcon = SpriteID.SPELL_ICE_BARRAGE_DISABLED;
 				PLUGIN.addSpriteToLabelIfValid(dmgLabel, splashIcon, this::repaint);
 			}
+			else if (fightEntry.getMatchedHitsCount() <= 0)
+			{
+				dmgLabel.setText("?");
+			}
 			else
 			{
-				Integer actualDmg = fightEntry.getActualDamageSum();
-				String dmgText = actualDmg != null ? nf.format(actualDmg) : "-";
-				dmgLabel.setText(dmgText);
+				dmgLabel.setText(nf.format(fightEntry.getActualDamageSum()));
 			}
 			stats[i][COLIDX_DMG_DEALT] = dmgLabel;
 			// HP column - Display as Current/Max
