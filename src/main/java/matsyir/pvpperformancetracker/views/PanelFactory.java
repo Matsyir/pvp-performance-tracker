@@ -285,15 +285,10 @@ public final class PanelFactory
 
 						g.translate(1, 1);
 						g.setColor(Color.BLACK);
-						g.drawString(wText, x, y); // draw text shadow 1/3
+						g.drawString(wText, x, y); // draw basic text shadow
 
-						g.translate(-2, 0);
-						g.drawString(wText, x, y); // draw text shadow 2/3
-						g.translate(1, 1);
-						g.drawString(wText, x, y); // draw text shadow 2/3
-
-						g.translate(0, -2);
-						g.setColor(Color.WHITE);
+						g.translate(-1, -1);
+						g.setColor(PvpColorScheme.neutralColor());
 
 						g.drawString(wText, x, y); // draw text
 

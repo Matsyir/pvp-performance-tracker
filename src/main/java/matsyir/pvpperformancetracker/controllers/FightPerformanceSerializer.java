@@ -70,22 +70,22 @@ public class FightPerformanceSerializer
 		FIGHT_HISTORY_DATA_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER + "/" + FIGHT_HISTORY_DATA_FOLDER);
 		FAV_FIGHTS_DIR = new File(RuneLite.RUNELITE_DIR, DATA_FOLDER + "/" + FAV_FIGHTS_FOLDER);
 
-		JsonGzChunkType.mkdirs();
+		JsonGzChunkType.makeAllDirs();
 	}
 
 	public enum JsonGzChunkType
 	{
-		// standard chunk types, all live in FIGHT_HISTORY_DATA_DIR
+		// "standard" chunk types, all live in FIGHT_HISTORY_DATA_DIR
 		IMPORTED_FROM_JSON_CHUNK("FightHistoryData-c", FIGHT_HISTORY_DATA_DIR),
 		SESSION_CHUNK("Fights_", FIGHT_HISTORY_DATA_DIR),
 		DE_FAVORITED_FIGHT("Fight_", FIGHT_HISTORY_DATA_DIR, true),
 
-		// other chunk types: just favorite fights for now
+		// other chunk types: just favorite fights for now, has its own folder
 		FAVORITE_FIGHT("Fav_", FAV_FIGHTS_DIR, true);
 
 		static final String DATA_CHUNK_FILE_EXT = ".json.gz";
 
-		public static boolean mkdirs()
+		public static boolean makeAllDirs()
 		{
 			boolean created = true;
 			for (JsonGzChunkType chunkType : JsonGzChunkType.values())
@@ -296,8 +296,6 @@ public class FightPerformanceSerializer
 		// will continue to function. This should only happen if their fight history data is corrupted/outdated.
 		try
 		{
-			JsonGzChunkType.mkdirs();
-
 			HashSet<File> stdFightChunkFiles = listStandardDataChunks();
 			HashSet<File> favFightChunkFiles = listFavoriteDataChunks();
 			// if there's no data files, then skip reading/importing data.
@@ -577,7 +575,7 @@ public class FightPerformanceSerializer
 		final int MAX_FIGHTS_PER_UPDATED_GZ_CHUNK = 100;
 		try
 		{
-			JsonGzChunkType.mkdirs();
+			JsonGzChunkType.makeAllDirs();
 
 			File originalJsonData = new File(BASE_DATA_DIR, _OLD_FIGHT_HISTORY_DATA_FNAME_JSON);
 
