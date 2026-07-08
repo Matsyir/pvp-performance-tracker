@@ -153,18 +153,10 @@ public class PvpColorScheme
 			catch (Exception e)
 			{
 				configUpdateSuccess = false;
-				log.info("Error while applying PanelColorPreset to config: " + e.getMessage());
+				log.warn("Error while applying PanelColorPreset to config: " + e.getMessage());
 			}
 
 			PLUGIN.enableColorConfigEvents();
-
-			PLUGIN.createConfirmationModal(configUpdateSuccess,
-				configUpdateSuccess ? "<html>Your desired color preset was successfully applied to the config.<br>" +
-					"Once you go back to the fight history panel, you should see your new theme applied.<br><br>" +
-					"Note that the actual config screen won't update the colors until you close and re-open it."
-				: "<html>An unknown error occurred while applying your desired color preset to the config.<br><br>" +
-					"You should close and re-open the config before attempting to change colors or presets again."
-			);
 		}
 	} // End of PanelColorPreset
 

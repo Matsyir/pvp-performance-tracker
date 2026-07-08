@@ -93,7 +93,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigSection(name = "Visual Styling",
 		description = "Contains settings which affect how fights in the panel are displayed.",
 		position = 1799,
-		closedByDefault = false
+		closedByDefault = true
 	)
 	String visualStylingSection = "visualStylingSection";
 
@@ -108,7 +108,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Contains gear & ammo settings for fights outside LMS.<br>" +
 			"This is what's used for expected damage if the fight isn't merged.",
 		position = 11000,
-		closedByDefault = false
+		closedByDefault = true
 	)
 	String gearAmmoSection = "gearAmmo";
 
@@ -116,7 +116,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		description = "Contains level settings for fights outside of LMS (including boosts).<br>" +
 			"This is what's used for expected damage if the fight isn't merged.",
 		position = 15000,
-		closedByDefault = false
+		closedByDefault = true
 	)
 	String levelsSection = "levels";
 
@@ -143,8 +143,9 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
-		description = "Some settings affect damage calculations, and every player should set them based on how they're pking." +
-			"<br>Please confirm them and tick this box in order to hide the config warning.",
+		description = "Some settings affect damage calculations, and every player should adjust them based on how they're PvPing." +
+			"<br><br>Please confirm the below Level & Gear settings according to your pur`poses," +
+			"<br>then check this box in order to hide the config warning.",
 		position = -1
 	)
 	default boolean settingsConfigured()
@@ -162,17 +163,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default boolean restrictToLms()
 	{
 		return false;
-	}
-
-	@ConfigItem(
-		keyName = "showFightHistoryPanel",
-		name = "Show Fight History Panel",
-		description = "Enables the side-panel which displays previous fight's statistics.",
-		position = 1000
-	)
-	default boolean showFightHistoryPanel()
-	{
-		return true;
 	}
 
 	@ConfigItem(
@@ -217,9 +207,9 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "pvpHubVisibilityDelay",
 		name = "PvP-Hub Upload Delay",
-		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub.<br>" +
-			"The \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight.<br>" +
-			"Worlds are never publicly displayed on the website, so it shouldn't be much of a concern to keep it on Instant.",
+		description = "Choose how long uploaded fights stay hidden before becoming public on PvP-Hub." +
+			"<br>The \"Rand\" option uses a freshly randomized 6-20 minute delay for each uploaded fight." +
+			"<br>Worlds are never publicly displayed on the website, so it shouldn't be much of a concern to keep it on Instant.",
 		position = 1410,
 		section = pvpHubSection
 	)
@@ -231,14 +221,14 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "hideRsnOnPvpHub",
 		name = "Hide RSN on PvP-Hub",
-		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel.<br><br>" +
-			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name or would like to change it, you can do so by right-clicking <br>" +
-			"the button which displays your hidden name, or the Total Stats panel above your fight history.",
-		warning = "<html>Your PvP-Hub hidden name will be shown in the PvP Performance Tracker panel.<br><br>" +
-			"If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share.<br><br>" +
-			"If you've leaked this name or would like to change it, you can do so by right-clicking <br>" +
-			"the button which displays your hidden name, or the Total Stats panel above your fight history.",
+		description = "Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel." +
+			"<br><br>If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share." +
+			"<br><br>If you've leaked this name or would like to change it, you can do so by right-clicking" +
+			"<br>the button which displays your hidden name, or the Total Stats panel above your fight history.",
+		warning = "<html>Replace your RSN in PvP-Hub uploads with the hidden name shown in the side panel." +
+			"<br><br>If you wish to keep that hidden identity private, be careful not to show this on stream, screenshots, or screen share." +
+			"<br><br>If you've leaked this name or would like to change it, you can do so by right-clicking" +
+			"<br>the button which displays your hidden name, or the Total Stats panel above your fight history.",
 		position = 1420,
 		section = pvpHubSection
 	)
@@ -260,6 +250,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	// ============================= Visual Styling ==============================
+	@ConfigItem(
+		keyName = "showFightHistoryPanel",
+		name = "Show Fight History Panel",
+		description = "Enables the side-panel which displays your most recent fight and their tracked statistics.",
+		position = 1798,
+		section = visualStylingSection
+	)
+	default boolean showFightHistoryPanel()
+	{
+		return true;
+	}
 	// Text alignment - sides vs centered - default to side
 	@ConfigItem(
 		keyName = "centerPanelLabels", // controls text centering for FightPerformancePanel.
@@ -289,13 +290,17 @@ public interface PvpPerformanceTrackerConfig extends Config
 	@ConfigItem(
 		keyName = "panelColorPreset",
 		name = "Preset Color Style",
-		description = "Updates all of the below color options to a given preset." +
-			"<br><br>Beware that the config Color Pickers don't visually update when selecting a preset,<br>" +
-			"but it does work, you simply have to re-open the config to see the changes apply." +
+		description = "Updates all of the below color settings to a given preset." +
+			"<br><br>Beware that the config Color Pickers don't visually update when selecting a preset," +
+			"<br>but it does work, you simply have to re-open the config to see the changes apply." +
 			"<br>You should immediately see your new colors in the fight history panel(s) when clicking into it." +
-			"<br><br><u>*(dmgOnly)</u>: These presets use the same colors as the original ones,<br>" +
-			"but only apply highlight colors on damage-related statistics (eD, D, GB), and otherwise<br>" +
-			"use neutral colors everywhere. You can achieve the same results by manually configuring the colors.",
+			"<br><br><u>*(dmgOnly)</u>: These presets use the same colors as the original ones," +
+			"<br>but only apply highlight colors on damage-related statistics (eD, D, GB), and otherwise" +
+			"<br>use neutral colors everywhere. You can achieve the same results by manually configuring the colors.",
+		warning = "<html>Beware that the config Color Pickers don't visually update when selecting a preset, but these presets" +
+			"<br>do work despite that visual issue, you simply have to close and re-open this config panel" +
+			"<br>(via the arrow in the top-left) to see the changes apply to this window." +
+			"<br><br>Regardless, once you go back to the fight history panel, you should see your new theme applied immediately.",
 		position = 1814,
 		section = visualStylingSection
 	)
@@ -377,7 +382,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "gbColor",
 		name = "GB Successful Color",
 		description = "\"Successful\" or \"positive\" color, used for ghost-barrage.<br>" +
-			"Otherwise uses unsuccessful dmg color & neutral dmg color.",
+			"GB otherwise uses the unsuccessful dmg & neutral dmg colors.",
 		position = 1844,
 		section = visualStylingSection
 	)
