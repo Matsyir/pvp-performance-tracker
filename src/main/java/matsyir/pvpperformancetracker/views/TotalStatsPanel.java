@@ -74,8 +74,7 @@ public class TotalStatsPanel extends JPanel
 
 	public static void loadBackgroundImages()
 	{
-		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(),
-			"/panelBackgrounds/totalStatsPanel.png");
+		backgroundImage = ImageUtil.loadImageResource(PLUGIN.getClass(), "/panelBackgrounds/totalStatsPanel.png");
 	}
 
 	// excluding title row
@@ -190,18 +189,40 @@ public class TotalStatsPanel extends JPanel
 		removeAllFights.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
 		removeAllFights.addActionListener(e ->
 		{
-			PLUGIN.resetFightHistory(false);
+			PLUGIN.resetFightHistory(false, true);
 		});
 
-		// Create "Remove All Fights Forever" popup menu/context menu item
-		final JMenuItem removeAllFightsForever = new JMenuItem("<html><b>&#128465;&nbsp;Delete All Fights Forever</b>");
-		removeAllFightsForever.setForeground(PvpColorScheme.RED_TEXT_ACTION);
-		removeAllFightsForever.addActionListener(e ->
+		// Create "Delete Fights* Permanently" popup menu/context menu item (keeps favorites)
+		final JMenuItem removeFightsPermanentlyKeepingFavorites = new JMenuItem("<html><b>&#128465;&sup1;&nbsp;Delete Fights <u>Permanently</u></b>");
+		removeFightsPermanentlyKeepingFavorites.setForeground(PvpColorScheme.ORANGE_TEXT_WARNING_ACTION);
+		removeFightsPermanentlyKeepingFavorites.setToolTipText(removeFightsPermanentlyKeepingFavorites.getText() +
+			":<br>This menu option deletes all your fights, &sup1;<u><i>but keeps any favorite fights saved.</i></u>");
+		removeFightsPermanentlyKeepingFavorites.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete all fight history data, forever? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			int dialogResult = JOptionPane.showConfirmDialog(this,
+				"<html>Are you sure you want to delete all&sup1; fight history data, <b><u>permanently</u></b>? This cannot be undone." +
+				"<br><br>&sup1;<u>Your favorite fights will <b><i>not</i></b> be deleted by this.<u>",
+				"Warning: PvP Performance Tracker - Delete Fights Permanently? (excluding favorites)", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
-				PLUGIN.resetFightHistory();
+				PLUGIN.resetFightHistoryKeepingFavorites();
+			}
+		});
+
+		// Create "Delete All Fights Permanently" popup menu/context menu item (also deletes favorites)
+		final JMenuItem removeAllFightsPermanently = new JMenuItem("<html><b>&#128465;&sup2;&nbsp;Delete <u>ALL</u> Fights <u>Permanently</u></b>");
+		removeAllFightsPermanently.setForeground(PvpColorScheme.RED_TEXT_WARNING_ACTION);
+		removeAllFightsPermanently.setToolTipText(removeAllFightsPermanently.getText() +
+			":<br>This menu option deletes all your fights, &sup2;<b><u><i>also deleting any favorite fights.</i></u></b>");
+		removeAllFightsPermanently.addActionListener(e ->
+		{
+			int dialogResult = JOptionPane.showConfirmDialog(this,
+				"<html>Are you sure you want to delete <b><u>ALL</u></b>&sup2; fight history data, <b><u>permanently</u></b>? This cannot be undone." +
+				"<br><br>&sup2;<u>Your favorite fights <b><i>WILL</i> also be deleted</b> by this!</u>",
+				"Warning: PvP Performance Tracker - Delete Fights Permanently? (INCLUDING favorites)", JOptionPane.YES_NO_OPTION);
+			if (dialogResult == JOptionPane.YES_OPTION)
+			{
+				PLUGIN.resetFightHistory(true, true);
 			}
 		});
 
@@ -215,10 +236,10 @@ public class TotalStatsPanel extends JPanel
 		resetPvpHubHiddenNameMenuItem.setForeground(PvpColorScheme.GREEN_TEXT_ACTION);
 		resetPvpHubHiddenNameMenuItem.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want " +
+			int dialogResult = JOptionPane.showConfirmDialog(this,"Are you sure you want " +
 					"to regenerate your Hidden Name for PvP-Hub? You will not be able to go back to your current " +
 					"hidden name. Existing fights will remain uploaded using your previous hidden name.",
-				"Warning", JOptionPane.YES_NO_OPTION);
+				"Warning: PvP Performance Tracker - Reset PvP-Hub Hidden Name?", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.resetPvpHubHiddenName();
@@ -232,7 +253,8 @@ public class TotalStatsPanel extends JPanel
 		popupMenu.add(toggleSocialButtonsMenuItem);
 		popupMenu.add(resetPvpHubHiddenNameMenuItem);
 		popupMenu.add(removeAllFights);
-		popupMenu.add(removeAllFightsForever);
+		popupMenu.add(removeFightsPermanentlyKeepingFavorites);
+		popupMenu.add(removeAllFightsPermanently);
 
 		// Now initializing all lines:
 		// FIRST LINE

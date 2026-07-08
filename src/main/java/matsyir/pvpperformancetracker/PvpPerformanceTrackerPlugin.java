@@ -57,7 +57,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import joptsimple.internal.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -272,11 +271,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		FightPerformanceSerializer.deserializeFightHistory(GSON, (importedFights) ->
-		{
-			fightHistory.clear();
-			importFights(importedFights);
-		});
+		FightPerformanceSerializer.deserializeFightHistory(this::importFights);
 		executor.scheduleWithFixedDelay(this::syncPendingPvpHubFights, 60, 60, TimeUnit.SECONDS);
 
 		// add the panel's nav button depending on config
@@ -308,7 +303,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		FightPerformanceSerializer.serializeFightHistory(GSON);
+		FightPerformanceSerializer.serializeSessionFightHistory();
 
 		clientToolbar.removeNavigation(navButton);
 		overlayManager.remove(overlay);
@@ -682,12 +677,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void resetConfiguration()
 	{
 		super.resetConfiguration();
-		int dialogResult = JOptionPane.showConfirmDialog(panel, "Your configuration was successfully reset " +
-			"to default settings. Do you also want to remove all saved fight data?",
-			"Warning - also remove fight history?", JOptionPane.YES_NO_OPTION);
+		int dialogResult = JOptionPane.showConfirmDialog(panel,
+			"Your configuration was successfully reset to default settings. " +
+				"Do you also want to remove all saved fight data, including any saved favorites?",
+			"Warning: PvP Performance Tracker - Delete Fights Permanently? (INCLUDING favorites)", JOptionPane.YES_NO_OPTION);
 		if (dialogResult == JOptionPane.YES_OPTION)
 		{
-			resetFightHistory();
+			resetFightHistory(true, true);
 		}
 	}
 
@@ -695,7 +691,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onClientShutdown(ClientShutdown event)
 	{
-		event.waitFor(executor.submit(() -> FightPerformanceSerializer.serializeFightHistory(GSON)));
+		event.waitFor(executor.submit(() -> FightPerformanceSerializer.serializeSessionFightHistory()));
 	}
 
 	@Subscribe
@@ -1344,7 +1340,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// with how the rendered vs. saved fights work its totally unnecessary to have 200
 			configManager.setConfiguration(CONFIG_KEY, "fightHistoryRenderLimit", 30);
 
-			FightPerformanceSerializer.updateFrom1_8_1to1_8_2(GSON);
+			FightPerformanceSerializer.updateFrom1_8_1to1_8_2();
 		}
 
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
@@ -1627,53 +1623,81 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	public void resetFightHistory()
+	public void resetFightHistoryKeepingFavorites()
 	{
-		resetFightHistory(true);
+		resetFightHistoryKeepingFavorites(true);
 	}
 	// reset the loaded fight history as well as the saved json data
-	public void resetFightHistory(boolean deleteForever)
+	public void resetFightHistoryKeepingFavorites(boolean deletePermanently)
 	{
-
-		if (deleteForever)
-		{
-			FightPerformanceSerializer.removeAllFights();
-		}
-		else // if we're just hiding the fights temporarily (as opposed to deleting forever), we should save the session
-		// fights if there are any, so those aren't lost, this action shouldn't delete anything.
-		{
-			FightPerformanceSerializer.serializeFightHistory(GSON);
-		}
-		fightHistory.clear();
-		sessionFightHistory.clear();
-		panel.enqueueRebuild();
+		resetFightHistory(deletePermanently, false);
 	}
 
-	// remove a fight from the loaded fight history
+	// reset the loaded fight history, and delete files if we're deleting permanently.
+	public void resetFightHistory(boolean deletePermanently, boolean deleteFavorites)
+	{
+		clientThread.invokeLater(() ->
+		{
+			if (deletePermanently)
+			{
+				FightPerformanceSerializer.removeAllFights(deleteFavorites);
+			}
+			else // if we're just hiding the fights temporarily (as opposed to deleting permanently), we should save
+			// the session fights if there are any, so those aren't lost, this action shouldn't delete anything.
+			{
+				FightPerformanceSerializer.serializeSessionFightHistory();
+			}
+
+			// if we're not including favorites in the deletion, then leave the favorites in the loaded data.
+			// if we're only 'hiding' fights (i.e not deleting permanently), then remove the loaded favorite
+			// fights regardless, so we don't have to make an extra menu for "hide favorite fights" along with "hide all fights".
+			// or in other words, only keep the favorite fights when we're deleting permanently but not deleting favorites
+			if (deletePermanently && !deleteFavorites)
+			{
+				fightHistory.removeIf((f) -> !f.isFavorite());
+				sessionFightHistory.removeIf((f) -> !f.isFavorite());
+			}
+			else
+			{
+				fightHistory.clear();
+				sessionFightHistory.clear();
+			}
+
+			panel.enqueueRebuild();
+		});
+	}
+
+	// remove a fight - delete/update its file if deletePermanently is true, otherwise only remove
+	// since users have to directly select/target a fight to remove it individually, provide no validation regarding
+	// favorited fights - assume a user indeed wants to delete it. We could maybe add a popup to say are you sure you
+	// want to delete this favorited fight? But I think it's unnecessary
 	public void removeFight(FightPerformance fight)
 	{
 		removeFight(fight, true);
 	}
-	public void removeFight(FightPerformance fight, boolean deleteForever)
+	public void removeFight(FightPerformance fight, boolean deletePermanently)
 	{
-
-		if (deleteForever)
+		clientThread.invokeLater(() ->
 		{
-			// if the fight wasn't loaded from a file, it won't have its fileName set,
-			// so this won't really do anything. Don't have to do much validation outside this call.
-			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight, GSON));
-
-			// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
-			// remove it from there, or it will get saved next time we write.
-			if (Strings.isNullOrEmpty(fight.getLoadedFromFname()))
+			if (deletePermanently)
 			{
-				sessionFightHistory.remove(fight);
+				// if the fight wasn't loaded from a file, it won't have its fileName set to find where to delete/update,
+				// so this won't really do anything. Don't have to do much validation outside this call.
+				FightPerformanceSerializer.removeFight(fight, fight.getLoadedFromFname());
+				// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
+				// remove it from there, or it will get saved next time we write.
+				if (!fight.isSavedToFile())
+				{
+					sessionFightHistory.remove(fight);
+				}
 			}
-		}
+			// if we aren't deleting permanently, then don't remove from sessionFightHistory, as those
+			// aren't saved to file yet and would inadvertently be deleted permanently
 
-		// we add to the global fight history along with the session history though, so remove it from there regardless
-		fightHistory.remove(fight);
-		panel.enqueueRebuild();
+			// remove fight from the total/global loaded fightHistory regardless
+			fightHistory.remove(fight);
+			panel.enqueueRebuild();
+		});
 	}
 
 	public boolean isAtLMS()
