@@ -405,10 +405,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		totalStatsPanel.reset();
 		ArrayList<FightPerformance> displayFights = new ArrayList<>();
-		for (FightPerformance fight : fights)
-		{
-			displayFights.add(fight.getPvpHubDisplayFight());
-		}
+		fights.forEach(f -> displayFights.add(f.getPvpHubDisplayFight()));
 		totalStatsPanel.addFights(displayFights);
 
 		// if we're adding more fights than we want to render at all, then reduce the number of fights we're adding
@@ -433,11 +430,12 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			fightHistoryContainer.removeAll();
 			for (int i = 0; i < panelsToAdd.size(); i++)
 			{
-				int endOffset = i+1; // end-based index
+				int endBasedIndex = panelsToAdd.size() - (i+1); // end-based index
 				// get fight panels starting from the end of the fights, so we add the newest ones first
 				// (newest ones get added to the end of the fight array)
-				fightHistoryContainer.add(panelsToAdd.get(panelsToAdd.size() - endOffset), i);
+				fightHistoryContainer.add(panelsToAdd.get(endBasedIndex), i);
 			}
+			updateUI();
 		});
 	}
 
@@ -518,16 +516,16 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 		if (!plugin.fightHistory.isEmpty())
 		{
-
 			// create new arrayDeque here from the main one so we can't/don't modify the fight history
 			// addFights handles UI updates on its own.
-			addFights(new ArrayDeque<>(plugin.fightHistory), skipUpdatesIfFightCountUnchanged);
+			boolean _finalSkipUpdatesIfFightCountUnchanged = skipUpdatesIfFightCountUnchanged;
+			clientThread.invokeLater(() -> addFights(new ArrayDeque<>(plugin.fightHistory), _finalSkipUpdatesIfFightCountUnchanged));
 		}
 		else
 		{
 			totalStatsPanel.reset();
-			fightHistoryContainer.removeAll();
 			SwingUtilities.invokeLater(() -> {
+				fightHistoryContainer.removeAll();
 				totalStatsPanel.setLabels();
 				this.updateUI();
 			});

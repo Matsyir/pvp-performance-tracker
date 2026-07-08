@@ -677,12 +677,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void resetConfiguration()
 	{
 		super.resetConfiguration();
-		int dialogResult = JOptionPane.showConfirmDialog(panel, "Your configuration was successfully reset " +
-			"to default settings. Do you also want to remove all saved fight data?",
-			"Warning - also remove fight history?", JOptionPane.YES_NO_OPTION);
+		int dialogResult = JOptionPane.showConfirmDialog(panel,
+			"Your configuration was successfully reset to default settings. " +
+				"Do you also want to remove all saved fight data, including any saved favorites?",
+			"Warning: PvP Performance Tracker - Delete Fights Permanently? (INCLUDING favorites)", JOptionPane.YES_NO_OPTION);
 		if (dialogResult == JOptionPane.YES_OPTION)
 		{
-			resetFightHistory();
+			resetFightHistory(true, true);
 		}
 	}
 
@@ -1601,18 +1602,24 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 	}
 
-	public void resetFightHistory()
+	public void resetFightHistoryKeepingFavorites()
 	{
-		resetFightHistory(true);
+		resetFightHistoryKeepingFavorites(true);
 	}
 	// reset the loaded fight history as well as the saved json data
-	public void resetFightHistory(boolean deletePermanently)
+	public void resetFightHistoryKeepingFavorites(boolean deletePermanently)
+	{
+		resetFightHistory(deletePermanently, false);
+	}
+
+	// reset the loaded fight history, and delete files if we're deleting permanently.
+	public void resetFightHistory(boolean deletePermanently, boolean deleteFavorites)
 	{
 		clientThread.invokeLater(() ->
 		{
 			if (deletePermanently)
 			{
-				FightPerformanceSerializer.removeAllFights();
+				FightPerformanceSerializer.removeAllFights(deleteFavorites);
 			}
 			else // if we're just hiding the fights temporarily (as opposed to deleting permanently), we should save
 			// the session fights if there are any, so those aren't lost, this action shouldn't delete anything.
@@ -1620,8 +1627,21 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				FightPerformanceSerializer.serializeSessionFightHistory();
 			}
 
-			fightHistory.clear();
-			sessionFightHistory.clear();
+			// if we're not including favorites in the deletion, then leave the favorites in the loaded data.
+			// if we're only 'hiding' fights (i.e not deleting permanently), then remove the loaded favorite
+			// fights regardless, so we don't have to make an extra menu for "hide favorite fights" along with "hide all fights".
+			// or in other words, only keep the favorite fights when we're deleting permanently but not deleting favorites
+			if (deletePermanently && !deleteFavorites)
+			{
+				fightHistory.removeIf((f) -> !f.isFavorite());
+				sessionFightHistory.removeIf((f) -> !f.isFavorite());
+			}
+			else
+			{
+				fightHistory.clear();
+				sessionFightHistory.clear();
+			}
+
 			panel.enqueueRebuild();
 		});
 	}
@@ -1636,26 +1656,27 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	}
 	public void removeFight(FightPerformance fight, boolean deletePermanently)
 	{
-
-		if (deletePermanently)
+		clientThread.invokeLater(() ->
 		{
-			// if the fight wasn't loaded from a file, it won't have its fileName set to find where to delete/update,
-			// so this won't really do anything. Don't have to do much validation outside this call.
-			clientThread.invokeLater(() -> FightPerformanceSerializer.removeFight(fight));
-
-			// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
-			// remove it from there, or it will get saved next time we write.
-			if (!fight.isSavedToFile())
+			if (deletePermanently)
 			{
-				sessionFightHistory.remove(fight);
+				// if the fight wasn't loaded from a file, it won't have its fileName set to find where to delete/update,
+				// so this won't really do anything. Don't have to do much validation outside this call.
+				FightPerformanceSerializer.removeFight(fight, fight.getLoadedFromFname());
+				// if the fight wasn't loaded from a file, then it's in the current session history, and we have to
+				// remove it from there, or it will get saved next time we write.
+				if (!fight.isSavedToFile())
+				{
+					sessionFightHistory.remove(fight);
+				}
 			}
-		}
-		// if we aren't deleting permanently, then don't remove from sessionFightHistory, as those
-		// aren't saved to file yet and would inadvertently be deleted permanently
+			// if we aren't deleting permanently, then don't remove from sessionFightHistory, as those
+			// aren't saved to file yet and would inadvertently be deleted permanently
 
-		// remove fight from the total/global loaded fightHistory regardless
-		fightHistory.remove(fight);
-		panel.enqueueRebuild();
+			// remove fight from the total/global loaded fightHistory regardless
+			fightHistory.remove(fight);
+			panel.enqueueRebuild();
+		});
 	}
 
 	public boolean isAtLMS()

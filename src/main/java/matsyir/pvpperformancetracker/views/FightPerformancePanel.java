@@ -362,15 +362,17 @@ public class FightPerformancePanel extends JPanel
 
 		// Create "Remove Fight" popup menu/context menu
 		final JMenuItem removeFightPermanently = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Permanently</b>");
+		removeFightPermanently.setForeground(PvpColorScheme.RED_TEXT_WARNING_ACTION);
 		removeFightPermanently.addActionListener(e ->
 		{
-			int dialogResult = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove this fight, permanently? This cannot be undone.", "Warning", JOptionPane.YES_NO_OPTION);
+			int dialogResult = JOptionPane.showConfirmDialog(this,
+				"<html>Are you sure you want to remove this fight, <b><u>permanently</u></b>? This cannot be undone.",
+				"Warning: PvP Performance Tracker - Delete Fight Permanently?", JOptionPane.YES_NO_OPTION);
 			if (dialogResult == JOptionPane.YES_OPTION)
 			{
 				PLUGIN.removeFight(fight);
 			}
 		});
-		removeFightPermanently.setForeground(PvpColorScheme.RED_TEXT_ACTION);
 
 
 		popupMenu.add(displayFightLog);

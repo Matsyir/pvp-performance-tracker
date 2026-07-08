@@ -29,7 +29,8 @@ public class PvpColorScheme
 	// text / action / button colors
 	public static final Color GREEN_TEXT_ACTION = new Color(30, 230, 30);
 	public static final Color GREEN_TEXT_ACTION_WHITER = ColorUtil.colorLerp(GREEN_TEXT_ACTION, Color.WHITE, 0.4f);
-	public static final Color RED_TEXT_ACTION = BLOOD_RED_ORANGE_REDDER;
+	public static final Color ORANGE_TEXT_WARNING_ACTION = BLOOD_RED_ORANGE;
+	public static final Color RED_TEXT_WARNING_ACTION = BLOOD_RED_ORANGE_REDDER;
 	public static final Color BLUE_TEXT_URL = new Color(48, 160, 255);
 	public static final Color ORANGE_TEXT_ACTION = ColorUtil.colorLerp(BRAND_ORANGE, Color.WHITE, 0.4f);
 	public static final Color DARK_ORANGE_BROWN_TEXT = new Color(132, 43, 0); // used for update text
