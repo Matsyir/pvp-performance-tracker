@@ -39,18 +39,16 @@ import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
@@ -59,7 +57,7 @@ import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
-import matsyir.pvpperformancetracker.views.PlaceholderTextField;
+import matsyir.pvpperformancetracker.views.PlaceholderIconTextField;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import static matsyir.pvpperformancetracker.views.TotalStatsPanel.WIKI_HELP_URL;
@@ -70,6 +68,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
@@ -140,6 +139,9 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		setBackground(ColorScheme.BORDER_COLOR);
 		setBorder(null);
 		JPanel mainContent = new JPanel(new BorderLayout());
+
+		panelFilterTask.setRepeats(false);
+		enqueueRebuildTask.setRepeats(false);
 
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
@@ -247,58 +249,53 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
 		// filter textfield
-		PlaceholderTextField nameFilter = new PlaceholderTextField("Filter Fights:", config.nameFilter());
-		nameFilter.setHorizontalAlignment(SwingConstants.CENTER);
-		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
-		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
-		Border nameFilterBorder = pvpHubHiddenNameBtn.getPaddedPanelActionBorder();
-		Border nameFilterBorderHovered = pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered();
-		nameFilter.setBorder(nameFilterBorder);
-		filterLine.setMaximumSize(
-			new Dimension(FULL_PANEL_WIDTH,
-			Math.max((int) filterLine.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
-		filterLine.setPreferredSize(filterLine.getMaximumSize());
-
-		panelFilterTask.setRepeats(false);
-		((AbstractDocument) nameFilter.getDocument()).setDocumentFilter(new DocumentFilter()
+		//PlaceholderIconTextField fightFilterTextField = new PlaceholderIconTextField();
+		//fightFilterTextField.setPlaceholder("Filter Fights:");
+		IconTextField fightFilterTextField = new IconTextField();
+		fightFilterTextField.setText(config.nameFilter());
+		fightFilterTextField.setIcon(PlaceholderIconTextField.Icon.SEARCH);
+		fightFilterTextField.setHoverBackgroundColor(ColorScheme.DARK_GRAY_HOVER_COLOR);
+		fightFilterTextField.getDocument().addDocumentListener(new DocumentListener()
 		{
 			@Override
-			public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-				throws BadLocationException
+			public void insertUpdate(DocumentEvent e)
 			{
-				update(fb, offset, 0, string, attr);
+				onFilterChanged();
 			}
 
 			@Override
-			public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException
+			public void removeUpdate(DocumentEvent e)
 			{
-				update(fb, offset, length, text, attrs);
+				onFilterChanged();
 			}
 
 			@Override
-			public void remove(FilterBypass fb, int offset, int length)
-				throws BadLocationException
+			public void changedUpdate(DocumentEvent e)
 			{
-				update(fb, offset, length, "", null);
+				onFilterChanged();
 			}
 
-			private void update(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException
+			private void onFilterChanged()
 			{
-				String sanitized = fb.getDocument().getText(0, fb.getDocument().getLength());
-
-				sanitized = sanitized.substring(0, offset)
-					+ text
-					+ sanitized.substring(offset + length);
-
-				sanitized = plugin.updateNameFilterConfig(sanitized);
-
-				fb.replace(0, fb.getDocument().getLength(), sanitized, attrs);
+				plugin.updateNameFilterConfig(fightFilterTextField.getText());
 
 				panelFilterTask.restart();
 			}
 		});
+		FightPerformance.PRESET_FILTER_KEYWORDS.forEach(fightFilterTextField.getSuggestionListModel()::addElement);
+		fightFilterTextField.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+		fightFilterTextField.setForeground(ColorScheme.TEXT_COLOR);
+		fightFilterTextField.setBackground(ColorScheme.BORDER_COLOR);
+		Border nameFilterBorder = pvpHubHiddenNameBtn.getPaddedPanelActionBorder();
+		Border nameFilterBorderHovered = pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered();
+		fightFilterTextField.setBorder(nameFilterBorder);
+		fightFilterTextField.setMaximumSize(
+			new Dimension(FULL_PANEL_WIDTH - 1,
+				Math.max((int) fightFilterTextField.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
+		fightFilterTextField.setPreferredSize(fightFilterTextField.getMaximumSize());
+		filterLine.setMaximumSize(fightFilterTextField.getMaximumSize());
+		filterLine.setPreferredSize(filterLine.getMaximumSize());
+
 		MouseAndFocusListener mouseAndFocusListener = new MouseAndFocusListener()
 		{
 			boolean nameFilterHovered = false;
@@ -307,7 +304,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			public void focusGained(FocusEvent e)
 			{
 				nameFilterFocused = true;
-				nameFilter.setBorder(nameFilterBorderHovered);
+				fightFilterTextField.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -316,7 +313,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				nameFilterFocused = false;
 				if (!nameFilterHovered)
 				{
-					nameFilter.setBorder(nameFilterBorder);
+					fightFilterTextField.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -324,7 +321,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			public void mouseEntered(MouseEvent e)
 			{
 				nameFilterHovered = true;
-				nameFilter.setBorder(nameFilterBorderHovered);
+				fightFilterTextField.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -333,7 +330,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				nameFilterHovered = false;
 				if (!nameFilterFocused)
 				{
-					nameFilter.setBorder(nameFilterBorder);
+					fightFilterTextField.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -341,18 +338,16 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			@Override public void mousePressed(MouseEvent e) {}
 			@Override public void mouseReleased(MouseEvent e) {}
 		};
-		nameFilter.addFocusListener(mouseAndFocusListener);
-		nameFilter.addMouseListener(mouseAndFocusListener);
+		fightFilterTextField.addFocusListener(mouseAndFocusListener);
+		fightFilterTextField.addMouseListener(mouseAndFocusListener);
 
-		filterLine.add(nameFilter, BorderLayout.CENTER);
+		filterLine.add(fightFilterTextField, BorderLayout.CENTER);
 		filterLine.setToolTipText(filterTooltip);
 		filterLine.setBorder(leftBorder);
-		nameFilter.setToolTipText(filterTooltip);
+		fightFilterTextField.setToolTipText(filterTooltip);
 
 		add(filterLine);
 		add(Box.createVerticalStrut(1));
-
-		enqueueRebuildTask.setRepeats(false);
 
 		// wrap mainContent with scrollpane so it's scrollable
 		JScrollPane scrollableContainer = new JScrollPane(mainContent,

@@ -30,8 +30,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import joptsimple.internal.Strings;
 import lombok.Getter;
 import lombok.Setter;
@@ -70,6 +73,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
+
+	public static final List<String> PRESET_FILTER_KEYWORDS = Stream.concat(
+		Stream.of("favorite", "sync", "kill", "death", "double", "doubledeath"),
+		Arrays.stream(FightPerformancePanel.BackgroundStyle.SHOW_ALL_FILTER_WORDS)).collect(Collectors.toList());
 
 	@Expose
 	@SerializedName("c") // use 1 letter serialized variable names for more compact storage
