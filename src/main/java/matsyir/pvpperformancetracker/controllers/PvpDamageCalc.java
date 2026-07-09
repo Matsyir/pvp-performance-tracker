@@ -83,9 +83,13 @@ public class PvpDamageCalc
 	// Offensive pray: assume you have valid. Piety for melee, Rigour for range, Augury for mage
 	private static final double PIETY_ATK_PRAYER_MODIFIER = 1.2;
 	private static final double PIETY_STR_PRAYER_MODIFIER = 1.23;
+	private static final double ULTIMATE_STRENGTH_PRAYER_MODIFIER = 1.15;
 	private static final double AUGURY_OFFENSIVE_PRAYER_MODIFIER = 1.25;
+	private static final double AUGURY_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.04;
+	private static final double MYSTIC_MIGHT_PRAYER_MODIFIER = 1.15;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.23;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER = 1.2;
+	private static final double EAGLE_EYE_PRAYER_MODIFIER = 1.15;
 
 	// Defensive pray: Assume you have one of the defensive prays active, but don't assume you have augury
 	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
@@ -171,7 +175,7 @@ public class PvpDamageCalc
 	}
 
 	// main function used to update stats during an ongoing fight
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData)
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
 	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
@@ -190,8 +194,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
-		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
+		int[] playerStats = calculateBonuses(attackerItems, getRingUsed(attacker));
+		int[] opponentStats = calculateBonuses(defenderItems, getRingUsed(defender));
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
 
@@ -203,13 +207,13 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, true);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, true);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, true, attackerItems, animationData, attackerAmmoItemId);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, true, attackerItems, attackerAmmoItemId);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, offensivePray, attackerItems, animationData, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -219,8 +223,8 @@ public class PvpDamageCalc
 			EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
 			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
 			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
-			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, true, voidStyle, shield, weapon, hat, top, bottom);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, offensivePray, voidStyle, shield, weapon, hat, top, bottom);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, false);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -242,7 +246,7 @@ public class PvpDamageCalc
 		int[] defenderItems = atkLog.getDefenderGear();
 		boolean success = atkLog.success();
 		AnimationData animationData = atkLog.getAnimationData();
-		boolean successfulOffensive = atkLog.getAnimationData().attackStyle.isUsingSuccessfulOffensivePray(atkLog.getAttackerOffensivePray());
+		int offensivePray = atkLog.getAttackerOffensivePray();
 
 		averageHit = 0;
 		accuracy = 0;
@@ -268,13 +272,13 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee())
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, successfulOffensive);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, successfulOffensive);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
-			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, animationData, attackerAmmoItemId);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, successfulOffensive, attackerItems, attackerAmmoItemId);
+			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, offensivePray, attackerItems, animationData, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -284,8 +288,8 @@ public class PvpDamageCalc
 			EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
 			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
 			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
-			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, successfulOffensive, voidStyle, shield, weapon, hat, top, bottom);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, offensivePray, voidStyle, shield, weapon, hat, top, bottom);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -526,7 +530,45 @@ public class PvpDamageCalc
 		return totalDamageSum / (maxD - minD + 1);
 	}
 
-	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private double getMeleeStrengthPrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_PIETY ? PIETY_STR_PRAYER_MODIFIER :
+			offensivePray == SpriteID.PRAYER_ULTIMATE_STRENGTH ? ULTIMATE_STRENGTH_PRAYER_MODIFIER :
+			1;
+	}
+
+	private double getMeleeAttackPrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_PIETY ? PIETY_ATK_PRAYER_MODIFIER : 1;
+	}
+
+	private double getRangedDamagePrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_RIGOUR ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER :
+			offensivePray == SpriteID.PRAYER_EAGLE_EYE ? EAGLE_EYE_PRAYER_MODIFIER :
+			1;
+	}
+
+	private double getRangedAttackPrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_RIGOUR ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER :
+			offensivePray == SpriteID.PRAYER_EAGLE_EYE ? EAGLE_EYE_PRAYER_MODIFIER :
+			1;
+	}
+
+	private double getMagicDamagePrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_AUGURY ? AUGURY_OFFENSIVE_PRAYER_DMG_MODIFIER : 1;
+	}
+
+	private double getMagicAttackPrayerModifier(int offensivePray)
+	{
+		return offensivePray == SpriteID.PRAYER_AUGURY ? AUGURY_OFFENSIVE_PRAYER_MODIFIER :
+			offensivePray == SpriteID.PRAYER_MYSTIC_MIGHT ? MYSTIC_MIGHT_PRAYER_MODIFIER :
+			1;
+	}
+
+	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
@@ -538,7 +580,7 @@ public class PvpDamageCalc
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 		boolean arkanBlade = weapon == EquipmentData.ARKAN_BLADE;
 
-		int effectiveLevel = (int) Math.floor((attackerLevels.str * (successfulOffensive ? PIETY_STR_PRAYER_MODIFIER : 1)) + 8 + 3);
+		int effectiveLevel = (int) Math.floor((attackerLevels.str * getMeleeStrengthPrayerModifier(offensivePray)) + 8 + 3);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -565,6 +607,36 @@ public class PvpDamageCalc
 		return attackerAmmo == null ? EquipmentData.getWeaponAmmo(weapon, isLmsFight) : attackerAmmo;
 	}
 
+	private RingData getRingUsed(Player player)
+	{
+		Integer actualRingItemId = getLocalPlayerRingItemId(player);
+		RingData actualRing = actualRingItemId == null ? null : RingData.fromId(actualRingItemId);
+		return actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
+	}
+
+	private Integer getLocalPlayerRingItemId(Player player)
+	{
+		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		if (player == null || localPlayer == null || player.getName() == null || !player.getName().equals(localPlayer.getName()))
+		{
+			return null;
+		}
+
+		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
+		if (worn == null)
+		{
+			return null;
+		}
+
+		Item ring = worn.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+		if (ring == null || ring.getId() <= 0)
+		{
+			return null;
+		}
+
+		return ring.getId();
+	}
+
 	private Integer getLocalPlayerAmmoItemId(Player attacker)
 	{
 		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
@@ -588,7 +660,7 @@ public class PvpDamageCalc
 		return ammo.getId();
 	}
 
-	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
+	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
 	{
 		RangeAmmoData weaponAmmo = getWeaponAmmo(weapon, attackerAmmoItemId);
 		EquipmentData head = EquipmentData.fromId(fixItemId(attackerComposition[KitType.HEAD.getIndex()]));
@@ -618,7 +690,7 @@ public class PvpDamageCalc
 
 		rangeStrength += ammoStrength;
 
-		double effectiveLevel = Math.floor((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + 8);
+		double effectiveLevel = Math.floor((attackerLevels.range * getRangedDamagePrayerModifier(offensivePray)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
@@ -651,7 +723,7 @@ public class PvpDamageCalc
 		{
 			int[] playerStats = calculateBonusesWithRing(attackerComposition);
 			// Recalculate effective level using Strength level but Ranged prayer modifier
-			effectiveLevel = Math.floor(((attackerLevels.str * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER : 1)) + STANCE_BONUS) + 8);
+			effectiveLevel = Math.floor(((attackerLevels.str * getRangedDamagePrayerModifier(offensivePray)) + STANCE_BONUS) + 8);
 
 			// Apply Ranged void bonus if applicable
 			if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
@@ -696,7 +768,7 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getMagicMaxHit(int mageDamageBonus, AnimationData animationData, boolean successfulOffensive,
+	private void getMagicMaxHit(int mageDamageBonus, AnimationData animationData, int offensivePray,
 								VoidStyle voidStyle, EquipmentData shield, EquipmentData weapon,
 								EquipmentData hat, EquipmentData top, EquipmentData bottom)
 	{
@@ -709,6 +781,7 @@ public class PvpDamageCalc
 		mageDamageBonus += bottom == EquipmentData.VIRTUS_ROBE_BOTTOM ? 3 : 0;
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
+		magicBonus *= getMagicDamagePrayerModifier(offensivePray);
 		// provide dmg buff from smoke battlestaff if applicable
 		if (smokeBstaff && animationData.isStandardSpellbookSpell())
 		{
@@ -728,7 +801,7 @@ public class PvpDamageCalc
 		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
 	}
 
-	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -771,7 +844,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((attackerLevels.atk * (successfulOffensive ? PIETY_ATK_PRAYER_MODIFIER : 1)) + STANCE_BONUS) + 8);
+		effectiveLevelPlayer = Math.floor(((attackerLevels.atk * getMeleeAttackPrayerModifier(offensivePray)) + STANCE_BONUS) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -828,7 +901,7 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive, int[] attackerComposition, Integer attackerAmmoItemId)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, Integer attackerAmmoItemId)
 	{
 		RangeAmmoData weaponAmmo = getWeaponAmmo(weapon, attackerAmmoItemId);
 		playerRangeAtt += RangeAmmoData.getSeekingArrowAccuracyBonus(weaponAmmo, this.isLmsFight);
@@ -849,7 +922,7 @@ public class PvpDamageCalc
 		{
 			stanceBonus += 3; // dark bow spec is assumed to be on accurate
 		}
-		effectiveLevelPlayer = Math.floor(((attackerLevels.range * (successfulOffensive ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER : 1)) + stanceBonus) + 8);
+		effectiveLevelPlayer = Math.floor(((attackerLevels.range * getRangedAttackPrayerModifier(offensivePray)) + stanceBonus) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_RANGE || voidStyle == VoidStyle.VOID_RANGE)
 		{
@@ -916,7 +989,7 @@ public class PvpDamageCalc
 		accuracy = (diamonds || opals) && !(dragonCbow && usingSpec) ? (accuracy * .95) + .05 : accuracy;
 	}
 
-	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, boolean successfulOffensive, boolean defensiveAugurySuccess)
+	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, int offensivePray, boolean defensiveAugurySuccess)
 	{
 		double effectiveLevelPlayer;
 
@@ -934,7 +1007,7 @@ public class PvpDamageCalc
 		/**
 		 * Attacker Chance
 		 */
-		effectiveLevelPlayer = Math.floor(((attackerLevels.mage * (successfulOffensive ? AUGURY_OFFENSIVE_PRAYER_MODIFIER : 1))) + 8);
+		effectiveLevelPlayer = Math.floor((attackerLevels.mage * getMagicAttackPrayerModifier(offensivePray)) + 8);
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MAGE || voidStyle == VoidStyle.VOID_MAGE)
 		{

@@ -257,7 +257,7 @@ class Fighter
 			staffMeleeReduction = hasStaffMeleeReduction(opponent);
 		}
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
@@ -304,7 +304,7 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
 
 		ghostBarrageCount++;
 		ghostBarrageExpectedDamage += pvpDamageCalc.getAverageHit();
