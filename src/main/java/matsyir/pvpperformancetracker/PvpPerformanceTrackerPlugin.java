@@ -151,6 +151,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private static final Set<Integer> LAST_MAN_STANDING_REGIONS = ImmutableSet.of(12344, 12600, 13658, 13659, 13660, 13914, 13915, 13916, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432);
 	private static final int PVP_HUB_SYNC_MAX_ATTEMPTS = 5;
 	private static final long PVP_HUB_SYNC_RETRY_DELAY_MILLIS = TimeUnit.MINUTES.toMillis(1);
+	private static final long PVP_HUB_UPLOAD_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(5);
 
 	static
 	{
@@ -1390,8 +1391,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				final FightPerformance fightToUpload = currentFight;
 				final String hiddenName = config.hideRsnOnPvpHub() ? getPvpHubHiddenName() : null;
 				fightToUpload.recordPvpHubUploadName(hiddenName != null ? hiddenName : fightToUpload.getCompetitor().getName());
-				executor.submit(() -> PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName,
-					() -> enqueuePvpHubSync(fightToUpload)));
+				executor.schedule(() ->
+				{
+					if (!CONFIG.uploadFightsToPvpHub())
+					{
+						return;
+					}
+
+					PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName,
+						() -> enqueuePvpHubSync(fightToUpload));
+				}, PVP_HUB_UPLOAD_DELAY_MILLIS, TimeUnit.MILLISECONDS);
 			}
 		}
 		currentFight = null;
