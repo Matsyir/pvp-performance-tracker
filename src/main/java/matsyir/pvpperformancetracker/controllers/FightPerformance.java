@@ -1015,7 +1015,10 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			return true;
 		}
-		// temp dev filter for testing ui with long names
+
+		// temp dev filters
+
+		// for testing ui with long names
 //		try
 //		{
 //			if (filter.startsWith("long"))
@@ -1024,6 +1027,12 @@ public class FightPerformance implements Comparable<FightPerformance>
 //			}
 //		}
 //		catch (Exception e) { }
+
+		// for finding vw spec or other weapons to debug
+//		if (filter.equals("voidwaker") && getAllFightLogEntries().stream().anyMatch(l -> l.getAnimationData() == AnimationData.MELEE_VOIDWAKER_SPEC))
+//		{
+//			return true;
+//		}
 
 		try
 		{
@@ -1034,7 +1043,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 			{
 				if (filter.equals("favorite"))
 				{
-					return this.isFavorite;
+					return isFavorite;
+				}
+				if (filter.equals("sync"))
+				{
+					return hasPvpHubSyncedFight();
 				}
 				if (filter.equals("kill"))
 				{
@@ -1052,6 +1065,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				{
 					return bgStyle.isEnabled() && bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT;
 				}
+
 			}
 
 

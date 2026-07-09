@@ -144,7 +144,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		keyName = "settingsConfigured",
 		name = "I have verified my settings",
 		description = "Some settings affect damage calculations, and every player should adjust them based on how they're PvPing." +
-			"<br><br>Please confirm the below Level & Gear settings according to your pur`poses," +
+			"<br><br>Please confirm the below Level & Gear settings according to your purposes," +
 			"<br>then check this box in order to hide the config warning.",
 		position = -1
 	)

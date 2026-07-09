@@ -90,18 +90,21 @@ public class FightPerformancePanel extends JPanel
 
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
-	private static final Border paddingBorder;
-	// border size: 0px left, 0px right, 5px top, 4px bottom (plus extra 4px bottom invisible offset)
-	// also note for border: The primary background color of the FightPerformancePanel is DARKER_GRAY_COLOR,
-	// and the primary background color PvpPerformanceTrackerPanel is DARK_GRAY_COLOR
-	static
-	{
-		paddingBorder = BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-			BorderFactory.createEmptyBorder(8, 0, 4, 0));
-	}
+	// border size: 0px left, 0px right, 8px top, 4px bottom (plus extra 4px bottom invisible offset)
+	// The primary background color of the panels is SCROLL_TRACK_COLOR,
+	private static final Border defaultBorder = BorderFactory.createCompoundBorder(
+		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+		BorderFactory.createEmptyBorder(8, 0, 4, 0));
+	private static final Border syncedBorder = defaultBorder;
+//	PanelFactory.combineBorders(
+//		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+//		PanelFactory.createGradientBorder(0, 0, 4, 0,
+//			ColorUtil.colorWithAlpha(PvpColorScheme.DARK_GREEN_SUBTLE_SUCCESS.brighter(), 160),
+//			ColorUtil.colorWithAlpha(PvpColorScheme.DARK_GREEN_SUBTLE_SUCCESS, 32)),
+//		BorderFactory.createEmptyBorder(8, 0, 0, 0)
+//	);
 
-	// enum of background styles "bgStyle" images to be rendered as backgrounds, below all of the stats.
+	// enum of background styles "bgStyle" images to be rendered as backgrounds, below all the stats.
 	// currently sized for what the panel size is with all statistics shown (so including GB). This is so
 	// that we only ever scale the image down, instead of stretch it. Scaling it down can still come with
 	// its issues, but since we're only doing it a bit, it seems fine so far. We could always include a normal
@@ -210,7 +213,7 @@ public class FightPerformancePanel extends JPanel
 		Fighter opponent = displayFight.getOpponent();
 
 		setLayout(new BorderLayout(0, 0));
-		setBorder(paddingBorder);
+		setBorder(pvpHubSynced ? syncedBorder : defaultBorder);
 
 		final String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
 			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));

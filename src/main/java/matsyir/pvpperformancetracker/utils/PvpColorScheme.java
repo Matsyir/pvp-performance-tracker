@@ -34,6 +34,7 @@ public class PvpColorScheme
 	public static final Color BLUE_TEXT_URL = new Color(48, 160, 255);
 	public static final Color ORANGE_TEXT_ACTION = ColorUtil.colorLerp(BRAND_ORANGE, Color.WHITE, 0.4f);
 	public static final Color DARK_ORANGE_BROWN_TEXT = new Color(132, 43, 0); // used for update text
+	public static final Color DARK_GREEN_SUBTLE_SUCCESS = new Color(46,111,64);
 
 
 	// default colors used for config fields. Ideally don't directly use these unless we really have to, use the static getters to get the config instead.

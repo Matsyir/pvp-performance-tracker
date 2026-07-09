@@ -37,7 +37,7 @@ public class BrewState
 	// use this logic to determine what counts as potted vs neutral vs brewed
 
 	// any brewedLevels below this threshold will count as neutral or brewed down instead of potted
-	private static final int BREWED_LEVELS_NEUTRAL_THRESHOLD = -3;
+	public static final int BREWED_LEVELS_NEUTRAL_THRESHOLD = -3;
 	private final int brewedLevels;
 	private final int levelChange;
 	private final int baseLevel;

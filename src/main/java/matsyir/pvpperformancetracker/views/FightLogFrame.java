@@ -188,11 +188,13 @@ public class FightLogFrame extends JFrame
 			BrewState brewState = attacker.getBrewState(fightEntry);
 			JLabel brewStateLabel = new JLabel();
 			brewStateLabel.setForeground(brewState.getCategory().getTextColor());
-			brewStateLabel.setToolTipText("<html>Amount of levels below the max potted level." +
-				"<br>For example, if ranging with 110 range, it will display -2 since 112 is max potted (at level 99)." +
-				"<br>You want this to stay as close to 0 as possible." +
+			brewStateLabel.setToolTipText(String.format("<html>" +
+				"Amount of levels above or below your base Level of the skill (str, range, or mage)." +
+				"<br>For example, if ranging with 110 range, it will display <i>+11 (110/112)</i> since 112 is max potted (at level 99)." +
+				"<br>The row is highlighted green if you are %d levels below the max potted level or higher. Ideally, should always be green." +
 				"<br><br>This does look at your actual potted/brewed level" + (pvpHubSynced ? "." :
-				", although it isn't used for Expected Damage<br>calculations, unless the fight is merged/synced"));
+				", although it isn't used for Expected Damage<br>calculations, unless the fight is merged/synced via PvP-Hub."),
+				Math.abs(BrewState.BREWED_LEVELS_NEUTRAL_THRESHOLD)));
 
 			brewStateLabel.setText(brewState.getFightLogText());
 
