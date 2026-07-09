@@ -216,7 +216,10 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
-			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, true);
+			EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
+			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
+			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, true, voidStyle, shield, weapon, hat, top, bottom);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, true, false);
 		}
 
@@ -278,7 +281,10 @@ public class PvpDamageCalc
 		else if (attackStyle == AttackStyle.MAGIC)
 		{
 			EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
-			getMagicMaxHit(shield, playerStats[MAGIC_DAMAGE], animationData, weapon, voidStyle, successfulOffensive);
+			EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
+			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
+			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
+			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, successfulOffensive, voidStyle, shield, weapon, hat, top, bottom);
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, successfulOffensive, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
 		}
 
@@ -690,10 +696,17 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getMagicMaxHit(EquipmentData shield, int mageDamageBonus, AnimationData animationData, EquipmentData weapon, VoidStyle voidStyle, boolean successfulOffensive)
+	private void getMagicMaxHit(int mageDamageBonus, AnimationData animationData, boolean successfulOffensive,
+								VoidStyle voidStyle, EquipmentData shield, EquipmentData weapon,
+								EquipmentData hat, EquipmentData top, EquipmentData bottom)
 	{
 		boolean smokeBstaff = weapon == EquipmentData.SMOKE_BATTLESTAFF;
 		boolean tome = shield == EquipmentData.TOME_OF_FIRE;
+
+		// assume use of ancients if wearing virtus and apply the hidden +3% per piece
+		mageDamageBonus += hat == EquipmentData.VIRTUS_MASK ? 3 : 0;
+		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_TOP ? 3 : 0;
+		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_BOTTOM ? 3 : 0;
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		// provide dmg buff from smoke battlestaff if applicable
