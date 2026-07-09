@@ -518,4 +518,17 @@ public class PvpPerformanceTrackerUtils
 			item.setToolTipText(getUrlButtonTooltip(url));
 		}
 	}
+
+	public static boolean anyStringNullOrEmpty(String... strings)
+	{
+		for (String string : strings)
+		{
+			if (Strings.isNullOrEmpty(string))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

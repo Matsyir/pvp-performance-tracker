@@ -39,7 +39,6 @@ import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -58,6 +57,7 @@ import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
+import matsyir.pvpperformancetracker.views.PanelFactory;
 import matsyir.pvpperformancetracker.views.PlaceholderIconTextField;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
@@ -80,6 +80,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
 	public static final int SOCIAL_BTN_HEIGHT = 34;
 	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
+	public static final int FIGHT_FILTER_HEIGHT = 28; //34
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
 	public static final int BASE_NAME_FILTER_DELAY = 45; // base delay in ms
@@ -236,26 +237,41 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"<br><br>There are a few different ways you can filter fights:" +
 			"<br><b>1)</b> Searching for RSN, either yours or the opponent's" +
 			"<br><b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"" +
-			"<br><b>3)</b> Searching for <i>&gt;X</i>, <i>&gt;=X</i>, <i>&lt;X</i>, or <i>&lt;=X</i> &nbsp;total attacks by the client player" +
-			"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, <i>\"&gt;60\"</i> will only display fights with over 60 total attacks made by yourself (the client player)" +
-			"<br><br>There are also a few preset filters you can search for:" +
-			"<br>&nbsp;&#xbb; <u>favorite</u> (shows any fights you favorited)" +
-			"<br>&nbsp;&#xbb; <u>sync</u> (shows any fights that have been synced via PvP-Hub for improved statistic accuracy)" +
-			"<br>&nbsp;&#xbb; <u>kill</u> (shows any fights where your opponent died)" +
-			"<br>&nbsp;&#xbb; <u>death</u> (shows any fights where you died)" +
-			"<br>&nbsp;&#xbb; <u>double</u> | <u>doubledeath</u> (shows any double-death fights)" +
-			"<br>&nbsp;&#xbb; <u>border</u> | <u>background</u> | <u>borderstyle</u> (shows any fight which has a non-default border style)";
+			"<br><br>Along with these, there are many preset filter types, which you can try by using the dropdown menu on the right of this textbox." +
+			"<br>Some of these preset filter types are static, such as 'favorite' to show favorited fights." +
+			"<br>Others are dynamic, such as searching '::ed>50' to find fights where you earned over 50 Expected Damage.";
 		// to view these preset filters, see FightPerformanceFilter.matches
 
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
-		// filter textfield
-		//PlaceholderIconTextField fightFilterTextField = new PlaceholderIconTextField();
-		//fightFilterTextField.setPlaceholder("Filter Fights:");
+
+		// filter textfield (IconTextField inspired from core's PluginListPanel)
 		IconTextField fightFilterTextField = new IconTextField();
 		fightFilterTextField.setText(config.fightFilter());
 		fightFilterTextField.setIcon(PlaceholderIconTextField.Icon.SEARCH);
-		fightFilterTextField.setHoverBackgroundColor(ColorScheme.DARK_GRAY_HOVER_COLOR);
+		fightFilterTextField.setForeground(ColorScheme.TEXT_COLOR);
+		fightFilterTextField.setBackground(ColorScheme.BORDER_COLOR);
+		fightFilterTextField.setMaximumSize(
+			new Dimension(FULL_PANEL_WIDTH - 1,
+				Math.max((int) fightFilterTextField.getPreferredSize().getHeight(), FIGHT_FILTER_HEIGHT)));
+		fightFilterTextField.setPreferredSize(fightFilterTextField.getMaximumSize());
+		fightFilterTextField.setMinimumSize(fightFilterTextField.getPreferredSize());
+
+		for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+		{
+			if (filter.isPresetFilter())
+			{
+				fightFilterTextField.getSuggestionListModel().addElement(filter.getName());
+			}
+		}
+
+		Border nameFilterBorder = PanelFactory.combineBorders(leftBorder, pvpHubHiddenNameBtn.getPaddedPanelActionBorder());
+		Border nameFilterBorderHovered = PanelFactory.combineBorders(leftBorder, pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered());
+		filterLine.setBorder(nameFilterBorder);
+		filterLine.setMaximumSize(fightFilterTextField.getMaximumSize());
+		filterLine.setPreferredSize(fightFilterTextField.getMaximumSize());
+		filterLine.setMinimumSize(fightFilterTextField.getMaximumSize());
+
 		fightFilterTextField.getDocument().addDocumentListener(new DocumentListener()
 		{
 			@Override
@@ -276,56 +292,41 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				onFilterChanged();
 			}
 
-private boolean applyUpdates = true;
-private void onFilterChanged()
-{
-	if (!applyUpdates)
-	{
-		return;
-	}
-
-	String newText = fightFilterTextField.getText();
-	for (FightPerformanceFilter filter : FightPerformanceFilter.values())
-	{
-		if (filter.getName().equals(newText))
-		{
-			newText = filter.getDefaultFilterVal();
-			final String updatedText = newText;
-			applyUpdates = false;
-			log.info("WE ARE UPDATING FILTER");
-			SwingUtilities.invokeLater(() ->
-			{ // hack to allow self-upodating in the onFilterChanged. Use this applyUpdates bool to prevent starting a loop.
-				fightFilterTextField.setText(updatedText);
-				applyUpdates = true;
-			});
-			break;
-		}
-	}
-	plugin.updateNameFilterConfig(newText);
-
-	panelFilterTask.restart();
-}
-		});
-		for (FightPerformanceFilter filter : FightPerformanceFilter.values())
-		{
-			if (filter.isPresetFilter())
+			private boolean applyUpdates = true;
+			private void onFilterChanged()
 			{
-				fightFilterTextField.getSuggestionListModel().addElement(filter.getName());
-			}
-		}
-		fightFilterTextField.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-		fightFilterTextField.setForeground(ColorScheme.TEXT_COLOR);
-		fightFilterTextField.setBackground(ColorScheme.BORDER_COLOR);
-		Border nameFilterBorder = pvpHubHiddenNameBtn.getPaddedPanelActionBorder();
-		Border nameFilterBorderHovered = pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered();
-		fightFilterTextField.setBorder(nameFilterBorder);
-		fightFilterTextField.setMaximumSize(
-			new Dimension(FULL_PANEL_WIDTH - 1,
-				Math.max((int) fightFilterTextField.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
-		fightFilterTextField.setPreferredSize(fightFilterTextField.getMaximumSize());
-		filterLine.setMaximumSize(fightFilterTextField.getMaximumSize());
-		filterLine.setPreferredSize(filterLine.getMaximumSize());
+				if (!applyUpdates)
+				{
+					return;
+				}
 
+				String newText = fightFilterTextField.getText();
+				for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+				{
+					if (filter.getName().equals(newText))
+					{
+						newText = filter.getDefaultFilterVal();
+						final String updatedText = newText;
+						applyUpdates = false;
+						SwingUtilities.invokeLater(() ->
+						{ // hack to allow self-updating in the onFilterChanged. Use this applyUpdates bool to prevent starting a loop.
+							try
+							{
+								fightFilterTextField.setText(updatedText);
+							}
+							finally
+							{
+								applyUpdates = true;
+							}
+						});
+						break;
+					}
+				}
+				plugin.updateFightFilterConfig(newText);
+
+				panelFilterTask.restart();
+			}
+		});
 		MouseAndFocusListener mouseAndFocusListener = new MouseAndFocusListener()
 		{
 			boolean nameFilterHovered = false;
@@ -334,7 +335,7 @@ private void onFilterChanged()
 			public void focusGained(FocusEvent e)
 			{
 				nameFilterFocused = true;
-				fightFilterTextField.setBorder(nameFilterBorderHovered);
+				filterLine.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -343,7 +344,7 @@ private void onFilterChanged()
 				nameFilterFocused = false;
 				if (!nameFilterHovered)
 				{
-					fightFilterTextField.setBorder(nameFilterBorder);
+					filterLine.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -351,7 +352,7 @@ private void onFilterChanged()
 			public void mouseEntered(MouseEvent e)
 			{
 				nameFilterHovered = true;
-				fightFilterTextField.setBorder(nameFilterBorderHovered);
+				filterLine.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -360,7 +361,7 @@ private void onFilterChanged()
 				nameFilterHovered = false;
 				if (!nameFilterFocused)
 				{
-					fightFilterTextField.setBorder(nameFilterBorder);
+					filterLine.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -373,7 +374,6 @@ private void onFilterChanged()
 
 		filterLine.add(fightFilterTextField, BorderLayout.CENTER);
 		filterLine.setToolTipText(filterTooltip);
-		filterLine.setBorder(leftBorder);
 		fightFilterTextField.setToolTipText(filterTooltip);
 
 		add(filterLine);
