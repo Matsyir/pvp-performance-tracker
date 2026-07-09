@@ -804,7 +804,7 @@ public interface PvpPerformanceTrackerConfig extends Config
 		position = 200000,
 		hidden = true
 	)
-	default String nameFilter()
+	default String fightFilter()
 	{
 		return "";
 	}

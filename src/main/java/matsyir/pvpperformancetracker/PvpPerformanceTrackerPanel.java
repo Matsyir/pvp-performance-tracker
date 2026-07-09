@@ -53,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.FightPerformanceFilter;
 import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
 import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
@@ -244,7 +245,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"<br>&nbsp;&#xbb; <u>death</u> (shows any fights where you died)" +
 			"<br>&nbsp;&#xbb; <u>double</u> | <u>doubledeath</u> (shows any double-death fights)" +
 			"<br>&nbsp;&#xbb; <u>border</u> | <u>background</u> | <u>borderstyle</u> (shows any fight which has a non-default border style)";
-		// to view these preset filters, see FightPerformance.isRelevantForFilter
+		// to view these preset filters, see FightPerformanceFilter.matches
 
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
@@ -252,7 +253,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		//PlaceholderIconTextField fightFilterTextField = new PlaceholderIconTextField();
 		//fightFilterTextField.setPlaceholder("Filter Fights:");
 		IconTextField fightFilterTextField = new IconTextField();
-		fightFilterTextField.setText(config.nameFilter());
+		fightFilterTextField.setText(config.fightFilter());
 		fightFilterTextField.setIcon(PlaceholderIconTextField.Icon.SEARCH);
 		fightFilterTextField.setHoverBackgroundColor(ColorScheme.DARK_GRAY_HOVER_COLOR);
 		fightFilterTextField.getDocument().addDocumentListener(new DocumentListener()
@@ -275,14 +276,43 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				onFilterChanged();
 			}
 
-			private void onFilterChanged()
-			{
-				plugin.updateNameFilterConfig(fightFilterTextField.getText());
+private boolean applyUpdates = true;
+private void onFilterChanged()
+{
+	if (!applyUpdates)
+	{
+		return;
+	}
 
-				panelFilterTask.restart();
-			}
+	String newText = fightFilterTextField.getText();
+	for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+	{
+		if (filter.getName().equals(newText))
+		{
+			newText = filter.getDefaultFilterVal();
+			final String updatedText = newText;
+			applyUpdates = false;
+			log.info("WE ARE UPDATING FILTER");
+			SwingUtilities.invokeLater(() ->
+			{ // hack to allow self-upodating in the onFilterChanged. Use this applyUpdates bool to prevent starting a loop.
+				fightFilterTextField.setText(updatedText);
+				applyUpdates = true;
+			});
+			break;
+		}
+	}
+	plugin.updateNameFilterConfig(newText);
+
+	panelFilterTask.restart();
+}
 		});
-		FightPerformance.PRESET_FILTER_KEYWORDS.forEach(fightFilterTextField.getSuggestionListModel()::addElement);
+		for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+		{
+			if (filter.isPresetFilter())
+			{
+				fightFilterTextField.getSuggestionListModel().addElement(filter.getName());
+			}
+		}
 		fightFilterTextField.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 		fightFilterTextField.setForeground(ColorScheme.TEXT_COLOR);
 		fightFilterTextField.setBackground(ColorScheme.BORDER_COLOR);
@@ -366,7 +396,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFight(FightPerformance fight)
 	{
 		// skip adding the fight to panels if it doesn't respect the name filter
-		if (!fight.isRelevantForFilter(config.nameFilter(), fight.getBgStyle()))
+		if (!FightPerformanceFilter.matches(fight))
 		{
 			return;
 		}
@@ -392,11 +422,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFights(ArrayDeque<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
 	{
 		// skip adding any fights to panels if they don't respect the name filter
-		// see FightPerformance.isRelevantForFilter for filter behavior details
-		if (!config.nameFilter().isEmpty())
+		// see FightPerformanceFilter.matches for filter behavior details
+		if (!config.fightFilter().isEmpty())
 		{
-			fights.removeIf((FightPerformance f) ->
-				!f.isRelevantForFilter(config.nameFilter(), f.getBgStyle()));
+			fights.removeIf((FightPerformance f) -> !FightPerformanceFilter.matches(f));
 		}
 
 		//log.info("Panel.addFights: skipUpdatesIfFightCountUnchanged=" + skipUpdatesIfFightCountUnchanged + ", fights.size=" + fights.size() + ", filteredFightCount=" + filteredFightCount);
