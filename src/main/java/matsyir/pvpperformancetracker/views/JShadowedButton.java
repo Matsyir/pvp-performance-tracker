@@ -79,34 +79,34 @@ public class JShadowedButton extends JShadowedLabel
 	{
 		super(text);
 		// panelActionBorders: To be used with any future actions which don't require the same padding as panelActionPaddingBorder
-		panelActionBorder = BorderFactory.createCompoundBorder(
+		panelActionBorder = PanelFactory.combineBorders(
 			BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1),
 			BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR, 2));
-		panelActionBorderHovered = BorderFactory.createCompoundBorder(
+		panelActionBorderHovered = PanelFactory.combineBorders(
 			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
 			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker().darker(), 2));
 
-		panelActionBorderWarning = BorderFactory.createCompoundBorder(
+		panelActionBorderWarning = PanelFactory.combineBorders(
 			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 1),
 			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 2));
-		panelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+		panelActionBorderWarningHovered = PanelFactory.combineBorders(
 			BorderFactory.createLineBorder(ColorScheme.BRAND_ORANGE.darker(), 1),
 			BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE, 2));
 
 // paddedPanelActionBorder: Padding included via panelActionPaddingBorder, this is currently used for
 // both pvpHubHiddenNameBtn and the name filter.
-		paddedPanelActionBorder = BorderFactory.createCompoundBorder(
+		paddedPanelActionBorder = PanelFactory.combineBorders(
 			panelActionBorder,
 			panelActionPaddingBorder);
-		paddedPanelActionBorderHovered = BorderFactory.createCompoundBorder(
+		paddedPanelActionBorderHovered = PanelFactory.combineBorders(
 			panelActionBorderHovered,
 			panelActionPaddingBorder);
 
-		paddedPanelActionBorderWarning = BorderFactory.createCompoundBorder(
+		paddedPanelActionBorderWarning = PanelFactory.combineBorders(
 			panelActionBorderWarning,
 			panelActionPaddingBorder);
 
-		paddedPanelActionBorderWarningHovered = BorderFactory.createCompoundBorder(
+		paddedPanelActionBorderWarningHovered = PanelFactory.combineBorders(
 			panelActionBorderWarningHovered,
 			panelActionPaddingBorder);
 

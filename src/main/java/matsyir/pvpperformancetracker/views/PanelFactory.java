@@ -25,6 +25,7 @@
 
 package matsyir.pvpperformancetracker.views;
 
+import java.security.InvalidParameterException;
 import java.util.function.BiConsumer;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -43,29 +44,28 @@ import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
+import net.runelite.client.util.ColorUtil;
 
 public final class PanelFactory
 {
 	// constants/final values
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
-	public static final int DEATH_ICON_MIDDLE_SPACING_PX = 14;
 	public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
 	public static final int HORIZONTAL_PADDING_OUTER = 4;
 	public static final int HORIZONTAL_PADDING_INNER_SIDE_ALIGNED = (HORIZONTAL_PADDING_OUTER / 2) + 1;
-	public static final int HORIZONTAL_PADDING_INNER_CENTERED = HORIZONTAL_PADDING_INNER_SIDE_ALIGNED;//HORIZONTAL_PADDING_OUTER * 2;
 
 	public static final Font COMPACT_INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
 
 	// borders for StatsLine on FightPerformancePanel, also reused on TotalStatsPanel
 	// border for left/right padding
 	public static final Border paddingBorder = BorderFactory.createEmptyBorder(0, HORIZONTAL_PADDING_OUTER, 0, HORIZONTAL_PADDING_OUTER);
-	public static final Border bottomLineBorderUnpadded = BorderFactory.createCompoundBorder(
+	public static final Border bottomLineBorderUnpadded = PanelFactory.combineBorders(
 		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
 		BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARKER_GRAY_HOVER_COLOR));
 	public static final int DEATH_ICON_SIDE_SPACING_PX = HORIZONTAL_PADDING_OUTER;
 
-	public static final Border bottomLineBorder = BorderFactory.createCompoundBorder(
+	public static final Border bottomLineBorder = PanelFactory.combineBorders(
 		paddingBorder, // left/right padding
 		bottomLineBorderUnpadded);
 
@@ -265,9 +265,6 @@ public final class PanelFactory
 
 				if (fight.getWorld() > 0 && c instanceof JPanel)
 				{
-					//JPanel lineContainer = (JPanel)c;
-					//lineContainer.setToolTipText(tooltip);
-
 					if (CONFIG.getWorldDisplayChoice() == WorldFlag.WorldDisplayChoice.FLAG && worldIcon != null)
 					{
 						int x = (c.getWidth() - worldIcon.getIconWidth()) / 2;
@@ -296,6 +293,53 @@ public final class PanelFactory
 					}
 				}
 			});
+	}
+
+	public static Border combineBorders(Border... outerToInnerBorders)
+	{
+		if (outerToInnerBorders.length < 2)
+		{
+			throw new InvalidParameterException("PanelFactory.combineBorders: why are you combining 1 border");
+		}
+		Border result = outerToInnerBorders[0];
+		for (int i = 1; i < outerToInnerBorders.length; i++)
+		{
+			result = BorderFactory.createCompoundBorder(result, outerToInnerBorders[i]);
+		}
+
+		return result;
+	}
+
+	// top/left/bottom/right have to all be the same, or 0
+	public static Border createGradientBorder(int top, int left, int bottom, int right, Color from, Color to)
+	{
+		double max = Math.max(top, left);
+		max = Math.max(max, bottom);
+		max = Math.max(max, right);
+
+		if (max <= 0)
+		{
+			return BorderFactory.createEmptyBorder();
+		}
+
+		double perStep = 1 / (max - 1);
+
+
+		Border b = BorderFactory.createEmptyBorder();
+		for (int i = 0; i < max; i++)
+		{
+			double lerp = (i == 0 ? 0 : perStep * i);
+			//log.info("creating border with i={}, lerp val={}", i, lerp);
+			b = BorderFactory.createCompoundBorder(b, BorderFactory.createMatteBorder(
+				top == 0 ? 0 : 1,
+				left == 0 ? 0 : 1,
+				bottom == 0 ? 0 : 1,
+				right == 0 ? 0 : 1,
+				ColorUtil.colorLerp(from, to, lerp)
+			));
+		}
+
+		return b;
 	}
 
 

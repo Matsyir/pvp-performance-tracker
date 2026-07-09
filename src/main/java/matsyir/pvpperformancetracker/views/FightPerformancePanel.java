@@ -92,7 +92,7 @@ public class FightPerformancePanel extends JPanel
 
 	// border size: 0px left, 0px right, 8px top, 4px bottom (plus extra 4px bottom invisible offset)
 	// The primary background color of the panels is SCROLL_TRACK_COLOR,
-	private static final Border defaultBorder = BorderFactory.createCompoundBorder(
+	private static final Border defaultBorder = PanelFactory.combineBorders(
 		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 		BorderFactory.createEmptyBorder(8, 0, 4, 0));
 	private static final Border syncedBorder = defaultBorder;

@@ -350,10 +350,9 @@ class FightLogDetailFrame extends JFrame
 			levelAssumptionWarning.setForeground(Color.WHITE);
 
 			int offsetToTop = 21;
-			levelAssumptionWarning.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createCompoundBorder(
-					BorderFactory.createEmptyBorder(28 - offsetToTop, 12, 28 + offsetToTop, 12),
-					BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 1)),
+			levelAssumptionWarning.setBorder(PanelFactory.combineBorders(
+				BorderFactory.createEmptyBorder(28 - offsetToTop, 12, 28 + offsetToTop, 12),
+				BorderFactory.createLineBorder(PvpColorScheme.BLOOD_RED_ORANGE_REDDER, 1),
 				BorderFactory.createMatteBorder(4,4,4,4, PvpColorScheme.BLOOD_RED_ORANGE_REDDER.darker())));
 
 			levelAssumptionWarning.setComponentPopupMenu(warningTogglePopupMenu);

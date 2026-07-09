@@ -262,10 +262,10 @@ public class TotalStatsPanel extends JPanel
 		JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
 		JShadowedLabel titleLabel = new JShadowedLabel("PvP Performance Tracker ");
-		titlePanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEmptyBorder(0, 24, 0, 24), BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
-				BorderFactory.createMatteBorder(0, 0, 1, 0, ColorUtil.colorWithAlpha(ColorScheme.BRAND_ORANGE, 112)))));
+		titlePanel.setBorder(PanelFactory.combineBorders(
+			BorderFactory.createEmptyBorder(0, 24, 0, 24),
+			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
+			BorderFactory.createMatteBorder(0, 0, 1, 0, ColorUtil.colorWithAlpha(ColorScheme.BRAND_ORANGE, 112))));
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		titleLabel.setForeground(ColorScheme.BRAND_ORANGE);
 
@@ -993,7 +993,7 @@ public class TotalStatsPanel extends JPanel
 	private void initializeSettingsWarningLabel()
 	{
 		settingsWarningLabel = new JShadowedLabel();
-		settingsWarningLabel.setBorder(BorderFactory.createCompoundBorder(
+		settingsWarningLabel.setBorder(PanelFactory.combineBorders(
 			BorderFactory.createLineBorder(Color.RED.darker(), 1),
 			BorderFactory.createLineBorder(Color.RED.darker().darker(), 1)));
 		settingsWarningLabel.setText("<html>&#9888;&nbsp;Check plugin config for setup options!&nbsp;&#9888;");
