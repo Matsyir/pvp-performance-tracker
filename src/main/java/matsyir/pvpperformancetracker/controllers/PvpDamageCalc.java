@@ -190,8 +190,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonusesWithRing(attackerItems);
-		int[] opponentStats = this.calculateBonusesWithRing(defenderItems);
+		int[] playerStats = calculateBonuses(attackerItems, getRingUsed(attacker));
+		int[] opponentStats = calculateBonuses(defenderItems, getRingUsed(defender));
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
 
@@ -565,6 +565,36 @@ public class PvpDamageCalc
 		return attackerAmmo == null ? EquipmentData.getWeaponAmmo(weapon, isLmsFight) : attackerAmmo;
 	}
 
+	private RingData getRingUsed(Player player)
+	{
+		Integer actualRingItemId = getLocalPlayerRingItemId(player);
+		RingData actualRing = actualRingItemId == null ? null : RingData.fromId(actualRingItemId);
+		return actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
+	}
+
+	private Integer getLocalPlayerRingItemId(Player player)
+	{
+		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		if (player == null || localPlayer == null || player.getName() == null || !player.getName().equals(localPlayer.getName()))
+		{
+			return null;
+		}
+
+		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
+		if (worn == null)
+		{
+			return null;
+		}
+
+		Item ring = worn.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+		if (ring == null || ring.getId() <= 0)
+		{
+			return null;
+		}
+
+		return ring.getId();
+	}
+
 	private Integer getLocalPlayerAmmoItemId(Player attacker)
 	{
 		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
@@ -706,7 +736,7 @@ public class PvpDamageCalc
 		// assume use of ancients if wearing virtus and apply the hidden +3% per piece
 		mageDamageBonus += hat == EquipmentData.VIRTUS_MASK ? 3 : 0;
 		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_TOP ? 3 : 0;
-		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_BOTTOM ? 3 : 0;
+		mageDamageBonus += bottom == EquipmentData.VIRTUS_ROBE_BOTTOM ? 3 : 0;
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		// provide dmg buff from smoke battlestaff if applicable
