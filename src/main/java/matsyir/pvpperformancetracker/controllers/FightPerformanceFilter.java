@@ -30,14 +30,20 @@ public enum FightPerformanceFilter
 	//_DEV_LONG_RSN("DEV: Long RSNs", true, "long", (_f, f) -> f.getCompetitor().getName().length() >= 12 || f.getOpponent().getName().length() >= 12),
 
 	FAVORITE("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.FAVORITE_GOLD) + "'>&#9733;&nbsp;Favorite Fights",
-		true, "favorite", (_f, f) -> f.isFavorite()),
-	SYNC("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;Synced Fights</font> (via <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) + "'><u>PvP-Hub</u></font>)",
-		true, "synced", (_f, f) -> f.hasPvpHubSyncedFight()),
-	KILLS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BRAND_ORANGE) + "'>&#9876;&nbsp;Kills",
-		true, "kills", (_f, f) -> f.getOpponent().isDead()),
+		true, "::fav", (_f, f) -> f.isFavorite()),
+
+	SYNCED_FROM_PVP_HUB("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) +
+		"'>&#8645;&nbsp;Synced Fights</font> (via <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) +
+		"'><u>PvP-Hub</u></font>)", true, "::sync", (_f, f) -> f.hasPvpHubSyncedFight()),
+
+	KILLS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BRAND_ORANGE) + "'>&#9818;&nbsp;Kills",
+		true, "::kill", (_f, f) -> f.getOpponent().isDead()),
+
 	DEATHS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) + "'>&#9760;&nbsp;Deaths",
-		true, "deaths", (_f, f) -> f.getCompetitor().isDead()),
-	DOUBLE_DEATHS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) + "'>&#9760;&#9760;&nbsp;Double-Deaths", true, "doubledeaths", (_f, f) -> f.getCompetitor().isDead() && f.getOpponent().isDead()),
+		true, "::death", (_f, f) -> f.getCompetitor().isDead()),
+
+	DOUBLE_DEATHS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
+		"'>&#9760;&#9760;&nbsp;Double-Deaths", true, "::doubledeath", (_f, f) -> f.getCompetitor().isDead() && f.getOpponent().isDead()),
 
 	COMPETITOR_ATTACK_COUNT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.5f)) +
 		"'>&#8807;&sup1;&nbsp;Competitor Attack Count >", true, "::atk", "::atk>20", (filter, f) ->
@@ -66,8 +72,8 @@ public enum FightPerformanceFilter
 			&& (f.getBgStyle().getName().toLowerCase().startsWith(filter)
 			|| f.getBgStyle().getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))))),
 
-	HAS_WEAPON("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.MAGENTA.darker(), 0.3f)) +
-		"'>&#9876;&nbsp;Fight Includes Weapon", true, "hasweapon", "hasweapon=voidwaker", (filter, f) ->
+	HAS_WEAPON("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.MAGENTA, 0.5f)) +
+		"'>&#9876;&nbsp;Fight Includes Weapon", true, "::wep=", "::wep=voidwaker", (filter, f) ->
 		f.getAllFightLogEntries().stream().anyMatch((log) ->
 		{
 			try
@@ -87,12 +93,13 @@ public enum FightPerformanceFilter
 				return false;
 			}
 		})),
-	BG_STYLE_ALL("<html><font color='" + ColorUtil.colorToHexCode(FightPerformancePanel.BackgroundStyle.SPEC_KO.getHighlightColor()) +
-		"'>&#9744;</font>&nbsp;Border Styles (KO style detection)", true, FightPerformancePanel.BackgroundStyle.PRESET_FILTER_STYLE_KEYWORD, (_f, f) ->
-		f.getBgStyle() != null && f.getBgStyle().isEnabled() && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.DEFAULT),
 	BG_STYLE_MINUS_SPEC("<html><font color='" + ColorUtil.colorToHexCode(FightPerformancePanel.BackgroundStyle.MAX_HIT_KO.getHighlightColor()) +
-		"'>&#9744;</font>&nbsp;Border Styles (excluding Spec KO)", true, FightPerformancePanel.BackgroundStyle.PRESET_FILTER_STYLE_KEYWORD_NO_SPEC, (_f, f) ->
-		f.getBgStyle() != null && f.getBgStyle().isEnabled() && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.DEFAULT && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.SPEC_KO);
+		"'>&#9744;</font>&nbsp;Border Styles (excluding <font color='" + ColorUtil.colorToHexCode(FightPerformancePanel.BackgroundStyle.SPEC_KO.getHighlightColor()) + "'><u>Spec KO</u></font>s)",
+		true, FightPerformancePanel.BackgroundStyle.PRESET_FILTER_STYLE_KEYWORD_NO_SPEC, (_f, f) ->
+		f.getBgStyle() != null && f.getBgStyle().isEnabled() && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.DEFAULT && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.SPEC_KO),
+	BG_STYLE_ALL("<html><font color='" + ColorUtil.colorToHexCode(FightPerformancePanel.BackgroundStyle.SPEC_KO.getHighlightColor()) +
+		"'>&#9744;</font>&nbsp;All Border Styles", true, FightPerformancePanel.BackgroundStyle.PRESET_FILTER_STYLE_KEYWORD, (_f, f) ->
+		f.getBgStyle() != null && f.getBgStyle().isEnabled() && f.getBgStyle() != FightPerformancePanel.BackgroundStyle.DEFAULT);
 
 	final String name;
 	final boolean isPresetFilter; // determines if the filter should be shown on the preset filters dropdown.
