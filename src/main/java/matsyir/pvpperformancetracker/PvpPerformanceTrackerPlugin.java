@@ -131,7 +131,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.4";
+	public static final String PLUGIN_VERSION = "1.8.5";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1312,7 +1312,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
 		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
 		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
-		String updateMsgForVersion = "1.8.4";
+		String updateMsgForVersion = "1.8.5";
 		String updatePrefix = "<shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
 			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
@@ -1321,10 +1321,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Ability to favorite fights, and to filter fights by favorites (& more - clarified filter options & functionality on filter tooltip). " +
-				"Fix gmaul detection for KO chance: improved hitsplat matching accuracy. " +
-				"New feature to hide fights until plugin or client reload - like a temporary delete. " +
-				"Various tooltip & config clarifications. Various background optimizations for UI & recent file format update.")
+				"Augury now properly applies +4% mage damage boost. Support for Virtus set hidden damage boost on ancients, +3% damage per piece. " +
+				"Improved reliability when fetching synced fights from PvP-Hub. Minor tooltip clarifications.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
