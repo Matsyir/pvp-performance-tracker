@@ -68,6 +68,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	// an "incomplete" fight log entry means it's only holding the current attacker's defensive stats to be used with
 	// an opposing attack, to be matched up with fight analysis/data merging
 	// very rough way to do this but itll work
+	// we're no longer doing the merge/analysis on the client for the time being, but this is still being used for merges on pvp hub
 	@Expose
 	@SerializedName("f")
 	private boolean isFullEntry;
@@ -297,43 +298,6 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.attackerOffensivePray = attackerOffensivePray;
 		this.attackerRingItemId = getLocalPlayerRingItemId(PLUGIN.getClient().getLocalPlayer());
 		this.attackerAmmoItemId = getLocalPlayerAmmoItemId(PLUGIN.getClient().getLocalPlayer());
-		this.actualDamageSum = 0;
-	}
-
-	// create new fightlogentry based on existing entry but new damage calcs (for fight analysis/stat merging)
-	public FightLogEntry(FightLogEntry e, PvpDamageCalc pvpDamageCalc)
-	{
-		this.isFullEntry = true;
-
-		// general
-		this.attackerName = e.attackerName;
-		this.time = e.time;
-		this.tick = e.tick;
-		this.hitsplatMatchTick = e.hitsplatMatchTick;
-
-		// attacker data
-		this.attackerGear = e.attackerGear;
-		this.attackerOverhead = e.attackerOverhead;
-		this.animationData = e.animationData;
-		this.expectedDamage = pvpDamageCalc.getAverageHit();
-		this.accuracy = pvpDamageCalc.getAccuracy();
-		this.minHit = pvpDamageCalc.getMinHit();
-		this.maxHit = pvpDamageCalc.getMaxHit();
-		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
-		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
-		this.splash = e.splash;
-		this.defenderElyProc = e.defenderElyProc;
-		this.defenderSotdMeleeReductionProc = e.defenderSotdMeleeReductionProc;
-		this.attackerLevels = e.attackerLevels;
-		this.attackerRingItemId = e.attackerRingItemId;
-		this.attackerAmmoItemId = e.attackerAmmoItemId;
-
-		// defender data
-		this.defenderGear = e.defenderGear;
-		this.defenderOverhead = e.defenderOverhead;
-		this.attackerOffensivePray = e.attackerOffensivePray;
-		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(e.animationData);
-		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
 	}
 
