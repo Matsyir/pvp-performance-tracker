@@ -44,7 +44,7 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 
 // A fight log entry for a single Fighter. Will be saved in a List of FightLogEntries in the Fighter class.
 @Getter
@@ -273,7 +273,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
 		this.defenderOverhead = defender.getOverheadIcon();
 		this.attackerOffensivePray = attackerOffensivePray;
-		this.expectedHits = PvpPerformanceTrackerUtils.getExpectedHits(animationData);
+		this.expectedHits = PvpUtils.getExpectedHits(animationData);
 		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
 	}

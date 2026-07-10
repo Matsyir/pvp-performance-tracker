@@ -52,7 +52,7 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
 
@@ -231,7 +231,7 @@ public class FightLogFrame extends JFrame
 			stats[i][COLIDX_OFF_PRAY] = fightEntry.success() ? "✔" : "";
 
 			// Def Prayer + sotd/ely
-			int prayIcon = PvpPerformanceTrackerUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
+			int prayIcon = PvpUtils.getSpriteForHeadIcon(fightEntry.getDefenderOverhead());
 			boolean hasPray = prayIcon > 0;
 			boolean hasEly = fightEntry.isDefenderElyProc();
 			boolean hasStaffReduction = fightEntry.isDefenderSotdMeleeReductionProc();

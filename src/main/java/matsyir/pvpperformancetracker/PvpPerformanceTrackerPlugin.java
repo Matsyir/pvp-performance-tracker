@@ -73,7 +73,7 @@ import matsyir.pvpperformancetracker.models.HitsplatInfo;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
@@ -1009,8 +1009,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						int hpBeforeThisCycle = -1;
 						if (ratio >= 0 && scale > 0 && maxHpToUse > 0)
 						{
-							hpBefore = PvpPerformanceTrackerUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, entry.getActualDamageSum());
-							hpBeforeThisCycle = PvpPerformanceTrackerUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, damageThisCycle);
+							hpBefore = PvpUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, entry.getActualDamageSum());
+							hpBeforeThisCycle = PvpUtils.calculateHpBeforeHit(ratio, scale, maxHpToUse, damageThisCycle);
 						}
 						if (hpBefore > 0)
 						{
@@ -1161,7 +1161,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 								{
 									healBetween = Math.max(0, hpBeforeP2 - hpAfterP1);
 								}
-								koChanceCurrent = PvpPerformanceTrackerUtils.calculateClawsTwoPhaseKo(entry.getAccuracy(), entry.getMaxHit(), hpBeforeCurrent, healBetween);
+								koChanceCurrent = PvpUtils.calculateClawsTwoPhaseKo(entry.getAccuracy(), entry.getMaxHit(), hpBeforeCurrent, healBetween);
 							}
 						}
 						else if (isDarkBow)
@@ -1178,7 +1178,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 										healBetween = Math.max(0, hpBeforeHit2 - hpAfterHit1);
 									}
 								}
-								koChanceCurrent = PvpPerformanceTrackerUtils.calculateDarkBowTwoPhaseKo(
+								koChanceCurrent = PvpUtils.calculateDarkBowTwoPhaseKo(
 									entry.getAccuracy(),
 									entry.getMinHit(),
 									entry.getMaxHit(),
@@ -1194,7 +1194,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 									switch (entry.getDamageRollDistribution())
 									{
 										case CLAMPED_TO_MINIMUM:
-											koChanceCurrent = PvpPerformanceTrackerUtils.calculateClampedKoChance(
+											koChanceCurrent = PvpUtils.calculateClampedKoChance(
 												entry.getAccuracy(),
 												entry.getMinHit(),
 												entry.getMaxHit(),
@@ -1202,7 +1202,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 											);
 											break;
 										case MULTI_HIT_CLAMPED_TO_MINIMUM:
-											koChanceCurrent = PvpPerformanceTrackerUtils.calculateMultiHitClampedKoChance(
+											koChanceCurrent = PvpUtils.calculateMultiHitClampedKoChance(
 												entry.getAccuracy(),
 												entry.getMinHit(),
 												entry.getMaxHit(),
@@ -1212,7 +1212,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 											break;
 										case STANDARD:
 										default:
-											koChanceCurrent = PvpPerformanceTrackerUtils.calculateKoChance(
+											koChanceCurrent = PvpUtils.calculateKoChance(
 												entry.getAccuracy(),
 												entry.getMinHit(),
 												entry.getMaxHit(),
