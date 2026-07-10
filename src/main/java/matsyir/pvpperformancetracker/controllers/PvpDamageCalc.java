@@ -229,9 +229,6 @@ public class PvpDamageCalc
 
 		getAverageHit(success, weapon, isSpecial);
 
-		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
-		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
-
 		log.debug("attackStyle: " + attackStyle.toString() + ", avgHit: " + nf1.format(averageHit) + ", acc: " + nf1.format(accuracy) +
 			"\nattacker(" + attacker.getName() + ")stats: " + Arrays.toString(playerStats) +
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
@@ -293,9 +290,6 @@ public class PvpDamageCalc
 		}
 
 		getAverageHit(success, weapon, isSpecial);
-
-		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
-		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
 		if (atkLog.isDefenderElyProc())
 		{
