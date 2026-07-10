@@ -56,7 +56,7 @@ import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import net.runelite.api.kit.KitType;
-import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
 import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
 
 // Holds two Fighters which contain data about PvP fight performance, and has many methods to
@@ -183,58 +183,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 		this.pluginVersion = PLUGIN.PLUGIN_VERSION;
 	}
 
-	// return a random fightPerformance used for testing UI
-	static FightPerformance getTestInstance()
-	{
-		int cTotal = (int)(Math.random() * 60) + 8;
-		int cSuccess = (int)(Math.random() * (cTotal - 4)) + 4;
-		double cDamage = (Math.random() * (cSuccess * 25));
-
-		int oTotal = (int)(Math.random() * 60) + 8;
-		int oSuccess = (int)(Math.random() * (oTotal - 4)) + 4;
-		double oDamage = (Math.random() * (oSuccess * 25));
-
-		int secOffset = (int)(Math.random() * 57600) - 28800;
-
-		boolean cDead = Math.random() >= 0.5;
-
-		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>();
-		int [] attackerItems = {0, 0, 0};
-		int [] defenderItems = {0, 0, 0};
-		String attackerName = "testname";
-		FightLogEntry fightLogEntry = new FightLogEntry(attackerItems, 21, 0.5, 1, 12, defenderItems, attackerName);
-		FightLogEntry fightLogEntry2 = new FightLogEntry(attackerItems, 11, 0.2, 1, 41, defenderItems, attackerName);
-		FightLogEntry fightLogEntry3 = new FightLogEntry(attackerItems, 12, 0.3, 1, 21, defenderItems, attackerName);
-		FightLogEntry fightLogEntry4 = new FightLogEntry(attackerItems, 43, 0.1, 1, 23, defenderItems, attackerName);
-		fightLogEntries.add(fightLogEntry);
-		fightLogEntries.add(fightLogEntry2);
-		fightLogEntries.add(fightLogEntry3);
-		fightLogEntries.add(fightLogEntry4);
-		return new FightPerformance("Matsyir", "TEST_DATA", cSuccess, cTotal, cDamage, oSuccess, oTotal, oDamage, cDead, secOffset, fightLogEntries);
-	}
-
-	// Used for testing purposes
-	private FightPerformance(String cName, String oName, int cSuccess, int cTotal, double cDamage, int oSuccess, int oTotal, double oDamage, boolean cDead, int secondOffset, ArrayList<FightLogEntry> fightLogs)
-	{
-		this.competitor = new Fighter(this, cName, fightLogs);
-		this.opponent = new Fighter(this, oName, fightLogs);
-
-		competitor.addAttacks(cSuccess, cTotal, cDamage, (int)cDamage, 20, 12, 13, 11, 22, 25, 26);
-		opponent.addAttacks(oSuccess, oTotal, oDamage, (int)oDamage, 20, 14, 13, 11, 22, 25, 26);
-
-		if (cDead)
-		{
-			competitor.died();
-		}
-		else
-		{
-			opponent.died();
-		}
-
-		lastFightTime = Instant.now().minusSeconds(secondOffset).toEpochMilli();
-		this.initialTime = lastFightTime;
-	}
-
 	// If the given playerName is in this fight, check the Fighter's current animation,
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
@@ -357,8 +305,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 				opponent.getPlayer(),
 				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
-				offensivePray,
-				competitorLevels);
+				offensivePray);
 		}
 	}
 

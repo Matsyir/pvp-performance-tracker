@@ -40,7 +40,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.BrewState;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
-import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.EquipmentData;
@@ -150,25 +150,6 @@ class Fighter
 		baseLevels = player == PLUGIN.getClient().getLocalPlayer() ? CombatLevels.getRealLevels(PLUGIN.getClient()) : null;
 	}
 
-	// fighter for merging fight logs together for detailed data (fight analysis)
-	Fighter(FightPerformance fight, String name, ArrayList<FightLogEntry> logs)
-	{
-		player = null;
-		this.name = name;
-		attackCount = 0;
-		offPraySuccessCount = 0;
-		expectedDamage = 0;
-		damageDealt = 0;
-		totalMagicAttackCount = 0;
-		magicHitCount = 0;
-		magicHitCountExpected = 0;
-		dead = false;
-		pvpDamageCalc = new PvpDamageCalc(fight);
-		fightLogEntries = logs;
-		pendingAttacks = new LinkedList<>();
-		baseLevels = null;
-	}
-
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
 	// but not actually updated during a fight.
 	public Fighter(String name)
@@ -257,7 +238,7 @@ class Fighter
 			staffMeleeReduction = hasStaffMeleeReduction(opponent);
 		}
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
@@ -295,7 +276,7 @@ class Fighter
 		pendingAttacks.add(fightLogEntry);
 	}
 
-	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels)
+	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
 	{
 		int currentTick = PLUGIN.getClient().getTickCount();
 		if (currentTick <= lastGhostBarrageCheckedTick)
@@ -304,13 +285,13 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
 
 		ghostBarrageCount++;
 		ghostBarrageExpectedDamage += pvpDamageCalc.getAverageHit();
 
-		// TODO: Create separate FightLog array for ghost barrages and include those in fight log table
-		// ^^^ also so they could be used in fight analysis/merge. Unused params will be used for this
+		// TODO?: possible future feature - Create separate FightLog array for ghost barrages and include those in fight log table
+		// Dunno if this really makes sense, we wouldn't have defender logs to do a proper merge with it
 	}
 
 
@@ -333,12 +314,6 @@ class Fighter
 	void addDamageDealt(int damage)
 	{
 		this.damageDealt += damage;
-	}
-
-	// will be used for merging fight logs (fight analysis)
-	void addMagicHitCount(int count)
-	{
-		this.magicHitCount += count;
 	}
 
 	void addHpHealed(int hpHealed)
@@ -388,12 +363,6 @@ class Fighter
 	AnimationData getAnimationData()
 	{
 		return AnimationData.fromId(player.getAnimation());
-	}
-
-	// the "addAttack" for a defensive log that creates an "incomplete" fight log entry.
-	void addDefensiveLogs(CombatLevels levels, int offensivePray)
-	{
-		fightLogEntries.add(new FightLogEntry(name, levels, offensivePray));
 	}
 
 	// the "addAttack" for a defensive log that creates an "incomplete" fight log entry.

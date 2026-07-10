@@ -26,7 +26,7 @@
 package matsyir.pvpperformancetracker.models;
 
 import lombok.Getter;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 
 @Getter
 public class BrewState
@@ -83,12 +83,12 @@ public class BrewState
 
 		if (this.category == BrewStateCategory.POTTED || this.category == BrewStateCategory.BREWED_DOWN)
 		{
-			return "<html><strong>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
+			return "<html><strong>" + PvpUtils.prependPlusIfPositive(levelChange) +
 				"</strong>&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
 		}
 		else
 		{
-			return "<html>" + PvpPerformanceTrackerUtils.prependPlusIfPositive(levelChange) +
+			return "<html>" + PvpUtils.prependPlusIfPositive(levelChange) +
 				"&nbsp;<i>(" + (baseLevel + levelChange) + "/" + maxPottedLevel + ")";
 		}
 	}

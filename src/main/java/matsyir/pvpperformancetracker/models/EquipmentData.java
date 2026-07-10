@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import net.runelite.api.ItemID;
 import net.runelite.api.kit.KitType;
 import org.apache.commons.lang3.ArrayUtils;
@@ -188,8 +188,9 @@ public enum EquipmentData
 	MASORI_BODY_F(ItemID.MASORI_BODY_F, ItemID.MASORI_BODY_F_33190),
 	MASORI_CHAPS_F(ItemID.MASORI_CHAPS_F, ItemID.MASORI_CHAPS_F_33192),
 	TORVA_PLATELEGS(ItemID.TORVA_PLATELEGS, ItemID.TORVA_PLATELEGS_33194),
-	VIRTUS_ROBE_TOP(ItemID.VIRTUS_ROBE_TOP, ItemID.VIRTUS_ROBE_TOP_33196),
-	VIRTUS_ROBE_BOTTOM(ItemID.VIRTUS_ROBE_BOTTOM, ItemID.VIRTUS_ROBE_BOTTOM_33198),
+	VIRTUS_MASK(ItemID.VIRTUS_MASK, 26242, ItemID.ECHO_VIRTUS_MASK),
+	VIRTUS_ROBE_TOP(ItemID.VIRTUS_ROBE_TOP, 26244, ItemID.VIRTUS_ROBE_TOP_33196, ItemID.ECHO_VIRTUS_ROBE_TOP),
+	VIRTUS_ROBE_BOTTOM(ItemID.VIRTUS_ROBE_BOTTOM, 26246, ItemID.VIRTUS_ROBE_BOTTOM_33198, ItemID.ECHO_VIRTUS_ROBE_BOTTOM),
 	BURNING_CLAWS(ItemID.BURNING_CLAWS, ItemID.BURNING_CLAWS_33200),
 	ARANEA_BOOTS(ItemID.ARANEA_BOOTS, ItemID.ARANEA_BOOTS_33202),
 	ABYSSAL_DAGGER(ItemID.ABYSSAL_DAGGER, ItemID.ABYSSAL_DAGGER_P, ItemID.ABYSSAL_DAGGER_P_13269, ItemID.ABYSSAL_DAGGER_P_13271, 27861, ItemID.ABYSSAL_DAGGER_BHP, ItemID.ABYSSAL_DAGGER_BHP_27865, ItemID.ABYSSAL_DAGGER_BHP_27867),
@@ -314,7 +315,7 @@ public enum EquipmentData
 		public static VoidStyle getVoidStyleFor(int[] playerComposition)
 		{
 			if (playerComposition == null) { return NONE; }
-			playerComposition = PvpPerformanceTrackerUtils.fixItemIds(playerComposition);
+			playerComposition = PvpUtils.fixItemIds(playerComposition);
 
 			EquipmentData gloves = EquipmentData.fromId(playerComposition[KitType.HANDS.getIndex()]);
 

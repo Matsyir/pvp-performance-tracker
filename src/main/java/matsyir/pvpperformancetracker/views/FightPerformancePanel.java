@@ -60,7 +60,7 @@ import matsyir.pvpperformancetracker.controllers.Fighter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
@@ -348,7 +348,7 @@ public class FightPerformancePanel extends JPanel
 		openOnPvpHub.setForeground(PvpColorScheme.BLUE_TEXT_URL);
 		try
 		{
-			openOnPvpHub.setToolTipText(PvpPerformanceTrackerUtils.getUrlButtonTooltip(buildPvpHubUrl(fight)));
+			openOnPvpHub.setToolTipText(PvpUtils.getUrlButtonTooltip(buildPvpHubUrl(fight)));
 		}
 		catch (Exception ignored) { }
 

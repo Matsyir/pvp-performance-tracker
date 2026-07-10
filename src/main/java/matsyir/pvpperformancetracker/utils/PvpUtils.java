@@ -37,7 +37,7 @@ import java.util.Arrays;
 import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
-public class PvpPerformanceTrackerUtils
+public class PvpUtils
 {
 	private static final int DBOW_MAX_HIT_CAP = 48; // per-arrow cap with dragon arrows in PvP
 
