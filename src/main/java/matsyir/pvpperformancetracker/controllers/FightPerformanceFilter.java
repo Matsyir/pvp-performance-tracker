@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.kit.KitType;
@@ -43,7 +43,7 @@ public enum FightPerformanceFilter
 		true, "::death", (_f, f) -> f.getCompetitor().isDead()),
 
 	DOUBLE_DEATHS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
-		"'>&#9760;&#9760;&nbsp;Double-Deaths", true, "::doubledeath", (_f, f) -> f.getCompetitor().isDead() && f.getOpponent().isDead()),
+		"'>&#9760;&#9760;&nbsp;Double-Deaths", true, "::double", (_f, f) -> f.getCompetitor().isDead() && f.getOpponent().isDead()),
 
 	COMPETITOR_ATTACK_COUNT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.5f)) +
 		"'>&#8807;&sup1;&nbsp;Competitor Attack Count >", true, "::atk", "::atk>20", (filter, f) ->
@@ -130,7 +130,7 @@ public enum FightPerformanceFilter
 		this.requiresExactKeywordMatch = isPresetFilter && filterPrefix.equals(defaultFilterVal);
 		this.matchProvider = matchProvider;
 
-		if ((isPresetFilter && PvpPerformanceTrackerUtils.anyStringNullOrEmpty(this.name, this.filterPrefix, this.defaultFilterVal))
+		if ((isPresetFilter && PvpUtils.anyStringNullOrEmpty(this.name, this.filterPrefix, this.defaultFilterVal))
 			|| this.matchProvider == null)
 		{
 			throw new InvalidParameterException("Attempted to initialize FightPerformanceFilter with missing fields.");
@@ -196,7 +196,7 @@ public enum FightPerformanceFilter
 		// returns INVALID if no match
 		private static ComparisonType from(String requiredPrefix, String filter)
 		{
-			if (PvpPerformanceTrackerUtils.anyStringNullOrEmpty(requiredPrefix, filter))
+			if (PvpUtils.anyStringNullOrEmpty(requiredPrefix, filter))
 			{
 				return INVALID; // invalid params
 			}
