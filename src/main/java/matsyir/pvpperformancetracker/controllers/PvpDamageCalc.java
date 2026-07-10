@@ -35,8 +35,8 @@ import static matsyir.pvpperformancetracker.models.AnimationData.MAGIC_VOLATILE_
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
-import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.fixItemId;
-import static matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils.getExpectedHits;
+import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
+import static matsyir.pvpperformancetracker.utils.PvpUtils.getExpectedHits;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
 import matsyir.pvpperformancetracker.models.CombatLevels;

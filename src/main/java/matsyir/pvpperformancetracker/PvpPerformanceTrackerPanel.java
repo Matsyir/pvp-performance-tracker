@@ -56,7 +56,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
-import matsyir.pvpperformancetracker.utils.PvpPerformanceTrackerUtils;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
 import matsyir.pvpperformancetracker.views.PlaceholderTextField;
@@ -170,7 +170,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			SocialIcon.GITHUB,
 			socialButtonsPopupMenu,
 			() -> LinkBrowser.browse(WIKI_HELP_URL));
-		wikiButton.setToolTipText(PvpPerformanceTrackerUtils.getUrlButtonTooltip(WIKI_HELP_URL));
+		wikiButton.setToolTipText(PvpUtils.getUrlButtonTooltip(WIKI_HELP_URL));
 
 		JShadowedButton discordButton = JShadowedButton.getSocialButton("<html>&nbsp;<u>Discord</u>&nbsp;&#8599",
 			(FULL_PANEL_WIDTH / 2) - 1,
@@ -178,7 +178,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			SocialIcon.DISCORD,
 			socialButtonsPopupMenu,
 			() -> LinkBrowser.browse(DISCORD_INVITE_URL));
-		discordButton.setToolTipText(PvpPerformanceTrackerUtils.getUrlButtonTooltip(DISCORD_INVITE_URL));
+		discordButton.setToolTipText(PvpUtils.getUrlButtonTooltip(DISCORD_INVITE_URL));
 
 		wikiAndDiscordButtonsLine.add(wikiButton, BorderLayout.WEST);
 		wikiAndDiscordButtonsLine.add(discordButton, BorderLayout.EAST);
