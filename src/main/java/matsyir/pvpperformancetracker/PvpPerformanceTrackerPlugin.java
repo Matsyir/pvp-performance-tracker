@@ -1326,7 +1326,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
 		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
 		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
-		String updateMsgForVersion = "1.8.5";
+		String updateMsgForVersion = "1.8.6";
 		String updatePrefix = "<shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
 			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
@@ -1335,8 +1335,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Augury now properly applies +4% mage damage boost. Support for Virtus set hidden damage boost on ancients, +3% damage per piece. " +
-				"Improved reliability when fetching synced fights from PvP-Hub. Minor tooltip clarifications.")
+				"Single-side POV fights now assume your opponent is using the proper offensive and defensive prayers throughout the fight. " +
+				"Possibly corrected incorrect stats for same-tick restore attacks.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
