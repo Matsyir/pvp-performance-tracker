@@ -371,6 +371,39 @@ class Fighter
 		fightLogEntries.add(new FightLogEntry(name, levels, offensivePray, attackTick, attackTime));
 	}
 
+	void refreshCombatLevelsForTick(int tick, CombatLevels levels)
+	{
+		refreshCombatLevelsForTick(fightLogEntries, tick, levels);
+	}
+
+	static void refreshCombatLevelsForTick(ArrayList<FightLogEntry> entries, int tick, CombatLevels levels)
+	{
+		if (entries == null || levels == null)
+		{
+			return;
+		}
+
+		for (int i = entries.size() - 1; i >= 0; i--)
+		{
+			FightLogEntry entry = entries.get(i);
+			if (entry.getTick() < tick)
+			{
+				break;
+			}
+			if (entry.getTick() > tick || entry.getAttackerLevels() == null)
+			{
+				continue;
+			}
+
+			entry.setAttackerLevels(copyLevels(levels));
+		}
+	}
+
+	private static CombatLevels copyLevels(CombatLevels levels)
+	{
+		return new CombatLevels(levels.atk, levels.str, levels.def, levels.range, levels.mage, levels.hp);
+	}
+
 	// Return a simple string to display the current player's success rate.
 	// ex. "42/59 (71%)". The name is not included as it will be in a separate view.
 	// if shortString is true, the percentage is omitted, it only returns the fraction.

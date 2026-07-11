@@ -296,9 +296,11 @@ public enum AnimationData
 					 pray == SpriteID.PRAYER_ULTIMATE_STRENGTH)) ||
 				(this == RANGED &&
 					(pray == SpriteID.PRAYER_RIGOUR ||
+					 pray == SpriteID.PRAYER_DEADEYE ||
 					 pray == SpriteID.PRAYER_EAGLE_EYE)) ||
 				(this == MAGIC &&
 					(pray == SpriteID.PRAYER_AUGURY ||
+					 pray == SpriteID.PRAYER_MYSTIC_VIGOUR ||
 					 pray == SpriteID.PRAYER_MYSTIC_MIGHT)))
 			);
 		}

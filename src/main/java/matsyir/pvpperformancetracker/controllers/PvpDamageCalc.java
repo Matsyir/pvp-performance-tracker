@@ -39,7 +39,9 @@ import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
 import static matsyir.pvpperformancetracker.utils.PvpUtils.getExpectedHits;
 import matsyir.pvpperformancetracker.models.EquipmentData;
 import matsyir.pvpperformancetracker.models.EquipmentData.VoidStyle;
+import matsyir.pvpperformancetracker.models.AssumedPrayers;
 import matsyir.pvpperformancetracker.models.CombatLevels;
+import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
 import net.runelite.api.EquipmentInventorySlot;
@@ -87,15 +89,19 @@ public class PvpDamageCalc
 	private static final double AUGURY_OFFENSIVE_PRAYER_MODIFIER = 1.25;
 	private static final double AUGURY_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.04;
 	private static final double MYSTIC_MIGHT_PRAYER_MODIFIER = 1.15;
+	private static final double MYSTIC_VIGOUR_PRAYER_MODIFIER = 1.18;
+	private static final double MYSTIC_VIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.03;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.23;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER = 1.2;
 	private static final double EAGLE_EYE_PRAYER_MODIFIER = 1.15;
+	private static final double DEADEYE_PRAYER_MODIFIER = 1.18;
 
-	// Defensive pray: Assume you have one of the defensive prays active, but don't assume you have augury
-	// while getting maged, since you would likely be planning to range or melee & using rigour/piety instead.
+	// Defensive pray: live tracking assumes Piety/Rigour/Augury (25%) when the local prayer
+	// level unlocks them; otherwise Steel Skin (15%). Augury mage-def only when Augury is unlocked.
+	// Merge path still uses high-tier def + defender-log Augury when available.
 	private static final double PIETY_DEF_PRAYER_MODIFIER = 1.25;
 	private static final double AUGURY_DEF_PRAYER_MODIFIER = 1.25;
-	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1.25; // assume we never use augury during defence for now (unless merging stats).
+	private static final double AUGURY_MAGEDEF_PRAYER_MODIFIER = 1.25;
 	private static final double RIGOUR_DEF_PRAYER_MODIFIER = 1.25;
 
 	private static final double BALLISTA_SPEC_ACCURACY_MODIFIER = 1.25;
@@ -142,6 +148,7 @@ public class PvpDamageCalc
 	public static final double SMOKE_BATTLESTAFF_DMG_ACC_MODIFIER = 1.1; // both dmg & accuracy modifier
 	public static final double TOME_OF_FIRE_DMG_MODIFIER = 1.5;
 	public static final double VOLATILE_NIGHTMARE_STAFF_ACC_MODIFIER = 0.5;
+	private static final int VIRTUS_ANCIENT_MAGIC_DMG_BONUS = 3;
 
 
 	@Getter
@@ -205,15 +212,20 @@ public class PvpDamageCalc
 		boolean isSpecial = animationData.isSpecial;
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition().getEquipmentIds());
 
+		// Assume defender prayers match local prayer unlocks (opponent prayers are not visible).
+		int localPrayerLevel = PLUGIN.getClient().getRealSkillLevel(Skill.PRAYER);
+		double defencePrayerModifier = AssumedPrayers.assumedDefencePrayerModifier(attackStyle, localPrayerLevel);
+		boolean defensiveAugurySuccess = AssumedPrayers.assumedDefensiveAugury(localPrayerLevel);
+
 		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray, defencePrayerModifier);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
 			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, offensivePray, attackerItems, animationData, attackerAmmoItemId);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId, defencePrayerModifier);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -224,7 +236,7 @@ public class PvpDamageCalc
 			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
 			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
 			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, offensivePray, voidStyle, shield, weapon, hat, top, bottom);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, false);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, defensiveAugurySuccess, defencePrayerModifier);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -270,12 +282,12 @@ public class PvpDamageCalc
 		if (attackStyle.isMelee())
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray, PIETY_DEF_PRAYER_MODIFIER);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
 			getRangedMaxHit(playerStats[RANGE_STRENGTH], isSpecial, weapon, voidStyle, offensivePray, attackerItems, animationData, attackerAmmoItemId);
-			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId);
+			getRangeAccuracy(playerStats[RANGE_ATTACK], opponentStats[RANGE_DEF], isSpecial, weapon, voidStyle, offensivePray, attackerItems, attackerAmmoItemId, RIGOUR_DEF_PRAYER_MODIFIER);
 		}
 		// this should always be true at this point, but just in case. unknown animation styles won't
 		// make it here, they should be stopped in FightPerformance::checkForAttackAnimations
@@ -286,7 +298,8 @@ public class PvpDamageCalc
 			EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
 			EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
 			getMagicMaxHit(playerStats[MAGIC_DAMAGE], animationData, offensivePray, voidStyle, shield, weapon, hat, top, bottom);
-			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY);
+			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray,
+				defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY, AUGURY_DEF_PRAYER_MODIFIER);
 		}
 
 		getAverageHit(success, weapon, isSpecial);
@@ -539,6 +552,7 @@ public class PvpDamageCalc
 	private double getRangedDamagePrayerModifier(int offensivePray)
 	{
 		return offensivePray == SpriteID.PRAYER_RIGOUR ? RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER :
+			offensivePray == SpriteID.PRAYER_DEADEYE ? DEADEYE_PRAYER_MODIFIER :
 			offensivePray == SpriteID.PRAYER_EAGLE_EYE ? EAGLE_EYE_PRAYER_MODIFIER :
 			1;
 	}
@@ -546,18 +560,22 @@ public class PvpDamageCalc
 	private double getRangedAttackPrayerModifier(int offensivePray)
 	{
 		return offensivePray == SpriteID.PRAYER_RIGOUR ? RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER :
+			offensivePray == SpriteID.PRAYER_DEADEYE ? DEADEYE_PRAYER_MODIFIER :
 			offensivePray == SpriteID.PRAYER_EAGLE_EYE ? EAGLE_EYE_PRAYER_MODIFIER :
 			1;
 	}
 
 	private double getMagicDamagePrayerModifier(int offensivePray)
 	{
-		return offensivePray == SpriteID.PRAYER_AUGURY ? AUGURY_OFFENSIVE_PRAYER_DMG_MODIFIER : 1;
+		return offensivePray == SpriteID.PRAYER_AUGURY ? AUGURY_OFFENSIVE_PRAYER_DMG_MODIFIER :
+			offensivePray == SpriteID.PRAYER_MYSTIC_VIGOUR ? MYSTIC_VIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER :
+			1;
 	}
 
 	private double getMagicAttackPrayerModifier(int offensivePray)
 	{
 		return offensivePray == SpriteID.PRAYER_AUGURY ? AUGURY_OFFENSIVE_PRAYER_MODIFIER :
+			offensivePray == SpriteID.PRAYER_MYSTIC_VIGOUR ? MYSTIC_VIGOUR_PRAYER_MODIFIER :
 			offensivePray == SpriteID.PRAYER_MYSTIC_MIGHT ? MYSTIC_MIGHT_PRAYER_MODIFIER :
 			1;
 	}
@@ -770,9 +788,9 @@ public class PvpDamageCalc
 		boolean tome = shield == EquipmentData.TOME_OF_FIRE;
 
 		// assume use of ancients if wearing virtus and apply the hidden +3% per piece
-		mageDamageBonus += hat == EquipmentData.VIRTUS_MASK ? 3 : 0;
-		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_TOP ? 3 : 0;
-		mageDamageBonus += bottom == EquipmentData.VIRTUS_ROBE_BOTTOM ? 3 : 0;
+		mageDamageBonus += hat == EquipmentData.VIRTUS_MASK ? VIRTUS_ANCIENT_MAGIC_DMG_BONUS : 0;
+		mageDamageBonus += top == EquipmentData.VIRTUS_ROBE_TOP ? VIRTUS_ANCIENT_MAGIC_DMG_BONUS : 0;
+		mageDamageBonus += bottom == EquipmentData.VIRTUS_ROBE_BOTTOM ? VIRTUS_ANCIENT_MAGIC_DMG_BONUS : 0;
 
 		double magicBonus = 1 + (mageDamageBonus / 100.0);
 		magicBonus *= getMagicDamagePrayerModifier(offensivePray);
@@ -795,7 +813,7 @@ public class PvpDamageCalc
 		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
 	}
 
-	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray)
+	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, double defencePrayerModifier)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -871,7 +889,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((defenderLevels.def * PIETY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * defencePrayerModifier) + STANCE_BONUS) + 8);
 
 		if (vls && usingSpec)
 		{
@@ -895,7 +913,7 @@ public class PvpDamageCalc
 		}
 	}
 
-	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, Integer attackerAmmoItemId)
+	private void getRangeAccuracy(int playerRangeAtt, int opponentRangeDef, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, Integer attackerAmmoItemId, double defencePrayerModifier)
 	{
 		RangeAmmoData weaponAmmo = getWeaponAmmo(weapon, attackerAmmoItemId);
 		playerRangeAtt += RangeAmmoData.getSeekingArrowAccuracyBonus(weaponAmmo, this.isLmsFight);
@@ -958,7 +976,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((defenderLevels.def * RIGOUR_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * defencePrayerModifier) + STANCE_BONUS) + 8);
 		defenderChance = Math.floor(effectiveLevelTarget * ((double) opponentRangeDef + 64));
 
 		/**
@@ -983,7 +1001,7 @@ public class PvpDamageCalc
 		accuracy = (diamonds || opals) && !(dragonCbow && usingSpec) ? (accuracy * .95) + .05 : accuracy;
 	}
 
-	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, int offensivePray, boolean defensiveAugurySuccess)
+	private void getMagicAccuracy(int playerMageAtt, int opponentMageDef, EquipmentData weapon, AnimationData animationData, VoidStyle voidStyle, int offensivePray, boolean defensiveAugurySuccess, double defencePrayerModifier)
 	{
 		double effectiveLevelPlayer;
 
@@ -1014,7 +1032,7 @@ public class PvpDamageCalc
 		/**
 		 * Defender Chance
 		 */
-		effectiveLevelTarget = Math.floor(((defenderLevels.def * AUGURY_DEF_PRAYER_MODIFIER) + STANCE_BONUS) + 8);
+		effectiveLevelTarget = Math.floor(((defenderLevels.def * defencePrayerModifier) + STANCE_BONUS) + 8);
 		effectiveMagicLevelTarget = Math.floor((defenderLevels.mage * (defensiveAugurySuccess ? AUGURY_MAGEDEF_PRAYER_MODIFIER : 1)) * 0.70);
 		reducedDefenceLevelTarget = Math.floor(effectiveLevelTarget * 0.30);
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;

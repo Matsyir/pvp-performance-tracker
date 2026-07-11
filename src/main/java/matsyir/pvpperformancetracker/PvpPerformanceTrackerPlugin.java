@@ -131,7 +131,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.5";
+	public static final String PLUGIN_VERSION = "1.8.6";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -636,6 +636,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		Skill skill = statChanged.getSkill();
 		if (!hasOpponent()) { return; }
 
+		if (isCombatBoostSkill(skill))
+		{
+			currentFight.refreshCompetitorLevelsForTick(client.getTickCount(), new CombatLevels(client));
+		}
+
 		if (skill == Skill.HITPOINTS)
 		{
 			currentFight.updateCompetitorHp(client.getBoostedSkillLevel(Skill.HITPOINTS));
@@ -650,6 +655,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				clientThread.invokeLater(this::checkForGhostBarrage);
 			}
 		}
+	}
+
+	private static boolean isCombatBoostSkill(Skill skill)
+	{
+		return skill == Skill.ATTACK
+			|| skill == Skill.STRENGTH
+			|| skill == Skill.DEFENCE
+			|| skill == Skill.RANGED
+			|| skill == Skill.MAGIC;
 	}
 
 	@Subscribe
@@ -1312,7 +1326,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
 		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
 		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
-		String updateMsgForVersion = "1.8.5";
+		String updateMsgForVersion = "1.8.6";
 		String updatePrefix = "<shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
 			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
@@ -1321,8 +1335,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Augury now properly applies +4% mage damage boost. Support for Virtus set hidden damage boost on ancients, +3% damage per piece. " +
-				"Improved reliability when fetching synced fights from PvP-Hub. Minor tooltip clarifications.")
+				"Single-side POV fights now assume your opponent is using the proper offensive and defensive prayers throughout the fight. " +
+				"Possibly corrected incorrect stats for same-tick restore attacks.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
@@ -1786,8 +1800,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
 				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
 				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
+				client.isPrayerActive(Prayer.DEADEYE) 			? SpriteID.PRAYER_DEADEYE :
 				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
 				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
+				client.isPrayerActive(Prayer.MYSTIC_VIGOUR)		? SpriteID.PRAYER_MYSTIC_VIGOUR :
 				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
 				0;
 	}
