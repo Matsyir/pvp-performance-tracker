@@ -196,8 +196,9 @@ class FightLogDetailFrame extends JFrame
 		// if there's a valid offensive pray, display it.
 		PLUGIN.addSpriteToLabelIfValid(attackerOffensiveLabel, logEntry.getAttackerOffensivePray());
 
-		if (!isCompetitorLog) // if it wasn't a competitor log, then this is N/A in most cases, and
-		{ // do NOT put a bank filler, to indicate that this is fully N/A, and not "None"
+		// Opponent prayers are assumed from local prayer unlocks when unsynced; only show N/A if none was stored.
+		if (!isCompetitorLog && logEntry.getAttackerOffensivePray() <= 0)
+		{
 			attackerOffensiveLabel.setText("N/A");
 			attackerOffensiveLabel.setIcon(null);
 		}
@@ -331,9 +332,11 @@ class FightLogDetailFrame extends JFrame
 				"<br>The Levels shown here are the Levels that were used for the Expected Damage (eD) calculation, which" +
 				"<br>assumes both players are always potted, in order to be as fair as possible for both players. These" +
 				"<br>Levels are pulled from your config outside of LMS, and are hardcoded to potted LMS stats inside of LMS." +
-				"<br><br>Offensive prayers are also assumed to always be correct while attacking," +
-				"<br>and assumed to be piety or rigour while defending (for both players)." +
-				"<br><br>This has always been the case." +
+				"<br><br>Opponent offensive prayers are assumed to match your Prayer unlocks for their attack style" +
+				"<br>(Piety/Rigour/Augury, or Ultimate Strength/Deadeye/Mystic Vigour below those levels)." +
+				"<br>While defending, Piety/Rigour/Augury (25% Defence) are assumed when unlocked; otherwise Steel Skin (15%)." +
+				"<br>Augury Magic Defence is assumed only when your Prayer level unlocks Augury." +
+				"<br><br>These assumptions are used for Expected Damage until the fight is merged/synced." +
 				"<br><u>You can toggle the visibility of this warning by right clicking it.</u>";
 			JPopupMenu warningTogglePopupMenu = new JPopupMenu();
 			JMenuItem warningToggleMenuItem = new JMenuItem("Toggle Warning Visibility");

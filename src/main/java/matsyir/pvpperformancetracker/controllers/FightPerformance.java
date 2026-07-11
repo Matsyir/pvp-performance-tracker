@@ -40,6 +40,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.AnimationData.AttackStyle;
+import matsyir.pvpperformancetracker.models.AssumedPrayers;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.FightType;
@@ -216,8 +217,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			recordInitialFightTick(animationTick);
 			opponent.setPlayer(eventSource);
-			// there is no offensive prayer data for the opponent so hardcode 0
-			opponent.addAttack(competitor.getPlayer(), animationData, 0, null, animationTick, animationTime);
+			// Opponent prayers aren't visible; assume they match local prayer unlocks for the attack style.
+			int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
+				animationData.attackStyle,
+				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()));
+			opponent.addAttack(competitor.getPlayer(), animationData, assumedOffensivePray, null, animationTick, animationTime);
 			addedAttack = true;
 			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 			competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray(), animationTick, animationTime);
@@ -325,6 +329,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 			competitor.addHpHealed(hpHealed);
 		}
 		competitorPrevHp = currentHp;
+	}
+
+	public void refreshCompetitorLevelsForTick(int tick, CombatLevels levels)
+	{
+		competitor.refreshCombatLevelsForTick(tick, levels);
 	}
 
 	// Will return true if either competitor has died yet

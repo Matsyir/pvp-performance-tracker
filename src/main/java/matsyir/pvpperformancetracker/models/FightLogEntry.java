@@ -108,6 +108,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	private boolean splash; // true if it was a magic attack and it splashed
 	@Expose
 	@SerializedName("C")
+	@Setter
 	private CombatLevels attackerLevels; // CAN BE NULL
 
 	@Getter
