@@ -238,7 +238,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"<br><b>1)</b> Searching for RSN, either yours or the opponent's" +
 			"<br><b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"" +
 			"<br><br>Along with these, there are many preset filter types, which you can try by using the dropdown menu on the right of this textbox." +
-			"<br>Some of these preset filter types are static, such as 'favorite' to show favorited fights." +
+			"<br>Some of these preset filter types are static, such as '::fav' to show favorited fights." +
 			"<br>Others are dynamic, such as searching '::ed>50' to find fights where you earned over 50 Expected Damage.";
 		// to view these preset filters, see FightPerformanceFilter.matches
 
