@@ -21,9 +21,10 @@ import net.runelite.client.util.ColorUtil;
 @Slf4j
 public enum FightPerformanceFilter
 {
-	// order these by priority/which should be checked first. We'll start with preset filter styles,
-	// since those start with a basic string match instead of potentially complex filtering (even the more complex
-	// ones check for prefix strings so won't check much aside from 1 or 2 startsWith() in most cases)
+	// ordered by how they should be shown in the filter dropdown, just relevancy really.
+	// Ideally, all the filter keywords & matchProviders should short-circuit fairly quickly, so that not much processing
+	// is wasted on them. Either way though, creating & re-loading/painting the actual UI/Panels is the intensive part
+	// of filtering, not really the actual filtering, for the most part.
 
 	// dev filters for testing:
 	// long RSNs: to test UI with the longest names
