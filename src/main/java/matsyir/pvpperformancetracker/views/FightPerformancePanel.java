@@ -91,7 +91,8 @@ public class FightPerformancePanel extends JPanel
 	private static final int BOTTOM_SPACING_PX = 4; // vertical px gap between fights
 
 	// border size: 0px left, 0px right, 8px top, 4px bottom (plus extra 4px bottom invisible offset)
-	// The primary background color of the panels is SCROLL_TRACK_COLOR,
+	// The primary background color under the panels is ColorScheme.SCROLL_TRACK_COLOR, but
+	// the main background, on PvpPerformanceTrackerPanel, is BORDER_COLOR
 	private static final Border defaultBorder = PanelFactory.combineBorders(
 		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 		BorderFactory.createEmptyBorder(8, 0, 4, 0));
@@ -127,7 +128,8 @@ public class FightPerformancePanel extends JPanel
 
 		// if your filter is exactly equal to one of these filter words, then we'll display any fights with a
 		// BackgroundStyle, provided it's enabled & not Default.
-		public static final String[] SHOW_ALL_FILTER_WORDS = { "border", "background", "borderstyle" };
+		public static final String PRESET_FILTER_STYLE_KEYWORD = "borderstyle";
+		public static final String PRESET_FILTER_STYLE_KEYWORD_NO_SPEC = "borderstylenospec";
 
 		final String name;
 		final Color highlightColor;

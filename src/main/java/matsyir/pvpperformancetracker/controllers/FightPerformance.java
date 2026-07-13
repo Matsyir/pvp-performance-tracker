@@ -30,8 +30,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import joptsimple.internal.Strings;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,6 +74,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// Delay to assume a fight is over. May seem long, but sometimes people barrage &
 	// stand under for a while to eat. Fights will automatically end when either competitor dies.
 	private static final Duration NEW_FIGHT_DELAY = Duration.ofSeconds(21);
+
+	public static final List<String> PRESET_FILTER_KEYWORDS = List.of(
+		"favorite", "sync", "kill", "death", "double", "doubledeath", FightPerformancePanel.BackgroundStyle.PRESET_FILTER_STYLE_KEYWORD);
 
 	@Expose
 	@SerializedName("c") // use 1 letter serialized variable names for more compact storage
@@ -138,6 +144,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 	@Getter
 	@Setter
 	private transient boolean isFavorite;
+
+	private transient FightPerformancePanel.BackgroundStyle bgStyle = null;
 
 	// shouldn't be used, just here so we can make a subclass, weird java thing
 	public FightPerformance()
@@ -896,6 +904,11 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 	public FightPerformancePanel.BackgroundStyle getBgStyle()
 	{
+		if (bgStyle != null)
+		{
+			return bgStyle;
+		}
+
 		boolean cmpDied = competitor.isDead();
 		boolean oppDied = opponent.isDead();
 		FightLogEntry lastCmpLog = null;
@@ -917,7 +930,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		boolean validOppLog = (lastOppLog != null && lastOppLog.getAnimationData() != null);
 		if (!validCmpLog && !validOppLog)
 		{
-			return FightPerformancePanel.BackgroundStyle.DEFAULT;
+			bgStyle = FightPerformancePanel.BackgroundStyle.DEFAULT;
+			return bgStyle;
 		}
 
 		boolean isCmpMaxHitKo = validCmpLog && oppDied && lastCmpLog.getMaxHit() == lastCmpLog.getActualDamageSum();;
@@ -938,168 +952,34 @@ public class FightPerformance implements Comparable<FightPerformance>
 
 		if (isCmpSpecMaxHitKo || isOppSpecMaxHitKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.MAX_SPEC_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.MAX_SPEC_KO;
 		}
 		else if (isCmpSpecKo || isOppSpecKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.SPEC_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.SPEC_KO;
 		}
 		else if (isCmpPunchKo || isOppPunchKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.PUNCH_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.PUNCH_KO;
 		}
 		else if (isCmpKickKo || isOppKickKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.KICK_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.KICK_KO;
 		}
 		else if (isCmpStaffKo || isOppStaffKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.STAFF_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.STAFF_KO;
 		}
 		else if (isCmpMaxHitKo || isOppMaxHitKo)
 		{
-			return FightPerformancePanel.BackgroundStyle.MAX_HIT_KO;
+			bgStyle = FightPerformancePanel.BackgroundStyle.MAX_HIT_KO;
 		}
-
-		return FightPerformancePanel.BackgroundStyle.DEFAULT;
-	}
-
-	public boolean isRelevantForFilter(String filter, FightPerformancePanel.BackgroundStyle bgStyle)
-	{
-		// empty is a valid filter, it means display every fight - don't filter them
-		if (Strings.isNullOrEmpty(filter))
+		else
 		{
-			return true;
+			bgStyle = FightPerformancePanel.BackgroundStyle.DEFAULT;
 		}
 
-		// temp dev filters
-
-		// for testing ui with long names
-//		try
-//		{
-//			if (filter.startsWith("long"))
-//			{
-//				return competitor.getName().length() >= 12 || opponent.getName().length() >= 12;
-//			}
-//		}
-//		catch (Exception e) { }
-
-		// for finding vw spec or other weapons to debug
-//		if (filter.equals("voidwaker") && getAllFightLogEntries().stream().anyMatch(l -> l.getAnimationData() == AnimationData.MELEE_VOIDWAKER_SPEC))
-//		{
-//			return true;
-//		}
-
-		try
-		{
-			// before even checking for normal results, see if the filter is a "preset hardcoded filter", in which case
-			// we won't include other kinds of results along with those, only the desired filter.
-			// skip all these checks if length<4 since our shortest hardcoded filter is 4 characters (kill)
-			if (filter.length() >= 4)
-			{
-				if (filter.equals("favorite"))
-				{
-					return isFavorite;
-				}
-				if (filter.equals("sync"))
-				{
-					return hasPvpHubSyncedFight();
-				}
-				if (filter.equals("kill"))
-				{
-					return opponent.isDead();
-				}
-				if (filter.equals("death"))
-				{
-					return competitor.isDead();
-				}
-				if (filter.equals("double") || filter.equals("doubledeath"))
-				{
-					return competitor.isDead() && opponent.isDead();
-				}
-				if (Arrays.asList(FightPerformancePanel.BackgroundStyle.SHOW_ALL_FILTER_WORDS).contains(filter))
-				{
-					return bgStyle.isEnabled() && bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT;
-				}
-
-			}
-
-
-			boolean isRelevant = ( // first filter result type: basic name match. Whether it's an exact match or just startsWith depends on config.
-					(CONFIG.exactNameFilter()
-						? (competitor.getName().toLowerCase().equals(filter) || opponent.getName().toLowerCase().equals(filter))
-						: (competitor.getName().toLowerCase().startsWith(filter) || opponent.getName().toLowerCase().startsWith(filter))
-					)
-				|| ( // second filter result type: bgStyle.name match. e.g, you can search 'max' or 'max hit' to see fights that ended in a max hit ko.
-					(bgStyle != FightPerformancePanel.BackgroundStyle.DEFAULT
-						&& bgStyle.isEnabled()
-						&& (bgStyle.getName().toLowerCase().startsWith(filter)
-						|| bgStyle.getName().replace(" ", "").toLowerCase().startsWith(filter.replace(" ", "")))
-					)
-				)
-			);
-
-			// if it's already relevant from one of the first 2 filter types, skip checking for the 3rd.
-			if (isRelevant)
-			{
-				return isRelevant;
-			}
-		}
-		// if there's somehow an exception during this filter (shouldn't happen), just return false
-		catch (Exception e)
-		{
-			return false;
-		}
-
-		// third filter type: Filter by >, >=, <, or <= total number of attacks from the client player / competitor
-		// e.g, >60 will show fights with over 60 attacks by the client player.
-		// <=10 will show fights with <= 10 total attacks by the client player.
-		try
-		{
-			if (filter.length() < 2)
-			{
-				return false;
-			}
-			boolean isGtFilter = filter.startsWith(">");
-			boolean isLtFilter = filter.startsWith("<");
-			if (!isGtFilter && !isLtFilter && filter.length() < 3)
-			{
-				return false;
-			}
-			boolean isGteFilter = filter.startsWith(">=");
-			boolean isLteFilter = filter.startsWith("<=");
-
-			if (!isGtFilter && !isGteFilter && !isLtFilter && !isLteFilter)
-			{
-				return false;
-			}
-
-			boolean is2charStart = isGteFilter || isLteFilter;
-			StringBuilder sb = new StringBuilder();
-
-			// remove gt/gte symbol, remove all chars that aren't digits, append to string
-			filter.substring(is2charStart ? 2 : 1)
-				.chars()
-				.mapToObj(c -> (char)c)
-				.filter(Character::isDigit)
-				.forEach(sb::append);
-
-			// parse int from string, only compare if it's >0
-			int filterNumber = Integer.parseInt(sb.toString());
-			if (filterNumber <= 0)
-			{
-				return false;
-			}
-
-			return (isGtFilter && competitor.getAttackCount() > filterNumber) ||
-				(isGteFilter && competitor.getAttackCount() >= filterNumber) ||
-				(isLtFilter && competitor.getAttackCount() < filterNumber) ||
-				(isLteFilter && competitor.getAttackCount() <= filterNumber);
-		}
-		catch(Exception e)
-		{
-			return false;
-		}
+		return bgStyle;
 	}
 
 	public boolean isSavedToFile()

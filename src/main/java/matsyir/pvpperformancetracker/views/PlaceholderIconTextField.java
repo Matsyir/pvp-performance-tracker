@@ -6,41 +6,26 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import javax.swing.JTextField;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.components.IconTextField;
 
 @Getter
 @Setter
-public class PlaceholderTextField extends JTextField
+public class PlaceholderIconTextField extends IconTextField
 {
-	private static final Color DEFAULT_PLACEHOLDER_COLOR = ColorScheme.LIGHT_GRAY_COLOR;
+	private static final Color DEFAULT_PLACEHOLDER_COLOR = ColorScheme.TEXT_COLOR;
 	private static final Color DEFAULT_PLACEHOLDER_SHADOW_COLOR = Color.BLACK;
 
 	private String placeholder;
 	private Color placeholderColor = DEFAULT_PLACEHOLDER_COLOR;
 	private Color placeholderShadowColor = DEFAULT_PLACEHOLDER_SHADOW_COLOR;
 
-	public PlaceholderTextField(String placeholder)
+	public PlaceholderIconTextField()
 	{
 		super();
-		this.placeholder = placeholder;
 	}
-
-	public PlaceholderTextField(String placeholder, String text)
-	{
-		super(text);
-		this.placeholder = placeholder;
-	}
-
-	public PlaceholderTextField(String placeholder, String text, Color placeholderColor)
-	{
-		super(text);
-		this.placeholder = placeholder;
-		this.placeholderColor = placeholderColor;
-	}
-
 
 	@Override
 	protected void paintComponent(Graphics g)
@@ -63,23 +48,7 @@ public class PlaceholderTextField extends JTextField
 				int availableWidth = getWidth() - insets.left - insets.right;
 
 				int x;
-				switch (getHorizontalAlignment())
-				{
-					case CENTER:
-						x = insets.left + (availableWidth - textWidth) / 2;
-						break;
-
-					case RIGHT:
-					case TRAILING:
-						x = getWidth() - insets.right - textWidth;
-						break;
-
-					case LEFT:
-					case LEADING:
-					default:
-						x = insets.left;
-						break;
-				}
+				x = insets.left + (int)((double)(availableWidth - textWidth) / (1.0 / getAlignmentX()));
 
 				int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
 

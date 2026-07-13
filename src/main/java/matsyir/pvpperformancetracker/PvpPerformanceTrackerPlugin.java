@@ -1926,7 +1926,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		addItemToLabelIfValid(label, itemId, true, null);
 	}
 
-	public String updateNameFilterConfig(String newFilterName)
+	public String updateFightFilterConfig(String newFilterName)
 	{
 		String sanitizedFilterName = Text.sanitize(newFilterName.stripLeading().toLowerCase());
 

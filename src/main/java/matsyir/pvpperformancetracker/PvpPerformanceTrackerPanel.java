@@ -43,23 +43,22 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.Border;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
+import matsyir.pvpperformancetracker.controllers.FightPerformanceFilter;
 import matsyir.pvpperformancetracker.utils.MouseAndFocusListener;
 import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.FightPerformancePanel;
 import matsyir.pvpperformancetracker.views.JShadowedButton;
-import matsyir.pvpperformancetracker.views.PlaceholderTextField;
+import matsyir.pvpperformancetracker.views.PanelFactory;
+import matsyir.pvpperformancetracker.views.PlaceholderIconTextField;
 import matsyir.pvpperformancetracker.utils.SocialIcon;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import static matsyir.pvpperformancetracker.views.TotalStatsPanel.WIKI_HELP_URL;
@@ -70,6 +69,7 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.LinkBrowser;
 
 @Slf4j
@@ -80,6 +80,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public static final int FIGHT_PERFORMANCE_PANEL_WIDTH = FULL_PANEL_WIDTH - FIGHT_HISTORY_SCROLL_WIDTH;
 	public static final int SOCIAL_BTN_HEIGHT = 34;
 	public static final int PVP_HUB_HIDDEN_NAME_BTN_HEIGHT = 25;
+	public static final int FIGHT_FILTER_HEIGHT = 28; //34
 
 	// put a small delay on the name filtering behavior so it doesn't lag too much if typing quickly
 	public static final int BASE_NAME_FILTER_DELAY = 45; // base delay in ms
@@ -140,6 +141,9 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		setBackground(ColorScheme.BORDER_COLOR);
 		setBorder(null);
 		JPanel mainContent = new JPanel(new BorderLayout());
+
+		panelFilterTask.setRepeats(false);
+		enqueueRebuildTask.setRepeats(false);
 
 		fightHistoryContainer.setLayout(new BoxLayout(fightHistoryContainer, BoxLayout.Y_AXIS));
 
@@ -233,68 +237,92 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			"<br><br>There are a few different ways you can filter fights:" +
 			"<br><b>1)</b> Searching for RSN, either yours or the opponent's" +
 			"<br><b>2)</b> Searching for the Border style, for example you can search for \"max hit ko\" or \"spec ko\"" +
-			"<br><b>3)</b> Searching for <i>&gt;X</i>, <i>&gt;=X</i>, <i>&lt;X</i>, or <i>&lt;=X</i> &nbsp;total attacks by the client player" +
-			"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, <i>\"&gt;60\"</i> will only display fights with over 60 total attacks made by yourself (the client player)" +
-			"<br><br>There are also a few preset filters you can search for:" +
-			"<br>&nbsp;&#xbb; <u>favorite</u> (shows any fights you favorited)" +
-			"<br>&nbsp;&#xbb; <u>sync</u> (shows any fights that have been synced via PvP-Hub for improved statistic accuracy)" +
-			"<br>&nbsp;&#xbb; <u>kill</u> (shows any fights where your opponent died)" +
-			"<br>&nbsp;&#xbb; <u>death</u> (shows any fights where you died)" +
-			"<br>&nbsp;&#xbb; <u>double</u> | <u>doubledeath</u> (shows any double-death fights)" +
-			"<br>&nbsp;&#xbb; <u>border</u> | <u>background</u> | <u>borderstyle</u> (shows any fight which has a non-default border style)";
-		// to view these preset filters, see FightPerformance.isRelevantForFilter
+			"<br><br>Along with these, there are many preset filter types, which you can try by using the dropdown menu on the right of this textbox." +
+			"<br>Some of these preset filter types are static, such as 'favorite' to show favorited fights." +
+			"<br>Others are dynamic, such as searching '::ed>50' to find fights where you earned over 50 Expected Damage.";
+		// to view these preset filters, see FightPerformanceFilter.matches
 
 		filterLine.setForeground(ColorScheme.TEXT_COLOR);
 		filterLine.setBackground(ColorScheme.BORDER_COLOR);
-		// filter textfield
-		PlaceholderTextField nameFilter = new PlaceholderTextField("Filter Fights:", config.nameFilter());
-		nameFilter.setHorizontalAlignment(SwingConstants.CENTER);
-		nameFilter.setForeground(ColorScheme.TEXT_COLOR);
-		nameFilter.setBackground(ColorScheme.BORDER_COLOR);
-		Border nameFilterBorder = pvpHubHiddenNameBtn.getPaddedPanelActionBorder();
-		Border nameFilterBorderHovered = pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered();
-		nameFilter.setBorder(nameFilterBorder);
-		filterLine.setMaximumSize(
-			new Dimension(FULL_PANEL_WIDTH,
-			Math.max((int) filterLine.getPreferredSize().getHeight(), PVP_HUB_HIDDEN_NAME_BTN_HEIGHT)));
-		filterLine.setPreferredSize(filterLine.getMaximumSize());
 
-		panelFilterTask.setRepeats(false);
-		((AbstractDocument) nameFilter.getDocument()).setDocumentFilter(new DocumentFilter()
+		// filter textfield (IconTextField inspired from core's PluginListPanel)
+		IconTextField fightFilterTextField = new IconTextField();
+		fightFilterTextField.setText(config.fightFilter());
+		fightFilterTextField.setIcon(PlaceholderIconTextField.Icon.SEARCH);
+		fightFilterTextField.setForeground(ColorScheme.TEXT_COLOR);
+		fightFilterTextField.setBackground(ColorScheme.BORDER_COLOR);
+		fightFilterTextField.setMaximumSize(
+			new Dimension(FULL_PANEL_WIDTH - 1,
+				Math.max((int) fightFilterTextField.getPreferredSize().getHeight(), FIGHT_FILTER_HEIGHT)));
+		fightFilterTextField.setPreferredSize(fightFilterTextField.getMaximumSize());
+		fightFilterTextField.setMinimumSize(fightFilterTextField.getPreferredSize());
+
+		for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+		{
+			if (filter.isPresetFilter())
+			{
+				fightFilterTextField.getSuggestionListModel().addElement(filter.getName());
+			}
+		}
+
+		Border nameFilterBorder = PanelFactory.combineBorders(leftBorder, pvpHubHiddenNameBtn.getPaddedPanelActionBorder());
+		Border nameFilterBorderHovered = PanelFactory.combineBorders(leftBorder, pvpHubHiddenNameBtn.getPaddedPanelActionBorderHovered());
+		filterLine.setBorder(nameFilterBorder);
+		filterLine.setMaximumSize(fightFilterTextField.getMaximumSize());
+		filterLine.setPreferredSize(fightFilterTextField.getMaximumSize());
+		filterLine.setMinimumSize(fightFilterTextField.getMaximumSize());
+
+		fightFilterTextField.getDocument().addDocumentListener(new DocumentListener()
 		{
 			@Override
-			public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-				throws BadLocationException
+			public void insertUpdate(DocumentEvent e)
 			{
-				update(fb, offset, 0, string, attr);
+				onFilterChanged();
 			}
 
 			@Override
-			public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException
+			public void removeUpdate(DocumentEvent e)
 			{
-				update(fb, offset, length, text, attrs);
+				onFilterChanged();
 			}
 
 			@Override
-			public void remove(FilterBypass fb, int offset, int length)
-				throws BadLocationException
+			public void changedUpdate(DocumentEvent e)
 			{
-				update(fb, offset, length, "", null);
+				onFilterChanged();
 			}
 
-			private void update(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException
+			private boolean applyUpdates = true;
+			private void onFilterChanged()
 			{
-				String sanitized = fb.getDocument().getText(0, fb.getDocument().getLength());
+				if (!applyUpdates)
+				{
+					return;
+				}
 
-				sanitized = sanitized.substring(0, offset)
-					+ text
-					+ sanitized.substring(offset + length);
-
-				sanitized = plugin.updateNameFilterConfig(sanitized);
-
-				fb.replace(0, fb.getDocument().getLength(), sanitized, attrs);
+				String newText = fightFilterTextField.getText();
+				for (FightPerformanceFilter filter : FightPerformanceFilter.values())
+				{
+					if (filter.getName().equals(newText))
+					{
+						newText = filter.getDefaultFilterVal();
+						final String updatedText = newText;
+						applyUpdates = false;
+						SwingUtilities.invokeLater(() ->
+						{ // hack to allow self-updating in the onFilterChanged. Use this applyUpdates bool to prevent starting a loop.
+							try
+							{
+								fightFilterTextField.setText(updatedText);
+							}
+							finally
+							{
+								applyUpdates = true;
+							}
+						});
+						break;
+					}
+				}
+				plugin.updateFightFilterConfig(newText);
 
 				panelFilterTask.restart();
 			}
@@ -307,7 +335,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			public void focusGained(FocusEvent e)
 			{
 				nameFilterFocused = true;
-				nameFilter.setBorder(nameFilterBorderHovered);
+				filterLine.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -316,7 +344,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				nameFilterFocused = false;
 				if (!nameFilterHovered)
 				{
-					nameFilter.setBorder(nameFilterBorder);
+					filterLine.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -324,7 +352,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			public void mouseEntered(MouseEvent e)
 			{
 				nameFilterHovered = true;
-				nameFilter.setBorder(nameFilterBorderHovered);
+				filterLine.setBorder(nameFilterBorderHovered);
 			}
 
 			@Override
@@ -333,7 +361,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 				nameFilterHovered = false;
 				if (!nameFilterFocused)
 				{
-					nameFilter.setBorder(nameFilterBorder);
+					filterLine.setBorder(nameFilterBorder);
 				}
 			}
 
@@ -341,18 +369,15 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 			@Override public void mousePressed(MouseEvent e) {}
 			@Override public void mouseReleased(MouseEvent e) {}
 		};
-		nameFilter.addFocusListener(mouseAndFocusListener);
-		nameFilter.addMouseListener(mouseAndFocusListener);
+		fightFilterTextField.addFocusListener(mouseAndFocusListener);
+		fightFilterTextField.addMouseListener(mouseAndFocusListener);
 
-		filterLine.add(nameFilter, BorderLayout.CENTER);
+		filterLine.add(fightFilterTextField, BorderLayout.CENTER);
 		filterLine.setToolTipText(filterTooltip);
-		filterLine.setBorder(leftBorder);
-		nameFilter.setToolTipText(filterTooltip);
+		fightFilterTextField.setToolTipText(filterTooltip);
 
 		add(filterLine);
 		add(Box.createVerticalStrut(1));
-
-		enqueueRebuildTask.setRepeats(false);
 
 		// wrap mainContent with scrollpane so it's scrollable
 		JScrollPane scrollableContainer = new JScrollPane(mainContent,
@@ -371,7 +396,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFight(FightPerformance fight)
 	{
 		// skip adding the fight to panels if it doesn't respect the name filter
-		if (!fight.isRelevantForFilter(config.nameFilter(), fight.getBgStyle()))
+		if (!FightPerformanceFilter.matches(fight))
 		{
 			return;
 		}
@@ -397,11 +422,10 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void addFights(ArrayDeque<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
 	{
 		// skip adding any fights to panels if they don't respect the name filter
-		// see FightPerformance.isRelevantForFilter for filter behavior details
-		if (!config.nameFilter().isEmpty())
+		// see FightPerformanceFilter.matches for filter behavior details
+		if (!config.fightFilter().isEmpty())
 		{
-			fights.removeIf((FightPerformance f) ->
-				!f.isRelevantForFilter(config.nameFilter(), f.getBgStyle()));
+			fights.removeIf((FightPerformance f) -> !FightPerformanceFilter.matches(f));
 		}
 
 		//log.info("Panel.addFights: skipUpdatesIfFightCountUnchanged=" + skipUpdatesIfFightCountUnchanged + ", fights.size=" + fights.size() + ", filteredFightCount=" + filteredFightCount);
