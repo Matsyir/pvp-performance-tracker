@@ -238,11 +238,11 @@ public class FightLogFrame extends JFrame
 			double eDmgDiffOpp = fight.opponent.getExpectedDamage() - rootFight.opponent.getExpectedDamage();
 			String eDmgDiffWordOpp = eDmgDiffOpp >= 0 ? " gained " : " lost ";
 
-			JLabel clientDiffLabel = new JLabel("<html>&nbsp;&nbsp;&nbsp;&nbsp;<font color='"
+			JLabel clientDiffLabel = new JLabel("<html>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color='"
 				+ (eDmgDiffClient >= 0 ? ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION_WHITER) : ColorUtil.colorToHexCode(PvpColorScheme.ORANGE_TEXT_ACTION))+ "'>"
 				+ PvpUtils.prependPlusIfPositive(nf.format(eDmgDiffClient), eDmgDiffClient) + " eD<br><br><br><br><br><br><br>");
 			clientDiffLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-			clientDiffLabel.setToolTipText(fight.competitor.getName() + eDmgDiffWordClient + Math.abs(eDmgDiffClient) + " expected damage after syncing via PvP-Hub.");
+			clientDiffLabel.setToolTipText(fight.competitor.getName() + eDmgDiffWordClient + nf.format(Math.abs(eDmgDiffClient)) + " expected damage after syncing via PvP-Hub.");
 
 			fightPerformancePanelDisplayLine.add(clientDiffLabel);
 
@@ -252,14 +252,14 @@ public class FightLogFrame extends JFrame
 				+ (eDmgDiffOpp >= 0 ? ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION_WHITER) : ColorUtil.colorToHexCode(PvpColorScheme.ORANGE_TEXT_ACTION))+ "'>"
 				+ PvpUtils.prependPlusIfPositive(nf.format(eDmgDiffOpp), eDmgDiffOpp) + " eD<br><br><br><br><br><br><br>");
 			oppDiffLabel.setHorizontalAlignment(SwingConstants.LEFT);
-			oppDiffLabel.setToolTipText(fight.opponent.getName() + eDmgDiffWordOpp + Math.abs(eDmgDiffOpp) + " expected damage after syncing via PvP-Hub.");
+			oppDiffLabel.setToolTipText(fight.opponent.getName() + eDmgDiffWordOpp + nf.format(Math.abs(eDmgDiffOpp)) + " expected damage after syncing via PvP-Hub.");
 
 			fightPerformancePanelDisplayLine.add(oppDiffLabel);
 
 
 			String sep = "-" + s.repeat(3);
-			syncedLabel.setText("<html>&#128196;&nbsp;<i>Client</i>" + s.repeat(6) + sep.repeat(12) + s
-				+ "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;<u>Synced</u></font>" + s.repeat(10));
+			syncedLabel.setText("<html>&#128196;&nbsp;<i>Client</i>" + s.repeat(10) + sep.repeat(12) + s
+				+ "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;<u>Synced</u></font>" + s.repeat(12));
 		}
 		else
 		{
