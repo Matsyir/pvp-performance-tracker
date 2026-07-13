@@ -241,6 +241,9 @@ public class PvpDamageCalc
 
 		getAverageHit(success, weapon, isSpecial);
 
+		// UNSUCCESSFUL_PRAY_DMG_MODIFIER is already applied to average hit inside the getAverageHit call above,
+		// but I suppose this shouldn't introduce any issues since it's being called after?
+		// The min/maxHits should indeed account for the UNSUCCESSFUL_PRAY_DMG_MODIFIER.
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
@@ -307,6 +310,9 @@ public class PvpDamageCalc
 
 		getAverageHit(success, weapon, isSpecial);
 
+		// UNSUCCESSFUL_PRAY_DMG_MODIFIER is already applied to average hit inside the getAverageHit call above,
+		// but I suppose this shouldn't introduce any issues since it's being called after?
+		// The min/maxHits should indeed account for the UNSUCCESSFUL_PRAY_DMG_MODIFIER.
 		maxHit = (int)(maxHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 		minHit = (int)(minHit * (success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
 
