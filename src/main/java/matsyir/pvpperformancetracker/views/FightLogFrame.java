@@ -27,23 +27,28 @@ package matsyir.pvpperformancetracker.views;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Point;
+import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import lombok.extern.slf4j.Slf4j;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPanel;
 import matsyir.pvpperformancetracker.controllers.Fighter;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.BrewState;
@@ -52,9 +57,11 @@ import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN_ICON;
 
+import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpUtils;
 import net.runelite.api.ItemID;
 import net.runelite.api.SpriteID;
+import net.runelite.client.util.ColorUtil;
 
 @Slf4j
 public class FightLogFrame extends JFrame
@@ -115,12 +122,17 @@ public class FightLogFrame extends JFrame
 	private ListSelectionListener onRowSelected;
 	private ArrayList<FightLogEntry> fightLogEntries;
 
-	public static void createFightLogFrame(FightPerformance fight, JRootPane rootPane)
+	public static void createOriginalFightLogFrame(FightPerformance rootFight, JRootPane rootPane)
 	{
-		createFightLogFrame(fight, rootPane, false);
+		createFightLogFrame(rootFight, rootPane, true);
 	}
 
-	public static void createFightLogFrame(FightPerformance fight, JRootPane rootPane, boolean pvpHubSynced)
+	public static void createFightLogFrame(FightPerformance rootFight, JRootPane rootPane)
+	{
+		createFightLogFrame(rootFight, rootPane, false);
+	}
+
+	public static void createFightLogFrame(FightPerformance rootFight, JRootPane rootPane, boolean showOriginal)
 	{
 		// destroy current frame if it exists so we only have one at a time (static field)
 		if (fightLogFrame != null)
@@ -129,7 +141,7 @@ public class FightLogFrame extends JFrame
 		}
 
 		// show error modal if the fight has no log entries to display.
-		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(fight.getAllFightLogEntries());
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(rootFight.getAllFightLogEntries());
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
 		if (fightLogEntries.isEmpty())
 		{
@@ -137,19 +149,23 @@ public class FightLogFrame extends JFrame
 		}
 		else
 		{
-			fightLogFrame = new FightLogFrame(fight,
+			fightLogFrame = new FightLogFrame(rootFight,
 				fightLogEntries,
 				rootPane,
-				pvpHubSynced);
+				showOriginal);
 		}
 	}
 
 	// expects logEntries composing of only "full" log entries, that contain full attack data, not defender entries.
-	private FightLogFrame(FightPerformance fight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane, boolean pvpHubSynced)
+	private FightLogFrame(FightPerformance rootFight, ArrayList<FightLogEntry> logEntries, JRootPane rootPane, boolean showOriginal)
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
-		super("Fight Log - " + fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName()
-			+ " on world " + fight.getWorld() + (pvpHubSynced ? " *SYNCED*" : ""));
+		super("Fight Log - " + rootFight.getCompetitor().getName() + " vs " + rootFight.getOpponent().getName()
+			+ " on world " + rootFight.getWorld() + (rootFight.hasPvpHubSyncedFight() && !showOriginal ? " *SYNCED*" : ""));
+
+		boolean pvpHubSynced = rootFight.hasPvpHubSyncedFight() && !showOriginal;
+
+		FightPerformance fight = pvpHubSynced ? rootFight : rootFight.getPvpHubDisplayFight();
 
 		fightLogEntries = logEntries;
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
@@ -166,6 +182,57 @@ public class FightLogFrame extends JFrame
 		setLocation(rootPane.getLocationOnScreen());
 
 		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+
+		// prepare FightPerformancePanel display
+		JPanel fightPerformancePanelDisplayArea = new JPanel(new BorderLayout(2, 2));
+		JPanel fightPerformancePanelDisplayLine = new JPanel(new FlowLayout(FlowLayout.CENTER, 32, 2));
+		JLabel syncedLabel = new JLabel();
+		syncedLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+		JCheckBox displayPanelToggle = new JCheckBox();
+		displayPanelToggle.setSelected(pvpHubSynced);
+		displayPanelToggle.setHorizontalAlignment(SwingConstants.CENTER);
+		displayPanelToggle.setText(pvpHubSynced ? "Display Client vs. Synced Panel Comparison?" : "Display Fight Panel?");
+		ItemListener onToggleDisplayPanels = e -> {
+			fightPerformancePanelDisplayLine.setSize(displayPanelToggle.isSelected()
+				? new Dimension(
+				PvpPerformanceTrackerPanel.FIGHT_PERFORMANCE_PANEL_WIDTH * fightPerformancePanelDisplayLine.getComponentCount() + ((fightPerformancePanelDisplayLine.getComponentCount() - 1) * 32),
+					fightPerformancePanelDisplayLine.getComponent(0).getHeight()
+				)
+				: new Dimension(0, 0)
+			);
+			fightPerformancePanelDisplayArea.setSize(fightPerformancePanelDisplayArea.getWidth(), fightPerformancePanelDisplayLine.getHeight() + (displayPanelToggle.isSelected() ? 48 : 24));
+
+			syncedLabel.setVisible(displayPanelToggle.isSelected());
+			fightPerformancePanelDisplayLine.setVisible(displayPanelToggle.isSelected());
+		};
+		displayPanelToggle.addItemListener(onToggleDisplayPanels);
+		fightPerformancePanelDisplayArea.add(displayPanelToggle, BorderLayout.NORTH);
+
+		fightPerformancePanelDisplayArea.add(fightPerformancePanelDisplayLine, BorderLayout.SOUTH);
+
+		String s = "&nbsp;";
+		if (pvpHubSynced)
+		{
+			fightPerformancePanelDisplayLine.add(PLUGIN.getPanel().createFightPanelFor(rootFight, true, false));
+			fightPerformancePanelDisplayLine.add(PLUGIN.getPanel().createFightPanelFor(rootFight, false, false));
+
+			String sep = "-" + s.repeat(3);
+			syncedLabel.setText("<html>&#128196;&nbsp;<i>Client</i>" + s.repeat(6) + sep.repeat(12) + s
+				+ "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;<u>Synced</u></font>");
+		}
+		else
+		{
+			fightPerformancePanelDisplayLine.add(PLUGIN.getPanel().createFightPanelFor(rootFight, true, false));
+
+			syncedLabel.setText("<html>&#128196;<i>Local Client Data Only</i>");
+		}
+		fightPerformancePanelDisplayArea.add(syncedLabel, BorderLayout.CENTER);
+
+		onToggleDisplayPanels.itemStateChanged(null);
+		mainPanel.add(fightPerformancePanelDisplayArea, BorderLayout.NORTH);
+
+		// prepare table content
 		Object[][] stats = new Object[fightLogEntries.size()][COL_INDEXES.length];
 		int i = 0;
 		int initialTick = 0;
@@ -376,6 +443,7 @@ public class FightLogFrame extends JFrame
 		};
 
 		table.getSelectionModel().addListSelectionListener(onRowSelected);
+
 
 		mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 

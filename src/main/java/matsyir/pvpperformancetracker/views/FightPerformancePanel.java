@@ -203,10 +203,10 @@ public class FightPerformancePanel extends JPanel
 	//     4 G.B. (37)				N/A // ghost barrages
 	//
 
-	public FightPerformancePanel(PvpPerformanceTrackerPanel pluginPanel, FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier)
+	public FightPerformancePanel(PvpPerformanceTrackerPanel pluginPanel, FightPerformance fight, WorldService worldService, IntSupplier worldLocationSupplier, boolean showOriginal, boolean enableActions)
 	{
 		boolean pvpHubSynced = fight.hasPvpHubSyncedFight();
-		FightPerformance displayFight = fight.getPvpHubDisplayFight();
+		FightPerformance displayFight = showOriginal ? fight : fight.getPvpHubDisplayFight();
 
 		// save Fighters temporarily for more direct access
 		Fighter competitor = displayFight.getCompetitor();
@@ -270,10 +270,13 @@ public class FightPerformancePanel extends JPanel
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				hovered = true;
-				setCursor(new Cursor(Cursor.HAND_CURSOR));
+				if (enableActions)
+				{
+					hovered = true;
+					setCursor(new Cursor(Cursor.HAND_CURSOR));
+					repaint();
+				}
 
-				repaint();
 			}
 
 			@Override
@@ -290,12 +293,12 @@ public class FightPerformancePanel extends JPanel
 			{
 				// ignore right clicks since that should be used for context menus/popup menus.
 				// btn1: left click, btn2: middle click, btn3: right click
-				if (e.getButton() == MouseEvent.BUTTON3)
+				if (!enableActions || e.getButton() == MouseEvent.BUTTON3)
 				{
 					return;
 				}
 
-				FightLogFrame.createFightLogFrame(displayFight, getRootPane(), pvpHubSynced);
+				FightLogFrame.createFightLogFrame(fight, getRootPane());
 			}
 		};
 		addMouseListener(fightPerformanceMouseListener);
@@ -305,100 +308,104 @@ public class FightPerformancePanel extends JPanel
 		// cover the image. This ensures everything is transparent and doesn't cover the image.
 		setFullBackgroundColor(CURRENT_BG_COLOR);
 
-		JPopupMenu popupMenu = new JPopupMenu();
-
-		// Create "Show fight log" menu (same action as left click)
-		final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
-		displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(displayFight, getRootPane(), pvpHubSynced));
-
-		final JMenuItem displayOriginalFightLog = new JMenuItem("Display Original Fight Log");
-		displayOriginalFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, getRootPane()));
-
-		// Create "Show attack summary" menu
-		final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
-		displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(displayFight, getRootPane()));
-
-		// Create "Favorite/De-Favorite fight" menu
-		final JMenuItem favoriteFightToggleMenuItem = new JMenuItem();
-		updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
-		ActionListener favoriteFightAction = e ->
+		JPopupMenu popupMenu = null;
+		if (enableActions)
 		{
-			PLUGIN.getClientThread().invokeLater(() ->
+			popupMenu = new JPopupMenu();
+
+			// Create "Show fight log" menu (same action as left click)
+			final JMenuItem displayFightLog = new JMenuItem("Display Fight Log");
+			displayFightLog.addActionListener(e -> FightLogFrame.createFightLogFrame(fight, getRootPane()));
+
+			final JMenuItem displayOriginalFightLog = new JMenuItem("Display Original Fight Log");
+			displayOriginalFightLog.addActionListener(e -> FightLogFrame.createOriginalFightLogFrame(fight, getRootPane()));
+
+			// Create "Show attack summary" menu
+			final JMenuItem displayAttackSummary = new JMenuItem("Display Attack Summary");
+			displayAttackSummary.addActionListener(e -> AttackSummaryFrame.createAttackSummaryFrame(displayFight, getRootPane()));
+
+			// Create "Favorite/De-Favorite fight" menu
+			final JMenuItem favoriteFightToggleMenuItem = new JMenuItem();
+			updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
+			ActionListener favoriteFightAction = e ->
 			{
-				if (!fight.isFavorite())
+				PLUGIN.getClientThread().invokeLater(() ->
 				{
-					FightPerformanceSerializer.serializeFavoriteFight(fight);
-				}
-				else
-				{
-					FightPerformanceSerializer.deFavoriteFight(fight);
-					pluginPanel.enqueueRebuild();
-				}
+					if (!fight.isFavorite())
+					{
+						FightPerformanceSerializer.serializeFavoriteFight(fight);
+					}
+					else
+					{
+						FightPerformanceSerializer.deFavoriteFight(fight);
+						pluginPanel.enqueueRebuild();
+					}
 
-				updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
-			});
-		};
-		favoriteFightToggleMenuItem.addActionListener(favoriteFightAction);
+					updateFavoriteFightMenuItem(favoriteFightToggleMenuItem, fight);
+				});
+			};
+			favoriteFightToggleMenuItem.addActionListener(favoriteFightAction);
 
-		// Create "Open on PvP-Hub" popup menu/context menu
-		final JMenuItem openOnPvpHub = new JMenuItem("<html>&#8599;&nbsp;<u>Open on PvP-Hub Website</u></html>");
-		openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
-		openOnPvpHub.setForeground(PvpColorScheme.BLUE_TEXT_URL);
-		try
-		{
-			openOnPvpHub.setToolTipText(PvpUtils.getUrlButtonTooltip(buildPvpHubUrl(fight)));
-		}
-		catch (Exception ignored) { }
-
-		// Create "Copy Fight Data" popup menu/context menu
-		final JMenuItem copyFight = new JMenuItem("<html>&#10063;&nbsp;Copy Fight JSON (Advanced)");
-		copyFight.addActionListener(e -> PLUGIN.exportFightAsJson(fight));
-		copyFight.setForeground(PvpColorScheme.GREEN_TEXT_ACTION_WHITER);
-
-		// Create "Hide Fight (until reload)" popup menu/context menu
-		final JMenuItem hideFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
-		hideFight.addActionListener(e ->
-		{
-			PLUGIN.removeFight(fight, false);
-		});
-		hideFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
-
-		// Create "Remove Fight" popup menu/context menu
-		final JMenuItem removeFightPermanently = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Permanently</b>");
-		removeFightPermanently.setForeground(PvpColorScheme.RED_TEXT_WARNING_ACTION);
-		removeFightPermanently.addActionListener(e ->
-		{
-			int dialogResult = JOptionPane.showConfirmDialog(this,
-				"<html>Are you sure you want to remove this fight, <b><u>permanently</u></b>? This cannot be undone.",
-				"Warning: PvP Performance Tracker - Delete Fight Permanently?", JOptionPane.YES_NO_OPTION);
-			if (dialogResult == JOptionPane.YES_OPTION)
+			// Create "Open on PvP-Hub" popup menu/context menu
+			final JMenuItem openOnPvpHub = new JMenuItem("<html>&#8599;&nbsp;<u>Open on PvP-Hub Website</u></html>");
+			openOnPvpHub.addActionListener(e -> openOnPvpHub(fight));
+			openOnPvpHub.setForeground(PvpColorScheme.BLUE_TEXT_URL);
+			try
 			{
-				PLUGIN.removeFight(fight);
+				openOnPvpHub.setToolTipText(PvpUtils.getUrlButtonTooltip(buildPvpHubUrl(fight)));
 			}
-		});
+			catch (Exception ignored) { }
+
+			// Create "Copy Fight Data" popup menu/context menu
+			final JMenuItem copyFight = new JMenuItem("<html>&#10063;&nbsp;Copy Fight JSON (Advanced)");
+			copyFight.addActionListener(e -> PLUGIN.exportFightAsJson(fight));
+			copyFight.setForeground(PvpColorScheme.GREEN_TEXT_ACTION_WHITER);
+
+			// Create "Hide Fight (until reload)" popup menu/context menu
+			final JMenuItem hideFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
+			hideFight.addActionListener(e ->
+			{
+				PLUGIN.removeFight(fight, false);
+			});
+			hideFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
+
+			// Create "Remove Fight" popup menu/context menu
+			final JMenuItem removeFightPermanently = new JMenuItem("<html><b>&#128465;&nbsp;Delete Fight Permanently</b>");
+			removeFightPermanently.setForeground(PvpColorScheme.RED_TEXT_WARNING_ACTION);
+			removeFightPermanently.addActionListener(e ->
+			{
+				int dialogResult = JOptionPane.showConfirmDialog(this,
+					"<html>Are you sure you want to remove this fight, <b><u>permanently</u></b>? This cannot be undone.",
+					"Warning: PvP Performance Tracker - Delete Fight Permanently?", JOptionPane.YES_NO_OPTION);
+				if (dialogResult == JOptionPane.YES_OPTION)
+				{
+					PLUGIN.removeFight(fight);
+				}
+			});
 
 
-		popupMenu.add(displayFightLog);
-		if (pvpHubSynced)
-		{
-			popupMenu.add(displayOriginalFightLog);
-		}
-		popupMenu.add(displayAttackSummary);
-		popupMenu.add(favoriteFightToggleMenuItem);
-		if (hasPvpHubUrl(fight))
-		{
-			popupMenu.add(openOnPvpHub);
-		}
-		popupMenu.add(copyFight);
+			popupMenu.add(displayFightLog);
+			if (pvpHubSynced)
+			{
+				popupMenu.add(displayOriginalFightLog);
+			}
+			popupMenu.add(displayAttackSummary);
+			popupMenu.add(favoriteFightToggleMenuItem);
+			if (hasPvpHubUrl(fight))
+			{
+				popupMenu.add(openOnPvpHub);
+			}
+			popupMenu.add(copyFight);
 
-		// if the fight wasn't loaded from file, then it's not saved yet, and can only be deleted permanently
-		// at this moment, so only display the "hide fight (until reload)" option if it's already written
-		if (fight.isSavedToFile())
-		{
-			popupMenu.add(hideFight);
+			// if the fight wasn't loaded from file, then it's not saved yet, and can only be deleted permanently
+			// at this moment, so only display the "hide fight (until reload)" option if it's already written
+			if (fight.isSavedToFile())
+			{
+				popupMenu.add(hideFight);
+			}
+			popupMenu.add(removeFightPermanently);
+			setComponentPopupMenu(popupMenu);
 		}
-		popupMenu.add(removeFightPermanently);
-		setComponentPopupMenu(popupMenu);
 
 		for (JPanel line : panelLines)
 		{

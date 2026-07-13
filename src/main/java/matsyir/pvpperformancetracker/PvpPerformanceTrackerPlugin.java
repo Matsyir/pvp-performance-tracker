@@ -164,7 +164,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private NavigationButton navButton;
 	private boolean navButtonShown = false;
 
-	@Getter(AccessLevel.PACKAGE)
+	@Getter
 	private PvpPerformanceTrackerPanel panel;
 
 	@Inject

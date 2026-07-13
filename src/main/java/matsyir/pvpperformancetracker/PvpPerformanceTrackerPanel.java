@@ -381,7 +381,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// run all of this on UI thread, since we're adding and removing containers in it.
 		SwingUtilities.invokeLater(() ->
 		{
-			fightHistoryContainer.add(new FightPerformancePanel(this, fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld())), 0);
+			fightHistoryContainer.add(createFightPanelFor(fight), 0);
 
 			// if we now have more fights than we want to render, then remove fights from the container in order to only render our max.
 			int c;
@@ -426,8 +426,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 		// initializing all the panels on the client thread before the UI thread call helps a lot,
 		// especially when we're doing 200 or potentially more.
 		ArrayList<FightPerformancePanel> panelsToAdd = new ArrayList<>();
-		fights.forEach((f) -> panelsToAdd.add(new FightPerformancePanel(this,
-			f, worldService, getWorldLocationSupplier(f.getWorld()))));
+		fights.forEach((f) -> panelsToAdd.add(createFightPanelFor(f)));
 
 		// for bulk addFights, don't just add them to 0, since this causes visual flickering while they all get added.
 		// instead, start at 0 and go upwards, so the first few panels simply get replaced, and then while the rest
@@ -564,6 +563,21 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	public void updateSocialButtons()
 	{
 		wikiAndDiscordButtonsLine.setVisible(CONFIG.displayPanelSocialButtons());
+	}
+
+	public FightPerformancePanel createFightPanelFor(FightPerformance fight)
+	{
+		return createFightPanelFor(fight, false, true);
+	}
+
+	public FightPerformancePanel createFightPanelFor(FightPerformance fight, boolean showOriginal)
+	{
+		return createFightPanelFor(fight, showOriginal, true);
+	}
+
+	public FightPerformancePanel createFightPanelFor(FightPerformance fight, boolean showOriginal, boolean enableActions)
+	{
+		return new FightPerformancePanel(this, fight, worldService, getWorldLocationSupplier(fight.getPvpHubDisplayFight().getWorld()), showOriginal, enableActions);
 	}
 
 	@Override
