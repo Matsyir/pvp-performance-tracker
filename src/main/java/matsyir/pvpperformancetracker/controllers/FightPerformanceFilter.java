@@ -28,7 +28,7 @@ public enum FightPerformanceFilter
 
 	// dev filters for testing:
 	// long RSNs: to test UI with the longest names
-	//_DEV_LONG_RSN("DEV: Long RSNs", true, "long", (_f, f) -> f.getCompetitor().getName().length() >= 12 || f.getOpponent().getName().length() >= 12),
+	//_DEV_LONG_RSN("DEV: Long RSNs", true, "::long", (_f, f) -> f.getCompetitor().getName().length() >= 12 || f.getOpponent().getName().length() >= 12),
 
 	FAVORITE("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.FAVORITE_GOLD) + "'>&#9733;&nbsp;Favorite Fights",
 		true, "::fav", (_f, f) -> f.isFavorite()),
@@ -46,16 +46,16 @@ public enum FightPerformanceFilter
 	DOUBLE_DEATHS("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
 		"'>&#9760;&#9760;&nbsp;Double-Deaths", true, "::double", (_f, f) -> f.getCompetitor().isDead() && f.getOpponent().isDead()),
 
-	COMPETITOR_ATTACK_COUNT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.5f)) +
+	COMPETITOR_ATTACK_COUNT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.25f)) +
 		"'>&#8807;&sup1;&nbsp;Competitor Attack Count >", true, "::atk", "::atk>20", (filter, f) ->
 		ComparisonType.parseAndCompareInt(f.getCompetitor().getAttackCount(), "::atk", filter)),
 
-	COMPETITOR_EXPECTED_DMG("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.5f)) +
+	COMPETITOR_EXPECTED_DMG("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.4f)) +
 		"'>&#8807;&sup2;&nbsp;Competitor Expected Damage >",
 		true, "::ed", "::ed>50", (filter, f) ->
 		ComparisonType.parseAndCompareInt((int)f.getCompetitor().getExpectedDamage(), "::ed", filter)),
 
-	COMPETITOR_DMG_DEALT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.5f)) +
+	COMPETITOR_DMG_DEALT("<html><font color='" + ColorUtil.colorToHexCode(ColorUtil.colorLerp(PvpColorScheme.BLUE_TEXT_URL, Color.BLUE, 0.55f)) +
 		"'>&#8807;&sup3;&nbsp;Competitor Damage Dealt >",
 		true, "::d", "::d>50", (filter, f) ->
 		ComparisonType.parseAndCompareInt(f.getCompetitor().getDamageDealt(), "::d", filter)),
@@ -80,14 +80,14 @@ public enum FightPerformanceFilter
 			try
 			{
 				int fixedItemId = log.getAttackerGear()[KitType.WEAPON.getIndex()] - PlayerComposition.ITEM_OFFSET;
-				boolean attackerHasWep = fixedItemId > 0 && PLUGIN.getItemManager().getItemComposition(fixedItemId).getName().toLowerCase().startsWith(filter.substring("hasweapon=".length()));
+				boolean attackerHasWep = fixedItemId > 0 && PLUGIN.getItemManager().getItemComposition(fixedItemId).getName().toLowerCase().startsWith(filter.substring("::wep=".length()));
 				if (attackerHasWep)
 				{
 					return true;
 				}
 
 				fixedItemId = log.getDefenderGear()[KitType.WEAPON.getIndex()] - PlayerComposition.ITEM_OFFSET;
-				return fixedItemId > 0 && PLUGIN.getItemManager().getItemComposition(fixedItemId).getName().toLowerCase().startsWith(filter.substring("hasweapon=".length()));
+				return fixedItemId > 0 && PLUGIN.getItemManager().getItemComposition(fixedItemId).getName().toLowerCase().startsWith(filter.substring("::wep=".length()));
 			}
 			catch (Exception ignored)
 			{
