@@ -229,7 +229,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
 				animationData.attackStyle,
 				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()));
-			opponent.addAttack(competitor.getPlayer(), animationData, assumedOffensivePray, null, animationTick, animationTime);
+			opponent.addAttack(competitor.getPlayer(), animationData, assumedOffensivePray, null, competitorLevels, animationTick, animationTime);
 			addedAttack = true;
 			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 			competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray(), animationTick, animationTime);
@@ -309,7 +309,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 				opponent.getPlayer(),
 				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
-				offensivePray);
+				offensivePray,
+				competitorLevels);
 		}
 	}
 
