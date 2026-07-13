@@ -101,7 +101,11 @@ public class FightLogFrame extends JFrame
 		COLIDX_TIME
 	};
 
-	private static JFrame fightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
+	// save frame as static instance so there's only one at a time, to avoid window clutter.
+	private static JFrame fightLogFrame;
+
+	// allow 2 frames to allow displaying original fight log side-by-side the synced log.
+	private static JFrame originalFightLogFrame; // save frame as static instance so there's only one at a time, to avoid window clutter.
 
 	private static final NumberFormat nf = NumberFormat.getInstance();
 	private static final NumberFormat nfPercent = NumberFormat.getPercentInstance(); // For KO Chance %
@@ -134,25 +138,37 @@ public class FightLogFrame extends JFrame
 
 	public static void createFightLogFrame(FightPerformance rootFight, JRootPane rootPane, boolean showOriginal)
 	{
-		// destroy current frame if it exists so we only have one at a time (static field)
-		if (fightLogFrame != null)
-		{
-			fightLogFrame.dispose();
-		}
-
-		// show error modal if the fight has no log entries to display.
-		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(rootFight.getAllFightLogEntries());
+		ArrayList<FightLogEntry> fightLogEntries = new ArrayList<>(!showOriginal && rootFight.hasPvpHubSyncedFight()
+			? rootFight.getPvpHubDisplayFight().getAllFightLogEntries()
+			: rootFight.getAllFightLogEntries());
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
+		// show error modal if the fight has no log entries to display.
 		if (fightLogEntries.isEmpty())
 		{
 			PLUGIN.createConfirmationModal(false, "This fight has no attack logs to display, or the data is outdated.");
+			return;
+		}
+		JFrame newFrame = new FightLogFrame(rootFight,
+			fightLogEntries,
+			rootPane,
+			showOriginal);
+
+		// ensure we destroy current frame if it exists so we only have one at a time (static field)
+		if (showOriginal)
+		{
+			if (originalFightLogFrame != null)
+			{
+				originalFightLogFrame.dispose();
+			}
+			originalFightLogFrame = newFrame;
 		}
 		else
 		{
-			fightLogFrame = new FightLogFrame(rootFight,
-				fightLogEntries,
-				rootPane,
-				showOriginal);
+			if (fightLogFrame != null)
+			{
+				fightLogFrame.dispose();
+			}
+			fightLogFrame = newFrame;
 		}
 	}
 
@@ -161,11 +177,11 @@ public class FightLogFrame extends JFrame
 	{
 		//String title = fight.getCompetitor().getName() + " vs " + fight.getOpponent().getName();
 		super("Fight Log - " + rootFight.getCompetitor().getName() + " vs " + rootFight.getOpponent().getName()
-			+ " on world " + rootFight.getWorld() + (rootFight.hasPvpHubSyncedFight() && !showOriginal ? " *SYNCED*" : ""));
+			+ " on world " + rootFight.getWorld() + (rootFight.hasPvpHubSyncedFight() && !showOriginal ? " *SYNCED*" : (rootFight.hasPvpHubSyncedFight() && showOriginal ? " *client logs*" : "")));
 
 		boolean pvpHubSynced = rootFight.hasPvpHubSyncedFight() && !showOriginal;
 
-		FightPerformance fight = pvpHubSynced ? rootFight : rootFight.getPvpHubDisplayFight();
+		FightPerformance fight = pvpHubSynced ? rootFight.getPvpHubDisplayFight() : rootFight;
 
 		fightLogEntries = logEntries;
 		fightLogEntries.removeIf(e -> !e.isFullEntry());
@@ -185,7 +201,7 @@ public class FightLogFrame extends JFrame
 
 		// prepare FightPerformancePanel display
 		JPanel fightPerformancePanelDisplayArea = new JPanel(new BorderLayout(2, 2));
-		JPanel fightPerformancePanelDisplayLine = new JPanel(new FlowLayout(FlowLayout.CENTER, 32, 2));
+		JPanel fightPerformancePanelDisplayLine = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 2));
 		JLabel syncedLabel = new JLabel();
 		syncedLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -201,7 +217,7 @@ public class FightLogFrame extends JFrame
 				)
 				: new Dimension(0, 0)
 			);
-			fightPerformancePanelDisplayArea.setSize(fightPerformancePanelDisplayArea.getWidth(), fightPerformancePanelDisplayLine.getHeight() + (displayPanelToggle.isSelected() ? 48 : 24));
+			fightPerformancePanelDisplayArea.setSize(fightPerformancePanelDisplayLine.getWidth(), fightPerformancePanelDisplayLine.getHeight() + (displayPanelToggle.isSelected() ? 48 : 24));
 
 			syncedLabel.setVisible(displayPanelToggle.isSelected());
 			fightPerformancePanelDisplayLine.setVisible(displayPanelToggle.isSelected());
@@ -215,11 +231,35 @@ public class FightLogFrame extends JFrame
 		if (pvpHubSynced)
 		{
 			fightPerformancePanelDisplayLine.add(PLUGIN.getPanel().createFightPanelFor(rootFight, true, false));
+
+
+			double eDmgDiffClient = fight.competitor.getExpectedDamage() - rootFight.competitor.getExpectedDamage();
+			String eDmgDiffWordClient = eDmgDiffClient >= 0 ? " gained " : " lost ";
+			double eDmgDiffOpp = fight.opponent.getExpectedDamage() - rootFight.opponent.getExpectedDamage();
+			String eDmgDiffWordOpp = eDmgDiffOpp >= 0 ? " gained " : " lost ";
+
+			JLabel clientDiffLabel = new JLabel("<html>&nbsp;&nbsp;&nbsp;&nbsp;<font color='"
+				+ (eDmgDiffClient >= 0 ? ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION_WHITER) : ColorUtil.colorToHexCode(PvpColorScheme.ORANGE_TEXT_ACTION))+ "'>"
+				+ PvpUtils.prependPlusIfPositive(nf.format(eDmgDiffClient), eDmgDiffClient) + " eD<br><br><br><br><br><br><br>");
+			clientDiffLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+			clientDiffLabel.setToolTipText(fight.competitor.getName() + eDmgDiffWordClient + Math.abs(eDmgDiffClient) + " expected damage after syncing via PvP-Hub.");
+
+			fightPerformancePanelDisplayLine.add(clientDiffLabel);
+
 			fightPerformancePanelDisplayLine.add(PLUGIN.getPanel().createFightPanelFor(rootFight, false, false));
+
+			JLabel oppDiffLabel = new JLabel("<html><font color='"
+				+ (eDmgDiffOpp >= 0 ? ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION_WHITER) : ColorUtil.colorToHexCode(PvpColorScheme.ORANGE_TEXT_ACTION))+ "'>"
+				+ PvpUtils.prependPlusIfPositive(nf.format(eDmgDiffOpp), eDmgDiffOpp) + " eD<br><br><br><br><br><br><br>");
+			oppDiffLabel.setHorizontalAlignment(SwingConstants.LEFT);
+			oppDiffLabel.setToolTipText(fight.opponent.getName() + eDmgDiffWordOpp + Math.abs(eDmgDiffOpp) + " expected damage after syncing via PvP-Hub.");
+
+			fightPerformancePanelDisplayLine.add(oppDiffLabel);
+
 
 			String sep = "-" + s.repeat(3);
 			syncedLabel.setText("<html>&#128196;&nbsp;<i>Client</i>" + s.repeat(6) + sep.repeat(12) + s
-				+ "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;<u>Synced</u></font>");
+				+ "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) + "'>&#8645;&nbsp;<u>Synced</u></font>" + s.repeat(10));
 		}
 		else
 		{

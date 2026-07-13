@@ -505,6 +505,16 @@ public class PvpUtils
 		return String.valueOf(number);
 	}
 
+	public static String prependPlusIfPositive(String number, double valToUse)
+	{
+		if (valToUse >= 0)
+		{
+			return "+" + number;
+		}
+
+		return number;
+	}
+
 	public static String getUrlButtonTooltip(String url)
 	{
 		return "<html><b>Opens URL:</b><br><i><u>" + url;
