@@ -365,16 +365,16 @@ public enum TrackedStatistic
 				Color oppGhostBarrageColor = PvpColorScheme.neutralDmgColor();
 				Color cmpGbColor = PvpColorScheme.gbColor();
 
-				if (fight.hasPvpHubSyncedFight())
+				if (fight.isSyncedFight())
 				{
 					oppGhostBarrageText = (fight.opponent.getGhostBarrageStats());
 					oppGhostBarrageTooltipText = ("(Advanced): " + fight.opponent.getName() + " hit " + fight.opponent.getGhostBarrageCount()
 						+ " ghost barrages during the fight, worth an extra " + nf2.format(fight.opponent.getGhostBarrageExpectedDamage())
 						+ " expected damage.<br>Unless fighting in PvP Arena, your opponent likely had a similar value.");
 					oppGhostBarrageColor = (fight.opponent.getGhostBarrageExpectedDamage() > fight.competitor.getGhostBarrageExpectedDamage()
-						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
+						? PvpColorScheme.gbColor() : PvpColorScheme.unsuccessDmgColor());
 					cmpGbColor = (fight.competitor.getGhostBarrageExpectedDamage() > fight.opponent.getGhostBarrageExpectedDamage()
-						? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor());
+						? PvpColorScheme.gbColor() : PvpColorScheme.unsuccessDmgColor());
 				}
 
 				return PanelFactory.createStatsLine(GHOST_BARRAGES.acronym, GHOST_BARRAGES.acronymTooltip
