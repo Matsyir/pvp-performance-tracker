@@ -83,9 +83,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
 import net.runelite.api.PlayerComposition;
-import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
-import net.runelite.api.SpriteID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.FakeXpDrop;
 import net.runelite.api.events.GameTick;
@@ -94,6 +92,7 @@ import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.PlayerDespawned;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
@@ -105,10 +104,6 @@ import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
-import net.runelite.client.hiscore.HiscoreEndpoint;
-import net.runelite.client.hiscore.HiscoreManager;
-import net.runelite.client.hiscore.HiscoreResult;
-import net.runelite.client.hiscore.HiscoreSkill;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -120,7 +115,6 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.ArrayUtils;
-
 
 @Slf4j
 @PluginDescriptor(
@@ -212,9 +206,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private Gson injectedGson;
 
 	@Inject
-	private HiscoreManager hiscoreManager;
-
-	@Inject
 	private OkHttpClient httpClient;
 
 	// custom fields/props
@@ -228,7 +219,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
 	private final PvpHubSyncRetryState pendingPvpHubSyncs = new PvpHubSyncRetryState(PVP_HUB_SYNC_MAX_ATTEMPTS, PVP_HUB_SYNC_RETRY_DELAY_MILLIS);
-	private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL; // Added field
 	private File pvpHubSyncedFightsDir;
 
 	// #################################################################################################################
@@ -278,7 +268,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
-			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLMS())))
+			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLmsIncludingFerox())))
 		{
 			navButtonShown = true;
 			clientToolbar.addNavigation(navButton);
@@ -330,7 +320,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// if a user enables the panel or restricts/unrestricts the location to LMS, hide/show the panel accordingly
 			case "showFightHistoryPanel":
 			case "restrictToLms":
-				boolean isAtLms = isAtLMS();
+				boolean isAtLms = isAtLmsIncludingFerox();
 				if (!navButtonShown && config.showFightHistoryPanel() &&
 					(!config.restrictToLms() || isAtLms))
 				{
@@ -434,7 +424,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onInteractingChanged(InteractingChanged event)
 	{
-		if (config.restrictToLms() && !isAtLMS())
+		if (config.restrictToLms() && !isInLmsMatch())
 		{
 			return;
 		}
@@ -486,12 +476,10 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		sendUpdateChatMessage();
 
-		hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType()); // Update endpoint on login/world change
-
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
 		if (config.restrictToLms())
 		{
-			if (isAtLMS())
+			if (isAtLmsIncludingFerox())
 			{
 				if (!navButtonShown && config.showFightHistoryPanel())
 				{
@@ -870,29 +858,15 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		hitsByActor.forEach((opponent, hits) -> {
 			if (!(opponent instanceof Player)) return; // Only process hits on players
 
-			// Determine max HP to use (config, Hiscores, or LMS override)
+			// Determine max HP to use (Either uses config lvl, or override to 99 for LMS)
 			int maxHpToUse;
-			if (isAtLMS())
+			if (isInLmsMatch())
 			{
 				maxHpToUse = 99;
 			}
 			else
 			{
 				maxHpToUse = CONFIG.opponentHitpointsLevel();
-
-				// Hiscores lookup should only happen if not in LMS
-				if (opponent.getName() != null)
-				{
-					final HiscoreResult hiscoreResult = hiscoreManager.lookupAsync(opponent.getName(), hiscoreEndpoint);
-					if (hiscoreResult != null)
-					{
-						final int hp = hiscoreResult.getSkill(HiscoreSkill.HITPOINTS).getLevel();
-						if (hp > 0)
-						{
-							maxHpToUse = hp; // Use Hiscores HP if available
-						}
-					}
-				}
 			}
 
 			// Determine attacker safely (handle null names and prefer identity when possible)
@@ -1726,7 +1700,13 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		});
 	}
 
-	public boolean isAtLMS()
+	public boolean isInLmsMatch()
+	{
+		//log.info("PvpPerformanceTrackerPlugin.isInLmsMatch - BR_INGAME varbit={}, BR_ACTIVE_BUILD_PLAYER={}, BR_MODE_SELECTED={}", client.getVarbitValue(VarbitID.BR_INGAME), client.getVarbitValue(VarbitID.BR_ACTIVE_BUILD_PLAYER), client.getVarbitValue(VarbitID.BR_MODE_SELECTED));
+		return client.getVarbitValue(VarbitID.BR_INGAME) != 0;
+	}
+
+	public boolean isAtLmsIncludingFerox()
 	{
 		final int[] mapRegions = client.getMapRegions();
 

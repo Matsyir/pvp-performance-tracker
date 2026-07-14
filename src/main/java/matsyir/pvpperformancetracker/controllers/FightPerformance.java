@@ -33,8 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import joptsimple.internal.Strings;
 import lombok.Getter;
 import lombok.Setter;
@@ -158,8 +156,13 @@ public class FightPerformance implements Comparable<FightPerformance>
 	{
 		int defLvl = PLUGIN.getClient().getBoostedSkillLevel(Skill.DEFENCE);
 
-		// determine fight type based on being at LMS areas & use def level to check for LMS builds.
-		this.fightType = !PLUGIN.isAtLMS() ? FightType.NORMAL :
+		// determine fight type based on being in LMS match & use def level to check for LMS builds.
+		// Note, we can also use the following varbit to reliably detect the build, but we dont really need to?
+		// if the levels change again, we'll switch to this, but then our levels would still be wrong anyway
+		// on max/med: BR_ACTIVE_BUILD_PLAYER = 0
+		// on zerk: BR_ACTIVE_BUILD_PLAYER = 1
+		// on pure: BR_ACTIVE_BUILD_PLAYER = 2
+		this.fightType = !PLUGIN.isInLmsMatch() ? FightType.NORMAL :
 			defLvl <= FightType.LMS_1DEF.getCombatLevelsForType().def ? FightType.LMS_1DEF :
 			defLvl <= FightType.LMS_ZERK.getCombatLevelsForType().def ? FightType.LMS_ZERK :
 			FightType.LMS_MAXMED;

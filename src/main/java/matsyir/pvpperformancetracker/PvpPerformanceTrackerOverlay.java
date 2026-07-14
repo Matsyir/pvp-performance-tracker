@@ -97,7 +97,7 @@ public class PvpPerformanceTrackerOverlay extends Overlay
 		setLines();
 		FightPerformance fight = plugin.getCurrentFight();
 		if (!config.showFightOverlay() || fight == null || !fight.fightStarted() ||
-			(config.restrictToLms() && !plugin.isAtLMS()))
+			(config.restrictToLms() && !plugin.isAtLmsIncludingFerox()))
 		{
 			return null;
 		}
