@@ -1800,11 +1800,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
 				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
 				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
-				client.isPrayerActive(Prayer.DEADEYE) 			? SpriteID.PRAYER_DEADEYE :
 				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
+				client.isPrayerActive(Prayer.DEADEYE) 			? SpriteID.PRAYER_DEADEYE :
 				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
-				client.isPrayerActive(Prayer.MYSTIC_VIGOUR)		? SpriteID.PRAYER_MYSTIC_VIGOUR :
 				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
+				client.isPrayerActive(Prayer.MYSTIC_VIGOUR)		? SpriteID.PRAYER_MYSTIC_VIGOUR :
 				0;
 	}
 
