@@ -94,22 +94,7 @@ public class FightPerformancePanel extends JPanel
 	// border size: 0px left, 0px right, 8px top, 4px bottom (plus extra 4px bottom invisible offset)
 	// The primary background color under the panels is ColorScheme.SCROLL_TRACK_COLOR, but
 	// the main background, on PvpPerformanceTrackerPanel, is BORDER_COLOR
-	private static final Border defaultBorder = PanelFactory.combineBorders(
-		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-		BorderFactory.createEmptyBorder(8, 2, 4, 2));
-//	private static final Border defaultHoverBorder = PanelFactory.combineBorders(
-//		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-//		PanelFactory.createGradientBorder(2, 2, 2, 2, ColorUtil.colorWithAlpha(ColorScheme.TEXT_COLOR, 164), ColorUtil.colorWithAlpha(ColorScheme.TEXT_COLOR, 64)),
-//		BorderFactory.createEmptyBorder(6, 0, 2, 0));
 
-	private static final Border syncedBorder = defaultBorder;
-//	PanelFactory.combineBorders(
-//		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-//		PanelFactory.createGradientBorder(0, 0, 4, 0,
-//			ColorUtil.colorWithAlpha(PvpColorScheme.DARK_GREEN_SUBTLE_SUCCESS.brighter(), 160),
-//			ColorUtil.colorWithAlpha(PvpColorScheme.DARK_GREEN_SUBTLE_SUCCESS, 32)),
-//		BorderFactory.createEmptyBorder(8, 0, 0, 0)
-//	);
 
 	// enum of background styles "bgStyle" images to be rendered as backgrounds, below all the stats.
 	// currently sized for what the panel size is with all statistics shown (so including GB). This is so
@@ -231,6 +216,9 @@ public class FightPerformancePanel extends JPanel
 
 		bgStyle = fight.getBgStyle();
 
+		// border size: 0px left, 0px right, 8px top, 4px bottom (plus extra 4px bottom invisible offset)
+		// The primary background color under the panels is ColorScheme.SCROLL_TRACK_COLOR, but
+		// the main background, on PvpPerformanceTrackerPanel, is BORDER_COLOR
 		Border border = PanelFactory.combineBorders(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 			PanelFactory.createGradientBorder(2, 2, 2, 2,
@@ -244,7 +232,7 @@ public class FightPerformancePanel extends JPanel
 				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 64)),
 			BorderFactory.createEmptyBorder(6, 0, 2, 0));
 
-		setBorder(pvpHubSynced ? syncedBorder : border);
+		setBorder(border);
 
 		final String bgStyleDisplayTooltipText;
 		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
@@ -308,7 +296,7 @@ public class FightPerformancePanel extends JPanel
 			{
 				hovered = false;
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-				setBorder(pvpHubSynced ? syncedBorder : border);
+				setBorder(border);
 
 				repaint();
 			}
