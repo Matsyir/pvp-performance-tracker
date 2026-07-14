@@ -36,6 +36,9 @@ import net.runelite.api.SpriteID;
  */
 public final class AssumedPrayers
 {
+	public static final int DEADEYE_LEVEL = 62;
+	public static final int MYSTIC_VIGOR_LEVEL = 63;
+
 	public static final int DEFENCE_LEVEL_REQ = 70; // same for piety, rigour, and augury
 	public static final int PIETY_LEVEL = 70;
 	public static final int RIGOUR_LEVEL = 74;
@@ -73,13 +76,13 @@ public final class AssumedPrayers
 		{
 			return prayerLevel >= RIGOUR_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ
 				? SpriteID.PRAYER_RIGOUR
-				: (fightType.isLmsFight() ? SpriteID.PRAYER_EAGLE_EYE : SpriteID.PRAYER_DEADEYE);
+				: (fightType.isLmsFight() || prayerLevel < DEADEYE_LEVEL ? SpriteID.PRAYER_EAGLE_EYE : SpriteID.PRAYER_DEADEYE);
 		}
 		if (attackStyle == AttackStyle.MAGIC)
 		{
 			return prayerLevel >= AUGURY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ
 				? SpriteID.PRAYER_AUGURY
-				: fightType.isLmsFight() ? SpriteID.PRAYER_MYSTIC_MIGHT : SpriteID.PRAYER_MYSTIC_VIGOUR;
+				: (fightType.isLmsFight() || prayerLevel < MYSTIC_VIGOR_LEVEL ? SpriteID.PRAYER_MYSTIC_MIGHT : SpriteID.PRAYER_MYSTIC_VIGOUR);
 		}
 		return 0;
 	}
