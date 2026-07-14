@@ -411,22 +411,24 @@ public class PvpDamageCalc
 		{
 			double averageSuccessfulRegularHit = maxHit / 2.0;
 
-			double a = accuracy; // per-roll accuracy
+			double a = accuracy;
 			double miss = 1 - a;
 
-			double specMultiplier =
-				a * 2.0
-				+ miss * a * 2.5
-				+ miss * miss * a * 2.0
-				+ miss * miss * miss * a * 1.0;
+			double successfulSpecAverage =
+				(a * 3.0
+					+ miss * a * 2.5
+					+ miss * miss * a * 2.0
+					+ miss * miss * miss * a * 1.5)
+					* averageSuccessfulRegularHit;
 
-			averageHit = specMultiplier * averageSuccessfulRegularHit * prayerModifier;
+			double allMissChipAverage = Math.pow(miss, 4) * (4.0 / 3.0);
 
-			// convert accuracy to "chance the spec hits at least once" instead of per-roll accuracy
-			accuracy = 1 - Math.pow(1 - accuracy, 4);
+			averageHit = (successfulSpecAverage + allMissChipAverage) * prayerModifier;
 
-			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
-			maxHit = maxHit * 2 + 1;
+			accuracy = 1 - Math.pow(miss, 4);
+
+			int firstMaxHit = maxHit - 1;
+			maxHit = firstMaxHit + firstMaxHit / 2 + firstMaxHit / 4 + firstMaxHit / 4 + 1;
 			return;
 		}
 		else if (burningClaws && usingSpec)
