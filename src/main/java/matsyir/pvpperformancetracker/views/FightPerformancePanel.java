@@ -222,14 +222,14 @@ public class FightPerformancePanel extends JPanel
 		Border border = PanelFactory.combineBorders(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 			PanelFactory.createGradientBorder(2, 2, 2, 2,
-				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 96),
-				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 32)),
+				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 48),
+				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 24)),
 			BorderFactory.createEmptyBorder(6, 0, 2, 0));
 		Border hoverBorder = PanelFactory.combineBorders(
 			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
 			PanelFactory.createGradientBorder(2, 2, 2, 2,
-				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 164),
-				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 64)),
+				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 128),
+				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 80)),
 			BorderFactory.createEmptyBorder(6, 0, 2, 0));
 
 		setBorder(border);
