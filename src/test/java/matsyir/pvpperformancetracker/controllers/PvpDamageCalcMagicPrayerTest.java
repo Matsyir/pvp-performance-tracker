@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.EquipmentData;
+import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.SpriteID;
 import org.junit.Test;
 import sun.misc.Unsafe;
@@ -65,6 +66,46 @@ public class PvpDamageCalcMagicPrayerTest
 		assertEquals(12.0, calc.getAverageHit(), 0.0001);
 		assertEquals(40, calc.getMaxHit());
 		assertEquals(0, calc.getMinHit());
+	}
+
+	@Test
+	public void thrownJavelinDoesNotUseEquippedBoltsAsAmmo() throws Exception
+	{
+		PvpDamageCalc calc = newCalc();
+		setField(calc, "isLmsFight", false);
+
+		Method getWeaponAmmo = PvpDamageCalc.class.getDeclaredMethod(
+			"getWeaponAmmo",
+			EquipmentData.class,
+			Integer.class);
+		getWeaponAmmo.setAccessible(true);
+
+		RangeAmmoData ammo = (RangeAmmoData) getWeaponAmmo.invoke(
+			calc,
+			EquipmentData.MORRIGANS_JAVELIN,
+			RangeAmmoData.StrongBoltAmmo.OPAL_DRAGON_BOLTS_E.getItemId());
+
+		assertEquals(null, ammo);
+	}
+
+	@Test
+	public void bowCanUseCompatibleEquippedArrows() throws Exception
+	{
+		PvpDamageCalc calc = newCalc();
+		setField(calc, "isLmsFight", false);
+
+		Method getWeaponAmmo = PvpDamageCalc.class.getDeclaredMethod(
+			"getWeaponAmmo",
+			EquipmentData.class,
+			Integer.class);
+		getWeaponAmmo.setAccessible(true);
+
+		RangeAmmoData ammo = (RangeAmmoData) getWeaponAmmo.invoke(
+			calc,
+			EquipmentData.MAGIC_SHORTBOW,
+			RangeAmmoData.OtherAmmo.SEEKING_DRAGON_ARROW.getItemId());
+
+		assertEquals(RangeAmmoData.OtherAmmo.SEEKING_DRAGON_ARROW, ammo);
 	}
 
 	private static PvpDamageCalc newCalc() throws Exception
