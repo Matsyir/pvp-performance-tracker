@@ -671,6 +671,10 @@ public class PvpDamageCalc
 		{
 			return ammo == RangeAmmoData.OtherAmmo.DRAGON_JAVELIN;
 		}
+		if (weapon == EquipmentData.TOXIC_BLOWPIPE)
+		{
+			return ammo instanceof RangeAmmoData.DartAmmo;
+		}
 		if (weapon == EquipmentData.DARK_BOW ||
 			weapon == EquipmentData.MAGIC_SHORTBOW ||
 			weapon == EquipmentData.MAGIC_SHORTBOW_I ||
