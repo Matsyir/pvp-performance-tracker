@@ -32,6 +32,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntSupplier;
@@ -107,6 +108,7 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 	private JShadowedButton pvpHubHiddenNameBtn;
 	private boolean hiddenNameIsVisible = false;
 	private int filteredFightCount = 0;
+	private String appliedFightFilter = null;
 
 	private final PvpPerformanceTrackerPlugin plugin;
 	private final PvpPerformanceTrackerConfig config;
@@ -421,19 +423,21 @@ public class PvpPerformanceTrackerPanel extends PluginPanel
 
 	public void addFights(ArrayDeque<FightPerformance> fights, boolean skipUpdatesIfFightCountUnchanged)
 	{
+		String requestedFightFilter = config.fightFilter();
 		// skip adding any fights to panels if they don't respect the name filter
 		// see FightPerformanceFilter.matches for filter behavior details
-		if (!config.fightFilter().isEmpty())
+		if (!requestedFightFilter.isEmpty())
 		{
 			fights.removeIf((FightPerformance f) -> !FightPerformanceFilter.matches(f));
 		}
 
 		//log.info("Panel.addFights: skipUpdatesIfFightCountUnchanged=" + skipUpdatesIfFightCountUnchanged + ", fights.size=" + fights.size() + ", filteredFightCount=" + filteredFightCount);
-		if (skipUpdatesIfFightCountUnchanged && fights.size() == filteredFightCount)
+		if (skipUpdatesIfFightCountUnchanged && Objects.equals(requestedFightFilter, appliedFightFilter) && fights.size() == filteredFightCount)
 		{
 			return;
 		}
 
+		appliedFightFilter = requestedFightFilter;
 		filteredFightCount = fights.size();
 
 		totalStatsPanel.reset();

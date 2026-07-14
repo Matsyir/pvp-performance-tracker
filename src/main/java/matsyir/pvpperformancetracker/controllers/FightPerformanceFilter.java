@@ -2,6 +2,7 @@ package matsyir.pvpperformancetracker.controllers;
 
 import java.awt.Color;
 import java.security.InvalidParameterException;
+import java.util.Locale;
 import java.util.function.BiPredicate;
 import javax.inject.Inject;
 import joptsimple.internal.Strings;
@@ -149,6 +150,11 @@ public enum FightPerformanceFilter
 		String requestedFilter = CONFIG.fightFilter();
 		// empty is a valid filter, it means display every fight - don't filter them
 		if (Strings.isNullOrEmpty(requestedFilter))
+		{
+			return true;
+		}
+		requestedFilter = requestedFilter.trim().toLowerCase(Locale.ROOT);
+		if (requestedFilter.isEmpty())
 		{
 			return true;
 		}
