@@ -29,6 +29,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -45,10 +46,12 @@ import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import lombok.Getter;
@@ -65,6 +68,7 @@ import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.components.shadowlabel.JShadowedLabel;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
@@ -376,10 +380,7 @@ public class FightPerformancePanel extends JPanel
 
 			// Create "Hide Fight (until reload)" popup menu/context menu
 			final JMenuItem hideFight = new JMenuItem("<html>&#128065;&nbsp;Hide Fight (until reload)");
-			hideFight.addActionListener(e ->
-			{
-				PLUGIN.removeFight(fight, false);
-			});
+			hideFight.addActionListener(e -> PLUGIN.removeFight(fight, false));
 			hideFight.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
 
 			// Create "Remove Fight" popup menu/context menu
@@ -395,6 +396,11 @@ public class FightPerformancePanel extends JPanel
 					PLUGIN.removeFight(fight);
 				}
 			});
+
+			// Create "Hide Fight (until reload)" popup menu/context menu
+			final JMenuItem hideSyncedWarning = new JMenuItem("<html>&#128065;&nbsp;Toggle Unsynced Warning Visibility");
+			hideSyncedWarning.addActionListener(e -> PLUGIN.toggleUnsyncedFightWarningVisibility());
+			hideSyncedWarning.setForeground(PvpColorScheme.ORANGE_TEXT_ACTION);
 
 
 			popupMenu.add(displayFightLog);
@@ -417,6 +423,7 @@ public class FightPerformancePanel extends JPanel
 				popupMenu.add(hideFight);
 			}
 			popupMenu.add(removeFightPermanently);
+			popupMenu.add(hideSyncedWarning);
 			setComponentPopupMenu(popupMenu);
 		}
 
@@ -426,6 +433,57 @@ public class FightPerformancePanel extends JPanel
 			line.addMouseListener(fightPerformanceMouseListener);
 			line.setComponentPopupMenu(popupMenu);
 		}
+
+		// add synced line display / warning if unsynced
+		JPanel syncedLine = new JPanel(new BorderLayout());
+		syncedLine.setBackground(null);
+		syncedLine.addMouseListener(fightPerformanceMouseListener);
+		syncedLine.setComponentPopupMenu(popupMenu);
+
+		// if false, shows unsynced label. Does not control visibility of the label
+		boolean showSyncedLabel = pvpHubSynced && !showOriginal;
+		JShadowedLabel syncedLabel = new JShadowedLabel(showSyncedLabel ? "<html>&#8645;&nbsp;synced" : "<html><font color='" +
+			ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) + "'>&#9888;</font>&nbsp;unsynced");
+		syncedLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		syncedLabel.setForeground(showSyncedLabel ? PvpColorScheme.GREEN_TEXT_ACTION : PvpColorScheme.ORANGE_TEXT_WARNING_ACTION);
+
+		syncedLine.setToolTipText(showSyncedLabel
+			? ("<html>Fight data successfully <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.GREEN_TEXT_ACTION) +
+			"'>&#8645;synced</font> via <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) +
+			"'><u>PvP-Hub</u></font>.<br>With this sync/merge, the fight results should be near-perfect.")
+
+			: ("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.RED_TEXT_WARNING_ACTION) +
+			"'><u>Warning!</u></font>&nbsp;This fight only makes use of local client-side data." +
+			"<br>By opting into <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) +
+			"'><u>PvP-Hub</u></font>, you can merge your fight " +
+			"data along with your opponent's in order to get more accurate results." +
+			"<br><br><b>Without sync, the following is assumed for both players.</b>" +
+			"<br><i>These assumptions are either based on configs, or using LMS values</i>:" +
+			"<br>&nbsp;&nbsp;&#xbb;&nbsp;Offensive prayers are assumed to always be correct. This includes augury tanking." +
+			"<br>&nbsp;&nbsp;&#xbb;&nbsp;You are both assumed to be potted at all times, even if brewed down." +
+			"<br>&nbsp;&nbsp;&#xbb;&nbsp;Rings & Ammo are assumed, rather than detecting actual equipment."));
+
+		if (!showSyncedLabel)
+		{
+			JShadowedLabel warningLabel = new JShadowedLabel("<html>&nbsp;&nbsp;<u>Warning!</u>&nbsp;&nbsp;&nbsp;");
+			warningLabel.setFont(PanelFactory.getIndexFontFrom(warningLabel.getFont()));
+			warningLabel.setFont(warningLabel.getFont().deriveFont(warningLabel.getFont().getStyle() | Font.BOLD));
+			warningLabel.setHorizontalAlignment(SwingConstants.LEFT);
+			warningLabel.setForeground(PvpColorScheme.neutralColor());
+
+			syncedLine.add(warningLabel, BorderLayout.WEST);
+
+			JShadowedLabel lvlsAssumedLabel = new JShadowedLabel("<html>Lvls assumed.&nbsp;&nbsp;");
+			lvlsAssumedLabel.setFont(PanelFactory.getIndexFontFrom(lvlsAssumedLabel.getFont()));
+			lvlsAssumedLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+			lvlsAssumedLabel.setForeground(PvpColorScheme.neutralColor());
+
+			syncedLine.add(lvlsAssumedLabel, BorderLayout.EAST);
+		}
+
+		syncedLine.add(syncedLabel, BorderLayout.CENTER);
+		syncedLine.setVisible(CONFIG.displayUnsyncedFightWarning() || pvpHubSynced); // only show label if it's synced, or if the warning is enabled
+		fightPanel.add(syncedLine);
 
 		add(fightPanel, BorderLayout.NORTH);
 

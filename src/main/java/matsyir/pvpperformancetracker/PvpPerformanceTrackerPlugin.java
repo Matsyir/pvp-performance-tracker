@@ -282,7 +282,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		clientThread.invokeLater(() -> DEFAULT_NONE_SYMBOL = itemManager.getImage(20594));
 
 		TotalStatsPanel.loadBackgroundImages();
-		
+
 		// Explicitly force rebuild panel after all setup and import.
         SwingUtilities.invokeLater(() -> {
             if (panel != null) {
@@ -410,6 +410,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			case "centerPanelLabels":
 			case "hidePanelBgImages":
 			case "worldDisplayChoice":
+			case "displayUnsyncedFightWarning":
 				panel.enqueueRebuild();
 				break;
 		}
@@ -1410,9 +1411,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 		catch (Exception e)
 		{
-			log.warn("Error calculating robe hits for new fight ({} vs {}): {}", 
-				fight.getCompetitor() != null ? fight.getCompetitor().getName() : "N/A", 
-				fight.getOpponent() != null ? fight.getOpponent().getName() : "N/A", 
+			log.warn("Error calculating robe hits for new fight ({} vs {}): {}",
+				fight.getCompetitor() != null ? fight.getCompetitor().getName() : "N/A",
+				fight.getOpponent() != null ? fight.getOpponent().getName() : "N/A",
 				e.getMessage());
 		}
 
@@ -1946,5 +1947,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	{
 		configManager.setConfiguration(CONFIG_KEY, "displayPanelSocialButtons", !config.displayPanelSocialButtons());
 		// this will call panel.updateSocialButtons() via onConfigChanged event
+	}
+	public void toggleUnsyncedFightWarningVisibility()
+	{
+		configManager.setConfiguration(CONFIG_KEY, "displayUnsyncedFightWarning", !config.displayUnsyncedFightWarning());
 	}
 }
