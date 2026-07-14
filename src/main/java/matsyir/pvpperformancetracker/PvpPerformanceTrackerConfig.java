@@ -798,6 +798,19 @@ public interface PvpPerformanceTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "displayUnsyncedFightWarning",
+		name = "Show Unsynced Fight Warning",
+		description = "Config used to determine if the warning for unsynced fights at the bottom of fight panels should be visible or hidden." +
+			"<br>Can also be toggled by right clicking any fight panel.",
+		position = 35120,
+		section = visibilitySection
+	)
+	default boolean displayUnsyncedFightWarning()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "nameFilter",
 		name = "Name Filter",
 		description = "Hidden config used to save user's selected name/RSN filter for the panel views.",

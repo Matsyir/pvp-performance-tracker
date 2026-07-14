@@ -26,6 +26,7 @@ package matsyir.pvpperformancetracker.models;
 
 import java.util.function.Function;
 import lombok.Getter;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
@@ -341,7 +342,9 @@ public enum TrackedStatistic
 					, oppTotalKoChanceText
 					, fight.opponent.getName() + " got " + opponentKoChances + " KO attempts with an overall KO probability of " + nfP1.format(opponentOverallKoProb)
 					, (opponentOverallKoProb > competitorOverallKoProb ? PvpColorScheme.successColor() : PvpColorScheme.unsuccessColor())
-					, showGhostBarrages // only show bottom border if we're showing ghost barrages, otherwise it's last statistic so don't need it.
+					// show bottom border if we're showing ghost barrages, unsynced fight warning, or if its a synced fight.
+					// otherwise it's the last line so don't need it.
+					, showGhostBarrages || CONFIG.displayUnsyncedFightWarning() || fight.isSyncedFight()
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(KO_CHANCES.acronym, 50, 50,
@@ -387,9 +390,7 @@ public enum TrackedStatistic
 					, oppGhostBarrageText
 					, oppGhostBarrageTooltipText
 					, oppGhostBarrageColor
-					, false
-					// TODO: if we move ghost barrage from being the bottom-most statistic,
-					//  then move this to only exclude the bottom border on the new last line.
+					, CONFIG.displayUnsyncedFightWarning() || fight.isSyncedFight() || fight.hasPvpHubSyncedFight()
 				);
 			},
 			() -> PanelFactory.createOverlayStatsLine(GHOST_BARRAGES.acronym, 80, 20,
