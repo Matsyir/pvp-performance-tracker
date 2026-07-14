@@ -65,6 +65,7 @@ import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 
@@ -95,7 +96,12 @@ public class FightPerformancePanel extends JPanel
 	// the main background, on PvpPerformanceTrackerPanel, is BORDER_COLOR
 	private static final Border defaultBorder = PanelFactory.combineBorders(
 		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
-		BorderFactory.createEmptyBorder(8, 0, 4, 0));
+		BorderFactory.createEmptyBorder(8, 2, 4, 2));
+//	private static final Border defaultHoverBorder = PanelFactory.combineBorders(
+//		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+//		PanelFactory.createGradientBorder(2, 2, 2, 2, ColorUtil.colorWithAlpha(ColorScheme.TEXT_COLOR, 164), ColorUtil.colorWithAlpha(ColorScheme.TEXT_COLOR, 64)),
+//		BorderFactory.createEmptyBorder(6, 0, 2, 0));
+
 	private static final Border syncedBorder = defaultBorder;
 //	PanelFactory.combineBorders(
 //		BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
@@ -118,7 +124,7 @@ public class FightPerformancePanel extends JPanel
 	@Getter
 	public enum BackgroundStyle
 	{
-		DEFAULT("Default", ColorScheme.BRAND_ORANGE, "GB_Grayscale", "GB_Orange_Hovered"),
+		DEFAULT("Default", ColorScheme.TEXT_COLOR, "GB_Grayscale", "GB_Orange_Hovered"),
 		MAX_HIT_KO("Max Hit KO", Color.RED, "GB_Red"),
 		SPEC_KO("Spec KO", new Color(17, 146, 178), "GB_Cyan"),
 		MAX_SPEC_KO("Max Spec Ko", Color.MAGENTA.darker(), "GB_Purple"),
@@ -215,7 +221,7 @@ public class FightPerformancePanel extends JPanel
 		Fighter opponent = displayFight.getOpponent();
 
 		setLayout(new BorderLayout(0, 0));
-		setBorder(pvpHubSynced ? syncedBorder : defaultBorder);
+
 
 		final String baseTooltipText = competitor.getName() + " vs. " + opponent.getName() + ": This fight ended at " +
 			DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(displayFight.getLastFightTime())));
@@ -224,6 +230,21 @@ public class FightPerformancePanel extends JPanel
 			: "");
 
 		bgStyle = fight.getBgStyle();
+
+		Border border = PanelFactory.combineBorders(
+			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+			PanelFactory.createGradientBorder(2, 2, 2, 2,
+				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 96),
+				ColorUtil.colorWithAlpha(bgStyle.highlightColor, 32)),
+			BorderFactory.createEmptyBorder(6, 0, 2, 0));
+		Border hoverBorder = PanelFactory.combineBorders(
+			BorderFactory.createMatteBorder(0, 0, BOTTOM_SPACING_PX, 0, ColorScheme.SCROLL_TRACK_COLOR),
+			PanelFactory.createGradientBorder(2, 2, 2, 2,
+				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 164),
+				ColorUtil.colorWithAlpha(bgStyle == BackgroundStyle.DEFAULT ? ColorScheme.BRAND_ORANGE : bgStyle.highlightColor, 64)),
+			BorderFactory.createEmptyBorder(6, 0, 2, 0));
+
+		setBorder(pvpHubSynced ? syncedBorder : border);
 
 		final String bgStyleDisplayTooltipText;
 		if (bgStyle != BackgroundStyle.DEFAULT && bgStyle.enabled)
@@ -276,6 +297,7 @@ public class FightPerformancePanel extends JPanel
 				{
 					hovered = true;
 					setCursor(new Cursor(Cursor.HAND_CURSOR));
+					setBorder(hoverBorder);
 					repaint();
 				}
 
@@ -286,6 +308,7 @@ public class FightPerformancePanel extends JPanel
 			{
 				hovered = false;
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				setBorder(pvpHubSynced ? syncedBorder : border);
 
 				repaint();
 			}

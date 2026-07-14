@@ -52,7 +52,7 @@ public final class PanelFactory
 	public static final float LINE_INDEX_LABEL_FONT_SCALE = 0.65f;
 	public static final Color STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.4f);
 	public static final Color OVERLAY_STATS_LINE_INDEX_COLOR = new Color(1f, 1f, 1f, 0.2f);
-	public static final int HORIZONTAL_PADDING_OUTER = 4;
+	public static final int HORIZONTAL_PADDING_OUTER = 2;
 	public static final int HORIZONTAL_PADDING_INNER_SIDE_ALIGNED = (HORIZONTAL_PADDING_OUTER / 2) + 1;
 
 	public static final Font COMPACT_INDEX_FONT = new Font("Monospace", Font.PLAIN, 12);
