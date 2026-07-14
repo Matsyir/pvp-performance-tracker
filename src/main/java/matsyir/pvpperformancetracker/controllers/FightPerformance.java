@@ -228,7 +228,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 			// Opponent prayers aren't visible; assume they match local prayer unlocks for the attack style.
 			int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
 				animationData.attackStyle,
-				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()));
+				fightType,
+				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
+				competitorLevels.def);
 			opponent.addAttack(competitor.getPlayer(), animationData, assumedOffensivePray, null, competitorLevels, animationTick, animationTime);
 			addedAttack = true;
 			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge

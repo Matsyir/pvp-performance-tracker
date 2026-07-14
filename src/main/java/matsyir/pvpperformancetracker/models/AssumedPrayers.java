@@ -36,6 +36,10 @@ import net.runelite.api.SpriteID;
  */
 public final class AssumedPrayers
 {
+	public static final int DEADEYE_LEVEL = 62;
+	public static final int MYSTIC_VIGOR_LEVEL = 63;
+
+	public static final int DEFENCE_LEVEL_REQ = 70; // same for piety, rigour, and augury
 	public static final int PIETY_LEVEL = 70;
 	public static final int RIGOUR_LEVEL = 74;
 	public static final int AUGURY_LEVEL = 77;
@@ -55,7 +59,7 @@ public final class AssumedPrayers
 	/**
 	 * Assumed offensive prayer sprite for an opponent attack of the given style.
 	 */
-	public static int assumedOffensivePray(AttackStyle attackStyle, int prayerLevel)
+	public static int assumedOffensivePray(AttackStyle attackStyle, FightType fightType, int prayerLevel, int defenceLevel)
 	{
 		if (attackStyle == null)
 		{
@@ -64,21 +68,21 @@ public final class AssumedPrayers
 
 		if (attackStyle.isMelee())
 		{
-			return prayerLevel >= PIETY_LEVEL
+			return prayerLevel >= PIETY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ
 				? SpriteID.PRAYER_PIETY
 				: SpriteID.PRAYER_ULTIMATE_STRENGTH;
 		}
 		if (attackStyle == AttackStyle.RANGED)
 		{
-			return prayerLevel >= RIGOUR_LEVEL
+			return prayerLevel >= RIGOUR_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ
 				? SpriteID.PRAYER_RIGOUR
-				: SpriteID.PRAYER_DEADEYE;
+				: (fightType.isLmsFight() || prayerLevel < DEADEYE_LEVEL ? SpriteID.PRAYER_EAGLE_EYE : SpriteID.PRAYER_DEADEYE);
 		}
 		if (attackStyle == AttackStyle.MAGIC)
 		{
-			return prayerLevel >= AUGURY_LEVEL
+			return prayerLevel >= AUGURY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ
 				? SpriteID.PRAYER_AUGURY
-				: SpriteID.PRAYER_MYSTIC_VIGOUR;
+				: (fightType.isLmsFight() || prayerLevel < MYSTIC_VIGOR_LEVEL ? SpriteID.PRAYER_MYSTIC_MIGHT : SpriteID.PRAYER_MYSTIC_VIGOUR);
 		}
 		return 0;
 	}
@@ -87,7 +91,7 @@ public final class AssumedPrayers
 	 * Defence-level prayer modifier for the defender against an incoming attack style.
 	 * High unlocks use Piety/Rigour/Augury (25%); otherwise Steel Skin (15%).
 	 */
-	public static double assumedDefencePrayerModifier(AttackStyle incomingAttackStyle, int prayerLevel)
+	public static double assumedDefencePrayerModifier(AttackStyle incomingAttackStyle, int prayerLevel, int defenceLevel)
 	{
 		if (incomingAttackStyle == null)
 		{
@@ -96,22 +100,22 @@ public final class AssumedPrayers
 
 		if (incomingAttackStyle.isMelee())
 		{
-			return prayerLevel >= PIETY_LEVEL ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
+			return prayerLevel >= PIETY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
 		}
 		if (incomingAttackStyle == AttackStyle.RANGED)
 		{
-			return prayerLevel >= RIGOUR_LEVEL ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
+			return prayerLevel >= RIGOUR_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
 		}
 		if (incomingAttackStyle == AttackStyle.MAGIC)
 		{
-			return prayerLevel >= AUGURY_LEVEL ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
+			return prayerLevel >= AUGURY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ ? 1.25 : STEEL_SKIN_DEF_PRAYER_MODIFIER;
 		}
 		return STEEL_SKIN_DEF_PRAYER_MODIFIER;
 	}
 
 	/** Whether Augury's Magic Defence bonus should be assumed while defending. */
-	public static boolean assumedDefensiveAugury(int prayerLevel)
+	public static boolean assumedDefensiveAugury(int prayerLevel, int defenceLevel)
 	{
-		return prayerLevel >= AUGURY_LEVEL;
+		return prayerLevel >= AUGURY_LEVEL && defenceLevel >= DEFENCE_LEVEL_REQ ;
 	}
 }
