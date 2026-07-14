@@ -70,6 +70,7 @@ import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
 import matsyir.pvpperformancetracker.models.FightLogEntry;
 import matsyir.pvpperformancetracker.models.HitsplatInfo;
+import matsyir.pvpperformancetracker.models.PrayerType;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
@@ -1797,15 +1798,16 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	// aside from comparison/equality checks, so we save an extra mapping this way
 	public int currentlyUsedOffensivePray()
 	{
-		return client.isPrayerActive(Prayer.PIETY) 				? SpriteID.PRAYER_PIETY :
-				client.isPrayerActive(Prayer.ULTIMATE_STRENGTH) ? SpriteID.PRAYER_ULTIMATE_STRENGTH :
-				client.isPrayerActive(Prayer.RIGOUR) 			? SpriteID.PRAYER_RIGOUR :
-				client.isPrayerActive(Prayer.EAGLE_EYE) 		? SpriteID.PRAYER_EAGLE_EYE :
-				client.isPrayerActive(Prayer.DEADEYE) 			? SpriteID.PRAYER_DEADEYE :
-				client.isPrayerActive(Prayer.AUGURY) 			? SpriteID.PRAYER_AUGURY :
-				client.isPrayerActive(Prayer.MYSTIC_MIGHT)		? SpriteID.PRAYER_MYSTIC_MIGHT :
-				client.isPrayerActive(Prayer.MYSTIC_VIGOUR)		? SpriteID.PRAYER_MYSTIC_VIGOUR :
-				0;
+		return PrayerType.PIETY.isActive(client) ? PrayerType.PIETY.getSpriteID() :
+			PrayerType.PIETY.isActive(client) ? PrayerType.PIETY.getSpriteID() :
+			PrayerType.ULTIMATE_STRENGTH.isActive(client) ? PrayerType.ULTIMATE_STRENGTH.getSpriteID() :
+			PrayerType.RIGOUR.isActive(client) ? PrayerType.RIGOUR.getSpriteID() :
+			PrayerType.EAGLE_EYE.isActive(client) ? PrayerType.EAGLE_EYE.getSpriteID() :
+			PrayerType.DEADEYE.isActive(client) ? PrayerType.DEADEYE.getSpriteID() :
+			PrayerType.AUGURY.isActive(client) ? PrayerType.AUGURY.getSpriteID() :
+			PrayerType.MYSTIC_MIGHT.isActive(client) ? PrayerType.MYSTIC_MIGHT.getSpriteID() :
+			PrayerType.MYSTIC_VIGOUR.isActive(client) ? PrayerType.MYSTIC_VIGOUR.getSpriteID() :
+			0;
 	}
 
 	public void addSpriteToLabelIfValid(JLabel label, int spriteId, Runnable swingCallback)
