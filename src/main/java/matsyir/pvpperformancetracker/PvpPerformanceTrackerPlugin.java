@@ -126,7 +126,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.6";
+	public static final String PLUGIN_VERSION = "1.8.7";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -1301,17 +1301,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
 		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
 		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
-		String updateMsgForVersion = "1.8.6";
-		String updatePrefix = "<shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
-			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER) +
+		String updateMsgForVersion = "1.8.7";
+		String updatePrefix = "<html><shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
+			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER2) +
 			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">Update:</col></shad> ";
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Single-side POV fights now assume your opponent is using the proper offensive and defensive prayers throughout the fight. " +
-				"Possibly corrected incorrect stats for same-tick restore attacks.")
+				"Fix offensive pray tracking & related assumptions. " +
+				"Improved filter functionality & added various new filters, with a dropdown to preview and help using them. " +
+				"Possibly corrected incorrect stats for same-tick restore attacks. " +
+				"Fix min/maxHits in fight logs & KO Chance, fix HP for KO chance (use config rather than hiscores). " +
+				"Allow comparing client vs. synced fight panels on synced fight logs.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);

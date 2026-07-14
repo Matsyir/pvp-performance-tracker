@@ -23,6 +23,7 @@ public class PvpColorScheme
 
 	public static final Color BLOOD_RED_ORANGE = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.5f);
 	public static final Color BLOOD_RED_ORANGE_REDDER = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.75f);
+	public static final Color BLOOD_RED_ORANGE_REDDER2 = ColorUtil.colorLerp(BRAND_ORANGE, Color.RED, 0.85f);
 
 	public static final Color FAVORITE_GOLD = new Color(251, 204, 19);
 
