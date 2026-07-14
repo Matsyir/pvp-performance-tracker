@@ -646,7 +646,50 @@ public class PvpDamageCalc
 	private RangeAmmoData getWeaponAmmo(EquipmentData weapon, Integer attackerAmmoItemId)
 	{
 		RangeAmmoData attackerAmmo = attackerAmmoItemId == null ? null : RangeAmmoData.fromId(attackerAmmoItemId);
-		return attackerAmmo == null ? EquipmentData.getWeaponAmmo(weapon, isLmsFight) : attackerAmmo;
+		return usesEquippedAmmo(weapon, attackerAmmo) ? attackerAmmo : EquipmentData.getWeaponAmmo(weapon, isLmsFight);
+	}
+
+	private boolean usesEquippedAmmo(EquipmentData weapon, RangeAmmoData ammo)
+	{
+		if (weapon == null || ammo == null)
+		{
+			return false;
+		}
+
+		if (weapon == EquipmentData.RUNE_CROSSBOW)
+		{
+			return ammo instanceof RangeAmmoData.BoltAmmo;
+		}
+		if (weapon == EquipmentData.ARMADYL_CROSSBOW ||
+			weapon == EquipmentData.DRAGON_CROSSBOW ||
+			weapon == EquipmentData.DRAGON_HUNTER_CROSSBOW ||
+			weapon == EquipmentData.ZARYTE_CROSSBOW)
+		{
+			return ammo instanceof RangeAmmoData.StrongBoltAmmo;
+		}
+		if (weapon == EquipmentData.HEAVY_BALLISTA || weapon == EquipmentData.LIGHT_BALLISTA)
+		{
+			return ammo == RangeAmmoData.OtherAmmo.DRAGON_JAVELIN;
+		}
+		if (weapon == EquipmentData.DARK_BOW ||
+			weapon == EquipmentData.MAGIC_SHORTBOW ||
+			weapon == EquipmentData.MAGIC_SHORTBOW_I ||
+			weapon == EquipmentData.SCORCHING_BOW)
+		{
+			return ammo == RangeAmmoData.OtherAmmo.AMETHYST_ARROWS ||
+				ammo == RangeAmmoData.OtherAmmo.DRAGON_ARROW ||
+				ArrayUtils.contains(RangeAmmoData.SEEKING_ARROW_AMMO, ammo);
+		}
+		if (weapon == EquipmentData.KARILS_CROSSBOW)
+		{
+			return ammo == RangeAmmoData.OtherAmmo.BOLT_RACK;
+		}
+		if (weapon == EquipmentData.HUNTERS_SUNLIGHT_CROSSBOW)
+		{
+			return ammo == RangeAmmoData.OtherAmmo.MOONLIGHT_ANTLER_BOLTS;
+		}
+
+		return false;
 	}
 
 	private RingData getRingUsed(Player player)
