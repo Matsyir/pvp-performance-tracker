@@ -168,6 +168,7 @@ public class PvpDamageCalc
 
 	private CombatLevels attackerLevels;
 	private CombatLevels defenderLevels;
+	private CombatLevels defaultCombatLevels;
 
 	private RingData ringUsed;
 	boolean isLmsFight;
@@ -175,8 +176,9 @@ public class PvpDamageCalc
 	public PvpDamageCalc(FightPerformance relatedFight)
 	{
 		isLmsFight = relatedFight.fightType.isLmsFight();
-		this.attackerLevels = relatedFight.fightType.getCombatLevelsForType();
-		this.defenderLevels = relatedFight.fightType.getCombatLevelsForType();
+		defaultCombatLevels = relatedFight.fightType.getCombatLevelsForType();
+		this.attackerLevels = defaultCombatLevels;
+		this.defenderLevels = defaultCombatLevels;
 
 		this.ringUsed = isLmsFight ? RingData.BERSERKER_RING_I : CONFIG.ringChoice();
 	}
@@ -184,9 +186,17 @@ public class PvpDamageCalc
 	// main function used to update stats during an ongoing fight
 	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
 	{
+		updateDamageStats(attacker, defender, success, animationData, offensivePray, null, null);
+	}
+
+	// Levels can be null when the client cannot observe that side's boosted/drained stats.
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray, CombatLevels currentAttackerLevels, CombatLevels currentDefenderLevels)
+	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
 
+		this.attackerLevels = currentAttackerLevels != null ? currentAttackerLevels : getDefaultCombatLevels();
+		this.defenderLevels = currentDefenderLevels != null ? currentDefenderLevels : getDefaultCombatLevels();
 		averageHit = 0;
 		accuracy = 0;
 		minHit = 0;
@@ -255,8 +265,8 @@ public class PvpDamageCalc
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
-		this.attackerLevels = atkLog.getAttackerLevels();
-		this.defenderLevels = defenderLog.getAttackerLevels();
+		this.attackerLevels = atkLog.getAttackerLevels() != null ? atkLog.getAttackerLevels() : getDefaultCombatLevels();
+		this.defenderLevels = defenderLog.getAttackerLevels() != null ? defenderLog.getAttackerLevels() : getDefaultCombatLevels();
 		int[] attackerItems = atkLog.getAttackerGear();
 		int[] defenderItems = atkLog.getDefenderGear();
 		boolean success = atkLog.success();
@@ -324,6 +334,11 @@ public class PvpDamageCalc
 		{
 			applyStaffMeleeReduction();
 		}
+	}
+
+	private CombatLevels getDefaultCombatLevels()
+	{
+		return defaultCombatLevels != null ? defaultCombatLevels : CombatLevels.getConfigLevels();
 	}
 
 	public void applyElysianReduction()

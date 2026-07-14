@@ -181,6 +181,12 @@ class Fighter
 	// Levels can be null
 	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels, int attackTick, long attackTime)
 	{
+		addAttack(opponent, animationData, offensivePray, levels, null, attackTick, attackTime);
+	}
+
+	// Levels can be null when that player's current boosted/drained stats are not visible locally.
+	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime)
+	{
 		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
 
 		// correct re-used animations into their separate AnimationData so it uses the correct attack style
@@ -238,7 +244,7 @@ class Fighter
 			staffMeleeReduction = hasStaffMeleeReduction(opponent);
 		}
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray, attackerLevels, defenderLevels);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
@@ -260,7 +266,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, levels, animationData, attackTick, attackTime);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, attackerLevels, animationData, attackTick, attackTime);
 		fightLogEntry.setDefenderElyProc(elyProc);
 		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
@@ -276,7 +282,7 @@ class Fighter
 		pendingAttacks.add(fightLogEntry);
 	}
 
-	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray)
+	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels attackerLevels)
 	{
 		int currentTick = PLUGIN.getClient().getTickCount();
 		if (currentTick <= lastGhostBarrageCheckedTick)
@@ -285,7 +291,7 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray, attackerLevels, null);
 
 		ghostBarrageCount++;
 		ghostBarrageExpectedDamage += pvpDamageCalc.getAverageHit();
