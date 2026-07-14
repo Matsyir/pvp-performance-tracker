@@ -409,19 +409,22 @@ public class PvpDamageCalc
 		}
 		else if (usingSpec && claws)
 		{
-			// if first 1-2 claws miss, it's a 150% dmg multiplier because when the 3rd att hits, the last
-			// 2 hits are 75% dmg multiplier, so 75% + 75% = 150%. It's a matter of a 2x multiplier or a
-			// 1.5x multiplier and the chance of a 2x multiplier is what higherModifierChance is for
-
-			// inverted accuracy is used to calculate the chances of missing specifically 1, 2 or 3 times in a row
-			double invertedAccuracy = 1 - accuracy;
 			double averageSuccessfulRegularHit = maxHit / 2.0;
-			double higherModifierChance = (accuracy + (accuracy * invertedAccuracy));
-			double lowerModifierChance = ((accuracy * Math.pow(invertedAccuracy, 2)) + (accuracy * Math.pow(invertedAccuracy, 3)));
-			double averageSpecialHit = ((higherModifierChance * 2) + (lowerModifierChance * 1.5)) * averageSuccessfulRegularHit;
 
-			averageHit = averageSpecialHit * prayerModifier;
-			accuracy = higherModifierChance + lowerModifierChance;
+			double a = accuracy; // per-roll accuracy
+			double miss = 1 - a;
+
+			double specMultiplier =
+				a * 2.0
+				+ miss * a * 2.5
+				+ miss * miss * a * 2.0
+				+ miss * miss * miss * a * 1.0;
+
+			averageHit = specMultiplier * averageSuccessfulRegularHit * prayerModifier;
+
+			// convert accuracy to "chance the spec hits at least once" instead of per-roll accuracy
+			accuracy = 1 - Math.pow(1 - accuracy, 4);
+
 			// the random +1 is not included in avg hit but it is included in the max hit to be seen from fight logs
 			maxHit = maxHit * 2 + 1;
 			return;
