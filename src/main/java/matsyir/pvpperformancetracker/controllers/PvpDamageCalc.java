@@ -91,7 +91,7 @@ public class PvpDamageCalc
 	private static final double MYSTIC_MIGHT_PRAYER_MODIFIER = 1.15;
 	private static final double MYSTIC_VIGOUR_PRAYER_MODIFIER = 1.18;
 	private static final double MYSTIC_VIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.03;
-	private static final double MYSTIC_MIGHT_PRAYER_DMG_MODIFIER = 1.03;
+	private static final double MYSTIC_MIGHT_PRAYER_DMG_MODIFIER = 1.02;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_DMG_MODIFIER = 1.23;
 	private static final double RIGOUR_OFFENSIVE_PRAYER_ATTACK_MODIFIER = 1.2;
 	private static final double EAGLE_EYE_PRAYER_MODIFIER = 1.15;
