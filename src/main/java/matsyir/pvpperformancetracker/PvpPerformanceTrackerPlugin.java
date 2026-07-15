@@ -1313,9 +1313,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
 				"Fix offensive pray tracking & related assumptions. " +
 				"Improved filter functionality & added various new filters, with a dropdown to preview and help using them. " +
-				"Possibly corrected incorrect stats for same-tick restore attacks. " +
+				"Likely fixed incorrect stats for same-tick restore attacks. " +
 				"Fix min/maxHits in fight logs & KO Chance, fix HP for KO chance (use config rather than hiscores). " +
-				"Allow comparing client vs. synced fight panels on synced fight logs.")
+				"Allow comparing client vs. synced fight panels on synced fight logs. Fix dclaws max hit.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);

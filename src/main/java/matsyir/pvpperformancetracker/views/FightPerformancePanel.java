@@ -458,7 +458,7 @@ public class FightPerformancePanel extends JPanel
 			"'><u>PvP-Hub</u></font>, you can merge your fight " +
 			"data along with your opponent's in order to get more accurate results." +
 			"<br><br><b>Without sync, the following is assumed for both players.</b>" +
-			"<br><i>These assumptions are either based on configs, or using LMS values</i>:" +
+			"<br><i>These assumptions are either based on configs, your own levels, or using LMS values</i>:" +
 			"<br>&nbsp;&nbsp;&#xbb;&nbsp;Offensive prayers are assumed to always be correct. This includes augury tanking." +
 			"<br>&nbsp;&nbsp;&#xbb;&nbsp;You are both assumed to be potted at all times, even if brewed down." +
 			"<br>&nbsp;&nbsp;&#xbb;&nbsp;Rings & Ammo are assumed, rather than detecting actual equipment."));
