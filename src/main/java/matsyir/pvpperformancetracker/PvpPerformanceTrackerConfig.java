@@ -28,6 +28,7 @@ import java.awt.Color;
 import lombok.Getter;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
+import matsyir.pvpperformancetracker.models.TrackedStatistic;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
 import matsyir.pvpperformancetracker.utils.WorldFlag;
 import net.runelite.client.config.Config;
@@ -96,6 +97,13 @@ public interface PvpPerformanceTrackerConfig extends Config
 		closedByDefault = true
 	)
 	String visualStylingSection = "visualStylingSection";
+
+	@ConfigSection(name = "Hide Statistics",
+		description = "Contains settings which controls which statistics are displayed on the fight panel.",
+		position = 1950,
+		closedByDefault = true
+	)
+	String hideStatisticSection = "hideStatisticSection";
 
 	@ConfigSection(name = "Overlay (5 lines max)",
 		description = "Contains overlay settings (MAX of 5 lines allowed)",
@@ -389,6 +397,134 @@ public interface PvpPerformanceTrackerConfig extends Config
 	default Color gbColor()
 	{
 		return PvpColorScheme.PanelColorPreset.DEFAULT.gb;
+	}
+
+	// ================================= Hide Statistics / statistic visibility =================================
+
+	@ConfigItem(
+		keyName = "statisticLineEnabled_OFF_PRAY",
+		name = "Enable Off-Pray",
+		description = "The Off-Pray statistic line will be shown on fight panels if this is checked.",
+		position = 1950,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_OFF_PRAY()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "statisticLineEnabled_EXPECTED_DMG",
+		name = "Enable Expected Dmg",
+		description = "The Expected Dmg statistic line will be shown on fight panels if this is checked.",
+		position = 1953,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_EXPECTED_DMG()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_expectedDmgIncludeGbs",
+		name = "Enable Expected Dmg - GBs",
+		description = "The Expected Dmg statistic line will include GBs on fight panels if this is checked.",
+		position = 1956,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_expectedDmgIncludeGbs()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "statisticLineEnabled_DMG_DEALT",
+		name = "Enable Dmg Dealt",
+		description = "The Dmg Dealt statistic line will be shown on fight panels if this is checked.",
+		position = 1959,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_DMG_DEALT()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_MAGIC_HITS",
+		name = "Enable Magic Hits",
+		description = "The Magic Hits statistic line will be shown on fight panels if this is checked.",
+		position = 1962,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_MAGIC_HITS()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_OFFENSIVE_PRAY",
+		name = "Enable Offensive Pray",
+		description = "The Offensive Pray statistic line will be shown on fight panels if this is checked.",
+		position = 1965,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_OFFENSIVE_PRAY()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_HP_HEALED",
+		name = "Enable HP Healed",
+		description = "The HP Healed statistic line will be shown on fight panels if this is checked.",
+		position = 1968,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_HP_HEALED()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_ROBE_HITS",
+		name = "Enable Robe Hits",
+		description = "The Robe Hits statistic line will be shown on fight panels if this is checked.",
+		position = 1971,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_ROBE_HITS()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_KO_CHANCES",
+		name = "Enable KO Chances",
+		description = "The KO Chances statistic line will be shown on fight panels if this is checked.",
+		position = 1974,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_KO_CHANCES()
+	{
+		return true;
+	}
+	@ConfigItem(
+		keyName = "statisticLineEnabled_GHOST_BARRAGES",
+		name = "Enable Ghost Barrages",
+		description = "The Ghost Barrages statistic line will be shown on fight panels if this is checked.",
+		position = 1977,
+		section = hideStatisticSection
+	)
+	default boolean statisticLineEnabled_GHOST_BARRAGES()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "displayUnsyncedFightWarning",
+		name = "Show Unsynced Fight Warning",
+		description = "Config used to determine if the warning for unsynced fights at the bottom of fight panels should be visible or hidden." +
+			"<br>Can also be toggled by right clicking any fight panel.",
+		position = 1980,
+		section = hideStatisticSection
+	)
+	default boolean displayUnsyncedFightWarning()
+	{
+		return true;
 	}
 
 
@@ -793,19 +929,6 @@ public interface PvpPerformanceTrackerConfig extends Config
 		section = visibilitySection
 	)
 	default boolean displayFightLogDetailWarning()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "displayUnsyncedFightWarning",
-		name = "Show Unsynced Fight Warning",
-		description = "Config used to determine if the warning for unsynced fights at the bottom of fight panels should be visible or hidden." +
-			"<br>Can also be toggled by right clicking any fight panel.",
-		position = 35120,
-		section = visibilitySection
-	)
-	default boolean displayUnsyncedFightWarning()
 	{
 		return true;
 	}

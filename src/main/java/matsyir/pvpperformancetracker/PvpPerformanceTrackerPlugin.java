@@ -182,6 +182,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Inject
 	private ClientToolbar clientToolbar;
 
+	@Getter
 	@Inject
 	private ConfigManager configManager;
 
@@ -314,6 +315,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public void onConfigChanged(ConfigChanged event)
 	{
 		if (!event.getGroup().equals(CONFIG_KEY)) { return; }
+
+		if (event.getKey().startsWith("statisticLineEnabled_"))
+		{
+			panel.enqueueRebuild();
+			return;
+		}
 
 		switch(event.getKey())
 		{

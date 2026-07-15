@@ -27,7 +27,9 @@ package matsyir.pvpperformancetracker.models;
 import java.util.function.Function;
 import joptsimple.internal.Strings;
 import lombok.Getter;
+import matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
+import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
@@ -42,6 +44,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import net.runelite.client.util.ColorUtil;
 
+@Getter
 public enum TrackedStatistic
 { 
 	OFF_PRAY("Off-pray", "OP",
@@ -117,7 +120,7 @@ public enum TrackedStatistic
 			{
 				boolean showGhostBarrages = fight.competitor.getGhostBarrageCount() > 0 || fight.opponent.getGhostBarrageCount() > 0;
 				String gbExpected;
-				if (showGhostBarrages)
+				if (showGhostBarrages && CONFIG.statisticLineEnabled_expectedDmgIncludeGbs())
 				{
 					gbExpected = "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.gbColor()) + "'> (" + PvpUtils.prependPlusIfPositive(
 						(int)fight.competitor.getGhostBarrageExpectedDamage()) + ")</font>";
@@ -432,12 +435,9 @@ public enum TrackedStatistic
 
 	private boolean initialized = false;
 
-	@Getter
-	private String name;
-	@Getter
-	private String acronym;
-	@Getter
-	private String acronymTooltip;
+	final String nameStr;
+	final String acronym;
+	final String acronymTooltip;
 
 	private Function<FightPerformance, JPanel> getPanelComponent;
 
@@ -460,9 +460,9 @@ public enum TrackedStatistic
 		this.updateOverlayComponent.accept(f, t);
 	}
 
-	TrackedStatistic(String name, String acronym, String acronymTooltip)
+	TrackedStatistic(String nameStr, String acronym, String acronymTooltip)
 	{
-		this.name = name;
+		this.nameStr = nameStr;
 		this.acronym = acronym;
 		this.acronymTooltip = acronymTooltip;
 
@@ -481,5 +481,20 @@ public enum TrackedStatistic
 	public String getPrefixedAcronymTooltip()
 	{
 		return ("<br><br><b><i>" + this.acronym + "</i></b>: " + this.acronymTooltip);
+	}
+
+	public boolean isPanelLineEnabled()
+	{
+		try
+		{
+			// expects config: statisticLineEnabled_ + enum.name
+			// example statisticLineEnabled_OFF_PRAY
+			return PLUGIN.getConfigManager().getConfiguration(
+				PvpPerformanceTrackerPlugin.CONFIG_KEY, "statisticLineEnabled_" + this.name(), boolean.class);
+		}
+		catch (Exception e)
+		{
+			return false;
+		}
 	}
 }

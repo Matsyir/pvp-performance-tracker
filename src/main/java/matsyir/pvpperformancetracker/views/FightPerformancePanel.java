@@ -271,7 +271,7 @@ public class FightPerformancePanel extends JPanel
 		boolean showGhostBarrages = competitor.getGhostBarrageCount() > 0 || opponent.getGhostBarrageCount() > 0;
 		for (TrackedStatistic stat : TrackedStatistic.values())
 		{
-			if (stat == TrackedStatistic.GHOST_BARRAGES && !showGhostBarrages)
+			if (!stat.isPanelLineEnabled() || stat == TrackedStatistic.GHOST_BARRAGES && !showGhostBarrages)
 			{
 				continue;
 			}
