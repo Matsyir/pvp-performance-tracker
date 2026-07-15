@@ -418,8 +418,8 @@ public class PvpDamageCalc
 				(a * 3.0
 					+ miss * a * 2.5
 					+ miss * miss * a * 2.0
-					+ miss * miss * miss * a * 1.5)
-					* averageSuccessfulRegularHit;
+					+ miss * miss * miss * a * 1.5
+				) * averageSuccessfulRegularHit;
 
 			double allMissChipAverage = Math.pow(miss, 4) * (4.0 / 3.0);
 
