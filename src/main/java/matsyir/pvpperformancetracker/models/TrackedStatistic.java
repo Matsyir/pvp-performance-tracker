@@ -25,11 +25,13 @@
 package matsyir.pvpperformancetracker.models;
 
 import java.util.function.Function;
+import joptsimple.internal.Strings;
 import lombok.Getter;
 import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.CONFIG;
 import matsyir.pvpperformancetracker.controllers.FightPerformance;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.*;
 import matsyir.pvpperformancetracker.utils.PvpColorScheme;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.PanelFactory;
 import matsyir.pvpperformancetracker.views.TableComponent;
 import javax.swing.JPanel;
@@ -38,6 +40,7 @@ import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import net.runelite.client.util.ColorUtil;
 
 public enum TrackedStatistic
 { 
@@ -110,17 +113,35 @@ public enum TrackedStatistic
 		);
 
 		EXPECTED_DMG.init(
-			(fight) -> PanelFactory.createStatsLine(EXPECTED_DMG.acronym, EXPECTED_DMG.acronymTooltip
-				, fight.competitor.getExpectedDmgString(fight.opponent)
-				, "On average, " + (fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
-					" damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)")
-				, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
+			(fight) ->
+			{
+				boolean showGhostBarrages = fight.competitor.getGhostBarrageCount() > 0 || fight.opponent.getGhostBarrageCount() > 0;
+				String gbExpected;
+				if (showGhostBarrages)
+				{
+					gbExpected = "<font color='" + ColorUtil.colorToHexCode(PvpColorScheme.gbColor()) + "'> (" + PvpUtils.prependPlusIfPositive(
+						(int)fight.competitor.getGhostBarrageExpectedDamage()) + ")</font>";
+				}
+				else
+				{
+					gbExpected = Strings.EMPTY;
+				}
+				return PanelFactory.createStatsLine(EXPECTED_DMG.acronym, EXPECTED_DMG.acronymTooltip
+					, "<html>" + Math.round(fight.competitor.getExpectedDamage()) + gbExpected + " (" + fight.competitor.getExpectedDmgString(fight.opponent, 0, true) + ")"
+					, "On average, " + fight.competitor.getName() + " could expect to deal " + nf2.format(fight.competitor.getExpectedDamage()) +
+						" damage based on gear & overheads (" + fight.competitor.getExpectedDmgString(fight.opponent, 1, true) + " vs opponent)" +
+						(fight.competitor.getGhostBarrageExpectedDamage() > 0 ? "<br><br>" + fight.competitor.getName() + " gained an additional " + nf2.format(fight.competitor.getGhostBarrageExpectedDamage()) + " expected damage from their ghost barrages (not included in the core eD number)"
+						: "")
+					, fight.competitorExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
 
-				, fight.opponent.getExpectedDmgString(fight.competitor)
-				, "On average, " + (fight.opponent.getName() + " could expect to deal " + nf2.format(fight.opponent.getExpectedDamage()) +
-					" damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you)")
-				, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
-			),
+					, fight.opponent.getExpectedDmgString(fight.competitor)
+					, "On average, " + fight.opponent.getName() + " could expect to deal " + nf2.format(fight.opponent.getExpectedDamage()) +
+						" damage based on gear & overheads (" + fight.opponent.getExpectedDmgString(fight.competitor, 1, true) + " vs you)" +
+						(fight.opponent.getGhostBarrageExpectedDamage() > 0 ? "<br><br>" + fight.opponent.getName() + " gained an additional " + nf2.format(fight.opponent.getGhostBarrageExpectedDamage()) + " expected damage from their ghost barrages (not included in the core eD number)"
+							: "")
+					, fight.opponentExpectedDmgIsGreater() ? PvpColorScheme.successDmgColor() : PvpColorScheme.unsuccessDmgColor()
+				);
+			},
 			() -> PanelFactory.createOverlayStatsLine(EXPECTED_DMG.acronym, 70, 30,
 				NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor(), NO_DATA_SHORT, PvpColorScheme.unsuccessDmgColor()),
 			(fight, component) -> component.updateLeftRightCells(

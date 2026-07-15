@@ -40,6 +40,7 @@ import static matsyir.pvpperformancetracker.PvpPerformanceTrackerPlugin.PLUGIN;
 import matsyir.pvpperformancetracker.models.BrewState;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf;
 import static matsyir.pvpperformancetracker.utils.NumberFormatter.nf1;
+import matsyir.pvpperformancetracker.utils.PvpUtils;
 import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.CombatLevels;
@@ -509,7 +510,7 @@ class Fighter
 
 	public String getGhostBarrageStats()
 	{
-		return ghostBarrageCount + " G.B. (" + nf1.format(ghostBarrageExpectedDamage) + ")";
+		return ghostBarrageCount + " G.B. (" + PvpUtils.prependPlusIfPositive(nf1.format(ghostBarrageExpectedDamage), ghostBarrageExpectedDamage) + ")";
 	}
 
 	public void resetRobeHits()
