@@ -109,6 +109,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -214,6 +215,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private EventBus eventBus;
+
+	@Inject
+	private PluginManager pluginManager;
 
 	// custom fields/props
 	public ArrayDeque<FightPerformance> fightHistory;
@@ -1407,13 +1411,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 				}, PVP_HUB_UPLOAD_DELAY_MILLIS, TimeUnit.MILLISECONDS);
 			}
 
-			// send pluginMessage containing fight data to pvp leaderboard plugin
+			// send pluginMessage containing fight data to pvp leaderboard plugin, if the user has this plugin
 			try
 			{
-				Map<String, Object> fightsToSend = Map.ofEntries(
-					entry("fight", GSON.toJson(currentFight))
+				boolean userHasLeaderboard = pluginManager.getPlugins().stream().anyMatch((p) ->
+					p.getClass().getName().equals("com.pvp.leaderboard.PvPLeaderboardPlugin")
+					|| p.getName().equals("PvP Leaderboard")
 				);
-				eventBus.post(new PluginMessage("PvPLeaderboard", "onFightEnded", fightsToSend));
+				if (userHasLeaderboard)
+				{
+					Map<String, Object> fightsToSend = Map.ofEntries(
+						entry("fight", GSON.toJson(currentFight))
+					);
+					eventBus.post(new PluginMessage("PvPLeaderboard", "onFightEnded", fightsToSend));
+				}
 			}
 			catch (Exception e)
 			{
