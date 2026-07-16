@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import static java.util.Map.entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
@@ -99,9 +100,11 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.PluginMessage;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
@@ -208,6 +211,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	@Inject
 	private OkHttpClient httpClient;
+
+	@Inject
+	private EventBus eventBus;
 
 	// custom fields/props
 	public ArrayDeque<FightPerformance> fightHistory;
@@ -1399,6 +1405,19 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					PvpHubUploader.uploadFight(fightToUpload, GSON, httpClient, hiddenName,
 						() -> enqueuePvpHubSync(fightToUpload));
 				}, PVP_HUB_UPLOAD_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+			}
+
+			// send pluginMessage containing fight data to pvp leaderboard plugin
+			try
+			{
+				Map<String, Object> fightsToSend = Map.ofEntries(
+					entry("fight", GSON.toJson(currentFight))
+				);
+				eventBus.post(new PluginMessage("PvPLeaderboard", "onFightEnded", fightsToSend));
+			}
+			catch (Exception e)
+			{
+				log.warn("onFightEnded - error while sending PluginMessage containing fight data for PvP Leaderboard.");
 			}
 		}
 		currentFight = null;
