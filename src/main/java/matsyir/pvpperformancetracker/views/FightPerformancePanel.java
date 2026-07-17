@@ -452,7 +452,7 @@ public class FightPerformancePanel extends JPanel
 			"'>&#8645;synced</font> via <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) +
 			"'><u>PvP-Hub</u></font>.<br>With this sync/merge, the fight results should be near-perfect.")
 
-			: ("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.RED_TEXT_WARNING_ACTION) +
+			: ("<html><font color='" + ColorUtil.colorToHexCode(PvpColorScheme.ORANGE_TEXT_WARNING_ACTION) +
 			"'><u>Warning!</u></font>&nbsp;This fight only makes use of local client-side data." +
 			"<br>By opting into <font color='" + ColorUtil.colorToHexCode(PvpColorScheme.BLUE_TEXT_URL) +
 			"'><u>PvP-Hub</u></font>, you can merge your fight " +
