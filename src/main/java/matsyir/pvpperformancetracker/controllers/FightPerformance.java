@@ -206,6 +206,14 @@ public class FightPerformance implements Comparable<FightPerformance>
 		String eName = eventSource.getName(); // event source name
 		boolean addedAttack = false;
 
+		// Opponent prayers aren't visible; assume they match local prayer unlocks for the attack style.
+		// Also use this assumed offensive pray for local player (when unsynced) to make these assumptions fair
+		int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
+			animationData.attackStyle,
+			fightType,
+			AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
+			competitorLevels.def);
+
 		// verify that the player is interacting with their tracked opponent before adding attacks
 		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
 		{
@@ -216,6 +224,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				opponent.getPlayer(),
 				animationData,
 				offensivePray,
+				assumedOffensivePray,
 				competitorLevels,
 				animationTick,
 				animationTime);
@@ -228,13 +237,16 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			recordInitialFightTick(animationTick);
 			opponent.setPlayer(eventSource);
-			// Opponent prayers aren't visible; assume they match local prayer unlocks for the attack style.
-			int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
-				animationData.attackStyle,
-				fightType,
-				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
-				competitorLevels.def);
-			opponent.addAttack(competitor.getPlayer(), animationData, assumedOffensivePray, null, competitorLevels, animationTick, animationTime);
+
+			opponent.addAttack(
+				competitor.getPlayer(),
+				animationData,
+				assumedOffensivePray,
+				assumedOffensivePray,
+				null,
+				competitorLevels,
+				animationTick,
+				animationTime);
 			addedAttack = true;
 			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 			competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray(), animationTick, animationTime);
@@ -310,11 +322,18 @@ public class FightPerformance implements Comparable<FightPerformance>
 		{
 			animationData = AnimationData.MAGIC_ANCIENT_MULTI_TARGET;
 
+			int assumedOffensivePray = AssumedPrayers.assumedOffensivePray(
+				animationData.attackStyle,
+				fightType,
+				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
+				competitorLevels.def);
+
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
 				opponent.getPlayer(),
 				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
 				offensivePray,
+				assumedOffensivePray,
 				competitorLevels);
 		}
 	}

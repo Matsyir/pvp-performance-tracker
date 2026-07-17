@@ -180,13 +180,13 @@ class Fighter
 	}
 
 	// Levels can be null
-	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels levels, int attackTick, long attackTime)
+	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels levels, int attackTick, long attackTime)
 	{
-		addAttack(opponent, animationData, offensivePray, levels, null, attackTick, attackTime);
+		addAttack(opponent, animationData, realOffensivePray, assumedOffensivePray, levels, null, attackTick, attackTime);
 	}
 
 	// Levels can be null when that player's current boosted/drained stats are not visible locally.
-	void addAttack(Player opponent, AnimationData animationData, int offensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime)
+	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime)
 	{
 		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
 
@@ -223,7 +223,7 @@ class Fighter
 		{
 			offPraySuccessCount++;
 		}
-		if (animationData.attackStyle.isUsingSuccessfulOffensivePray(offensivePray))
+		if (animationData.attackStyle.isUsingSuccessfulOffensivePray(realOffensivePray))
 		{
 			offensivePraySuccessCount++;
 		}
@@ -245,7 +245,11 @@ class Fighter
 			staffMeleeReduction = hasStaffMeleeReduction(opponent);
 		}
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray, attackerLevels, defenderLevels);
+
+		// always overwrite offensive pray with the assumed pray for dps calcs, same as is used for opponent.
+		// we still want to save the real pray in the fight log, though. Same with levels.
+		// Calc doesn't even need levels since it just uses defaults.
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, assumedOffensivePray);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
@@ -267,7 +271,7 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, offensivePray, attackerLevels, animationData, attackTick, attackTime);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, realOffensivePray, attackerLevels, animationData, attackTick, attackTime);
 		fightLogEntry.setDefenderElyProc(elyProc);
 		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
@@ -283,7 +287,7 @@ class Fighter
 		pendingAttacks.add(fightLogEntry);
 	}
 
-	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int offensivePray, CombatLevels attackerLevels)
+	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels)
 	{
 		int currentTick = PLUGIN.getClient().getTickCount();
 		if (currentTick <= lastGhostBarrageCheckedTick)
@@ -292,7 +296,7 @@ class Fighter
 		}
 		lastGhostBarrageCheckedTick = currentTick;
 
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, offensivePray, attackerLevels, null);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, assumedOffensivePray);
 
 		ghostBarrageCount++;
 		ghostBarrageExpectedDamage += pvpDamageCalc.getAverageHit();

@@ -185,19 +185,15 @@ public class PvpDamageCalc
 	}
 
 	// main function used to update stats during an ongoing fight
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
-	{
-		updateDamageStats(attacker, defender, success, animationData, offensivePray, null, null);
-	}
-
 	// Levels can be null when the client cannot observe that side's boosted/drained stats.
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray, CombatLevels currentAttackerLevels, CombatLevels currentDefenderLevels)
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
 	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
 
-		this.attackerLevels = currentAttackerLevels != null ? currentAttackerLevels : getDefaultCombatLevels();
-		this.defenderLevels = currentDefenderLevels != null ? currentDefenderLevels : getDefaultCombatLevels();
+		// always force default levels (either config levels, or LMS levels) for dps calcs, same as is assumed for opponent
+		this.attackerLevels = getDefaultCombatLevels();
+		this.defenderLevels = getDefaultCombatLevels();
 		averageHit = 0;
 		accuracy = 0;
 		minHit = 0;
