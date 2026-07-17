@@ -44,10 +44,6 @@ import matsyir.pvpperformancetracker.models.CombatLevels;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import matsyir.pvpperformancetracker.models.RingData;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.SpriteID;
 import net.runelite.api.kit.KitType;
@@ -208,10 +204,10 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = calculateBonuses(attackerItems, getRingUsed(attacker));
-		int[] opponentStats = calculateBonuses(defenderItems, getRingUsed(defender));
+		int[] playerStats = calculateBonusesWithRing(attackerItems);
+		int[] opponentStats = calculateBonusesWithRing(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
-		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
+		Integer attackerAmmoItemId = null;
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
@@ -695,59 +691,6 @@ public class PvpDamageCalc
 		}
 
 		return false;
-	}
-
-	private RingData getRingUsed(Player player)
-	{
-		Integer actualRingItemId = getLocalPlayerRingItemId(player);
-		RingData actualRing = actualRingItemId == null ? null : RingData.fromId(actualRingItemId);
-		return actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
-	}
-
-	private Integer getLocalPlayerRingItemId(Player player)
-	{
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
-		if (player == null || localPlayer == null || player.getName() == null || !player.getName().equals(localPlayer.getName()))
-		{
-			return null;
-		}
-
-		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
-		if (worn == null)
-		{
-			return null;
-		}
-
-		Item ring = worn.getItem(EquipmentInventorySlot.RING.getSlotIdx());
-		if (ring == null || ring.getId() <= 0)
-		{
-			return null;
-		}
-
-		return ring.getId();
-	}
-
-	private Integer getLocalPlayerAmmoItemId(Player attacker)
-	{
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
-		if (attacker == null || localPlayer == null || attacker.getName() == null || !attacker.getName().equals(localPlayer.getName()))
-		{
-			return null;
-		}
-
-		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
-		if (worn == null)
-		{
-			return null;
-		}
-
-		Item ammo = worn.getItem(EquipmentInventorySlot.AMMO.getSlotIdx());
-		if (ammo == null || ammo.getId() <= 0)
-		{
-			return null;
-		}
-
-		return ammo.getId();
 	}
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
