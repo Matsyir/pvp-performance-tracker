@@ -212,7 +212,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 			animationData.attackStyle,
 			fightType,
 			AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
-			competitorLevels.def);
+			PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE));
 
 		// verify that the player is interacting with their tracked opponent before adding attacks
 		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
@@ -326,7 +326,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				animationData.attackStyle,
 				fightType,
 				AssumedPrayers.localPrayerLevel(PLUGIN.getClient()),
-				competitorLevels.def);
+				PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE));
 
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),

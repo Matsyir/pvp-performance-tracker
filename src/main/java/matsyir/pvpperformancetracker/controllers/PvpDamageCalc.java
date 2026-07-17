@@ -217,7 +217,7 @@ public class PvpDamageCalc
 
 		// Assume defender prayers match local prayer unlocks (opponent prayers are not visible).
 		int localPrayerLevel = PLUGIN.getClient().getRealSkillLevel(Skill.PRAYER);
-		int localDefenceLevel = this.attackerLevels.def;
+		int localDefenceLevel = PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE);
 		double defencePrayerModifier = AssumedPrayers.assumedDefencePrayerModifier(attackStyle, localPrayerLevel, localDefenceLevel);
 		boolean defensiveAugurySuccess = AssumedPrayers.assumedDefensiveAugury(localPrayerLevel, localDefenceLevel);
 
