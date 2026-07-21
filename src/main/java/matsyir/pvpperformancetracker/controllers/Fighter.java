@@ -63,6 +63,10 @@ class Fighter
 	private static final int GFX_TARGET_DBOW_SPEC = 1100;   // dragon-arrow gfx on target
 	private static final int GFX_TARGET_DCBOW_SPEC = 157;    // Annihilate AOE gfx on target
 
+	// Soulreaper axe mechanics
+	private static final int SOULREAPER_MAX_STACKS = 5;
+	private static final int SOULREAPER_STACK_DECAY_TICKS = 50;
+
 	@Setter
 	private Player player;
 	@Setter
@@ -127,6 +131,8 @@ class Fighter
 	private int lastGhostBarrageCheckedTick = -1;
 	@Setter
 	private int lastGhostBarrageCheckedMageXp = -1;
+	private transient int soulreaperStacks;
+	private transient int lastSoulreaperAttackTick = -1;
 
 	@Getter
 	private transient Queue<FightLogEntry> pendingAttacks;
@@ -180,19 +186,22 @@ class Fighter
 	}
 
 	// Levels can be null
-	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels levels, int attackTick, long attackTime)
+	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels levels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
 	{
-		addAttack(opponent, animationData, realOffensivePray, assumedOffensivePray, levels, null, attackTick, attackTime);
+		addAttack(opponent, animationData, realOffensivePray, assumedOffensivePray, levels, null, attackTick, attackTime, recordedSoulreaperStacksVarp);
 	}
 
 	// Levels can be null when that player's current boosted/drained stats are not visible locally.
-	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime)
+	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
 	{
 		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
 
 		// correct re-used animations into their separate AnimationData so it uses the correct attack style
 		// for overhead success & accuracy calcs
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		Integer soulreaperStacksForAttack = weapon == EquipmentData.SOULREAPER_AXE && animationData.isSoulreaperAxeAttack()
+			? updateSoulreaperStacks(animationData, attackTick)
+			: null;
 
 		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
 
@@ -249,7 +258,8 @@ class Fighter
 		// always overwrite offensive pray with the assumed pray for dps calcs, same as is used for opponent.
 		// we still want to save the real pray in the fight log, though. Same with levels.
 		// Calc doesn't even need levels since it just uses defaults.
-		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, assumedOffensivePray);
+		pvpDamageCalc.updateDamageStats(player, opponent, successful, animationData, assumedOffensivePray,
+			soulreaperStacksForAttack != null ? soulreaperStacksForAttack : 0);
 		if (elyProc)
 		{
 			pvpDamageCalc.applyElysianReduction();
@@ -271,7 +281,8 @@ class Fighter
 			}
 		}
 
-		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, realOffensivePray, attackerLevels, animationData, attackTick, attackTime);
+		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, realOffensivePray, attackerLevels,
+			animationData, attackTick, attackTime, soulreaperStacksForAttack, recordedSoulreaperStacksVarp);
 		fightLogEntry.setDefenderElyProc(elyProc);
 		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
@@ -285,6 +296,33 @@ class Fighter
 		}
 		fightLogEntries.add(fightLogEntry);
 		pendingAttacks.add(fightLogEntry);
+	}
+
+	int updateSoulreaperStacks(AnimationData animationData, int attackTick)
+	{
+		if (!animationData.isSoulreaperAxeAttack())
+		{
+			return 0;
+		}
+
+		if (lastSoulreaperAttackTick >= 0 && soulreaperStacks > 0)
+		{
+			int elapsedTicks = Math.max(0, attackTick - lastSoulreaperAttackTick);
+			soulreaperStacks = Math.max(0, soulreaperStacks - elapsedTicks / SOULREAPER_STACK_DECAY_TICKS);
+		}
+
+		int stacksForAttack = soulreaperStacks;
+		if (animationData == AnimationData.MELEE_SOULREAPER_AXE_SPEC)
+		{
+			soulreaperStacks = 0;
+		}
+		else
+		{
+			soulreaperStacks = Math.min(SOULREAPER_MAX_STACKS, soulreaperStacks + 1);
+		}
+		lastSoulreaperAttackTick = attackTick;
+
+		return stacksForAttack;
 	}
 
 	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels)

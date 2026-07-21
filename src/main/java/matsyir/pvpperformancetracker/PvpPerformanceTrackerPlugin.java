@@ -94,6 +94,7 @@ import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
@@ -537,6 +538,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		}
 		int animationTick = client.getTickCount();
 		long animationTime = Instant.now().toEpochMilli();
+		Integer recordedSoulreaperStacksVarp = eventSource == client.getLocalPlayer() && animationData.isSoulreaperAxeAttack()
+			? client.getVarpValue(VarPlayerID.SOULREAPER_STACKS)
+			: null;
 
 		// delay the animation processing, since we will also want to use equipment data for expected
 		// damage, and equipment updates are loaded after the animation updates.
@@ -556,7 +560,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					animationData,
 					animationTick,
 					animationTime,
-					new CombatLevels(client));
+					new CombatLevels(client),
+					recordedSoulreaperStacksVarp);
 			}
 		});
 	}
