@@ -138,6 +138,9 @@ public class PvpDamageCalc
 
 	private static final double ABYSSAL_DAGGER_SPEC_ACCURACY_MODIFIER = 1.25;
 	private static final double ABYSSAL_DAGGER_SPEC_DMG_MODIFIER = 0.85;
+	private static final double SOULREAPER_STACK_DAMAGE_MODIFIER = 0.06;
+	private static final double SOULREAPER_SPEC_ACCURACY_MODIFIER = 0.12;
+	private static final double SOULREAPER_SPEC_MIN_HIT_MODIFIER = 0.06;
 
 	private static final double ARKAN_BLADE_SPEC_ACCURACY_MODIFIER = 1.5;
 	private static final double ARKAN_BLADE_SPEC_DMG_MODIFIER = 1.5;
@@ -188,6 +191,11 @@ public class PvpDamageCalc
 	// Levels can be null when the client cannot observe that side's boosted/drained stats.
 	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
 	{
+		updateDamageStats(attacker, defender, success, animationData, offensivePray, 0);
+	}
+
+	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray, int soulreaperStacks)
+	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
 
@@ -227,8 +235,9 @@ public class PvpDamageCalc
 
 		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray, defencePrayerModifier);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray, soulreaperStacks);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray,
+				defencePrayerModifier, soulreaperStacks);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
@@ -291,12 +300,14 @@ public class PvpDamageCalc
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
 		// are used for multiple special attacks.
 		boolean isSpecial = animationData.isSpecial;
+		int soulreaperStacks = atkLog.getSoulreaperStacks() != null ? atkLog.getSoulreaperStacks() : 0;
 		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attackerItems);
 
 		if (attackStyle.isMelee())
 		{
-			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray);
-			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray, PIETY_DEF_PRAYER_MODIFIER);
+			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray, soulreaperStacks);
+			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray,
+				PIETY_DEF_PRAYER_MODIFIER, soulreaperStacks);
 		}
 		else if (attackStyle == AttackStyle.RANGED)
 		{
@@ -371,6 +382,7 @@ public class PvpDamageCalc
 		boolean swh = weapon == EquipmentData.STATIUS_WARHAMMER;
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean burningClaws = weapon == EquipmentData.BURNING_CLAWS;
+		boolean soulreaperAxe = weapon == EquipmentData.SOULREAPER_AXE;
 
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
@@ -482,10 +494,13 @@ public class PvpDamageCalc
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 		// average hit calculation for attacks with minimum hits that use a more 'intuitive' average hit, similar to osmuten's fang
-		else if (usingSpec && voidwaker)
+		else if (usingSpec && (voidwaker || soulreaperAxe))
 		{
-			// back-calc base hit from floored spec-max, then apply 50% for correct rounding
-			minHit = (int) Math.floor((maxHit / VOIDWAKER_SPEC_DMG_MODIFIER) * VOIDWAKER_SPEC_MIN_DMG_MODIFIER);
+			if (voidwaker)
+			{
+				// back-calc base hit from floored spec-max, then apply 50% for correct rounding
+				minHit = (int) Math.floor((maxHit / VOIDWAKER_SPEC_DMG_MODIFIER) * VOIDWAKER_SPEC_MIN_DMG_MODIFIER);
+			}
 			averageSuccessfulHit = (minHit + maxHit) / 2.0;
 		}
 		else
@@ -611,7 +626,7 @@ public class PvpDamageCalc
 			1;
 	}
 
-	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray)
+	private void getMeleeMaxHit(int meleeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int soulreaperStacks)
 	{
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
 		boolean ancientGs = weapon == EquipmentData.ANCIENT_GODSWORD;
@@ -622,8 +637,13 @@ public class PvpDamageCalc
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 		boolean arkanBlade = weapon == EquipmentData.ARKAN_BLADE;
+		boolean soulreaperAxe = weapon == EquipmentData.SOULREAPER_AXE;
 
-		int effectiveLevel = (int) Math.floor((attackerLevels.str * getMeleeStrengthPrayerModifier(offensivePray)) + 8 + 3);
+		int effectiveLevel = (int) Math.floor(attackerLevels.str * getMeleeStrengthPrayerModifier(offensivePray)) + 8 + 3;
+		if (soulreaperAxe && !usingSpec)
+		{
+			effectiveLevel += (int) Math.floor(attackerLevels.str * soulreaperStacks * SOULREAPER_STACK_DAMAGE_MODIFIER);
+		}
 		// apply void bonus if applicable
 		if (voidStyle == VoidStyle.VOID_ELITE_MELEE || voidStyle == VoidStyle.VOID_MELEE)
 		{
@@ -640,8 +660,13 @@ public class PvpDamageCalc
 			(voidwaker && usingSpec) ? VOIDWAKER_SPEC_DMG_MODIFIER :
 			(abyssalDagger && usingSpec) ? ABYSSAL_DAGGER_SPEC_DMG_MODIFIER :
 			(arkanBlade && usingSpec) ? ARKAN_BLADE_SPEC_DMG_MODIFIER :
+			(soulreaperAxe && usingSpec) ? 1 + soulreaperStacks * SOULREAPER_STACK_DAMAGE_MODIFIER :
 			1;
 		maxHit = (int) (damageModifier * baseDamage);
+		if (soulreaperAxe && usingSpec)
+		{
+			minHit = (int) Math.floor(baseDamage * soulreaperStacks * SOULREAPER_SPEC_MIN_HIT_MODIFIER);
+		}
 	}
 
 	private RangeAmmoData getWeaponAmmo(EquipmentData weapon, Integer attackerAmmoItemId)
@@ -891,7 +916,7 @@ public class PvpDamageCalc
 		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
 	}
 
-	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, double defencePrayerModifier)
+	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, double defencePrayerModifier, int soulreaperStacks)
 	{
 		boolean vls = weapon == EquipmentData.VESTAS_LONGSWORD;
 		boolean ags = weapon == EquipmentData.ARMADYL_GODSWORD;
@@ -901,6 +926,7 @@ public class PvpDamageCalc
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean abyssalDagger = weapon == EquipmentData.ABYSSAL_DAGGER;
 		boolean arkanBlade = weapon == EquipmentData.ARKAN_BLADE;
+		boolean soulreaperAxe = weapon == EquipmentData.SOULREAPER_AXE;
 
 		if (voidwaker && usingSpec)
 		{
@@ -929,6 +955,7 @@ public class PvpDamageCalc
 			ancientGs ? ANCIENT_GS_SPEC_ACCURACY_MODIFIER :
 			fang ? FANG_SPEC_ACCURACY_MODIFIER :
 			arkanBlade ? ARKAN_BLADE_SPEC_ACCURACY_MODIFIER :
+			soulreaperAxe ? 1 + soulreaperStacks * SOULREAPER_SPEC_ACCURACY_MODIFIER :
 			1;
 
 		/**

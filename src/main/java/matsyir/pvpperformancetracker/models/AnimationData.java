@@ -102,6 +102,10 @@ public enum AnimationData
 	MELEE_SCYTHE(8056, AttackStyle.SLASH), // tested w/ all scythe styles (so could be crush, but unlikely)
 	MELEE_GHAZI_RAPIER_STAB(8145, AttackStyle.STAB), // rapier slash is 390, basic slash animation. Also VLS stab.
 	MELEE_ANCIENT_GODSWORD_SPEC(9171, AttackStyle.SLASH, true),
+	// These observed styles intentionally differ from RuneLite's generated animation names.
+	MELEE_SOULREAPER_AXE_CRUSH(10171, AttackStyle.CRUSH),
+	MELEE_SOULREAPER_AXE_SLASH(10172, AttackStyle.SLASH),
+	MELEE_SOULREAPER_AXE_SPEC(10173, AttackStyle.SLASH, true),
 	MELEE_DUAL_MACUACHUITL(10989, AttackStyle.CRUSH), // Note the animation is identical for stab attacks and normal/special attack
 	MELEE_ELDER_MAUL2(11124, AttackStyle.CRUSH), // spec anim, but looks like this anim is also used for normal attacks after using the spec. No spec tracking for now, just for normal attacks
     MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
@@ -247,6 +251,13 @@ public enum AnimationData
 			this == MELEE_STAFF_SLASH ||
 			this == MELEE_STAFF_STAB ||
 			this == MELEE_AHRIMS_STAFF_CRUSH);
+	}
+
+	public boolean isSoulreaperAxeAttack()
+	{
+		return this == MELEE_SOULREAPER_AXE_CRUSH ||
+			this == MELEE_SOULREAPER_AXE_SLASH ||
+			this == MELEE_SOULREAPER_AXE_SPEC;
 	}
 
 	@Override

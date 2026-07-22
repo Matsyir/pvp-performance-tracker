@@ -86,6 +86,12 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("m") // m because movement?
 	private AnimationData animationData;
+	@Expose
+	@SerializedName("sr")
+	private Integer soulreaperStacks;
+	@Expose
+	@SerializedName("srv")
+	private Integer recordedSoulreaperStacksVarp;
 	@Setter
 	@Expose
 	@SerializedName("d")
@@ -245,6 +251,11 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 
 	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time)
 	{
+		this(attacker, defender, pvpDamageCalc, attackerOffensivePray, levels, animationData, tick, time, null, null);
+	}
+
+	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time, Integer soulreaperStacks, Integer recordedSoulreaperStacksVarp)
+	{
 		this.isFullEntry = true;
 
 		// general
@@ -254,6 +265,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.hitsplatMatchTick = PLUGIN.getClient().getTickCount();
 
 		this.animationData = animationData;
+		this.soulreaperStacks = soulreaperStacks;
+		this.recordedSoulreaperStacksVarp = recordedSoulreaperStacksVarp;
 
 		// attacker data
 		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
