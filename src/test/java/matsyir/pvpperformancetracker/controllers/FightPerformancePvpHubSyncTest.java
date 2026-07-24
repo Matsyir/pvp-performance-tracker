@@ -97,6 +97,15 @@ public class FightPerformancePvpHubSyncTest
 		assertEquals(50, displayFight.getOpponent().getDamageDealt());
 	}
 
+	@Test
+	public void attackTimeOpponentHpPrefersVisibleHealthBarThenMatchedHit()
+	{
+		assertEquals(50, FightPerformance.estimateOpponentHpAtAttack(15, 30, 20, 99));
+		assertEquals(20, FightPerformance.estimateOpponentHpAtAttack(-1, -1, 20, 99));
+		assertEquals(99, FightPerformance.estimateOpponentHpAtAttack(-1, -1, null, 99));
+		assertEquals(0, FightPerformance.estimateOpponentHpAtAttack(0, 30, 20, 99));
+	}
+
 	private static FightPerformance fight(String competitorName, String opponentName, int competitorDamage, int opponentDamage)
 	{
 		FightPerformance fight = new FightPerformance();

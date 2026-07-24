@@ -55,6 +55,7 @@ import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import net.runelite.api.kit.KitType;
+import static matsyir.pvpperformancetracker.utils.PvpUtils.calculateHpBeforeHit;
 import static matsyir.pvpperformancetracker.utils.PvpUtils.fixItemId;
 import static matsyir.pvpperformancetracker.controllers.PvpDamageCalc.RANGE_DEF;
 
@@ -118,6 +119,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	private transient int initialFightTick = -1;
 	private transient boolean logTicksRelative = false;
 	private transient int[] lastNonEmptyInventorySnapshot;
+	private transient Integer latestOpponentEstimatedHp; // Updated after matched local hits.
 
 	private int competitorPrevHp; // intentionally don't serialize this, temp variable used to calculate hp healed.
 
@@ -227,6 +229,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 				offensivePray,
 				assumedOffensivePray,
 				competitorLevels,
+				null,
+				null,
+				getFighterMaxHp(competitor),
 				animationTick,
 				animationTime,
 				recordedSoulreaperStacksVarp);
@@ -240,6 +245,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 			recordInitialFightTick(animationTick);
 			opponent.setPlayer(eventSource);
 
+			int opponentMaxHp = getAssumedOpponentMaxHp();
+			int opponentHp = getOpponentHpAtAttack(eventSource, opponentMaxHp);
 			opponent.addAttack(
 				competitor.getPlayer(),
 				animationData,
@@ -247,6 +254,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 				assumedOffensivePray,
 				null,
 				competitorLevels,
+				opponentHp,
+				opponentMaxHp,
 				animationTick,
 				animationTime,
 				recordedSoulreaperStacksVarp);
@@ -443,6 +452,58 @@ public class FightPerformance implements Comparable<FightPerformance>
 			pvpHubSyncedFight.applyLocalDisplayIdentityFrom(this);
 			pvpHubSyncedFight.initializeFightLogNames();
 		}
+	}
+
+	public void updateOpponentEstimatedHp(Integer estimatedHp)
+	{
+		if (estimatedHp == null)
+		{
+			return;
+		}
+		latestOpponentEstimatedHp = Math.max(0, Math.min(estimatedHp, getAssumedOpponentMaxHp()));
+	}
+
+	private int getOpponentHpAtAttack(Player player, int maxHp)
+	{
+		int ratio = player != null ? player.getHealthRatio() : -1;
+		int scale = player != null ? player.getHealthScale() : -1;
+		return estimateOpponentHpAtAttack(ratio, scale, latestOpponentEstimatedHp, maxHp);
+	}
+
+	static int estimateOpponentHpAtAttack(int ratio, int scale, Integer latestMatchedHp, int maxHp)
+	{
+		maxHp = Math.max(1, maxHp);
+		int healthBarHp = calculateHpBeforeHit(ratio, scale, maxHp, 0);
+		int estimatedHp = healthBarHp >= 0 ? healthBarHp : latestMatchedHp != null ? latestMatchedHp : maxHp;
+		return Math.max(0, Math.min(estimatedHp, maxHp));
+	}
+
+	public String getDharokHpAtAttackText(FightLogEntry entry)
+	{
+		return entry == null ? "-" : entry.getDharokHpAtAttackText(getFighterMaxHp(getAttacker(entry)));
+	}
+
+	private Fighter getAttacker(FightLogEntry entry)
+	{
+		if (entry != null && competitor != null && Objects.equals(entry.getAttackerName(), competitor.getName()))
+		{
+			return competitor;
+		}
+		return opponent;
+	}
+
+	private int getFighterMaxHp(Fighter fighter)
+	{
+		if (fighter != null && fighter.getBaseLevels() != null && fighter.getBaseLevels().hp > 0)
+		{
+			return fighter.getBaseLevels().hp;
+		}
+		return fighter == opponent ? getAssumedOpponentMaxHp() : 99;
+	}
+
+	private int getAssumedOpponentMaxHp()
+	{
+		return fightType != null && fightType.isLmsFight() ? 99 : CONFIG.opponentHitpointsLevel();
 	}
 
 	public void recordPvpHubUploadName(String uploadName)
