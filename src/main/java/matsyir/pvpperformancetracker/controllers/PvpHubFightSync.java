@@ -128,7 +128,7 @@ public final class PvpHubFightSync
 		{
 			FightDetail detail = gson.fromJson(reader, FightDetail.class);
 			if (detail == null || detail.fullData == null || detail.secondaryData == null ||
-				!localFight.getFightId().equals(detail.fightId))
+				validateSyncedFightDetail(detail, localFight.getFightId()) == null)
 			{
 				return null;
 			}
@@ -169,6 +169,11 @@ public final class PvpHubFightSync
 	static FightDetail parseSyncedFightDetail(String json, Gson gson, String expectedFightId)
 	{
 		FightDetail detail = gson.fromJson(json, FightDetail.class);
+		return validateSyncedFightDetail(detail, expectedFightId);
+	}
+
+	static FightDetail validateSyncedFightDetail(FightDetail detail, String expectedFightId)
+	{
 		if (detail == null)
 		{
 			return null;
@@ -176,7 +181,8 @@ public final class PvpHubFightSync
 
 		String responseFightId = detail.fightId != null ? detail.fightId :
 			detail.fullData != null ? detail.fullData.getFightId() : null;
-		if (expectedFightId != null && !expectedFightId.equals(responseFightId))
+		if (expectedFightId != null && !expectedFightId.equals(responseFightId) &&
+			!expectedFightId.equals(detail.requestedFightId))
 		{
 			return null;
 		}
@@ -194,6 +200,9 @@ public final class PvpHubFightSync
 		@Expose
 		@SerializedName("fight_id")
 		String fightId;
+		@Expose
+		@SerializedName("requested_fight_id")
+		String requestedFightId;
 		@Expose
 		@SerializedName("full_data")
 		FightPerformance fullData;
