@@ -219,7 +219,7 @@ public class PvpDamageCalc
 		int[] playerStats = calculateBonuses(attackerItems, getRingUsed(attacker));
 		int[] opponentStats = calculateBonuses(defenderItems, getRingUsed(defender));
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
-		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
+		Integer attackerAmmoItemId = null;
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
@@ -229,7 +229,7 @@ public class PvpDamageCalc
 
 		// Assume defender prayers match local prayer unlocks (opponent prayers are not visible).
 		int localPrayerLevel = PLUGIN.getClient().getRealSkillLevel(Skill.PRAYER);
-		int localDefenceLevel = this.attackerLevels.def;
+		int localDefenceLevel = PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE);
 		double defencePrayerModifier = AssumedPrayers.assumedDefencePrayerModifier(attackStyle, localPrayerLevel, localDefenceLevel);
 		boolean defensiveAugurySuccess = AssumedPrayers.assumedDefensiveAugury(localPrayerLevel, localDefenceLevel);
 
@@ -750,29 +750,6 @@ public class PvpDamageCalc
 		}
 
 		return ring.getId();
-	}
-
-	private Integer getLocalPlayerAmmoItemId(Player attacker)
-	{
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
-		if (attacker == null || localPlayer == null || attacker.getName() == null || !attacker.getName().equals(localPlayer.getName()))
-		{
-			return null;
-		}
-
-		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
-		if (worn == null)
-		{
-			return null;
-		}
-
-		Item ammo = worn.getItem(EquipmentInventorySlot.AMMO.getSlotIdx());
-		if (ammo == null || ammo.getId() <= 0)
-		{
-			return null;
-		}
-
-		return ammo.getId();
 	}
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
