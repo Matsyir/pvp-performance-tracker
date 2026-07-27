@@ -59,6 +59,8 @@ import net.runelite.api.kit.KitType;
 public
 class Fighter
 {
+	private static final int ANCIENT_SIGNAL_LOOKBACK_TICKS = 6;
+
 	// Target graphics IDs indicating special attacks
 	private static final int GFX_TARGET_DBOW_SPEC = 1100;   // dragon-arrow gfx on target
 	private static final int GFX_TARGET_DCBOW_SPEC = 157;    // Annihilate AOE gfx on target
@@ -275,7 +277,7 @@ class Fighter
 			totalMagicAttackCount++;
 			magicHitCountExpected += pvpDamageCalc.getAccuracy();
 
-			if (opponent.getGraphic() != GraphicID.SPLASH)
+			if (!opponent.hasSpotAnim(GraphicID.SPLASH))
 			{
 				magicHitCount++;
 			}
@@ -283,6 +285,10 @@ class Fighter
 
 		FightLogEntry fightLogEntry = new FightLogEntry(player, opponent, pvpDamageCalc, realOffensivePray, attackerLevels,
 			animationData, attackTick, attackTime, soulreaperStacksForAttack, recordedSoulreaperStacksVarp);
+		if (animationData.isSharedAncientAnimation())
+		{
+			fightLogEntry.setAssumedOffensivePray(assumedOffensivePray);
+		}
 		fightLogEntry.setDefenderElyProc(elyProc);
 		fightLogEntry.setDefenderSotdMeleeReductionProc(staffMeleeReduction);
 		fightLogEntry.setGmaulSpecial(isGmaulSpec);
@@ -323,6 +329,94 @@ class Fighter
 		lastSoulreaperAttackTick = attackTick;
 
 		return stacksForAttack;
+	}
+
+	FightLogEntry refineRecentAncientSpell(AnimationData spell, int signalTick, boolean sameTickOnly)
+	{
+		FightLogEntry match = null;
+		FightLogEntry sameTickFallback = null;
+		int earliestTick = sameTickOnly ? signalTick : signalTick - ANCIENT_SIGNAL_LOOKBACK_TICKS;
+		for (int i = fightLogEntries.size() - 1; i >= 0; i--)
+		{
+			FightLogEntry entry = fightLogEntries.get(i);
+			if (entry.getTick() < earliestTick)
+			{
+				break;
+			}
+			if (entry.getTick() > signalTick ||
+				!entry.isFullEntry() ||
+				!spell.matchesSharedAncientAnimation(entry.getSharedAnimationData()))
+			{
+				continue;
+			}
+			if (!sameTickOnly && entry.getTick() == signalTick)
+			{
+				if (sameTickFallback == null)
+				{
+					sameTickFallback = entry;
+				}
+				continue;
+			}
+			match = entry;
+			break;
+		}
+
+		// Projectile signals emitted on the cast tick belong to the new cast, even when
+		// another compatible Ancient cast is still inside the lookback window.
+		if (sameTickFallback != null)
+		{
+			match = sameTickFallback;
+		}
+		if (match == null)
+		{
+			return null;
+		}
+		// Never let a repeated or conflicting signal fall through to an older cast.
+		if (match.getExactMagicSpell() != null)
+		{
+			return match.getExactMagicSpell() == spell ? match : null;
+		}
+
+		return refineAncientSpell(match, spell);
+	}
+
+	void resolveUnidentifiedAncientCasts(int currentTick)
+	{
+		int unresolvedTick = currentTick - ANCIENT_SIGNAL_LOOKBACK_TICKS - 1;
+		for (int i = fightLogEntries.size() - 1; i >= 0; i--)
+		{
+			FightLogEntry entry = fightLogEntries.get(i);
+			if (entry.getTick() < unresolvedTick)
+			{
+				break;
+			}
+			if (entry.getTick() == unresolvedTick &&
+				entry.isFullEntry() &&
+				entry.getExactMagicSpell() == null &&
+				entry.getAnimationData().isSharedAncientAnimation())
+			{
+				if (entry.getAnimationData() == AnimationData.MAGIC_ANCIENT_MULTI_TARGET)
+				{
+					refineAncientSpell(entry, AnimationData.MAGIC_BLOOD_BARRAGE);
+				}
+				else
+				{
+					refineAncientSpell(entry, AnimationData.MAGIC_ICE_BLITZ);
+				}
+			}
+		}
+	}
+
+	private FightLogEntry refineAncientSpell(FightLogEntry entry, AnimationData spell)
+	{
+		double previousExpectedDamage = entry.getExpectedDamage();
+		entry.setExactMagicSpell(spell);
+		pvpDamageCalc.updateExactMagicSpellDamage(entry, spell);
+		entry.setExpectedDamage(pvpDamageCalc.getAverageHit());
+		entry.setMinHit(pvpDamageCalc.getMinHit());
+		entry.setMaxHit(pvpDamageCalc.getMaxHit());
+		expectedDamage += entry.getExpectedDamage() - previousExpectedDamage;
+		return entry;
 	}
 
 	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels)

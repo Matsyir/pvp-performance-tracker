@@ -269,6 +269,50 @@ public class PvpDamageCalc
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
+	void updateExactMagicSpellDamage(FightLogEntry entry, AnimationData spell)
+	{
+		int[] attackerItems = entry.getAttackerGear();
+		int offensivePray = entry.getAssumedOffensivePray();
+		RingData actualRing = entry.getAttackerRingItemId() == null
+			? null
+			: RingData.fromId(entry.getAttackerRingItemId());
+		RingData attackRing = actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
+		boolean successful = entry.success();
+		int[] playerStats = calculateBonuses(attackerItems, attackRing);
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
+		EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
+		EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
+		EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
+
+		attackerLevels = getDefaultCombatLevels();
+		averageHit = 0;
+		accuracy = entry.getAccuracy();
+		minHit = 0;
+		maxHit = 0;
+		damageRollDistribution = DamageRollDistribution.STANDARD;
+		damageRollHitCount = 1;
+		rangedExpectedProcDamage = 0;
+		seekingArrowMinHit = 0;
+
+		getMagicMaxHit(
+			playerStats[MAGIC_DAMAGE],
+			spell,
+			offensivePray,
+			VoidStyle.getVoidStyleFor(attackerItems),
+			shield,
+			weapon,
+			hat,
+			top,
+			bottom);
+		getAverageHit(successful, weapon, false);
+		maxHit = (int)(maxHit * (successful ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+		if (entry.isDefenderElyProc())
+		{
+			applyElysianReduction();
+		}
+	}
+
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
