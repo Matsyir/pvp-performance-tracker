@@ -92,6 +92,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("srv")
 	private Integer recordedSoulreaperStacksVarp;
+	@Expose
+	@SerializedName("ms")
+	private AnimationData exactMagicSpell;
 	@Setter
 	@Expose
 	@SerializedName("d")
@@ -170,6 +173,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
+	// Retain the initial assumption until a delayed signal identifies the exact Ancient spell.
+	@Setter
+	private transient int assumedOffensivePray;
 
 	@Expose
 	@Getter
@@ -278,7 +284,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
 		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
-		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
+		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.hasSpotAnim(GraphicID.SPLASH);
 		this.attackerLevels = levels; // CAN BE NULL
 		this.attackerRingItemId = getLocalPlayerRingItemId(attacker);
 		this.attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
@@ -290,6 +296,24 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.expectedHits = PvpUtils.getExpectedHits(animationData);
 		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
+	}
+
+	public AnimationData getAnimationData()
+	{
+		return exactMagicSpell != null ? exactMagicSpell : animationData;
+	}
+
+	public AnimationData getSharedAnimationData()
+	{
+		return animationData;
+	}
+
+	public void setExactMagicSpell(AnimationData exactMagicSpell)
+	{
+		if (exactMagicSpell != null && exactMagicSpell.matchesSharedAncientAnimation(animationData))
+		{
+			this.exactMagicSpell = exactMagicSpell;
+		}
 	}
 
 	// create incomplete entry to save competitor's defensive stats which are only client side

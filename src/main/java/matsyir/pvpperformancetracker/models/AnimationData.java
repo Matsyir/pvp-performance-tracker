@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
+import net.runelite.api.gameval.SpotanimID;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -148,9 +149,33 @@ public enum AnimationData
 	MAGIC_STANDARD_GOD_SPELL(811, 30), // Same animation for flames of zamorak, claws of guthix and saradomin strike. Assumes charge is active.
 	MAGIC_ANCIENT_SINGLE_TARGET(1978, 26), // Rush & Blitz animations (tested all 8, different weapons)
 	MAGIC_ANCIENT_MULTI_TARGET(1979, 30), // Burst & Barrage animations (tested all 8, different weapons)
+	MAGIC_ICE_RUSH(0, 16),
+	MAGIC_ICE_BURST(0, 22),
+	MAGIC_ICE_BLITZ(0, 26),
+	MAGIC_ICE_BARRAGE(0, 30),
+	MAGIC_BLOOD_RUSH(0, 15),
+	MAGIC_BLOOD_BURST(0, 21),
+	MAGIC_BLOOD_BLITZ(0, 25),
+	MAGIC_BLOOD_BARRAGE(0, 29),
 	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, 66); // assume 99 mage's base damage (does not rise when boosted).
 
 	private static final Map<Integer, AnimationData> DATA;
+	private static final Map<Integer, AnimationData> ANCIENT_PROJECTILES = Map.of(
+		SpotanimID.ICE_RUSH_TRAVEL, MAGIC_ICE_RUSH,
+		SpotanimID.ICE_BURST_TRAVEL, MAGIC_ICE_BURST,
+		SpotanimID.ICE_BARRAGE_TRAVEL, MAGIC_ICE_BARRAGE,
+		SpotanimID.BLOOD_BLITZ_TRAVEL, MAGIC_BLOOD_BLITZ);
+	private static final Map<Integer, AnimationData> ANCIENT_IMPACTS = Map.ofEntries(
+		Map.entry(SpotanimID.ICE_RUSH_IMPACT, MAGIC_ICE_RUSH),
+		// RuneLite's ICE_BURST_IMPACT and ICE_BLITZ_IMPACT constants are swapped;
+		// its freeze timers compensate by mapping them to the opposite spell, as we do here.
+		Map.entry(SpotanimID.ICE_BLITZ_IMPACT, MAGIC_ICE_BURST),
+		Map.entry(SpotanimID.ICE_BURST_IMPACT, MAGIC_ICE_BLITZ),
+		Map.entry(SpotanimID.ICE_BARRAGE_IMPACT, MAGIC_ICE_BARRAGE),
+		Map.entry(SpotanimID.BLOOD_RUSH_IMPACT, MAGIC_BLOOD_RUSH),
+		Map.entry(SpotanimID.SPELL_BLOOD_BURST_IMPACT, MAGIC_BLOOD_BURST),
+		Map.entry(SpotanimID.BLOOD_BLITZ_IMPACT, MAGIC_BLOOD_BLITZ),
+		Map.entry(SpotanimID.SPELL_BLOOD_BARRAGE_IMPACT, MAGIC_BLOOD_BARRAGE));
 
 	public int animationId;
 	public boolean isSpecial;
@@ -227,6 +252,40 @@ public enum AnimationData
 	public static AnimationData fromId(int animationId)
 	{
 		return DATA.get(animationId);
+	}
+
+	public static AnimationData fromProjectileId(int projectileId)
+	{
+		return ANCIENT_PROJECTILES.get(projectileId);
+	}
+
+	public static AnimationData fromImpactGraphicId(int graphicId)
+	{
+		return ANCIENT_IMPACTS.get(graphicId);
+	}
+
+	public boolean isSharedAncientAnimation()
+	{
+		return this == MAGIC_ANCIENT_SINGLE_TARGET || this == MAGIC_ANCIENT_MULTI_TARGET;
+	}
+
+	public boolean matchesSharedAncientAnimation(AnimationData sharedAnimation)
+	{
+		switch (this)
+		{
+			case MAGIC_ICE_RUSH:
+			case MAGIC_ICE_BLITZ:
+			case MAGIC_BLOOD_RUSH:
+			case MAGIC_BLOOD_BLITZ:
+				return sharedAnimation == MAGIC_ANCIENT_SINGLE_TARGET;
+			case MAGIC_ICE_BURST:
+			case MAGIC_ICE_BARRAGE:
+			case MAGIC_BLOOD_BURST:
+			case MAGIC_BLOOD_BARRAGE:
+				return sharedAnimation == MAGIC_ANCIENT_MULTI_TARGET;
+			default:
+				return false;
+		}
 	}
 
 	public boolean isStandardSpellbookSpell()
