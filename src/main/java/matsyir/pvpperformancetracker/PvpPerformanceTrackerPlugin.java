@@ -1203,7 +1203,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							{
 								if (hpBeforeCurrent != null)
 								{
-									switch (entry.getDamageRollDistribution())
+									if (entry.getDamageProbabilityDistribution() != null)
+									{
+										koChanceCurrent = PvpUtils.calculateKoChance(
+											entry.getDamageProbabilityDistribution(),
+											hpBeforeCurrent
+										);
+									}
+									else switch (entry.getDamageRollDistribution())
 									{
 										case CLAMPED_TO_MINIMUM:
 											koChanceCurrent = PvpUtils.calculateClampedKoChance(

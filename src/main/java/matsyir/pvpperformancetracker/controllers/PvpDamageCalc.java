@@ -167,6 +167,8 @@ public class PvpDamageCalc
 	private DamageRollDistribution damageRollDistribution = DamageRollDistribution.STANDARD;
 	@Getter
 	private int damageRollHitCount = 1;
+	@Getter
+	private double[] damageProbabilityDistribution = null;
 	private double rangedExpectedProcDamage = 0;
 	private int seekingArrowMinHit = 0;
 
@@ -208,6 +210,7 @@ public class PvpDamageCalc
 		maxHit = 0;
 		damageRollDistribution = DamageRollDistribution.STANDARD;
 		damageRollHitCount = 1;
+		damageProbabilityDistribution = null;
 		rangedExpectedProcDamage = 0;
 		seekingArrowMinHit = 0;
 
@@ -286,6 +289,7 @@ public class PvpDamageCalc
 		maxHit = 0;
 		damageRollDistribution = DamageRollDistribution.STANDARD;
 		damageRollHitCount = 1;
+		damageProbabilityDistribution = null;
 		rangedExpectedProcDamage = 0;
 		seekingArrowMinHit = 0;
 
@@ -370,6 +374,11 @@ public class PvpDamageCalc
 		averageHit *= multiplier;
 		minHit = (int) Math.floor(minHit * multiplier);
 		maxHit = (int) Math.floor(maxHit * multiplier);
+		if (damageProbabilityDistribution != null)
+		{
+			damageProbabilityDistribution = scaleDamageDistribution(damageProbabilityDistribution, multiplier);
+			averageHit = getExpectedDamage(damageProbabilityDistribution);
+		}
 	}
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
@@ -383,6 +392,7 @@ public class PvpDamageCalc
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean burningClaws = weapon == EquipmentData.BURNING_CLAWS;
 		boolean soulreaperAxe = weapon == EquipmentData.SOULREAPER_AXE;
+		boolean crimsonKisten = weapon == EquipmentData.CRIMSON_KISTEN;
 
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
@@ -479,6 +489,24 @@ public class PvpDamageCalc
 
 			return;
 		}
+		else if (crimsonKisten && usingSpec)
+		{
+			double perRollAccuracy = accuracy;
+			damageProbabilityDistribution = buildCrimsonKistenDamageDistribution(perRollAccuracy, maxHit);
+			if (!success)
+			{
+				damageProbabilityDistribution = scaleDamageDistribution(
+					damageProbabilityDistribution,
+					UNSUCCESSFUL_PRAY_DMG_MODIFIER);
+			}
+
+			int[][] damageRanges = getCrimsonKistenDamageRanges(maxHit);
+			minHit = damageRanges[0][0];
+			maxHit = damageRanges[3][1];
+			accuracy = getCrimsonKistenDisplayedAccuracy(perRollAccuracy);
+			averageHit = getExpectedDamage(damageProbabilityDistribution);
+			return;
+		}
 		else if (fang)
 		{
 			double maxHitMultiplier = usingSpec ? 1: 0.85; // max hit when using spec is 100% but minHit stays the same
@@ -533,6 +561,86 @@ public class PvpDamageCalc
 		{
 			averageHit += ANCIENT_GS_FIXED_DAMAGE;
 		}
+	}
+
+	static double getCrimsonKistenDisplayedAccuracy(double perRollAccuracy)
+	{
+		double accuracy = Math.max(0.0, Math.min(1.0, perRollAccuracy));
+		return 1 - Math.pow(1 - accuracy, 4);
+	}
+
+	static double[] getCrimsonKistenAccuracyRollProbabilities(double perRollAccuracy)
+	{
+		double accuracy = Math.max(0.0, Math.min(1.0, perRollAccuracy));
+		double miss = 1 - accuracy;
+		return new double[]
+		{
+			Math.pow(miss, 4),
+			4 * accuracy * Math.pow(miss, 3),
+			6 * Math.pow(accuracy, 2) * Math.pow(miss, 2),
+			4 * Math.pow(accuracy, 3) * miss,
+			Math.pow(accuracy, 4)
+		};
+	}
+
+	static int[][] getCrimsonKistenDamageRanges(int baseMaxHit)
+	{
+		int base = Math.max(0, baseMaxHit);
+		int[][] ranges = new int[][]
+		{
+			{(int) Math.floor(base * 0.7), (int) Math.floor(base * 1.1)},
+			{(int) Math.floor(base * 0.9), (int) Math.floor(base * 1.3)},
+			{(int) Math.floor(base * 1.1), (int) Math.floor(base * 1.5)},
+			// The announced mechanic subtracts 1 from the four-roll maximum, but in-game testing shows no reduction.
+			{(int) Math.floor(base * 1.3), (int) Math.floor(base * 1.7)}
+		};
+
+		for (int[] range : ranges)
+		{
+			range[1] = Math.max(range[0], range[1]);
+		}
+		return ranges;
+	}
+
+	static double[] buildCrimsonKistenDamageDistribution(double perRollAccuracy, int baseMaxHit)
+	{
+		int[][] damageRanges = getCrimsonKistenDamageRanges(baseMaxHit);
+		double[] rollProbabilities = getCrimsonKistenAccuracyRollProbabilities(perRollAccuracy);
+		double[] distribution = new double[damageRanges[3][1] + 1];
+		distribution[0] = rollProbabilities[0];
+
+		for (int successes = 1; successes <= 4; successes++)
+		{
+			int minimum = damageRanges[successes - 1][0];
+			int maximum = damageRanges[successes - 1][1];
+			double probabilityPerDamage = rollProbabilities[successes] / (maximum - minimum + 1);
+			for (int damage = minimum; damage <= maximum; damage++)
+			{
+				distribution[damage] += probabilityPerDamage;
+			}
+		}
+		return distribution;
+	}
+
+	static double[] scaleDamageDistribution(double[] distribution, double multiplier)
+	{
+		int scaledMaximum = (int) Math.floor((distribution.length - 1) * multiplier);
+		double[] scaled = new double[scaledMaximum + 1];
+		for (int damage = 0; damage < distribution.length; damage++)
+		{
+			scaled[(int) Math.floor(damage * multiplier)] += distribution[damage];
+		}
+		return scaled;
+	}
+
+	static double getExpectedDamage(double[] distribution)
+	{
+		double expectedDamage = 0;
+		for (int damage = 0; damage < distribution.length; damage++)
+		{
+			expectedDamage += damage * distribution[damage];
+		}
+		return expectedDamage;
 	}
 
 	private double getAverageSuccessfulHitWithMinimum(int minimumHit)
