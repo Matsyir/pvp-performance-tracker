@@ -109,6 +109,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	private int minHit;
 	private PvpDamageCalc.DamageRollDistribution damageRollDistribution = PvpDamageCalc.DamageRollDistribution.STANDARD;
 	private int damageRollHitCount = 1;
+	private transient double[] damageProbabilityDistribution = null;
 	@Expose
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed
@@ -278,6 +279,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
 		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
+		double[] damageProbabilities = pvpDamageCalc.getDamageProbabilityDistribution();
+		this.damageProbabilityDistribution = damageProbabilities == null ? null : damageProbabilities.clone();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
 		this.attackerRingItemId = getLocalPlayerRingItemId(attacker);
