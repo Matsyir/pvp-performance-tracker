@@ -1345,7 +1345,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Added Pete Kayer fight tracking in his arena with cache-backed equipment mappings for all 18 fighting forms.")
+				"Added Pete Kayer fight tracking in his arena for both his Penultimate and Ultimate fights.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
