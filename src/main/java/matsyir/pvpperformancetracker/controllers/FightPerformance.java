@@ -52,6 +52,8 @@ import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
+import net.runelite.api.Actor;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 import net.runelite.api.Skill;
 import matsyir.pvpperformancetracker.PvpPerformanceTrackerConfig;
 import net.runelite.api.kit.KitType;
@@ -152,7 +154,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// constructor which initializes a fight from the 2 Players, starting stats at 0. Regular use constructor.
-	public FightPerformance(Player competitor, Player opponent)
+	public FightPerformance(Actor competitor, Actor opponent)
 	{
 		int defLvl = PLUGIN.getClient().getBoostedSkillLevel(Skill.DEFENCE);
 
@@ -191,7 +193,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	// add an attack if attacking, and compare attack style used with the opponent's overhead
 	// to determine if successful.
 	public void checkForAttackAnimations(
-		Player eventSource,
+		Actor eventSource,
 		String interactingName,
 		AnimationData animationData,
 		int animationTick,
@@ -245,7 +247,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				animationData,
 				assumedOffensivePray,
 				assumedOffensivePray,
-				null,
+				PeteKayer.isPete(eventSource) ? PeteKayer.levels() : null,
 				competitorLevels,
 				animationTick,
 				animationTime,
@@ -305,7 +307,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 	}
 
 	// this only gets called when the local client player receives a magic xp drop.
-	public void checkForLocalGhostBarrage(CombatLevels competitorLevels, Player localPlayer)
+	public void checkForLocalGhostBarrage(CombatLevels competitorLevels, Actor localPlayer)
 	{
 		if (localPlayer == null)
 		{
@@ -314,9 +316,9 @@ public class FightPerformance implements Comparable<FightPerformance>
 		}
 
 		competitor.setPlayer(localPlayer);
-		if (localPlayer.getInteracting() instanceof Player && localPlayer.getInteracting().getName().equals(opponent.getName()))
+		if ((localPlayer.getInteracting() instanceof Player || PeteKayer.isPete(localPlayer.getInteracting())) && localPlayer.getInteracting().getName().equals(opponent.getName()))
 		{
-			opponent.setPlayer((Player)localPlayer.getInteracting());
+			opponent.setPlayer(localPlayer.getInteracting());
 		}
 
 		AnimationData animationData = competitor.getAnimationData();
@@ -332,7 +334,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 				competitorLevels.def);
 
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
-			competitor.addGhostBarrage(opponent.getPlayer().getOverheadIcon() != animationData.attackStyle.getProtection(),
+			competitor.addGhostBarrage(PeteKayer.overhead(opponent.getPlayer()) != animationData.attackStyle.getProtection(),
 				opponent.getPlayer(),
 				AnimationData.MAGIC_ANCIENT_MULTI_TARGET,
 				offensivePray,

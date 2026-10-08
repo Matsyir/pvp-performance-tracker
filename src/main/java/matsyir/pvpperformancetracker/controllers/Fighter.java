@@ -50,6 +50,8 @@ import net.runelite.api.ActorSpotAnim;
 import net.runelite.api.GraphicID;
 import net.runelite.api.IterableHashTable;
 import net.runelite.api.Player;
+import net.runelite.api.Actor;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.gameval.SpotanimID;
 import net.runelite.api.kit.KitType;
@@ -68,7 +70,7 @@ class Fighter
 	private static final int SOULREAPER_STACK_DECAY_TICKS = 50;
 
 	@Setter
-	private Player player;
+	private Actor player;
 	@Setter
 	@Expose
 	@SerializedName("n") // use 1 letter serialized variable names for more compact storage
@@ -138,7 +140,7 @@ class Fighter
 	private transient Queue<FightLogEntry> pendingAttacks;
 
 	// fighter that is bound to a player and gets updated during a fight
-	Fighter(FightPerformance fight, Player player)
+	Fighter(FightPerformance fight, Actor player)
 	{
 		this.player = player;
 		name = player.getName();
@@ -154,7 +156,7 @@ class Fighter
 		pvpDamageCalc = new PvpDamageCalc(fight);
 		fightLogEntries = new ArrayList<>();
 		pendingAttacks = new LinkedList<>();
-		baseLevels = player == PLUGIN.getClient().getLocalPlayer() ? CombatLevels.getRealLevels(PLUGIN.getClient()) : null;
+		baseLevels = player == PLUGIN.getClient().getLocalPlayer() ? CombatLevels.getRealLevels(PLUGIN.getClient()) : PeteKayer.isPete(player) ? PeteKayer.levels() : null;
 	}
 
 	// create a basic Fighter to only hold stats, for the TotalStatsPanel,
@@ -186,15 +188,15 @@ class Fighter
 	}
 
 	// Levels can be null
-	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels levels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
+	void addAttack(Actor opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels levels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
 	{
 		addAttack(opponent, animationData, realOffensivePray, assumedOffensivePray, levels, null, attackTick, attackTime, recordedSoulreaperStacksVarp);
 	}
 
 	// Levels can be null when that player's current boosted/drained stats are not visible locally.
-	void addAttack(Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
+	void addAttack(Actor opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels, CombatLevels defenderLevels, int attackTick, long attackTime, Integer recordedSoulreaperStacksVarp)
 	{
-		int[] attackerItems = player.getPlayerComposition().getEquipmentIds();
+		int[] attackerItems = PeteKayer.equipment(player);
 
 		// correct re-used animations into their separate AnimationData so it uses the correct attack style
 		// for overhead success & accuracy calcs
@@ -203,7 +205,7 @@ class Fighter
 			? updateSoulreaperStacks(animationData, attackTick)
 			: null;
 
-		boolean successful = opponent.getOverheadIcon() != animationData.attackStyle.getProtection();
+		boolean successful = PeteKayer.overhead(opponent) != animationData.attackStyle.getProtection();
 
 		// Granite Maul specific handling
 		boolean isGmaulSpec = animationData == AnimationData.MELEE_GRANITE_MAUL_SPEC;
@@ -325,7 +327,7 @@ class Fighter
 		return stacksForAttack;
 	}
 
-	public void addGhostBarrage(boolean successful, Player opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels)
+	public void addGhostBarrage(boolean successful, Actor opponent, AnimationData animationData, int realOffensivePray, int assumedOffensivePray, CombatLevels attackerLevels)
 	{
 		int currentTick = PLUGIN.getClient().getTickCount();
 		if (currentTick <= lastGhostBarrageCheckedTick)
@@ -375,7 +377,7 @@ class Fighter
 		dead = true;
 	}
 
-	private static boolean hasTargetSpotAnim(Player opponent, int spotAnimId)
+	private static boolean hasTargetSpotAnim(Actor opponent, int spotAnimId)
 	{
 		if (opponent.getGraphic() == spotAnimId)
 		{
@@ -399,7 +401,7 @@ class Fighter
 		return false;
 	}
 
-	private static boolean hasStaffMeleeReduction(Player opponent)
+	private static boolean hasStaffMeleeReduction(Actor opponent)
 	{
 		return hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_START) ||
 			hasTargetSpotAnim(opponent, SpotanimID.SOTD_SPECIAL_EXTRA) ||

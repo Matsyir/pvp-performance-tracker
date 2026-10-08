@@ -71,3 +71,65 @@ To change your hidden name, reset the stored anonymous ID. You can do this by ri
 I am happy to see other features/stats come into this plugin in the future, feel free to submit issues/suggestions & PRs. If you find a weapon that doesn't work, let me know as well. If you have any problems or questions that don't warrant a whole issue, feel free to join the dedicated PvP Performance Tracker discord (https://discord.gg/hg26xeJnY5), or just DM me: `matsyir` (don't add, just DM - if you need a common server to DM, you can join the official Runelite discord, or the tracker discord linked above).
 
 Note that I'm not super active on RS lately myself, so this project is not among my highest priorities - but I'm happy to keep supporting it, especially for significant issues that may affect most average users with average gear setups in places like LMS.
+
+## Pete Kayer tracking
+
+Pete Kayer fights are tracked only in region **11100**, plane **0** (the arena containing
+world tile **2783, 5920, 0**). Instance coordinates are resolved to their template region.
+Existing player PvP tracking remains available under its usual settings; Pete support also
+works with the LMS restriction enabled.
+
+All 18 attackable Pete forms in the supplied October 7, 2026 cache report are supported:
+16579–16586 and 16588–16597. Changing NPC IDs on the same actor keeps the current fight
+and updates the combat bonuses used for the next attack. Lobby and dialogue forms are excluded.
+Each attack log stores Pete's NPC ID for its setup.
+
+Pete's levels stay fixed at Attack 118, Strength 118, Defence 120, Ranged 112, Magic 99,
+and Hitpoints 115. The NPC cache orders these as attack, defence, strength, hitpoints,
+ranged, magic ([RuneLite NPCComposition](https://github.com/runelite/runelite/blob/master/runelite-api/src/main/java/net/runelite/api/NPCComposition.java)).
+His ring is assumed to be Lightbearer. Equipment reference items for all 18 fighting
+forms are mapped from the matching October 7 cache's worn models and face colors.
+See [cache evidence and mapping tables](../docs/pete-cache/README.md).
+
+| NPC ID | Weapon | Top | Bottom | Shield |
+| --- | --- | --- | --- | --- |
+| 16579 | Staff of the dead | Virtus | Virtus | Elidinis' ward (f) |
+| 16580 | Voidwaker | Masori (f) | Masori (f) | Dragonfire shield |
+| 16581 | Noxious halberd | Masori (f) | Masori (f) | None |
+| 16582 | Zaryte crossbow | Masori (f) | Masori (f) | Dragonfire shield |
+| 16583 | Staff of the dead mesh, different colors | Masori (f) | Masori (f) | Dragonfire shield |
+| 16584 | Voidwaker | Masori (f) | Virtus | Dragonfire shield |
+| 16585 | Zaryte crossbow | Virtus | Masori (f) | Dragonfire shield |
+| 16586 | Staff of the dead | Virtus | Masori (f) | Elidinis' ward (f) |
+| 16588 / 16597 | Staff of the dead | Mystic | Mystic | Blessed spirit shield |
+| 16589 | Dragon crossbow | Karil's | Verac's mesh | Blessed spirit shield |
+| 16590 | Abyssal tentacle | Karil's | Verac's mesh | Dragon defender |
+| 16591 | Dragon claws | Karil's | Verac's mesh | None |
+| 16592 | Staff of the dead | Karil's mesh, different colors | Mystic | Blessed spirit shield |
+| 16593 | Staff of the dead | Karil's | Verac's mesh | Dragon defender |
+| 16594 | Abyssal tentacle | Karil's | Verac's mesh | Blessed spirit shield |
+| 16595 | Dragon crossbow | Karil's | Verac's mesh | Dragon defender |
+| 16596 | Staff of the dead | Karil's | Verac's mesh | Blessed spirit shield |
+
+16579–16586 use Torva helm, **regular fury**, Barrows gloves, an imbued ancient cape,
+and upgraded Avernic treads. Max treads remain the user's kit assumption: upgrades
+share the same appearance. 16588–16597 use Neitiznot helm, regular fury, Barrows gloves,
+dragon boots and the imbued Saradomin cape mesh. Reference item variants do not establish
+charge, degradation, hidden inventory or NPC-specific effects. Some meshes have different
+NPC colors, documented in the cache evidence.
+
+Only the ZCB forms use the supplied opal enchanted bolt assumption, represented as opal
+dragon bolts (e). Bolts are recorded in attack logs and use existing bolt-effect calculations;
+reported ranged strength is preserved and ammunition strength is not added twice.
+Ammunition remains unknown for the other forms and does not use player config defaults.
+
+Reported NPC bonuses are preserved. Missing damage and ranged defence bonuses are
+**estimates** from the reference gear's pinned cache parameters, including the identified
+cape. These estimates do not prove Pete uses player equipment mechanics. They do not depend
+on RuneLite's item-stat service having the new cape. Gear mappings enable existing weapon
+calculations, Virtus ancient spell bonuses, and robe-hit classification.
+
+Validation covers all 18 mappings and bonuses against a cache-derived fixture, gear
+snapshot isolation across switches, arena bounds/planes, exclusions, levels, overheads,
+and opal ammo behavior. Live attack timing and NPC-specific formulas still need verification.
+
