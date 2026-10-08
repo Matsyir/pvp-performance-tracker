@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import matsyir.pvpperformancetracker.models.AnimationData;
 import matsyir.pvpperformancetracker.models.EquipmentData;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 import matsyir.pvpperformancetracker.models.RangeAmmoData;
 import net.runelite.api.SpriteID;
 import org.junit.Test;
@@ -107,6 +108,31 @@ public class PvpDamageCalcMagicPrayerTest
 
 		assertEquals(RangeAmmoData.OtherAmmo.SEEKING_DRAGON_ARROW, ammo);
 	}
+
+    @Test
+    public void peteOpalBoltsApplyProcsWithoutAddingTheirStrengthTwice() throws Exception
+    {
+        PvpDamageCalc calc = newCalc();
+        setField(calc, "npcAttacker", true);
+        setField(calc, "attackerLevels", PeteKayer.levels());
+        Method getRangedMaxHit = PvpDamageCalc.class.getDeclaredMethod("getRangedMaxHit",
+            int.class, boolean.class, EquipmentData.class, EquipmentData.VoidStyle.class,
+            int.class, int[].class, AnimationData.class, Integer.class);
+        getRangedMaxHit.setAccessible(true);
+        getRangedMaxHit.invoke(calc, 131, false, EquipmentData.ZARYTE_CROSSBOW,
+            EquipmentData.VoidStyle.NONE, -1, PeteKayer.equipment(16582),
+            AnimationData.RANGED_ZARYTE_CROSSBOW_PVP, PeteKayer.ammoItemId(16582));
+        // 112 ranged + 8 effective levels, 131 reported strength already includes ammo.
+        assertEquals(37, calc.getMaxHit());
+        Field proc = PvpDamageCalc.class.getDeclaredField("rangedExpectedProcDamage");
+        proc.setAccessible(true);
+        org.junit.Assert.assertTrue((double) proc.get(calc) > 0);
+
+        Method getWeaponAmmo = PvpDamageCalc.class.getDeclaredMethod("getWeaponAmmo", EquipmentData.class, Integer.class);
+        getWeaponAmmo.setAccessible(true);
+        // Unknown challenge loadouts must not inherit player-configured ammunition.
+        assertEquals(null, getWeaponAmmo.invoke(calc, EquipmentData.ZARYTE_CROSSBOW, null));
+    }
 
 	private static PvpDamageCalc newCalc() throws Exception
 	{

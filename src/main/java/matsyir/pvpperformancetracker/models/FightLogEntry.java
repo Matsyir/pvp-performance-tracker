@@ -42,6 +42,8 @@ import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
+import net.runelite.api.Actor;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 import net.runelite.client.chat.ChatMessageBuilder;
 import org.apache.commons.text.WordUtils;
 import matsyir.pvpperformancetracker.utils.PvpUtils;
@@ -244,17 +246,22 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Setter
 	private transient boolean darkBowHitsStacked = false;
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
+    @Expose
+    private Integer attackerNpcId;
+    @Expose
+    private Integer defenderNpcId;
+
+	public FightLogEntry(Actor attacker, Actor defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData)
 	{
 		this(attacker, defender, pvpDamageCalc, attackerOffensivePray, levels, animationData, PLUGIN.getClient().getTickCount(), Instant.now().toEpochMilli());
 	}
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time)
+	public FightLogEntry(Actor attacker, Actor defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time)
 	{
 		this(attacker, defender, pvpDamageCalc, attackerOffensivePray, levels, animationData, tick, time, null, null);
 	}
 
-	public FightLogEntry(Player attacker, Player defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time, Integer soulreaperStacks, Integer recordedSoulreaperStacksVarp)
+	public FightLogEntry(Actor attacker, Actor defender, PvpDamageCalc pvpDamageCalc, int attackerOffensivePray, CombatLevels levels, AnimationData animationData, int tick, long time, Integer soulreaperStacks, Integer recordedSoulreaperStacksVarp)
 	{
 		this.isFullEntry = true;
 
@@ -269,8 +276,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.recordedSoulreaperStacksVarp = recordedSoulreaperStacksVarp;
 
 		// attacker data
-		this.attackerGear = attacker.getPlayerComposition().getEquipmentIds();
-		this.attackerOverhead = attacker.getOverheadIcon();
+		this.attackerNpcId = PeteKayer.isPete(attacker) ? ((net.runelite.api.NPC) attacker).getId() : null;
+		this.defenderNpcId = PeteKayer.isPete(defender) ? ((net.runelite.api.NPC) defender).getId() : null;
+		this.attackerGear = PeteKayer.equipment(attacker);
+		this.attackerOverhead = PeteKayer.overhead(attacker);
 
 		this.expectedDamage = pvpDamageCalc.getAverageHit();
 		this.accuracy = pvpDamageCalc.getAccuracy();
@@ -280,12 +289,12 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
-		this.attackerRingItemId = getLocalPlayerRingItemId(attacker);
-		this.attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
+		this.attackerRingItemId = PeteKayer.isPete(attacker) ? RingData.LIGHTBEARER.getItemId() : getLocalPlayerRingItemId(attacker);
+		this.attackerAmmoItemId = PeteKayer.isPete(attacker) ? PeteKayer.ammoItemId(attacker) : getLocalPlayerAmmoItemId(attacker);
 
 		// defender data
-		this.defenderGear = defender.getPlayerComposition().getEquipmentIds();
-		this.defenderOverhead = defender.getOverheadIcon();
+		this.defenderGear = PeteKayer.equipment(defender);
+		this.defenderOverhead = PeteKayer.overhead(defender);
 		this.attackerOffensivePray = attackerOffensivePray;
 		this.expectedHits = PvpUtils.getExpectedHits(animationData);
 		this.matchedHitsCount = 0;
@@ -315,13 +324,13 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.actualDamageSum = 0;
 	}
 
-	private boolean isLocalPlayer(Player player)
+	private boolean isLocalPlayer(Actor player)
 	{
 		if (player == null)
 		{
 			return false;
 		}
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		Actor localPlayer = PLUGIN.getClient().getLocalPlayer();
 		if (localPlayer == null || localPlayer.getName() == null || player.getName() == null)
 		{
 			return false;
@@ -333,7 +342,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		return localName.equals(playerName);
 	}
 
-	private Integer getLocalPlayerRingItemId(Player attacker)
+	private Integer getLocalPlayerRingItemId(Actor attacker)
 	{
 		if (!isLocalPlayer(attacker))
 		{
@@ -355,7 +364,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		return ring.getId();
 	}
 
-	private Integer getLocalPlayerAmmoItemId(Player attacker)
+	private Integer getLocalPlayerAmmoItemId(Actor attacker)
 	{
 		if (!isLocalPlayer(attacker))
 		{

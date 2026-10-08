@@ -83,6 +83,9 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.HitsplatID;
 import net.runelite.api.Player;
+import net.runelite.api.NPC;
+import net.runelite.api.events.NpcDespawned;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 import net.runelite.api.PlayerComposition;
 import net.runelite.api.Skill;
 import net.runelite.api.events.AnimationChanged;
@@ -131,7 +134,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// reminder: the version number update is needed in a few different places.
 	// Run a find-all of the old version number before updating version.
-	public static final String PLUGIN_VERSION = "1.8.7";
+	public static final String PLUGIN_VERSION = "1.9.0";
 	public static final String CONFIG_KEY = "pvpperformancetracker";
 	// Data folder naming history:
 	// "pvp-performance-tracker": From release, until 1.5.9 update @ 2024-08-19
@@ -280,7 +283,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// add the panel's nav button depending on config
 		if (config.showFightHistoryPanel() &&
-			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && isAtLmsIncludingFerox())))
+			(!config.restrictToLms() || (client.getGameState() == GameState.LOGGED_IN && (isAtLmsIncludingFerox() || PeteKayer.isArena(client)))))
 		{
 			navButtonShown = true;
 			clientToolbar.addNavigation(navButton);
@@ -313,6 +316,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		overlayManager.remove(overlay);
 	}
 
+
 	private boolean colorConfigEventsEnabled = true;
 	public void disableColorConfigEvents()
 	{
@@ -338,7 +342,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			// if a user enables the panel or restricts/unrestricts the location to LMS, hide/show the panel accordingly
 			case "showFightHistoryPanel":
 			case "restrictToLms":
-				boolean isAtLms = isAtLmsIncludingFerox();
+				boolean isAtLms = isAtLmsIncludingFerox() || PeteKayer.isArena(client);
 				if (!navButtonShown && config.showFightHistoryPanel() &&
 					(!config.restrictToLms() || isAtLms))
 				{
@@ -443,7 +447,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onInteractingChanged(InteractingChanged event)
 	{
-		if (config.restrictToLms() && !isInLmsMatch())
+		if (config.restrictToLms() && !isInLmsMatch() && !PeteKayer.isArena(client))
 		{
 			return;
 		}
@@ -453,8 +457,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// if the client player already has a valid opponent AND the fight has started,
 		// or the event source/target aren't players, skip any processing.
 		if ((hasOpponent() && currentFight.fightStarted())
-			|| !(event.getSource() instanceof Player)
-			|| !(event.getTarget() instanceof Player))
+			|| !isSupportedCombatActor(event.getSource())
+			|| !isSupportedCombatActor(event.getTarget()))
 		{
 			return;
 		}
@@ -475,10 +479,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			return;
 		}
 
+		if (config.restrictToLms() && !isInLmsMatch() && !PeteKayer.canTrack(client, opponent)) return;
+
 		// start a new fight with the newfound opponent, if a new one.
 		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
-			currentFight = new FightPerformance(client.getLocalPlayer(), (Player)opponent);
+			currentFight = new FightPerformance(client.getLocalPlayer(), opponent);
 			overlay.setFight(currentFight);
 			hitsplatBuffer.clear();
 			incomingHitsplatsBuffer.clear();
@@ -498,7 +504,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// hide or show panel depending if config is restricted to LMS and if player is at LMS
 		if (config.restrictToLms())
 		{
-			if (isAtLmsIncludingFerox())
+			if (isAtLmsIncludingFerox() || PeteKayer.isArena(client))
 			{
 				if (!navButtonShown && config.showFightHistoryPanel())
 				{
@@ -525,12 +531,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		checkForFightEnd();
 
 		Actor actor = event.getActor();
-		if (!(actor instanceof Player) || actor.getName() == null)
+		if (!isSupportedCombatActor(actor) || actor.getName() == null)
 		{
 			return;
 		}
 
-		Player eventSource = (Player) actor;
+		Actor eventSource = actor;
 		AnimationData animationData = AnimationData.fromId(eventSource.getAnimation());
 		if (animationData == null)
 		{
@@ -549,7 +555,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			if (hasOpponent() && eventSource.getName() != null)
 			{
 				Actor interacting = eventSource.getInteracting();
-				if (!(interacting instanceof Player) || interacting.getName() == null)
+				if (!isSupportedCombatActor(interacting) || interacting.getName() == null)
 				{
 					return;
 				}
@@ -575,7 +581,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// if there's no opponent, the target is not a player, or the hitsplat is not relevant to pvp damage,
 		// skip the hitsplat. Otherwise, add it to the fight, which will only include it if it is one of the
 		// Fighters in the fight being hit.
-		if (!hasOpponent() || !((target = event.getActor()) instanceof Player))
+		if (!hasOpponent() || !isSupportedCombatActor(target = event.getActor()))
 		{
 			return;
 		}
@@ -728,6 +734,12 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// We should have enough extra ticks to calc any hitsplats during death animations and empty these queues.
 		if (!hasOpponent()) { return; }
 
+        if (currentFight.getOpponent().getPlayer() instanceof NPC && !PeteKayer.isArena(client))
+        {
+            onFightEnded();
+            return;
+        }
+
 		currentFight.recordCurrentInventorySnapshot();
 
 		// Process hitsplats from the previous tick
@@ -879,7 +891,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		List<FightLogEntry> processedEntriesThisTick = new ArrayList<>();
 
 		hitsByActor.forEach((opponent, hits) -> {
-			if (!(opponent instanceof Player)) return; // Only process hits on players
+			if (!isSupportedCombatActor(opponent)) return;
 
 			// Determine max HP to use (Either uses config lvl, or override to 99 for LMS)
 			int maxHpToUse;
@@ -889,14 +901,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			}
 			else
 			{
-				maxHpToUse = CONFIG.opponentHitpointsLevel();
+				maxHpToUse = PeteKayer.isPete(opponent) ? PeteKayer.levels().hp : CONFIG.opponentHitpointsLevel();
 			}
 
 			// Determine attacker safely (handle null names and prefer identity when possible)
-			String actorName = ((Player) opponent).getName();
+			String actorName = opponent.getName();
 			Fighter attacker;
-			Player trackedOppPlayer = currentFight.getOpponent().getPlayer();
-			Player trackedCompPlayer = currentFight.getCompetitor().getPlayer();
+			Actor trackedOppPlayer = currentFight.getOpponent().getPlayer();
+			Actor trackedCompPlayer = currentFight.getCompetitor().getPlayer();
 
 			boolean opponentIsTrackedOpponent = opponent == trackedOppPlayer || Objects.equals(actorName, currentFight.getOpponent().getName());
 			boolean opponentIsTrackedCompetitor = opponent == trackedCompPlayer || Objects.equals(actorName, currentFight.getCompetitor().getName());
@@ -1324,7 +1336,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// don't directly use PLUGIN_VERSION in the prefix because there may be times we don't include a new update
 		// message and want it to remain the same as the previous version. For example, if there's a small hotfix after a major update.
 		// There should be intent behind the version number shown in the update message, not just automatically showing the current version.
-		String updateMsgForVersion = "1.8.7";
+		String updateMsgForVersion = "1.9.0";
 		String updatePrefix = "<html><shad=000000><col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
 			">PvP Performance Tracker</col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE_REDDER2) +
 			"><u>v" + updateMsgForVersion + "</u></col> <col=" + ColorUtil.colorToHexCode(PvpColorScheme.BLOOD_RED_ORANGE) +
@@ -1333,11 +1345,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(updatePrefix +
 				"<col=" + ColorUtil.colorToHexCode(PvpColorScheme.DARK_ORANGE_BROWN_TEXT) + ">" +
-				"Fix offensive pray tracking & related assumptions. " +
-				"Improved filter functionality & added various new filters, with a dropdown to preview and help using them. " +
-				"Likely fixed incorrect stats for same-tick restore attacks. " +
-				"Fix min/maxHits in fight logs & KO Chance, fix HP for KO chance (use config rather than hiscores). " +
-				"Allow comparing client vs. synced fight panels on synced fight logs. Fix dclaws max hit.")
+				"Added Pete Kayer fight tracking in his arena with cache-backed equipment mappings for all 18 fighting forms.")
 				.build());
 
 		configManager.setConfiguration(CONFIG_KEY, PvpPerformanceTrackerConfig.updateMsgKey, true);
@@ -1364,6 +1372,20 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		configManager.setConfiguration(CONFIG_KEY, "pluginVersion", PLUGIN_VERSION);
 	}
 
+    private boolean isSupportedCombatActor(Actor actor)
+    {
+        return actor instanceof Player || PeteKayer.canTrack(client, actor);
+    }
+
+    @Subscribe
+    public void onNpcDespawned(NpcDespawned event)
+    {
+        if (!hasOpponent() || event.getNpc() != currentFight.getOpponent().getPlayer()) return;
+        // ID changes on the same NPC are gear switches, not a new fight.
+        currentFight.checkForDeathAnimations();
+        onFightEnded();
+    }
+
 	// Returns true if the player has an opponent.
 	private boolean hasOpponent()
 	{
@@ -1382,7 +1404,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// if the fight has been inactive for 20+ secs however (FightPerformance.NEW_FIGHT_DELAY, plus however long
 		// until they triggered an event for this check), just end it.
-		if (currentFight.isInactive())
+		if ((currentFight.getOpponent().getPlayer() instanceof NPC && !PeteKayer.isArena(client))
+			|| currentFight.isInactive())
 		{
 			onFightEnded();
 		}

@@ -40,6 +40,7 @@ public enum RingData
 	BELLATOR_RING("Bellator ring", ItemID.BELLATOR_RING_28316),
 	ULTOR_RING("Ultor ring", ItemID.ULTOR_RING_28307),
 	RING_OF_SHADOWS("Ring of Shadows", ItemID.RING_OF_SHADOWS),
+	LIGHTBEARER("Lightbearer", ItemID.LIGHTBEARER),
 	NONE("None", -1);
 
 	private String name;

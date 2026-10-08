@@ -55,6 +55,8 @@ import net.runelite.client.game.ItemEquipmentStats;
 import net.runelite.client.game.ItemStats;
 import org.apache.commons.lang3.ArrayUtils;
 import net.runelite.api.Player;
+import net.runelite.api.Actor;
+import matsyir.pvpperformancetracker.utils.PeteKayer;
 
 // Pvp damage calculations
 // call updateDamageStats(...) with required parameters, and retrieve results by using the field getters
@@ -175,6 +177,7 @@ public class PvpDamageCalc
 	private CombatLevels defaultCombatLevels;
 
 	private RingData ringUsed;
+	private boolean npcAttacker;
 	boolean isLmsFight;
 
 	public PvpDamageCalc(FightPerformance relatedFight)
@@ -189,19 +192,20 @@ public class PvpDamageCalc
 
 	// main function used to update stats during an ongoing fight
 	// Levels can be null when the client cannot observe that side's boosted/drained stats.
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray)
+	public void updateDamageStats(Actor attacker, Actor defender, boolean success, AnimationData animationData, int offensivePray)
 	{
 		updateDamageStats(attacker, defender, success, animationData, offensivePray, 0);
 	}
 
-	public void updateDamageStats(Player attacker, Player defender, boolean success, AnimationData animationData, int offensivePray, int soulreaperStacks)
+	public void updateDamageStats(Actor attacker, Actor defender, boolean success, AnimationData animationData, int offensivePray, int soulreaperStacks)
 	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
 
-		// always force default levels (either config levels, or LMS levels) for dps calcs, same as is assumed for opponent
-		this.attackerLevels = getDefaultCombatLevels();
-		this.defenderLevels = getDefaultCombatLevels();
+		npcAttacker = PeteKayer.isPete(attacker);
+		// Pete uses fixed cache levels; player calculations keep the existing defaults.
+		this.attackerLevels = PeteKayer.isPete(attacker) ? PeteKayer.levels() : getDefaultCombatLevels();
+		this.defenderLevels = PeteKayer.isPete(defender) ? PeteKayer.levels() : getDefaultCombatLevels();
 		averageHit = 0;
 		accuracy = 0;
 		minHit = 0;
@@ -211,21 +215,21 @@ public class PvpDamageCalc
 		rangedExpectedProcDamage = 0;
 		seekingArrowMinHit = 0;
 
-		int[] attackerItems = attacker.getPlayerComposition().getEquipmentIds();
-		int[] defenderItems = defender.getPlayerComposition().getEquipmentIds();
+		int[] attackerItems = PeteKayer.equipment(attacker);
+		int[] defenderItems = PeteKayer.equipment(defender);
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = calculateBonuses(attackerItems, getRingUsed(attacker));
-		int[] opponentStats = calculateBonuses(defenderItems, getRingUsed(defender));
+		int[] playerStats = PeteKayer.isPete(attacker) ? PeteKayer.combatBonuses(((net.runelite.api.NPC) attacker).getId()) : calculateBonuses(attackerItems, getRingUsed(attacker));
+		int[] opponentStats = PeteKayer.isPete(defender) ? PeteKayer.combatBonuses(((net.runelite.api.NPC) defender).getId()) : calculateBonuses(defenderItems, getRingUsed(defender));
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
-		Integer attackerAmmoItemId = getLocalPlayerAmmoItemId(attacker);
+		Integer attackerAmmoItemId = npcAttacker ? PeteKayer.ammoItemId(attacker) : getLocalPlayerAmmoItemId(attacker);
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
 		// are used for multiple special attacks.
 		boolean isSpecial = animationData.isSpecial;
-		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(attacker.getPlayerComposition().getEquipmentIds());
+		VoidStyle voidStyle = VoidStyle.getVoidStyleFor(PeteKayer.equipment(attacker));
 
 		// Assume defender prayers match local prayer unlocks (opponent prayers are not visible).
 		int localPrayerLevel = PLUGIN.getClient().getRealSkillLevel(Skill.PRAYER);
@@ -272,6 +276,7 @@ public class PvpDamageCalc
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
+		npcAttacker = atkLog.getAttackerNpcId() != null;
 		this.attackerLevels = atkLog.getAttackerLevels() != null ? atkLog.getAttackerLevels() : getDefaultCombatLevels();
 		this.defenderLevels = defenderLog.getAttackerLevels() != null ? defenderLog.getAttackerLevels() : getDefaultCombatLevels();
 		int[] attackerItems = atkLog.getAttackerGear();
@@ -291,8 +296,8 @@ public class PvpDamageCalc
 
 		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
 
-		int[] playerStats = this.calculateBonuses(attackerItems);
-		int[] opponentStats = this.calculateBonuses(defenderItems);
+		int[] playerStats = atkLog.getAttackerNpcId() != null ? PeteKayer.combatBonuses(atkLog.getAttackerNpcId()) : this.calculateBonuses(attackerItems);
+		int[] opponentStats = atkLog.getDefenderNpcId() != null ? PeteKayer.combatBonuses(atkLog.getDefenderNpcId()) : this.calculateBonuses(defenderItems);
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
 		Integer attackerAmmoItemId = atkLog.getAttackerAmmoItemId();
 
@@ -672,6 +677,7 @@ public class PvpDamageCalc
 	private RangeAmmoData getWeaponAmmo(EquipmentData weapon, Integer attackerAmmoItemId)
 	{
 		RangeAmmoData attackerAmmo = attackerAmmoItemId == null ? null : RangeAmmoData.fromId(attackerAmmoItemId);
+		if (npcAttacker) return usesEquippedAmmo(weapon, attackerAmmo) ? attackerAmmo : null;
 		return usesEquippedAmmo(weapon, attackerAmmo) ? attackerAmmo : EquipmentData.getWeaponAmmo(weapon, isLmsFight);
 	}
 
@@ -722,16 +728,17 @@ public class PvpDamageCalc
 		return false;
 	}
 
-	private RingData getRingUsed(Player player)
+	private RingData getRingUsed(Actor player)
 	{
+		if (PeteKayer.isPete(player)) return RingData.LIGHTBEARER;
 		Integer actualRingItemId = getLocalPlayerRingItemId(player);
 		RingData actualRing = actualRingItemId == null ? null : RingData.fromId(actualRingItemId);
 		return actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
 	}
 
-	private Integer getLocalPlayerRingItemId(Player player)
+	private Integer getLocalPlayerRingItemId(Actor player)
 	{
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		Actor localPlayer = PLUGIN.getClient().getLocalPlayer();
 		if (player == null || localPlayer == null || player.getName() == null || !player.getName().equals(localPlayer.getName()))
 		{
 			return null;
@@ -752,9 +759,9 @@ public class PvpDamageCalc
 		return ring.getId();
 	}
 
-	private Integer getLocalPlayerAmmoItemId(Player attacker)
+	private Integer getLocalPlayerAmmoItemId(Actor attacker)
 	{
-		Player localPlayer = PLUGIN.getClient().getLocalPlayer();
+		Actor localPlayer = PLUGIN.getClient().getLocalPlayer();
 		if (attacker == null || localPlayer == null || attacker.getName() == null || !attacker.getName().equals(localPlayer.getName()))
 		{
 			return null;
@@ -793,7 +800,8 @@ public class PvpDamageCalc
 		int expectedHits = Math.max(1, getExpectedHits(animationData));
 		boolean seekingArrowAttack = !darkBowSpecial && RangeAmmoData.usesSeekingArrowUpgrade(weaponAmmo, isLmsFight);
 
-		int ammoStrength = weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
+		// Pete's reported ranged strength already includes his bolts.
+		int ammoStrength = npcAttacker || weaponAmmo == null ? 0 : weaponAmmo.getRangeStr();
 		seekingArrowMinHit = seekingArrowAttack ? RangeAmmoData.getSeekingArrowMinimumHit(weaponAmmo, isLmsFight) * expectedHits : 0;
 		if (seekingArrowMinHit > 0)
 		{
@@ -1143,7 +1151,7 @@ public class PvpDamageCalc
 		effectiveMagicDefenceTarget = effectiveMagicLevelTarget + reducedDefenceLevelTarget;
 
 		// 0.975x is a simplified brimstone accuracy formula, where x = mage def
-		defenderChance = ringUsed == RingData.BRIMSTONE_RING ?
+		defenderChance = !npcAttacker && ringUsed == RingData.BRIMSTONE_RING ?
 			Math.floor(effectiveMagicDefenceTarget * ((BRIMSTONE_RING_OPPONENT_DEF_MODIFIER * opponentMageDef) + 64)) :
 			Math.floor(effectiveMagicDefenceTarget * ((double) opponentMageDef + 64));
 
@@ -1189,6 +1197,12 @@ public class PvpDamageCalc
 			}
 		}
 
+		// New cape stats may lag in RuneLite's item-stat service. Cache 2735
+		// confirms the same combat bonuses as the other imbued god capes.
+		if (itemStats == null && EquipmentData.fromId(itemId) == EquipmentData.IMBUED_ANCIENT_CAPE)
+		{
+			return new int[] {0, 0, 0, 15, 0, 3, 3, 3, 15, 0, 0, 0, 2};
+		}
 		if (itemStats == null)
 		{
 			return null;
