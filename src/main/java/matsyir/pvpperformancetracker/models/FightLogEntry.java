@@ -289,7 +289,8 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
 		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
 		this.attackerLevels = levels; // CAN BE NULL
-		this.attackerRingItemId = PeteKayer.isPete(attacker) ? RingData.LIGHTBEARER.getItemId() : getLocalPlayerRingItemId(attacker);
+		// Keep both branches boxed: opponents have an unknown (null) ring ID.
+		this.attackerRingItemId = PeteKayer.isPete(attacker) ? Integer.valueOf(RingData.LIGHTBEARER.getItemId()) : getLocalPlayerRingItemId(attacker);
 		this.attackerAmmoItemId = PeteKayer.isPete(attacker) ? PeteKayer.ammoItemId(attacker) : getLocalPlayerAmmoItemId(attacker);
 
 		// defender data
