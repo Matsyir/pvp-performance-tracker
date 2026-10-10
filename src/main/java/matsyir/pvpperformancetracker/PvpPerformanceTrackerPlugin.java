@@ -78,6 +78,8 @@ import matsyir.pvpperformancetracker.utils.PvpHubPrivacy;
 import matsyir.pvpperformancetracker.utils.PvpUtils;
 import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
+import net.runelite.api.MenuAction;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -228,6 +230,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	public ArrayDeque<FightPerformance> sessionFightHistory;
 	@Getter
 	private FightPerformance currentFight;
+	private Actor requestedPeteTarget;
 	private Map<Integer, ImageIcon> spriteCache; // sprite cache since a small amount of sprites is re-used a lot
 	// do not cache items in the same way since we could potentially cache a very large amount of them.
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
@@ -310,6 +313,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		requestedPeteTarget = null;
 		FightPerformanceSerializer.serializeSessionFightHistory();
 
 		clientToolbar.removeNavigation(navButton);
@@ -481,7 +485,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		if (config.restrictToLms() && !isInLmsMatch() && !PeteKayer.canTrack(client, opponent)) return;
 
-		// start a new fight with the newfound opponent, if a new one.
+		startFightWithOpponent(opponent);
+	}
+
+	private void startFightWithOpponent(Actor opponent)
+	{
+		if (!isSupportedCombatActor(opponent) || opponent.getName() == null || client.getLocalPlayer() == null) return;
+		if (config.restrictToLms() && !isInLmsMatch() && !PeteKayer.canTrack(client, opponent)) return;
+		if (hasOpponent() && currentFight.fightStarted()) return;
 		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), opponent);
@@ -489,6 +500,29 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 			hitsplatBuffer.clear();
 			incomingHitsplatsBuffer.clear();
 		}
+	}
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		MenuAction action = event.getMenuAction();
+		if (action == MenuAction.WALK || action == MenuAction.WIDGET_TARGET_ON_PLAYER)
+		{
+			requestedPeteTarget = null;
+			return;
+		}
+		if (action != MenuAction.WIDGET_TARGET_ON_NPC && !"Attack".equals(event.getMenuOption())) return;
+		NPC target = event.getMenuEntry().getNpc();
+		if (event.isConsumed() || !PeteKayer.canTrack(client, target))
+		{
+			requestedPeteTarget = null;
+			return;
+		}
+		checkForFightEnd();
+		requestedPeteTarget = target;
+		// Prepare tracking before the opening animation, even without an interaction event.
+		// A click is not counted as an attack; the animation still supplies that evidence.
+		startFightWithOpponent(target);
 	}
 
 	@Subscribe
@@ -526,8 +560,6 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged event)
 	{
-		if (!hasOpponent()) { return; }
-
 		checkForFightEnd();
 
 		Actor actor = event.getActor();
@@ -542,6 +574,18 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			return;
 		}
+		Actor attackTarget = eventSource.getInteracting();
+		if (eventSource == client.getLocalPlayer())
+		{
+			// Manual casts may not retain an interaction; keep the clicked target for this attack.
+			if (requestedPeteTarget != null) attackTarget = requestedPeteTarget;
+			requestedPeteTarget = null;
+		}
+		Actor capturedTarget = attackTarget;
+		if (eventSource == client.getLocalPlayer()) startFightWithOpponent(attackTarget);
+		else if (attackTarget == client.getLocalPlayer()) startFightWithOpponent(eventSource);
+		if (!hasOpponent()) return;
+		FightPerformance animationFight = currentFight;
 		int animationTick = client.getTickCount();
 		long animationTime = Instant.now().toEpochMilli();
 		Integer recordedSoulreaperStacksVarp = eventSource == client.getLocalPlayer() && animationData.isSoulreaperAxeAttack()
@@ -552,9 +596,9 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		// damage, and equipment updates are loaded after the animation updates.
 		clientThread.invokeLater(() ->
 		{
-			if (hasOpponent() && eventSource.getName() != null)
+			if (currentFight == animationFight && eventSource.getName() != null)
 			{
-				Actor interacting = eventSource.getInteracting();
+				Actor interacting = capturedTarget != null ? capturedTarget : eventSource.getInteracting();
 				if (!isSupportedCombatActor(interacting) || interacting.getName() == null)
 				{
 					return;
@@ -1413,6 +1457,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	private void onFightEnded()
 	{
+		requestedPeteTarget = null;
 		// add fight to fight history if it actually started
 		if (currentFight.fightStarted())
 		{
