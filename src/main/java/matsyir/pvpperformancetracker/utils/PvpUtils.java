@@ -86,6 +86,22 @@ public class PvpUtils
 		return Math.max(0.0, Math.min(chance, 1.0));
 	}
 
+	public static Double calculateKoChance(double[] damageProbabilityDistribution, int estimatedOpponentHp)
+	{
+		if (damageProbabilityDistribution == null || estimatedOpponentHp <= 0 ||
+			estimatedOpponentHp >= damageProbabilityDistribution.length)
+		{
+			return null;
+		}
+
+		double chance = 0;
+		for (int damage = estimatedOpponentHp; damage < damageProbabilityDistribution.length; damage++)
+		{
+			chance += damageProbabilityDistribution[damage];
+		}
+		return Math.max(0.0, Math.min(chance, 1.0));
+	}
+
 	public static Double calculateClampedKoChance(double accuracy, int minHit, int maxHit, int estimatedOpponentHp)
 	{
 		return calculateMultiHitClampedKoChance(accuracy, minHit, maxHit, 1, estimatedOpponentHp);
