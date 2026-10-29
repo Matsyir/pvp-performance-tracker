@@ -113,7 +113,7 @@ public final class PvpHubFightSync
 
 	public static FightPerformance loadSyncedFight(File syncedFightsDir, Gson gson, FightPerformance localFight)
 	{
-		if (localFight == null || localFight.getFightId() == null || localFight.getFightId().trim().isEmpty())
+		if (syncedFightsDir == null || localFight == null || !isValidFightId(localFight.getFightId()))
 		{
 			return null;
 		}
@@ -144,7 +144,7 @@ public final class PvpHubFightSync
 
 	public static void saveSyncedFight(File syncedFightsDir, String fightId, String responseJson)
 	{
-		if (syncedFightsDir == null || fightId == null || fightId.trim().isEmpty() || responseJson == null || responseJson.trim().isEmpty())
+		if (syncedFightsDir == null || !isValidFightId(fightId) || responseJson == null || responseJson.trim().isEmpty())
 		{
 			return;
 		}
@@ -192,7 +192,16 @@ public final class PvpHubFightSync
 
 	private static File getSyncedFightFile(File syncedFightsDir, String fightId)
 	{
-		return new File(syncedFightsDir, fightId.trim() + ".json");
+		if (!isValidFightId(fightId))
+		{
+			throw new IllegalArgumentException("Invalid fight ID");
+		}
+		return new File(syncedFightsDir, fightId + ".json");
+	}
+
+	private static boolean isValidFightId(String fightId)
+	{
+		return fightId != null && fightId.matches("[A-Z0-9]{10}");
 	}
 
 	static final class FightDetail
