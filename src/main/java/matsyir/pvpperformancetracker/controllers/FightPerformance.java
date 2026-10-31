@@ -221,6 +221,8 @@ public class FightPerformance implements Comparable<FightPerformance>
 		if (eName.equals(competitor.getName()) && Objects.equals(interactingName, opponent.getName()))
 		{
 			recordInitialFightTick(animationTick);
+			// update before addAttack so an exception during attack processing can't leave the fight looking inactive
+			lastFightTime = animationTime;
 			competitor.setPlayer(eventSource);
 			int offensivePray = PLUGIN.currentlyUsedOffensivePray();
 			competitor.addAttack(
@@ -232,7 +234,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 				animationTick,
 				animationTime,
 				recordedSoulreaperStacksVarp);
-			lastFightTime = animationTime;
 			addedAttack = true;
 			ensureFightIdGenerated();
 
@@ -240,6 +241,7 @@ public class FightPerformance implements Comparable<FightPerformance>
 		else if (eName.equals(opponent.getName()) && Objects.equals(interactingName, competitor.getName()))
 		{
 			recordInitialFightTick(animationTick);
+			lastFightTime = animationTime;
 			opponent.setPlayer(eventSource);
 
 			opponent.addAttack(
@@ -255,7 +257,6 @@ public class FightPerformance implements Comparable<FightPerformance>
 			addedAttack = true;
 			// add a defensive log for the competitor while the opponent is attacking, to be used with the fight analysis/merge
 			competitor.addDefensiveLogs(competitorLevels, PLUGIN.currentlyUsedOffensivePray(), animationTick, animationTime);
-			lastFightTime = animationTime;
 			ensureFightIdGenerated();
 		}
 
