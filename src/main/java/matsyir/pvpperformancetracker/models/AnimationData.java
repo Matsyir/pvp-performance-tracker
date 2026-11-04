@@ -63,6 +63,7 @@ public enum AnimationData
 	MELEE_STAFF_STAB(428, AttackStyle.STAB), // tested w/ SOTD/SOL jab, vesta's spear stab, c hally
 	MELEE_SPEAR_CRUSH(429, AttackStyle.CRUSH), // tested w/ vesta's spear
 	MELEE_STAFF_SLASH(440, AttackStyle.SLASH), // tested w/ SOTD/SOL slash, zammy hasta slash, vesta's spear slash, c hally
+	MELEE_WEAPON_STAB_ALT(566, AttackStyle.STAB), // Crimson kisten stab; keep generic because this animation can be shared
 	MELEE_BLUE_MOON_FEND(1710, AttackStyle.CRUSH), // Note: the animation is identical between normal/special attacks
 	MELEE_BLUE_MOON_JAB(1711, AttackStyle.STAB), // Note: the animation is identical between normal/special attacks
 	MELEE_BLUE_MOON_SWIPE(1712, AttackStyle.SLASH), // Note: the animation is identical between normal/special attacks
@@ -110,6 +111,8 @@ public enum AnimationData
 	MELEE_ELDER_MAUL2(11124, AttackStyle.CRUSH), // spec anim, but looks like this anim is also used for normal attacks after using the spec. No spec tracking for now, just for normal attacks
     MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
     MELEE_ARKAN_BLADE_SPEC(12297, AttackStyle.SLASH, true),
+	MELEE_CRIMSON_KISTEN_CRUSH(14253, AttackStyle.CRUSH),
+	MELEE_CRIMSON_KISTEN_SPEC(14255, AttackStyle.CRUSH, true),
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, scorching bow, craw's bow, dbow, dbow spec
