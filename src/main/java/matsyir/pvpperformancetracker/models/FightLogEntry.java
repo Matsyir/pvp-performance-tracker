@@ -94,6 +94,25 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("srv")
 	private Integer recordedSoulreaperStacksVarp;
+	@Expose
+	@SerializedName("ef")
+	private Integer elementalFragments;
+
+	@Expose
+	@SerializedName("rc")
+	private Integer rondacheCharges;
+
+	@Expose
+	@SerializedName("ra")
+	private Boolean rondacheActive;
+
+	@Expose
+	@SerializedName("zc")
+	private Integer zoryaCharges;
+
+	@Expose
+	@SerializedName("ms")
+	private AnimationData exactMagicSpell;
 	@Setter
 	@Expose
 	@SerializedName("d")
@@ -111,6 +130,7 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	private int minHit;
 	private PvpDamageCalc.DamageRollDistribution damageRollDistribution = PvpDamageCalc.DamageRollDistribution.STANDARD;
 	private int damageRollHitCount = 1;
+	private transient double[] damageProbabilityDistribution = null;
 	@Expose
 	@SerializedName("s")
 	private boolean splash; // true if it was a magic attack and it splashed
@@ -118,6 +138,10 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@SerializedName("C")
 	@Setter
 	private CombatLevels attackerLevels; // CAN BE NULL
+	@Expose
+	@SerializedName("aH")
+	@Setter
+	private Integer attackerEstimatedHp; // Used only when the attacker's exact C.h is unavailable.
 
 	@Getter
 	@Setter
@@ -172,6 +196,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	@Expose
 	@SerializedName("p")
 	private int attackerOffensivePray; // offensive pray saved as SpriteID since that's all we use it for.
+	// Retain the initial assumption until a delayed signal identifies the exact Ancient spell.
+	@Setter
+	private transient int assumedOffensivePray;
 
 	@Expose
 	@Getter
@@ -272,6 +299,13 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.hitsplatMatchTick = PLUGIN.getClient().getTickCount();
 
 		this.animationData = animationData;
+		if (attacker == PLUGIN.getClient().getLocalPlayer())
+		{
+			this.elementalFragments = localElementalFragments();
+			this.rondacheActive = PLUGIN.getLocalRondacheActive();
+			this.zoryaCharges = PLUGIN.getClient().getVarpValue(net.runelite.api.gameval.VarPlayerID.ZORYAS_TOME_STACKS);
+			this.rondacheCharges = PLUGIN.getClient().getVarbitValue(net.runelite.api.gameval.VarbitID.RONDACHE_CHARGES);
+		}
 		this.soulreaperStacks = soulreaperStacks;
 		this.recordedSoulreaperStacksVarp = recordedSoulreaperStacksVarp;
 
@@ -287,7 +321,9 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.maxHit = pvpDamageCalc.getMaxHit();
 		this.damageRollDistribution = pvpDamageCalc.getDamageRollDistribution();
 		this.damageRollHitCount = pvpDamageCalc.getDamageRollHitCount();
-		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.getGraphic() == GraphicID.SPLASH;
+		double[] damageProbabilities = pvpDamageCalc.getDamageProbabilityDistribution();
+		this.damageProbabilityDistribution = damageProbabilities == null ? null : damageProbabilities.clone();
+		this.splash = animationData.attackStyle == AnimationData.AttackStyle.MAGIC && defender.hasSpotAnim(GraphicID.SPLASH);
 		this.attackerLevels = levels; // CAN BE NULL
 		// Keep both branches boxed: opponents have an unknown (null) ring ID.
 		this.attackerRingItemId = PeteKayer.isPete(attacker) ? Integer.valueOf(RingData.LIGHTBEARER.getItemId()) : getLocalPlayerRingItemId(attacker);
@@ -300,6 +336,40 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 		this.expectedHits = PvpUtils.getExpectedHits(animationData);
 		this.matchedHitsCount = 0;
 		this.actualDamageSum = 0;
+	}
+
+	public static int localElementalFragments()
+	{
+		int mask = 0;
+		int[] varbits = {
+            net.runelite.api.gameval.VarbitID.TFA_MOTE_AIR_UNLOCKED,
+            net.runelite.api.gameval.VarbitID.TFA_MOTE_WATER_UNLOCKED,
+            net.runelite.api.gameval.VarbitID.TFA_MOTE_EARTH_UNLOCKED,
+            net.runelite.api.gameval.VarbitID.TFA_MOTE_FIRE_UNLOCKED
+        };
+		for (int bit = 0; bit < varbits.length; bit++)
+		{
+			if (PLUGIN.getClient().getVarbitValue(varbits[bit]) != 0) mask |= 1 << bit;
+		}
+		return mask;
+	}
+
+	public AnimationData getAnimationData()
+	{
+		return exactMagicSpell != null ? exactMagicSpell : animationData;
+	}
+
+	public AnimationData getSharedAnimationData()
+	{
+		return animationData;
+	}
+
+	public void setExactMagicSpell(AnimationData exactMagicSpell)
+	{
+		if (exactMagicSpell != null && exactMagicSpell.matchesSharedAncientAnimation(animationData))
+		{
+			this.exactMagicSpell = exactMagicSpell;
+		}
 	}
 
 	// create incomplete entry to save competitor's defensive stats which are only client side
@@ -451,6 +521,25 @@ public class FightLogEntry implements Comparable<FightLogEntry>
 	public String getHitRange()
 	{
 		return minHit + "-" + maxHit;
+	}
+
+	public String getDharokHpAtAttackText(int maxHp)
+	{
+		if (!PvpDamageCalc.isFullDharokSet(attackerGear))
+		{
+			return "-";
+		}
+
+		maxHp = Math.max(1, maxHp);
+		if (attackerLevels != null)
+		{
+			return attackerLevels.hp + "/" + maxHp;
+		}
+		if (attackerEstimatedHp != null)
+		{
+			return "~" + attackerEstimatedHp + "/" + maxHp;
+		}
+		return "-";
 	}
 
 	// use to sort by last fight time, to sort fights by date/time.

@@ -80,22 +80,27 @@ import matsyir.pvpperformancetracker.views.TotalStatsPanel;
 import net.runelite.api.Actor;
 import net.runelite.api.MenuAction;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.ActorSpotAnim;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.HitsplatID;
+import net.runelite.api.IterableHashTable;
 import net.runelite.api.Player;
 import net.runelite.api.NPC;
 import net.runelite.api.events.NpcDespawned;
 import matsyir.pvpperformancetracker.utils.PeteKayer;
 import net.runelite.api.PlayerComposition;
+import net.runelite.api.Projectile;
 import net.runelite.api.Skill;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.FakeXpDrop;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GraphicChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
+import net.runelite.api.events.ProjectileMoved;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.gameval.VarbitID;
@@ -236,6 +241,8 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	private final Map<Integer, List<HitsplatInfo>> hitsplatBuffer = new HashMap<>();
 	private final Map<Integer, List<HitsplatInfo>> incomingHitsplatsBuffer = new ConcurrentHashMap<>(); // Stores hitsplats *received* by players per tick.
 	private final Map<String, Integer> lastNonGmaulSpecTickByAttacker = new ConcurrentHashMap<>();
+	private Boolean localRondacheActive;
+	private final Set<String> processedAncientSignals = ConcurrentHashMap.newKeySet();
 	private final PvpHubSyncRetryState pendingPvpHubSyncs = new PvpHubSyncRetryState(PVP_HUB_SYNC_MAX_ATTEMPTS, PVP_HUB_SYNC_RETRY_DELAY_MILLIS);
 	private File pvpHubSyncedFightsDir;
 
@@ -496,6 +503,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		if (!hasOpponent() || !currentFight.getOpponent().getName().equals(opponent.getName()))
 		{
 			currentFight = new FightPerformance(client.getLocalPlayer(), opponent);
+			processedAncientSignals.clear();
 			overlay.setFight(currentFight);
 			hitsplatBuffer.clear();
 			incomingHitsplatsBuffer.clear();
@@ -574,6 +582,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 		{
 			return;
 		}
+		if (eventSource == client.getLocalPlayer() && isLocalRondacheEquipped()) localRondacheActive = true;
 		Actor attackTarget = eventSource.getInteracting();
 		if (eventSource == client.getLocalPlayer())
 		{
@@ -614,6 +623,133 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 					recordedSoulreaperStacksVarp);
 			}
 		});
+	}
+
+	@Subscribe
+	public void onProjectileMoved(ProjectileMoved event)
+	{
+		Projectile projectile = event.getProjectile();
+		if (!hasOpponent())
+		{
+			return;
+		}
+
+		FightPerformance fight = currentFight;
+		int projectileId = projectile.getId();
+		int startCycle = projectile.getStartCycle();
+		AnimationData spell = AnimationData.fromProjectileId(projectileId);
+		if (spell == null)
+		{
+			return;
+		}
+		String signalKey = "P\u0000" + System.identityHashCode(fight) + '\u0000'
+			+ System.identityHashCode(projectile) + '\u0000' + startCycle;
+		if (processedAncientSignals.contains(signalKey))
+		{
+			return;
+		}
+
+		Actor source = projectile.getSourceActor();
+		Actor target = projectile.getTargetActor();
+		String trackedSourceName = fight.trackedPlayerName(source, projectile.getSourcePoint());
+		String targetName = fight.trackedPlayerName(target, projectile.getTargetPoint());
+		if ((source != null && trackedSourceName == null) || (target != null && targetName == null))
+		{
+			processedAncientSignals.add(signalKey);
+			return;
+		}
+		String sourceName;
+		if (source != null || (trackedSourceName != null && !Objects.equals(trackedSourceName, targetName)))
+		{
+			sourceName = trackedSourceName;
+		}
+		else
+		{
+			// Some Ancient projectile visuals originate on the target tile rather than the caster.
+			sourceName = fight.otherTrackedPlayerName(targetName);
+		}
+		if (sourceName == null)
+		{
+			return;
+		}
+		if (!processedAncientSignals.add(signalKey))
+		{
+			return;
+		}
+
+		int signalTick = client.getTickCount();
+		clientThread.invokeAtTickEnd(() -> clientThread.invokeLater(() ->
+		{
+			if (currentFight == fight)
+			{
+				fight.refineAncientSpellSignal(
+					sourceName, targetName, spell, signalTick, false);
+			}
+		}));
+	}
+
+	@Subscribe
+	public void onGraphicChanged(GraphicChanged event)
+	{
+		if (!hasOpponent() || !(event.getActor() instanceof Player))
+		{
+			return;
+		}
+
+		Player target = (Player)event.getActor();
+		FightPerformance fight = currentFight;
+		String targetName = fight.trackedPlayerName(target, null);
+		if (targetName == null)
+		{
+			return;
+		}
+
+		IterableHashTable<ActorSpotAnim> spotAnims = target.getSpotAnims();
+		if (spotAnims == null)
+		{
+			return;
+		}
+
+		ActorSpotAnim newestImpact = null;
+		AnimationData spell = null;
+		for (ActorSpotAnim spotAnim : spotAnims)
+		{
+			if (spotAnim == null)
+			{
+				continue;
+			}
+			AnimationData candidate = AnimationData.fromImpactGraphicId(spotAnim.getId());
+			if (candidate != null &&
+				(newestImpact == null || spotAnim.getStartCycle() > newestImpact.getStartCycle()))
+			{
+				newestImpact = spotAnim;
+				spell = candidate;
+			}
+		}
+
+		if (spell == null)
+		{
+			return;
+		}
+
+		String signalKey = "I\u0000" + System.identityHashCode(fight) + '\u0000' + targetName
+			+ '\u0000' + newestImpact.getId() + '\u0000' + newestImpact.getStartCycle();
+		if (!processedAncientSignals.add(signalKey))
+		{
+			return;
+		}
+
+		String sourceName = fight.otherTrackedPlayerName(targetName);
+		int signalTick = client.getTickCount();
+		AnimationData impactSpell = spell;
+		clientThread.invokeAtTickEnd(() -> clientThread.invokeLater(() ->
+		{
+			if (currentFight == fight)
+			{
+				fight.refineAncientSpellSignal(
+					sourceName, targetName, impactSpell, signalTick, true);
+			}
+		}));
 	}
 
 	@Subscribe
@@ -774,6 +910,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		if (!isLocalRondacheEquipped()) localRondacheActive = false;
 		// if there is no ongoing fight, skip any onGameTick processing.
 		// We should have enough extra ticks to calc any hitsplats during death animations and empty these queues.
 		if (!hasOpponent()) { return; }
@@ -788,6 +925,7 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 		// Process hitsplats from the previous tick
 		int currentTick = client.getTickCount();
+		currentFight.resolveUnidentifiedAncientCasts(currentTick);
 		int tickToProcess = currentTick - 1;
 		int maxWindow = 5;
 		List<HitsplatInfo> hitsplatsToProcess = hitsplatBuffer.remove(tickToProcess);
@@ -1259,7 +1397,14 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 							{
 								if (hpBeforeCurrent != null)
 								{
-									switch (entry.getDamageRollDistribution())
+									if (entry.getDamageProbabilityDistribution() != null)
+									{
+										koChanceCurrent = PvpUtils.calculateKoChance(
+											entry.getDamageProbabilityDistribution(),
+											hpBeforeCurrent
+										);
+									}
+									else switch (entry.getDamageRollDistribution())
 									{
 										case CLAMPED_TO_MINIMUM:
 											koChanceCurrent = PvpUtils.calculateClampedKoChance(
@@ -1306,6 +1451,11 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 						// Update HP for the next iteration
 						currentHp = hpAfterCurrent;
 				}
+
+					if (Objects.equals(attackerName, currentFight.getCompetitor().getName()) && currentHp != null)
+					{
+						currentFight.updateOpponentEstimatedHp(currentHp);
+					}
 				});
 			});
 		}
@@ -1890,9 +2040,21 @@ public class PvpPerformanceTrackerPlugin extends Plugin
 
 	// retrieve offensive pray as SpriteID since that's all we will directly use it for,
 	// aside from comparison/equality checks, so we save an extra mapping this way
+	private boolean isLocalRondacheEquipped()
+	{
+		net.runelite.api.ItemContainer equipment = client.getItemContainer(net.runelite.api.InventoryID.EQUIPMENT);
+		net.runelite.api.Item shield = equipment == null ? null : equipment.getItem(net.runelite.api.EquipmentInventorySlot.SHIELD.getSlotIdx());
+		return shield != null && shield.getId() == 34719;
+	}
+
+	public Boolean getLocalRondacheActive()
+	{
+		return isLocalRondacheEquipped() ? localRondacheActive : Boolean.FALSE;
+	}
+
 	public int currentlyUsedOffensivePray()
 	{
-		return PrayerType.PIETY.isActive(client) ? PrayerType.PIETY.getSpriteID() :
+		return PrayerType.ZEAL.isActive(client) ? PrayerType.ZEAL.getSpriteID() :
 			PrayerType.PIETY.isActive(client) ? PrayerType.PIETY.getSpriteID() :
 			PrayerType.ULTIMATE_STRENGTH.isActive(client) ? PrayerType.ULTIMATE_STRENGTH.getSpriteID() :
 			PrayerType.RIGOUR.isActive(client) ? PrayerType.RIGOUR.getSpriteID() :

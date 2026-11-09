@@ -33,11 +33,26 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import net.runelite.api.HeadIcon;
 import net.runelite.api.SpriteID;
+import net.runelite.api.gameval.SpotanimID;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public enum AnimationData
 {
+	// Fractured Archive (RuneLite gameval AnimationID).
+	MELEE_OBLIGATOR_CRUSH(15122, AttackStyle.CRUSH),
+	MELEE_OBLIGATOR_THRUST_CRUSH(15123, AttackStyle.CRUSH),
+	MELEE_OBLIGATOR_CRUSH_FEMALE(15130, AttackStyle.CRUSH),
+	MELEE_OBLIGATOR_THRUST_CRUSH_FEMALE(15131, AttackStyle.CRUSH),
+	MELEE_RONDACHE_SPEC(15108, AttackStyle.CRUSH, true),
+	RANGED_ASCENSION_CROSSBOW_LEFT(15113, AttackStyle.RANGED),
+	RANGED_ASCENSION_CROSSBOW_LEFT_PVN(15114, AttackStyle.RANGED),
+	RANGED_ASCENSION_CROSSBOW_RIGHT(15115, AttackStyle.RANGED),
+	RANGED_ASCENSION_CROSSBOW_RIGHT_PVN(15116, AttackStyle.RANGED),
+	MAGIC_ZORYA_TOME(15139, 24),
+	MAGIC_ZORYA_TOME_SPEC(15140, AttackStyle.MAGIC, true),
+	MAGIC_ZORYA_TOME_FEMALE(15146, 24),
+	MAGIC_ZORYA_TOME_SPEC_FEMALE(15147, AttackStyle.MAGIC, true),
 	// MELEE
 	MELEE_VIGGORAS_CHAINMACE(245, AttackStyle.CRUSH),
 	MELEE_DAGGER_SLASH(376, AttackStyle.SLASH), // tested w/ dds
@@ -63,6 +78,7 @@ public enum AnimationData
 	MELEE_STAFF_STAB(428, AttackStyle.STAB), // tested w/ SOTD/SOL jab, vesta's spear stab, c hally
 	MELEE_SPEAR_CRUSH(429, AttackStyle.CRUSH), // tested w/ vesta's spear
 	MELEE_STAFF_SLASH(440, AttackStyle.SLASH), // tested w/ SOTD/SOL slash, zammy hasta slash, vesta's spear slash, c hally
+	MELEE_WEAPON_STAB_ALT(566, AttackStyle.STAB), // Crimson kisten stab; keep generic because this animation can be shared
 	MELEE_BLUE_MOON_FEND(1710, AttackStyle.CRUSH), // Note: the animation is identical between normal/special attacks
 	MELEE_BLUE_MOON_JAB(1711, AttackStyle.STAB), // Note: the animation is identical between normal/special attacks
 	MELEE_BLUE_MOON_SWIPE(1712, AttackStyle.SLASH), // Note: the animation is identical between normal/special attacks
@@ -110,6 +126,8 @@ public enum AnimationData
 	MELEE_ELDER_MAUL2(11124, AttackStyle.CRUSH), // spec anim, but looks like this anim is also used for normal attacks after using the spec. No spec tracking for now, just for normal attacks
     MELEE_BURNING_CLAWS_SPEC(11140, AttackStyle.SLASH, true, 3),
     MELEE_ARKAN_BLADE_SPEC(12297, AttackStyle.SLASH, true),
+	MELEE_CRIMSON_KISTEN_CRUSH(14253, AttackStyle.CRUSH),
+	MELEE_CRIMSON_KISTEN_SPEC(14255, AttackStyle.CRUSH, true),
 
 	// RANGED
 	RANGED_SHORTBOW(426, AttackStyle.RANGED), // Confirmed same w/ 3 types of arrows, w/ maple, magic, & hunter's shortbow, scorching bow, craw's bow, dbow, dbow spec
@@ -148,9 +166,33 @@ public enum AnimationData
 	MAGIC_STANDARD_GOD_SPELL(811, 30), // Same animation for flames of zamorak, claws of guthix and saradomin strike. Assumes charge is active.
 	MAGIC_ANCIENT_SINGLE_TARGET(1978, 26), // Rush & Blitz animations (tested all 8, different weapons)
 	MAGIC_ANCIENT_MULTI_TARGET(1979, 30), // Burst & Barrage animations (tested all 8, different weapons)
+	MAGIC_ICE_RUSH(0, 16),
+	MAGIC_ICE_BURST(0, 22),
+	MAGIC_ICE_BLITZ(0, 26),
+	MAGIC_ICE_BARRAGE(0, 30),
+	MAGIC_BLOOD_RUSH(0, 15),
+	MAGIC_BLOOD_BURST(0, 21),
+	MAGIC_BLOOD_BLITZ(0, 25),
+	MAGIC_BLOOD_BARRAGE(0, 29),
 	MAGIC_VOLATILE_NIGHTMARE_STAFF_SPEC(8532, 66); // assume 99 mage's base damage (does not rise when boosted).
 
 	private static final Map<Integer, AnimationData> DATA;
+	private static final Map<Integer, AnimationData> ANCIENT_PROJECTILES = Map.of(
+		SpotanimID.ICE_RUSH_TRAVEL, MAGIC_ICE_RUSH,
+		SpotanimID.ICE_BURST_TRAVEL, MAGIC_ICE_BURST,
+		SpotanimID.ICE_BARRAGE_TRAVEL, MAGIC_ICE_BARRAGE,
+		SpotanimID.BLOOD_BLITZ_TRAVEL, MAGIC_BLOOD_BLITZ);
+	private static final Map<Integer, AnimationData> ANCIENT_IMPACTS = Map.ofEntries(
+		Map.entry(SpotanimID.ICE_RUSH_IMPACT, MAGIC_ICE_RUSH),
+		// RuneLite's ICE_BURST_IMPACT and ICE_BLITZ_IMPACT constants are swapped;
+		// its freeze timers compensate by mapping them to the opposite spell, as we do here.
+		Map.entry(SpotanimID.ICE_BLITZ_IMPACT, MAGIC_ICE_BURST),
+		Map.entry(SpotanimID.ICE_BURST_IMPACT, MAGIC_ICE_BLITZ),
+		Map.entry(SpotanimID.ICE_BARRAGE_IMPACT, MAGIC_ICE_BARRAGE),
+		Map.entry(SpotanimID.BLOOD_RUSH_IMPACT, MAGIC_BLOOD_RUSH),
+		Map.entry(SpotanimID.SPELL_BLOOD_BURST_IMPACT, MAGIC_BLOOD_BURST),
+		Map.entry(SpotanimID.BLOOD_BLITZ_IMPACT, MAGIC_BLOOD_BLITZ),
+		Map.entry(SpotanimID.SPELL_BLOOD_BARRAGE_IMPACT, MAGIC_BLOOD_BARRAGE));
 
 	public int animationId;
 	public boolean isSpecial;
@@ -229,6 +271,40 @@ public enum AnimationData
 		return DATA.get(animationId);
 	}
 
+	public static AnimationData fromProjectileId(int projectileId)
+	{
+		return ANCIENT_PROJECTILES.get(projectileId);
+	}
+
+	public static AnimationData fromImpactGraphicId(int graphicId)
+	{
+		return ANCIENT_IMPACTS.get(graphicId);
+	}
+
+	public boolean isSharedAncientAnimation()
+	{
+		return this == MAGIC_ANCIENT_SINGLE_TARGET || this == MAGIC_ANCIENT_MULTI_TARGET;
+	}
+
+	public boolean matchesSharedAncientAnimation(AnimationData sharedAnimation)
+	{
+		switch (this)
+		{
+			case MAGIC_ICE_RUSH:
+			case MAGIC_ICE_BLITZ:
+			case MAGIC_BLOOD_RUSH:
+			case MAGIC_BLOOD_BLITZ:
+				return sharedAnimation == MAGIC_ANCIENT_SINGLE_TARGET;
+			case MAGIC_ICE_BURST:
+			case MAGIC_ICE_BARRAGE:
+			case MAGIC_BLOOD_BURST:
+			case MAGIC_BLOOD_BARRAGE:
+				return sharedAnimation == MAGIC_ANCIENT_MULTI_TARGET;
+			default:
+				return false;
+		}
+	}
+
 	public boolean isStandardSpellbookSpell()
 	{
 		return (this == MAGIC_STANDARD_STRIKE_BOLT_BLAST_STAFF ||
@@ -303,7 +379,8 @@ public enum AnimationData
 		{
 			return (pray > 0 &&
 				((isMelee() &&
-					(pray == SpriteID.PRAYER_PIETY ||
+					(pray == net.runelite.api.gameval.SpriteID.Prayeron.ZEAL ||
+					 pray == SpriteID.PRAYER_PIETY ||
 					 pray == SpriteID.PRAYER_ULTIMATE_STRENGTH)) ||
 				(this == RANGED &&
 					(pray == SpriteID.PRAYER_RIGOUR ||

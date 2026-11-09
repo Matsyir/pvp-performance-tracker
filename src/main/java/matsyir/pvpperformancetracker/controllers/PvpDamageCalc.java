@@ -169,6 +169,9 @@ public class PvpDamageCalc
 	private DamageRollDistribution damageRollDistribution = DamageRollDistribution.STANDARD;
 	@Getter
 	private int damageRollHitCount = 1;
+	@Getter
+	private double[] damageProbabilityDistribution = null;
+	private Integer elementalFragments;
 	private double rangedExpectedProcDamage = 0;
 	private int seekingArrowMinHit = 0;
 
@@ -194,14 +197,24 @@ public class PvpDamageCalc
 	// Levels can be null when the client cannot observe that side's boosted/drained stats.
 	public void updateDamageStats(Actor attacker, Actor defender, boolean success, AnimationData animationData, int offensivePray)
 	{
-		updateDamageStats(attacker, defender, success, animationData, offensivePray, 0);
+		int attackerMaxHp = getDefaultCombatLevels().hp;
+		updateDamageStats(attacker, defender, success, animationData, offensivePray, 0, attackerMaxHp, attackerMaxHp);
 	}
 
 	public void updateDamageStats(Actor attacker, Actor defender, boolean success, AnimationData animationData, int offensivePray, int soulreaperStacks)
 	{
+		int attackerMaxHp = getDefaultCombatLevels().hp;
+		updateDamageStats(attacker, defender, success, animationData, offensivePray, soulreaperStacks, attackerMaxHp, attackerMaxHp);
+	}
+
+	// Dharok's current/max HP are passed separately so observed opponents can keep their combat levels unknown.
+	public void updateDamageStats(Actor attacker, Actor defender, boolean success, AnimationData animationData, int offensivePray,
+		int soulreaperStacks, int attackerCurrentHp, int attackerMaxHp)
+	{
 		// shouldn't be possible, but just in case
 		if (attacker == null || defender == null) { return; }
 
+		elementalFragments = attacker == PLUGIN.getClient().getLocalPlayer() ? FightLogEntry.localElementalFragments() : null;
 		npcAttacker = PeteKayer.isPete(attacker);
 		// Pete uses fixed cache levels; player calculations keep the existing defaults.
 		this.attackerLevels = PeteKayer.isPete(attacker) ? PeteKayer.levels() : getDefaultCombatLevels();
@@ -212,6 +225,7 @@ public class PvpDamageCalc
 		maxHit = 0;
 		damageRollDistribution = DamageRollDistribution.STANDARD;
 		damageRollHitCount = 1;
+		damageProbabilityDistribution = null;
 		rangedExpectedProcDamage = 0;
 		seekingArrowMinHit = 0;
 
@@ -223,7 +237,7 @@ public class PvpDamageCalc
 		int[] playerStats = PeteKayer.isPete(attacker) ? PeteKayer.combatBonuses(((net.runelite.api.NPC) attacker).getId()) : calculateBonuses(attackerItems, getRingUsed(attacker));
 		int[] opponentStats = PeteKayer.isPete(defender) ? PeteKayer.combatBonuses(((net.runelite.api.NPC) defender).getId()) : calculateBonuses(defenderItems, getRingUsed(defender));
 		AnimationData.AttackStyle attackStyle = animationData.attackStyle; // basic style: stab/slash/crush/ranged/magic
-		Integer attackerAmmoItemId = npcAttacker ? PeteKayer.ammoItemId(attacker) : getLocalPlayerAmmoItemId(attacker);
+		Integer attackerAmmoItemId = npcAttacker ? PeteKayer.ammoItemId(attacker) : null;
 
 		// Special attack used will be determined based on the currently used weapon, if its special attack has been implemented.
 		// the animation just serves to tell if they actually did a special attack animation, since some animations
@@ -233,13 +247,14 @@ public class PvpDamageCalc
 
 		// Assume defender prayers match local prayer unlocks (opponent prayers are not visible).
 		int localPrayerLevel = PLUGIN.getClient().getRealSkillLevel(Skill.PRAYER);
-		int localDefenceLevel = this.attackerLevels.def;
+		int localDefenceLevel = PLUGIN.getClient().getRealSkillLevel(Skill.DEFENCE);
 		double defencePrayerModifier = AssumedPrayers.assumedDefencePrayerModifier(attackStyle, localPrayerLevel, localDefenceLevel);
 		boolean defensiveAugurySuccess = AssumedPrayers.assumedDefensiveAugury(localPrayerLevel, localDefenceLevel);
 
 		if (attackStyle.isMelee() || animationData == AnimationData.MELEE_VOIDWAKER_SPEC)
 		{
 			getMeleeMaxHit(playerStats[STRENGTH_BONUS], isSpecial, weapon, voidStyle, offensivePray, soulreaperStacks);
+			applyDharokSetEffect(attackerItems, attackerCurrentHp, attackerMaxHp);
 			getMeleeAccuracy(playerStats, opponentStats, attackStyle, isSpecial, weapon, voidStyle, offensivePray,
 				defencePrayerModifier, soulreaperStacks);
 		}
@@ -260,7 +275,11 @@ public class PvpDamageCalc
 			getMagicAccuracy(playerStats[MAGIC_ATTACK], opponentStats[MAGIC_DEF], weapon, animationData, voidStyle, offensivePray, defensiveAugurySuccess, defencePrayerModifier);
 		}
 
-		getAverageHit(success, weapon, isSpecial);
+		boolean localTfaAttacker = attacker == PLUGIN.getClient().getLocalPlayer();
+		Integer tfaCharges = localTfaAttacker ? PLUGIN.getClient().getVarbitValue(net.runelite.api.gameval.VarbitID.RONDACHE_CHARGES) : null;
+		Integer tfaBuffs = localTfaAttacker ? PLUGIN.getClient().getVarpValue(net.runelite.api.gameval.VarPlayerID.ZORYAS_TOME_STACKS) : null;
+		if (!applyTfaAttack(weapon, animationData, success, playerStats, opponentStats, offensivePray, attackerAmmoItemId, tfaCharges, tfaBuffs))
+			getAverageHit(success, weapon, isSpecial);
 
 		// UNSUCCESSFUL_PRAY_DMG_MODIFIER is already applied to average hit inside the getAverageHit call above,
 		// but I suppose this shouldn't introduce any issues since it's being called after?
@@ -273,6 +292,50 @@ public class PvpDamageCalc
 			"\ndefender(" +  defender.getName() + ")stats: " + Arrays.toString(opponentStats));
 	}
 
+	void updateExactMagicSpellDamage(FightLogEntry entry, AnimationData spell)
+	{
+		int[] attackerItems = entry.getAttackerGear();
+		int offensivePray = entry.getAssumedOffensivePray();
+		RingData actualRing = entry.getAttackerRingItemId() == null
+			? null
+			: RingData.fromId(entry.getAttackerRingItemId());
+		RingData attackRing = actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
+		boolean successful = entry.success();
+		int[] playerStats = calculateBonuses(attackerItems, attackRing);
+		EquipmentData weapon = EquipmentData.fromId(fixItemId(attackerItems[KitType.WEAPON.getIndex()]));
+		EquipmentData shield = EquipmentData.fromId(fixItemId(attackerItems[KitType.SHIELD.getIndex()]));
+		EquipmentData hat = EquipmentData.fromId(fixItemId(attackerItems[KitType.HEAD.getIndex()]));
+		EquipmentData top = EquipmentData.fromId(fixItemId(attackerItems[KitType.TORSO.getIndex()]));
+		EquipmentData bottom = EquipmentData.fromId(fixItemId(attackerItems[KitType.LEGS.getIndex()]));
+
+		attackerLevels = getDefaultCombatLevels();
+		averageHit = 0;
+		accuracy = entry.getAccuracy();
+		minHit = 0;
+		maxHit = 0;
+		damageRollDistribution = DamageRollDistribution.STANDARD;
+		damageRollHitCount = 1;
+		rangedExpectedProcDamage = 0;
+		seekingArrowMinHit = 0;
+
+		getMagicMaxHit(
+			playerStats[MAGIC_DAMAGE],
+			spell,
+			offensivePray,
+			VoidStyle.getVoidStyleFor(attackerItems),
+			shield,
+			weapon,
+			hat,
+			top,
+			bottom);
+		getAverageHit(successful, weapon, false);
+		maxHit = (int)(maxHit * (successful ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER));
+		if (entry.isDefenderElyProc())
+		{
+			applyElysianReduction();
+		}
+	}
+
 	// secondary function used to analyze fights from the fight log (fight analysis/fight merge)
 	public void updateDamageStats(FightLogEntry atkLog, FightLogEntry defenderLog)
 	{
@@ -282,6 +345,7 @@ public class PvpDamageCalc
 		int[] attackerItems = atkLog.getAttackerGear();
 		int[] defenderItems = atkLog.getDefenderGear();
 		boolean success = atkLog.success();
+		elementalFragments = atkLog.getElementalFragments();
 		AnimationData animationData = atkLog.getAnimationData();
 		int offensivePray = atkLog.getAttackerOffensivePray();
 
@@ -291,6 +355,7 @@ public class PvpDamageCalc
 		maxHit = 0;
 		damageRollDistribution = DamageRollDistribution.STANDARD;
 		damageRollHitCount = 1;
+		damageProbabilityDistribution = null;
 		rangedExpectedProcDamage = 0;
 		seekingArrowMinHit = 0;
 
@@ -332,7 +397,8 @@ public class PvpDamageCalc
 				defenderLog.getAttackerOffensivePray() == SpriteID.PRAYER_AUGURY, AUGURY_DEF_PRAYER_MODIFIER);
 		}
 
-		getAverageHit(success, weapon, isSpecial);
+		if (!applyTfaAttack(weapon, animationData, success, playerStats, opponentStats, offensivePray, attackerAmmoItemId, atkLog.getRondacheCharges(), atkLog.getZoryaCharges()))
+			getAverageHit(success, weapon, isSpecial);
 
 		// UNSUCCESSFUL_PRAY_DMG_MODIFIER is already applied to average hit inside the getAverageHit call above,
 		// but I suppose this shouldn't introduce any issues since it's being called after?
@@ -348,6 +414,40 @@ public class PvpDamageCalc
 		{
 			applyStaffMeleeReduction();
 		}
+	}
+
+	public static boolean isFullDharokSet(int[] equipment)
+	{
+		int lastRequiredIndex = Math.max(Math.max(KitType.HEAD.getIndex(), KitType.WEAPON.getIndex()),
+			Math.max(KitType.TORSO.getIndex(), KitType.LEGS.getIndex()));
+		if (equipment == null || equipment.length <= lastRequiredIndex)
+		{
+			return false;
+		}
+
+		return EquipmentData.fromId(fixItemId(equipment[KitType.HEAD.getIndex()])) == EquipmentData.DHAROKS_HELM &&
+			EquipmentData.fromId(fixItemId(equipment[KitType.WEAPON.getIndex()])) == EquipmentData.DHAROKS_GREATAXE &&
+			EquipmentData.fromId(fixItemId(equipment[KitType.TORSO.getIndex()])) == EquipmentData.DHAROKS_PLATEBODY &&
+			EquipmentData.fromId(fixItemId(equipment[KitType.LEGS.getIndex()])) == EquipmentData.DHAROKS_PLATELEGS;
+	}
+
+	static int scaleDharokMaxHit(int baseMaxHit, int currentHp, int maxHp)
+	{
+		baseMaxHit = Math.max(0, baseMaxHit);
+		maxHp = Math.max(1, maxHp);
+		int missingHp = Math.max(0, maxHp - Math.max(0, currentHp));
+		long modifierNumerator = 10000L + (long) missingHp * maxHp;
+		return (int) ((baseMaxHit * modifierNumerator) / 10000L);
+	}
+
+	private void applyDharokSetEffect(int[] equipment, int currentHp, int maxHp)
+	{
+		if (!isFullDharokSet(equipment))
+		{
+			return;
+		}
+
+		maxHit = scaleDharokMaxHit(maxHit, currentHp, maxHp);
 	}
 
 	private CombatLevels getDefaultCombatLevels()
@@ -375,6 +475,60 @@ public class PvpDamageCalc
 		averageHit *= multiplier;
 		minHit = (int) Math.floor(minHit * multiplier);
 		maxHit = (int) Math.floor(maxHit * multiplier);
+		if (damageProbabilityDistribution != null)
+		{
+			damageProbabilityDistribution = scaleDamageDistribution(damageProbabilityDistribution, multiplier);
+			averageHit = getExpectedDamage(damageProbabilityDistribution);
+		}
+	}
+
+	private boolean applyTfaAttack(EquipmentData weapon, AnimationData animation, boolean success,
+		int[] playerStats, int[] opponentStats, int prayer, Integer ammo, Integer charges, Integer buffs)
+	{
+		boolean rondache = animation == AnimationData.MELEE_RONDACHE_SPEC;
+		boolean tome = weapon == EquipmentData.ZORYAS_TOME && animation.name().startsWith("MAGIC_ZORYA");
+		boolean thrust = weapon == EquipmentData.OBLIGATOR && animation.name().contains("THRUST");
+		boolean crossbow = weapon == EquipmentData.ASCENSION_CROSSBOWS;
+		if (!rondache && !tome && !thrust && !crossbow) return false;
+		if (tome)
+		{
+			int boosts = (animation.isSpecial ? 1 : 0) + (buffs != null && buffs > 0 ? 1 : 0);
+			maxHit = (int) Math.floor(maxHit * (1 + .6 * boosts));
+			// Recompute the roll; multiplying the final probability would overstate accuracy.
+			double atk = Math.floor(attackerLevels.mage * getMagicAttackPrayerModifier(prayer) + 8) * (playerStats[MAGIC_ATTACK] + 64) * (1 + 1.5 * boosts);
+			double effectiveDefence = Math.floor(Math.floor(defenderLevels.mage * 1.25 * .7) + Math.floor((defenderLevels.def * 1.25 + 8) * .3));
+			double def = effectiveDefence * (opponentStats[MAGIC_DEF] + 64);
+			accuracy = atk > def ? 1 - (def + 2) / (2 * (atk + 1)) : atk / (2 * (def + 1));
+		}
+		if (rondache)
+		{
+			int count = charges == null ? 0 : Math.max(0, Math.min(20, charges));
+			int[] weaponStats = weapon == null ? null : getItemStats(weapon.getItemId());
+			double atk = Math.floor(attackerLevels.atk * getMeleeAttackPrayerModifier(prayer) + 8) * (playerStats[CRUSH_ATTACK] - (weaponStats == null ? 0 : weaponStats[CRUSH_ATTACK]) + count * 6 + 64);
+			double def = Math.floor(defenderLevels.def * 1.25 + 8) * (opponentStats[CRUSH_DEF] + 64);
+			accuracy = atk > def ? 1 - (def + 2) / (2 * (atk + 1)) : atk / (2 * (def + 1));
+			maxHit = count >= 10 ? (int) Math.floor(count * (1 + count / 100.0)) : 0;
+		}
+		int rolls = thrust ? 2 + (opponentStats[STAB_DEF] > opponentStats[CRUSH_DEF] ? 1 : 0) + (opponentStats[SLASH_DEF] > opponentStats[CRUSH_DEF] ? 1 : 0) : 1;
+		boolean diamond = crossbow && ammo != null && ammo == 34696;
+		boolean onyx = crossbow && ammo != null && ammo == 34708;
+		// Unobserved ammunition uses the configured Ascension baseline.
+		double proc = diamond ? .025 : onyx ? .05 : 0;
+		int procMax = (int) Math.floor(maxHit * (diamond ? 1.15 : onyx ? 1.2 : 1));
+		damageProbabilityDistribution = new double[Math.max(maxHit, procMax) + 1];
+		damageProbabilityDistribution[0] = (1 - accuracy) * (diamond ? 1 - proc : 1);
+		if (rondache) damageProbabilityDistribution[maxHit] += accuracy;
+		else
+		{
+			for (int hit = 0; hit <= maxHit; hit++)
+				damageProbabilityDistribution[hit] += (1 - proc) * accuracy * (Math.pow((hit + 1.0) / (maxHit + 1), rolls) - Math.pow(hit / (maxHit + 1.0), rolls));
+			for (int hit = 0; hit <= procMax; hit++) damageProbabilityDistribution[hit] += proc * (diamond ? 1 : accuracy) / (procMax + 1);
+		}
+		if (diamond) accuracy = proc + (1 - proc) * accuracy;
+		maxHit = Math.max(maxHit, procMax);
+		if (!success) damageProbabilityDistribution = scaleDamageDistribution(damageProbabilityDistribution, UNSUCCESSFUL_PRAY_DMG_MODIFIER);
+		averageHit = getExpectedDamage(damageProbabilityDistribution);
+		return true;
 	}
 
 	private void getAverageHit(boolean success, EquipmentData weapon, boolean usingSpec)
@@ -388,6 +542,7 @@ public class PvpDamageCalc
 		boolean voidwaker = weapon == EquipmentData.VOIDWAKER;
 		boolean burningClaws = weapon == EquipmentData.BURNING_CLAWS;
 		boolean soulreaperAxe = weapon == EquipmentData.SOULREAPER_AXE;
+		boolean crimsonKisten = weapon == EquipmentData.CRIMSON_KISTEN;
 
 		double prayerModifier = success ? 1 : UNSUCCESSFUL_PRAY_DMG_MODIFIER;
 		double averageSuccessfulHit;
@@ -484,6 +639,24 @@ public class PvpDamageCalc
 
 			return;
 		}
+		else if (crimsonKisten && usingSpec)
+		{
+			double perRollAccuracy = accuracy;
+			damageProbabilityDistribution = buildCrimsonKistenDamageDistribution(perRollAccuracy, maxHit);
+			if (!success)
+			{
+				damageProbabilityDistribution = scaleDamageDistribution(
+					damageProbabilityDistribution,
+					UNSUCCESSFUL_PRAY_DMG_MODIFIER);
+			}
+
+			int[][] damageRanges = getCrimsonKistenDamageRanges(maxHit);
+			minHit = damageRanges[0][0];
+			maxHit = damageRanges[3][1];
+			accuracy = getCrimsonKistenDisplayedAccuracy(perRollAccuracy);
+			averageHit = getExpectedDamage(damageProbabilityDistribution);
+			return;
+		}
 		else if (fang)
 		{
 			double maxHitMultiplier = usingSpec ? 1: 0.85; // max hit when using spec is 100% but minHit stays the same
@@ -540,6 +713,86 @@ public class PvpDamageCalc
 		}
 	}
 
+	static double getCrimsonKistenDisplayedAccuracy(double perRollAccuracy)
+	{
+		double accuracy = Math.max(0.0, Math.min(1.0, perRollAccuracy));
+		return 1 - Math.pow(1 - accuracy, 4);
+	}
+
+	static double[] getCrimsonKistenAccuracyRollProbabilities(double perRollAccuracy)
+	{
+		double accuracy = Math.max(0.0, Math.min(1.0, perRollAccuracy));
+		double miss = 1 - accuracy;
+		return new double[]
+		{
+			Math.pow(miss, 4),
+			4 * accuracy * Math.pow(miss, 3),
+			6 * Math.pow(accuracy, 2) * Math.pow(miss, 2),
+			4 * Math.pow(accuracy, 3) * miss,
+			Math.pow(accuracy, 4)
+		};
+	}
+
+	static int[][] getCrimsonKistenDamageRanges(int baseMaxHit)
+	{
+		int base = Math.max(0, baseMaxHit);
+		int[][] ranges = new int[][]
+		{
+			{(int) Math.floor(base * 0.7), (int) Math.floor(base * 1.1)},
+			{(int) Math.floor(base * 0.9), (int) Math.floor(base * 1.3)},
+			{(int) Math.floor(base * 1.1), (int) Math.floor(base * 1.5)},
+			// The announced mechanic subtracts 1 from the four-roll maximum, but in-game testing shows no reduction.
+			{(int) Math.floor(base * 1.3), (int) Math.floor(base * 1.7)}
+		};
+
+		for (int[] range : ranges)
+		{
+			range[1] = Math.max(range[0], range[1]);
+		}
+		return ranges;
+	}
+
+	static double[] buildCrimsonKistenDamageDistribution(double perRollAccuracy, int baseMaxHit)
+	{
+		int[][] damageRanges = getCrimsonKistenDamageRanges(baseMaxHit);
+		double[] rollProbabilities = getCrimsonKistenAccuracyRollProbabilities(perRollAccuracy);
+		double[] distribution = new double[damageRanges[3][1] + 1];
+		distribution[0] = rollProbabilities[0];
+
+		for (int successes = 1; successes <= 4; successes++)
+		{
+			int minimum = damageRanges[successes - 1][0];
+			int maximum = damageRanges[successes - 1][1];
+			double probabilityPerDamage = rollProbabilities[successes] / (maximum - minimum + 1);
+			for (int damage = minimum; damage <= maximum; damage++)
+			{
+				distribution[damage] += probabilityPerDamage;
+			}
+		}
+		return distribution;
+	}
+
+	static double[] scaleDamageDistribution(double[] distribution, double multiplier)
+	{
+		int scaledMaximum = (int) Math.floor((distribution.length - 1) * multiplier);
+		double[] scaled = new double[scaledMaximum + 1];
+		for (int damage = 0; damage < distribution.length; damage++)
+		{
+			scaled[(int) Math.floor(damage * multiplier)] += distribution[damage];
+		}
+		return scaled;
+	}
+
+	static double getExpectedDamage(double[] distribution)
+	{
+		double expectedDamage = 0;
+		for (int damage = 0; damage < distribution.length; damage++)
+		{
+			expectedDamage += damage * distribution[damage];
+		}
+		return expectedDamage;
+	}
+
 	private double getAverageSuccessfulHitWithMinimum(int minimumHit)
 	{
 		minimumHit = Math.max(0, minimumHit);
@@ -589,14 +842,16 @@ public class PvpDamageCalc
 
 	private double getMeleeStrengthPrayerModifier(int offensivePray)
 	{
-		return offensivePray == SpriteID.PRAYER_PIETY ? PIETY_STR_PRAYER_MODIFIER :
+		return offensivePray == net.runelite.api.gameval.SpriteID.Prayeron.ZEAL ? 1.28 :
+			offensivePray == SpriteID.PRAYER_PIETY ? PIETY_STR_PRAYER_MODIFIER :
 			offensivePray == SpriteID.PRAYER_ULTIMATE_STRENGTH ? ULTIMATE_STRENGTH_PRAYER_MODIFIER :
 			1;
 	}
 
 	private double getMeleeAttackPrayerModifier(int offensivePray)
 	{
-		return offensivePray == SpriteID.PRAYER_PIETY ? PIETY_ATK_PRAYER_MODIFIER : 1;
+		return offensivePray == net.runelite.api.gameval.SpriteID.Prayeron.ZEAL ? 1.25 :
+			offensivePray == SpriteID.PRAYER_PIETY ? PIETY_ATK_PRAYER_MODIFIER : 1;
 	}
 
 	private double getRangedDamagePrayerModifier(int offensivePray)
@@ -688,6 +943,7 @@ public class PvpDamageCalc
 			return false;
 		}
 
+		if (weapon == EquipmentData.ASCENSION_CROSSBOWS) return ammo.getItemId() >= 34684 && ammo.getItemId() <= 34708;
 		if (weapon == EquipmentData.RUNE_CROSSBOW)
 		{
 			return ammo instanceof RangeAmmoData.BoltAmmo;
@@ -731,9 +987,7 @@ public class PvpDamageCalc
 	private RingData getRingUsed(Actor player)
 	{
 		if (PeteKayer.isPete(player)) return RingData.LIGHTBEARER;
-		Integer actualRingItemId = getLocalPlayerRingItemId(player);
-		RingData actualRing = actualRingItemId == null ? null : RingData.fromId(actualRingItemId);
-		return actualRing != null && actualRing != RingData.NONE ? actualRing : ringUsed;
+		return ringUsed;
 	}
 
 	private Integer getLocalPlayerRingItemId(Actor player)
@@ -757,29 +1011,6 @@ public class PvpDamageCalc
 		}
 
 		return ring.getId();
-	}
-
-	private Integer getLocalPlayerAmmoItemId(Actor attacker)
-	{
-		Actor localPlayer = PLUGIN.getClient().getLocalPlayer();
-		if (attacker == null || localPlayer == null || attacker.getName() == null || !attacker.getName().equals(localPlayer.getName()))
-		{
-			return null;
-		}
-
-		ItemContainer worn = PLUGIN.getClient().getItemContainer(InventoryID.EQUIPMENT);
-		if (worn == null)
-		{
-			return null;
-		}
-
-		Item ammo = worn.getItem(EquipmentInventorySlot.AMMO.getSlotIdx());
-		if (ammo == null || ammo.getId() <= 0)
-		{
-			return null;
-		}
-
-		return ammo.getId();
 	}
 
 	private void getRangedMaxHit(int rangeStrength, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, int[] attackerComposition, AnimationData animationData, Integer attackerAmmoItemId)
@@ -921,7 +1152,12 @@ public class PvpDamageCalc
 			magicBonus *= voidStyle.dmgModifier;
 		}
 
-		maxHit = (int)(animationData.baseSpellDamage * magicBonus);
+		int baseSpellDamage = weapon == EquipmentData.ZORYAS_TOME && animationData.name().startsWith("MAGIC_ZORYA")
+			? Math.max(0, attackerLevels.mage / 3 - 9) : animationData.baseSpellDamage;
+		// Shared Standard spell animations do not identify the element. All four
+		// unlocks are sufficient proof; partial ownership remains an estimate.
+		if (animationData.isStandardSpellbookSpell() && elementalFragments != null && elementalFragments == 15) baseSpellDamage += 2;
+		maxHit = (int)(baseSpellDamage * magicBonus);
 	}
 
 	private void getMeleeAccuracy(int[] playerStats, int[] opponentStats, AttackStyle attackStyle, boolean usingSpec, EquipmentData weapon, VoidStyle voidStyle, int offensivePray, double defencePrayerModifier, int soulreaperStacks)

@@ -178,6 +178,8 @@ class FightLogDetailFrame extends JFrame
 		defenderName.setText("<html>Defender:<br/><strong>" + defender.getName() + "</strong></html>");
 		namesLine.add(defenderName, BorderLayout.EAST);
 
+		boolean isDharokAttack = PvpDamageCalc.isFullDharokSet(logEntry.getAttackerGear());
+
 		// prayer display line
 		JPanel praysUsedLine = new JPanel(new BorderLayout());
 		GridLayout attackerPrayLayout = new GridLayout(1, 2);
@@ -249,8 +251,9 @@ class FightLogDetailFrame extends JFrame
 		attackerMageLvl.setToolTipText("Magic Level");
 		attackerHpLvl = new JLabel();
 		PLUGIN.addSpriteToLabelIfValid(attackerHpLvl, PvpUtils.getSpriteForSkill(Skill.HITPOINTS));
-		attackerHpLvl.setText(String.valueOf(atkLevels.hp));
-		attackerHpLvl.setToolTipText("Hitpoints Level");
+		attackerHpLvl.setText(isDharokAttack ? fight.getDharokHpAtAttackText(logEntry) : String.valueOf(atkLevels.hp));
+		attackerHpLvl.setToolTipText(isDharokAttack ?
+			"Hitpoints at attack. A leading ~ means the value was estimated locally." : "Hitpoints Level");
 
 		attackerCombatLevels.add(attackerAtkLvl);
 		attackerCombatLevels.add(attackerStrLvl);

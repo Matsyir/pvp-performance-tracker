@@ -98,6 +98,7 @@ public enum PrayerType
 				return vigour && !inLms;
 			}
 		},
+	ZEAL("Zeal", Prayer.ZEAL, "+25% Attack, +28% Strength, +25% Defence", SpriteID.Prayeron.ZEAL, false, 24),
 	PIETY("Piety", Prayer.PIETY, "+20% Attack, +23% Strength, +25% Defence", SpriteID.Prayeron.PIETY, false, 24),
 	RIGOUR("Rigour", Prayer.RIGOUR, "+20% Ranged attack, +23% Ranged strength, +25% Defence", SpriteID.Prayeron.RIGOUR, false, 24),
 	AUGURY("Augury", Prayer.AUGURY, "+25% Magical attack and defence, +25% Defence", SpriteID.Prayeron.AUGURY, false, 24),
